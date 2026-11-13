@@ -70,7 +70,7 @@ export class WebPushService {
   /**
    * Stores the subscription for session `sessionId` of `userId` and sends it a welcome push.
    * Throws `AccessError` when the session has ended by the time the row would be written, as
-   * after a password reset (#409).
+   * after a password reset.
    */
   public async subscribe(
     subscription: PushSubscribeRequest["subscription"],

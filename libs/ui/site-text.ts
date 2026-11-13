@@ -1,5 +1,5 @@
 /**
- * The translator of the public website's words (the `site` namespace, #276): the MPA's pages and
+ * The translator of the public website's words (the `site` namespace): the MPA's pages and
  * the newsletter screens it renders. Inside the website it is the page's, from the nearest
  * `I18nContext`. Without a provider, as in a test that renders one screen, it is the site's
  * English. Inside the SPA, whose catalogs leave the site's words out, a key the app's translator

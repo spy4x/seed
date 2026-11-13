@@ -62,6 +62,16 @@ export const NO_NOTE_FILTERS: NoteFilters = {
   direction: "desc",
 }
 
+/**
+ * The filters with "Created by me" as the one way to pick the person's own notes: `?author=` naming
+ * the person turns into `mine`, and `mine` drops any other author, so the bar never shows two chips
+ * for one filter nor a pair that no note can pass.
+ */
+export function withOneAuthor(filters: NoteFilters, youId: string | null): NoteFilters {
+  const mine = filters.mine || (youId !== null && filters.author === youId)
+  return mine ? { ...filters, mine, author: null } : filters
+}
+
 /** What a note needs for the list to filter and order it. */
 export interface FilterableNote {
   title: string

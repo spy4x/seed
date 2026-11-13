@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "登録は不要です。サンプルデータ入りのゲストアカウントで使えて、データは毎晩リセットされます。",
   "SiteNav.features": "機能",
+  "SiteNav.docs": "ドキュメント",
   "SiteNav.blog": "ブログ",
   "SiteNav.compare": "比較",
   "SiteNav.pricing": "料金",
@@ -133,13 +134,13 @@ export default {
   "Architecture.worker": "ワーカー",
   "Architecture.mail": "メール、プッシュ",
   "Architecture.webAppNote": "ブラウザで動くPreact",
-  "Architecture.websiteNote": "このページと同じFresh",
-  "Architecture.apiNote": "Deno上のHono",
+  "Architecture.websiteNote": "サーバーで動くPreact",
+  "Architecture.apiNote": "Deno・Node・Bun",
   "Architecture.postgresNote": "すべての変更",
   "Architecture.workerNote": "時間のかかる処理",
   "Architecture.mailNote": "とクリーンアップ",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "イベントも同じトランザクションで",
   "Architecture.caption": "すべて1台のサーバー上で、Traefikの背後にValkeyとGrafanaとともに稼働",
   "Architecture.captionTop": "すべて1台のサーバー上で、Traefikの背後に",
@@ -148,11 +149,11 @@ export default {
     "Seedの構成：WebアプリとWebサイトがAPIを呼び出し、APIはすべての変更とそのイベントをPostgresに書き込み、ワーカーがそのイベントからメールとプッシュ通知を送ります。すべてが1台のサーバーで動きます。",
   "Home.title": "Seed：Web標準で作られた無料のSaaSスターター",
   "Home.description":
-    "Web標準で作られた、無料でMITライセンスのSaaSスターター。2段階認証付きログイン、ロール付きグループ、メンバー単位のStripe課金、リアルタイム、オフライン対応。Denoで動作します。",
+    "Web標準で作られた、無料でMITライセンスのSaaSスターター。2段階認証、グループ、Stripe課金、リアルタイム、オフライン、デバイスから開く画面。Deno・Node・Bunで動作します。",
   "HomeProof.tests": "アプリとライブラリのテストファイル数。すべてCIで実行",
   "HomeProof.licence": "ライセンス：アカウント不要、ペイウォールなし",
   "HomeStatus.signIn":
-    "新規登録、ログイン、メールアドレス確認、パスワード再設定、GoogleとGitHubでのログイン、パスキー、マジックリンク、認証アプリによる2段階認証",
+    "新規登録、ログイン、メールアドレス確認、パスワード再設定、GoogleとGitHubでのログイン、パスキー、メールのログインコード、認証アプリによる2段階認証",
   "HomeStatus.guests":
     "ゲストアカウント：ワンクリックでアプリを試せて、ログイン方法を追加すればアカウントをそのまま使い続けられます",
   "HomeStatus.groups": "メンバー、ロール、招待、オーナー権限の譲渡に対応したグループ",
@@ -172,10 +173,13 @@ export default {
   "HomeFaq.tryQuestion": "アカウントなしで試せますか？",
   "HomeFaq.tryAnswer":
     "はい。「ライブデモを試す」を押すと、サンプルデータ入りのゲストアカウントでアプリが開きます。メールアドレスもパスワードも不要です。ログイン方法を追加することもできますが、デモのデータは毎晩リセットされます。Seed自体にはアカウントが一切不要で、GitHubからクローンするだけです。",
+  "HomeFaq.fastQuestion": "Seedのアプリが速く感じるのはなぜですか？",
+  "HomeFaq.fastAnswer":
+    "アプリを開いた後は、一度見た内容を表示するのにサーバーを待たないからです。アプリは各リストのコピーをデバイスに保存し、そこから画面をすぐに描画して、サーバーの応答が届いたら置き換えます。メモ一覧の検索と絞り込みはデバイス上で動きます。アプリを開くときはまずサーバーでログイン状態を確認し、初回の訪問ではデータをダウンロードし、変更の保存はサーバーを待ちます。",
   "HomeFaq.freeQuestion": "Seedは本当に無料ですか？",
   "HomeFaq.freeAnswer":
     "はい。MITライセンスなので、商用・非商用を問わずいくつのプロダクトにも使えますし、フォークの公開も自由で、アカウントも不要です。かかる費用は、借りるサーバー1台分と、Stripeやメール配信サービスなど自分で有効にしたサービスの料金だけです。",
-  "HomeFaq.stackQuestion": "なぜNext.jsではなくDenoとPreactなのですか？",
+  "HomeFaq.stackQuestion": "なぜNext.jsではなくHonoとPreactなのですか？",
   "HomeFaq.stackAnswer":
     "Web標準（<code>fetch</code>、<code>Request</code>、Web Crypto、ESモジュール）の上で動き、起動が速く、依存関係も少ないため、更新するものも壊れるものも少なくて済みます。Next.jsのエコシステムで開発しているなら、Next.jsのスターターのほうが合っているでしょう。おすすめは<compare>比較ページ</compare>で紹介しています。",
   "HomeFaq.clientQuestion": "受託開発に使えますか？",
@@ -184,10 +188,10 @@ export default {
   "HomeFaq.productionQuestion": "本番環境で使えますか？",
   "HomeFaq.productionAnswer":
     "「現在の対応状況」に載っている部分はCIでテストされています。すべてのプルリクエストでログイン、プロフィール、メモ、グループのテストが走り、マージのたびに全テストが実行されます。Seedは今すぐ使えて、今も成長中です。各部分を本番で頼る前に、対応状況の一覧を確認してください。",
-  "HomeHero.badge": "Deno 2で動作",
+  "HomeHero.badge": "Deno・Node・Bunで動作",
   "HomeHero.title": "SaaSの土台は、もうできています。",
   "HomeHero.lead":
-    "Seedは、Web標準で作られた無料のSaaSスターターです。ログインと2段階認証（2FA）、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面がそろっています。MITライセンスで、現在はDenoで動き、Docker Composeで借りたLinuxサーバー1台にデプロイできます。",
+    "Seedは、Web標準で作られた無料のSaaSスターターです。ログインと2段階認証（2FA）、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面がそろっています。MITライセンスで、Deno・Node・Bunのどれでも動き、Docker Composeで借りたLinuxサーバー1台にデプロイできます。",
   "HomeHero.github": "GitHubで見る",
   "HomeHero.status":
     "Seedは今すぐ使えて、公開しながら開発中です。<status>対応状況を見る</status>。",
@@ -208,7 +212,7 @@ export default {
   "HomeFeatures.signInAlt":
     "プロフィールのセキュリティページ。パスワード、「パスキーを追加」ボタン、オンになった2段階認証、ログイン中のデバイス一覧の上部が見えます。",
   "HomeFeatures.signInText":
-    "確認コード付きのメールアドレスとパスワード、パスワード再設定、GoogleとGitHubでのログイン、パスキー、メールで届くログインリンク、ゲストアカウント、認証アプリによる2段階認証。セッションは一覧で確認でき、終了もできます。",
+    "確認コード付きのメールアドレスとパスワード、パスワード再設定、GoogleとGitHubでのログイン、パスキー、メールで届くログインコード、ゲストアカウント、認証アプリによる2段階認証。セッションは一覧で確認でき、終了もできます。",
   "HomeFeatures.billingTitle": "メンバー単位の課金",
   "HomeFeatures.billingLink": "課金のしくみ",
   "HomeFeatures.billingText":
@@ -232,6 +236,12 @@ export default {
   "HomeFeatures.websiteText":
     "このサイトのことです。サーバーでレンダリングされ、JavaScriptがオフでも動き、9言語に対応。プランカタログから作られる料金ページ、法務ページ、ダブルオプトインのニュースレターも備えています。",
   "HomeFeatures.all": "すべての機能（スクリーンショットと対応状況付き）",
+  "HomeSpeed.eyebrow": "最初から速い",
+  "HomeSpeed.title": "クリックごとのローディング表示はありません",
+  "HomeSpeed.text":
+    "多くのWebアプリはクリックのたびにサーバーへ問い合わせ直すので、そのたびに待たされます。Seedのアプリは一度開いてしまえば、すでに見た画面はデバイス上のコピーからすぐに開き、メモ一覧の検索と絞り込みは入力するそばから結果が出ます。サーバーの最新の内容は、少し後にバックグラウンドでデバイスのコピーと置き換わります。",
+  "HomeSpeed.demo": "デモを触って試す",
+  "HomeSpeed.how": "仕組みを見る",
   "HomeServer.eyebrow": "借りたサーバー1台で動く",
   "HomeServer.title": "サーバー1台、<code>docker compose</code>ひとつ。想定外の請求なし。",
   "HomeServer.text":
@@ -239,11 +249,13 @@ export default {
   "HomeServer.skip":
     "サーバーレス関数やVercelを使いたいなら、Seedは向いていません。自分で管理するサーバー向けに作られています。",
   "HomeQuickStart.title": "4つのコマンドでローカル起動",
-  "HomeQuickStart.needs": "必要なのはDeno 2とDockerです。GitHub CLIは任意です。",
+  "HomeQuickStart.needs":
+    "必要なのはDockerとDeno 2です。GitHub CLIは任意です。NodeやBunを使う場合は、<readme>README</readme>の手順でDenoが自動でインストールされ、同じコマンドをnpmやbunで実行できます。",
   "HomeQuickStart.text":
     "<init>init</init>がenvファイルをコピーし、すべてのシークレットとWebプッシュ用の鍵を生成します。<dev>dev</dev>でTraefikをはじめすべてが起動します。あとは<url>http://app.localhost</url>を開くだけです。すべての設定項目とデプロイ方法は<readme>README</readme>にまとめています。",
   "HomeQuickStart.agent": "AIエージェントに頼むこともできます：<prompt></prompt>。",
   "HomeQuickStart.terminal": "ターミナル",
+  "HomeQuickStart.guide": "手順ガイドを読む",
   "HomeStatus.eyebrow": "正直な現状",
   "HomeStatus.title": "今どこまでできているか",
   "HomeStatus.lead":
@@ -269,6 +281,8 @@ export default {
   "Pricing.description":
     "SeedはMITライセンスで無料、有料プランはありません。運用にかかるのは、ホスティング会社の料金でLinuxサーバー1台分と、自分で有効にしたサービスの費用だけです。",
   "Pricing.crumb": "料金",
+  "Pricing.saving":
+    "{plan} は月額 {monthly}、または年額 {yearly} です。月払いより {saving} お得です。",
   "PricingFaq.paidQuestion": "Seedに有料版はありますか？",
   "PricingFaq.paidAnswer":
     "ありません。Pro版も、ライセンスキーも、出し惜しみしている機能もありません。サポートが必要なら私に依頼してください。私が売っているのは自分の時間だけです。",
@@ -344,13 +358,13 @@ export default {
   "FeatureSignIn.nav": "アカウントとログイン",
   "FeatureSignIn.title": "ログインは完成済み",
   "FeatureSignIn.lead":
-    "ユーザーはメールアドレスとパスワードで登録し、コードでメールアドレスを確認します。忘れたパスワードの再設定、GoogleやGitHubでのログイン、パスキーでのログイン、そして登録も兼ねるメールのログインリンクにも対応。まずゲストアカウントでアプリを試して、あとからログイン方法を追加することもできます。認証アプリを使えば2段階認証（2FA）も有効にできます。ログイン中のデバイスはすべて一覧で確認でき、ほかのデバイスをログアウトさせることもできます。ログイン方法を変更するときは本人確認を求め、メールで通知します。",
+    "ユーザーはメールアドレスとパスワードで登録し、コードでメールアドレスを確認します。忘れたパスワードの再設定、GoogleやGitHubでのログイン、パスキーでのログイン、そして登録も兼ねるメールのログインコードにも対応。まずゲストアカウントでアプリを試して、あとからログイン方法を追加することもできます。認証アプリを使えば2段階認証（2FA）も有効にできます。ログイン中のデバイスはすべて一覧で確認でき、ほかのデバイスをログアウトさせることもできます。ログイン方法を変更するときは本人確認を求め、メールで通知します。",
   "FeatureSignIn.fact1": "パスワードはWeb CryptoのPBKDF2-SHA-256でハッシュ化（デフォルトで60万回）",
   "FeatureSignIn.fact2": "署名付きのセッションCookieと、すべてのログインイベントの監査ログ",
   "FeatureSignIn.fact3": "個人用APIトークンは鍵付きハッシュとしてのみ保存",
   "FeatureSignIn.fact4": "パスキー：保存するのは公開鍵だけで、ログインのチャレンジは1回限り有効",
   "FeatureSignIn.fact5":
-    "マジックリンク：1つのリンクでログインも登録もでき、1回限り・15分間有効で、ハッシュとしてのみ保存",
+    "メールのログインコード：8文字のコードでログインも登録もでき、1回限り・10分間、リクエストしたブラウザでのみ有効で、ハッシュとしてのみ保存",
   "FeatureSignIn.fact6":
     "ゲストアカウント（匿名ログイン）：訪問者はログイン方法なしでワンクリックで始め、あとから同じアカウントにメールアドレスとパスワード、Google、GitHub、パスキーを追加できます",
   "FeatureSignIn.fact7":
@@ -432,6 +446,18 @@ export default {
   "FeatureRealtime.fact3":
     "リアルタイムはオフにもできます。その場合アプリは一定間隔でポーリングし、同じように動きます",
   "FeatureRealtime.code": "リアルタイムの設計を読む",
+  "FeatureFast.nav": "最初から速い",
+  "FeatureFast.title": "画面はデバイスから開き、あとからサーバーに追いつきます",
+  "FeatureFast.lead":
+    "アプリが一度表示したリストは、削除済みのメモとグループを除いてすべてデバイスに保存されます。画面はそのコピーをすぐに描画し、サーバーの応答が届いたら差し替えるので、開いたアプリの中での移動はサーバーとの往復を待ちません。ただしアプリを開くときはまずサーバーでログイン状態を確認し、初回の訪問ではデータをダウンロードし、いくつかの画面は常にサーバーに問い合わせます。",
+  "FeatureFast.fact1":
+    "まずデバイスのコピーを描画し、サーバーの応答で置き換えます（IndexedDB上のcachedRead）",
+  "FeatureFast.fact2":
+    "メモ一覧の検索と絞り込みはデバイス上のリストに対して行い、キー入力ごとのリクエストはありません",
+  "FeatureFast.fact3":
+    "今もサーバーを待つもの：アプリを開くときのログイン確認、削除済みのメモとグループ、そしてプランの変更や招待の送信などすべての保存",
+  "FeatureFast.fact4": "ネットワークがないときは、メモやタグの変更は接続が戻るまでキューで待ちます",
+  "FeatureFast.code": "デバイス上のコピーの仕組みを読む",
   "FeatureOffline.nav": "オフラインアプリ",
   "FeatureOffline.title": "ネットワークなしで開けるアプリ",
   "FeatureOffline.lead":
@@ -474,6 +500,18 @@ export default {
   "FeatureWorker.fact4":
     "失敗した試行は間隔を広げながら再試行。オペレーターは管理画面ですべての実行を確認できます",
   "FeatureWorker.code": "docs/jobs.mdを読む",
+  "FeatureCatalog.nav": "カタログ",
+  "FeatureCatalog.title": "ショップ、メニュー、レンタル向けのカタログ",
+  "FeatureCatalog.lead":
+    "オペレーターが管理画面で写真・カラー・サイズ付きの商品を登録すると、サイトが検索エンジンにも伝わるページで表示し、売り切れも示します。",
+  "FeatureCatalog.fact1": "CATALOG=trueを設定するまではオフです。通貨と言語も設定できます",
+  "FeatureCatalog.fact2":
+    "価格は最小通貨単位、テキストは対応する言語ごと、売り切れはカラーとサイズごとに管理",
+  "FeatureCatalog.fact3":
+    "ワーカーが写真をAVIFとWebPに変換し、管理画面での変更はすべて監査ログに残ります",
+  "FeatureCatalog.fact4":
+    "商品をシェアする場所ごとにトラッキングリンクを作り、Umamiで集計：<guide>カタログのガイドを読む</guide>",
+  "FeatureCatalog.code": "カタログのコードを読む",
   "FeatureYourFeature.nav": "独自の機能",
   "FeatureYourFeature.title": "既存の機能をコピーして、新しい機能を追加",
   "FeatureYourFeature.lead":
@@ -483,13 +521,11 @@ export default {
   "FeatureYourFeature.fact3": "IDはすべて時系列順のUUID（バージョン7）",
   "FeatureYourFeature.code": "docs/aggregates.mdを読む",
   "FeatureTierRuntime.eyebrow": "ランタイム",
-  "FeatureTierRuntime.nav": "ランタイム計画",
-  "FeatureTierRuntime.title": "現在はDenoで動作",
+  "FeatureTierRuntime.nav": "ランタイム",
+  "FeatureTierRuntime.title": "Deno・Node・Bunで動作",
   "FeatureTierRuntime.lead":
-    "Seedは現在Denoで動いており、今後はDeno・Node・Bunのどれでもそのまま動くようにする予定です。時期はまだ決まっていません。コードはWeb標準（fetch、Request、Web Crypto、WebSocket、ESモジュール）の上に作られているため、大部分はランタイムに依存しません。2026年10月、Denoチームはあと1年間サポートを続け、毎月バグ修正とセキュリティのリリースを出したうえで、自らの開発を終えると<announced>発表</announced>しました。Denoはオープンソースのまま残ります。",
-  "FeatureTierRuntime.wip": "対応中",
-  "FeatureTierRuntime.wipRuntimes": "<name>Node</name>と<name>Bun</name>",
-  "FeatureTierRuntime.follow": "GitHubで計画を見る（issue <issue>#623</issue>）",
+    "API、ワーカー、WebサイトはDeno・Node・Bunのどれでもそのまま動き、CIは変更のたびに3つすべてで起動を確認しています。ランタイムはenvファイルの1行（APP_RUNTIME）で選べます。コードはWeb標準（fetch、Request、Web Crypto、WebSocket、ESモジュール）の上に作られています。Seed自体のタスクとテストはDenoで動きますが、DenoはnpmやBunが自動でインストールします。2026年10月、Denoチームはあと1年間サポートを続け、毎月バグ修正とセキュリティのリリースを出したうえで、自らの開発を終えると<announced>発表</announced>しました。Denoはオープンソースのまま残ります。",
+  "FeatureTierRuntime.pick": "ランタイムの選び方",
   "FeatureTierOperations.eyebrow": "運用",
   "FeatureTierOperations.title": "動かして、見守って、ユーザーをサポートする",
   "FeatureTierOperations.lead":
@@ -525,12 +561,12 @@ export default {
   "FeatureWebsite.title": "自分用に手を加えられる公開Webサイト",
   "FeatureWebsite.lead":
     "このサイトのことです。高速で、サーバーでレンダリングされ、JavaScriptがオフでも使えます。料金ページ、法務ページ、ブログ、ニュースレター付き。",
-  "FeatureWebsite.fact1": "サーバー側はFresh。すべての操作が本物のリンクかフォーム",
+  "FeatureWebsite.fact1": "サーバー側はPreact、ビルドはVite。すべての操作が本物のリンクかフォーム",
   "FeatureWebsite.fact2": "料金はアプリのプランカタログから読み込み",
   "FeatureWebsite.fact3":
     "ダブルオプトイン、ワンクリック購読解除、受信者の言語で届くメールに対応したニュースレター",
   "FeatureWebsite.fact4":
-    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データ、URLを変えても新しいURLへ転送される古いリンク、新しい記事や更新した記事をすぐ検索エンジンに知らせるIndexNow通知に対応",
+    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データ、URLを変えても新しいURLへ転送される古いリンク、記事一覧のカバー画像、元記事を示すDev.toへの任意の転載、Telegram・Mastodon・Bluesky・Hashnode・LinkedInへの自動投稿、新しい記事や更新した記事をすぐ検索エンジンに知らせるIndexNow通知に対応",
   "FeatureWebsite.fact5": "連絡先リンクは管理画面で設定し、フッターと構造化データに表示",
   "FeatureWebsite.fact6":
     "ショップ用のオプションのカタログを管理画面で編集：写真、カラー、サイズ、サイズ表、売り切れのサイズを持つアイテムを、販売するすべての言語で。アイテムと共有先ごとに短いトラッキングリンクも作れます",
@@ -555,7 +591,7 @@ export default {
     "いいえ。Seedは、借りたLinuxサーバー1台の上でDocker Composeによる常駐コンテナとして動きます。APIがWebSocket接続を開いたままにし、ワーカーがキューを処理するためです。",
   "FeaturesFaq.runtimeQuestion": "SeedはNode.jsやBunで動きますか？",
   "FeaturesFaq.runtimeAnswer":
-    "まだ動きません。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています。進み具合はSeedのGitHubにあるissue #623で確認できます。",
+    "はい。API、バックグラウンドのワーカー、WebサイトはDeno・Node・Bunのどれでも動きます。ランタイムはenvファイルの設定ひとつ（APP_RUNTIME）で選べます。Seed自体のタスクとテストはDenoで動きますが、DenoはnpmやBunが自動でインストールするので、別途入れる必要はありません。",
   "FeaturesFaq.databaseQuestion": "Postgres以外のデータベースを使えますか？",
   "FeaturesFaq.databaseAnswer":
     "いいえ。SeedはPostgresを前提に作られていて、マイグレーション、クエリ、結合テストもPostgresを想定しています。",
@@ -577,7 +613,7 @@ export default {
     "Seedに含まれるもの：2段階認証とソーシャルログイン、ロール付きグループ、メンバー単位のStripe課金、リアルタイム、オフラインアプリ、管理画面、監視、バックアップ。",
   "FeaturesHero.title": "Seedに含まれるもの、まだないもの",
   "FeaturesHero.lead":
-    "Seedは無料でMITライセンスのSaaSスターターです。メールアドレス、Google、GitHubでのログイン、パスキー、マジックリンク、ゲストアカウント、2段階認証、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面、監視、そして任意で毎日の暗号化バックアップを備えています。以下の各セクションから、そのコードにリンクしています。",
+    "Seedは無料でMITライセンスのSaaSスターターです。メールアドレス、Google、GitHubでのログイン、パスキー、メールのログインコード、ゲストアカウント、2段階認証、ロール付きグループ、メンバー単位のStripe課金、リアルタイム更新、オフラインアプリ、管理画面、監視、そして任意で毎日の暗号化バックアップを備えています。以下の各セクションから、そのコードにリンクしています。",
   "FeaturesHero.note":
     "Seedは今すぐ使えて、公開しながら開発中です。足りないものは、影響する機能の横に「まだないもの」と記し、issueがあればそのリンクも載せています。",
   "Features.compare": "Seedとほかのスターターの比較",
@@ -621,7 +657,7 @@ export default {
     "Seedの管理画面：ユーザーを検索し、セッションを終了し、返金し、失敗したジョブを再実行。リスクのある操作は事前に確認し、すべて記録。無料、MITライセンス。",
   "AdminTour.heroTitle": "プロダクトを運営する人のための管理画面",
   "AdminTour.heroLead":
-    "Seedには、専用のホストで動くオペレーター用の管理画面が付いています。オペレーターはユーザーを検索し、そのログイン方法、セッション、グループを確認して、セッションの終了、パスワード再設定リンクの送信、返金などで手助けできます。リスクのある操作は事前に確認を求め、すべての操作が監査ログに残ります。",
+    "Seedには、専用のホストで動くオペレーター用の管理画面が付いています。オペレーターはユーザーを検索し、そのログイン方法、セッション、グループを確認して、セッションの終了、パスワード再設定メールの送信、返金などで手助けできます。リスクのある操作は事前に確認を求め、すべての操作が監査ログに残ります。",
   "AdminTour.code": "管理画面アプリのコードを読む",
   "AdminTour.dashboard": "ダッシュボード",
   "AdminTour.dashboardText":
@@ -629,7 +665,8 @@ export default {
   "AdminTour.stats": "統計",
   "AdminTour.statsText": "Umamiから取得したWebサイトの訪問数と注文クリック数。合計値のみ。",
   "AdminTour.users": "ユーザー",
-  "AdminTour.usersText": "ユーザーを検索し、ブロック、セッションの終了、再設定リンクの送信。",
+  "AdminTour.usersText":
+    "ユーザーの検索、ブロック、セッションの終了、パスワード再設定メールの送信。",
   "AdminTour.groups": "グループ",
   "AdminTour.groupsText": "メンバー、招待、ファイル。ファイルの削除やオーナーの変更。",
   "AdminTour.billing": "請求",
@@ -637,7 +674,8 @@ export default {
   "AdminTour.newsletter": "ニュースレター",
   "AdminTour.newsletterText": "購読者と配信済みの内容。リストはCSVでエクスポート。",
   "AdminTour.blog": "ブログ",
-  "AdminTour.blogText": "サイトの記事を言語ごとに、下書きから公開まで。",
+  "AdminTour.blogText":
+    "サイトの記事を言語ごとに、下書きから公開まで。公開後は各チャンネルへ自動で投稿。",
   "AdminTour.contactLinks": "連絡先",
   "AdminTour.contactLinksText": "サイトのフッターに載せる連絡先を、デプロイなしで変更。",
   "AdminTour.catalog": "カタログ",
@@ -652,7 +690,7 @@ export default {
   "AdminTour.tokensText": "すべてのAPIトークンと、その持ち主、最終使用日時。",
   "AdminTour.operator": "オペレーター",
   "AdminTour.operatorText":
-    "日々のサポート：ユーザーの検索、セッションの終了、パスワード再設定リンクの送信、グループの管理。",
+    "日々のサポート：ユーザーの検索、セッションの終了、パスワード再設定メールの送信、グループの管理。",
   "AdminTour.supervisor": "スーパーバイザー",
   "AdminTour.supervisorText":
     "上記に加えて、返金、サブスクリプションの即時解約、グループのほかのメンバーへの譲渡。",
@@ -706,7 +744,7 @@ export default {
   "CompareRow.makerkitLite": "Makerkit：Liteキットのみ",
   "CompareRow.openSource": "オープンソース（MIT）",
   "CompareRow.password": "パスワードでのログイン",
-  "CompareRow.magicLinks": "マジックリンク",
+  "CompareRow.magicLinks": "パスワード不要のメールログイン",
   "CompareRow.social": "ソーシャルログイン",
   "CompareRow.socialNote": "Seed：Google、GitHub",
   "CompareRow.totp": "認証アプリによる2段階認証",
@@ -725,6 +763,8 @@ export default {
   "CompareRow.blog": "ブログ",
   "CompareRow.audit": "監査ログ",
   "CompareRow.realtime": "リアルタイム更新",
+  "CompareRow.instant": "デバイス上のデータ",
+  "CompareRow.instantNote": "各リストのコピーをデバイスに保存",
   "CompareRow.offline": "オフラインアプリ",
   "CompareRow.offlineNote": "オフライン中の書き込みをキューにためる",
   "CompareRow.ops": "監視とバックアップ",
@@ -839,6 +879,7 @@ export default {
   "Blog.published": "公開日：<time>{date}</time>",
   "Blog.updated": "· 更新日：<time>{date}</time>",
   "Blog.alsoIn": "他の言語：<links></links>",
+  "Blog.relatedFeature": "Seed の機能：{name} →",
   "Blog.minutes": {
     "other": "· {count}分で読めます",
   },
@@ -911,7 +952,7 @@ export default {
   "FeaturePage.all": "すべての機能",
   "FeaturePage.runtimeQuestion": "SeedはNodeやBunで動きますか？",
   "FeaturePage.runtimeAnswer":
-    "まだです。Seedは現在Denoで動いており、Deno・Node・Bunのどれでも動くようにする作業を進めています（#623）。機能ページのランタイム計画をご覧ください。",
+    "はい。API、バックグラウンドのワーカー、Webサイトは、設定ひとつ（APP_RUNTIME）でDeno・Node・Bunのどれでも動きます。Seed自体のタスクはDenoで動きますが、DenoはnpmやBunが自動でインストールします。詳しくは機能ページのランタイムの項目をご覧ください。",
   "FeaturePageMissing.title": "この機能ページは見つかりません",
   "FeaturePageMissing.description":
     "移動した可能性があります。Seedのすべての機能は機能ページに載っています。",
@@ -919,19 +960,19 @@ export default {
   "FeaturePageSignIn.name": "ログイン",
   "FeaturePageSignIn.title": "SaaSのログイン機能を、認証サービスなしで",
   "FeaturePageSignIn.description":
-    "パスキー、メールのログインリンク、Google、GitHub、2段階認証。自分のAPIで検証するので、認証サービスもユーザー単位の料金も不要です。無料・MITライセンス。",
+    "パスキー、メールのログインコード、Google、GitHub、2段階認証。自分のAPIで検証するので、認証サービスもユーザー単位の料金も不要です。無料・MITライセンス。",
   "FeaturePageSignIn.h1": "SaaSにパスキーとログイン機能を、認証サービスなしで",
   "FeaturePageSignIn.answer":
-    "Seedは、パスキー、メールのログインリンク、Google、GitHubでのログインに対応し、その検証はサーバー上の自前のAPIが行います。外部の認証サービスは使いません。パスワード、パスキー、ログインリンクはデプロイした時点で使え、ユーザー単位の料金はかかりません。GoogleとGitHubは、それぞれenvファイルに2つのキーが必要です。",
+    "Seedは、パスキー、メールのログインコード、Google、GitHubでのログインに対応し、その検証はサーバー上の自前のAPIが行います。外部の認証サービスは使いません。パスワード、パスキー、ログインコードはデプロイした時点で使え、ユーザー単位の料金はかかりません。GoogleとGitHubは、それぞれenvファイルに2つのキーが必要です。",
   "FeaturePageSignIn.summary":
-    "パスキー、メールのログインリンク、Google、GitHub、2段階認証。認証サービスは不要です。",
+    "パスキー、メールのログインコード、Google、GitHub、2段階認証。認証サービスは不要です。",
   "FeaturePageSignIn.how1":
-    "APIがすべてのログインを自ら検証し、署名付きのセッションCookieを返します。パスキーはブラウザ標準のWebAuthnを使い、サーバーが保存するのは公開鍵だけで、ログインのチャレンジは1回限り有効です。ログインリンクはログインにも登録にも使え、1回限り・15分間有効で、ハッシュとしてのみ保存されます。",
+    "APIがすべてのログインを自ら検証し、署名付きのセッションCookieを返します。パスキーはブラウザ標準のWebAuthnを使い、サーバーが保存するのは公開鍵だけで、ログインのチャレンジは1回限り有効です。メールのログインコードはログインにも登録にも使え、1回限り・10分間、リクエストしたブラウザでのみ有効で、ハッシュとしてのみ保存されます。",
   "FeaturePageSignIn.how2":
     "認証アプリを使えば2段階認証を追加できます。プロフィールには、アカウントに入るすべての方法とログイン中のすべてのデバイスが一覧表示され、ログイン方法を変更するときは本人確認を求めてメールで通知します。訪問者はゲストアカウントで始めて、あとからログイン方法を追加することもできます。",
   "FeaturePageSignIn.authServiceQuestion": "認証サービスは必要ですか？",
   "FeaturePageSignIn.authServiceAnswer":
-    "いいえ。パスワード、パスキー、ログインリンク、そしてGoogleとGitHubからの応答は、Seed自身のAPIがサーバー上で検証するので、ユーザー単位の料金は一切かかりません。",
+    "いいえ。パスワード、パスキー、ログインコード、そしてGoogleとGitHubからの応答は、Seed自身のAPIがサーバー上で検証するので、ユーザー単位の料金は一切かかりません。",
   "FeaturePageSignIn.passkeysQuestion": "Seedはパスキーに対応していますか？",
   "FeaturePageSignIn.passkeysAnswer":
     "はい。ユーザーはプロフィールでパスキーを追加し、それでログインできます。サーバーが保存するのは公開鍵だけで、ログインのチャレンジは1回限り有効です。",
@@ -1086,4 +1127,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "バックアップはありますか？",
   "FeaturePageDeploy.backupAnswer":
     "はい。オプトインで、データベースの暗号化resticバックアップを毎日取れます。復元手順も文書化されています。",
+  "Catalog.title": "カタログ",
+  "Catalog.intro": "販売中のすべての商品を、価格・サイズ・カラーとあわせて掲載しています。",
+  "Catalog.categories": "カテゴリ",
+  "Catalog.all": "すべて",
+  "Catalog.empty": "販売中の商品はまだありません",
+  "Catalog.emptyLead": "新しい商品は準備ができしだい、ここに表示されます。",
+  "Catalog.categoryIntro": "{category}：価格・サイズ・カラー",
+  "CatalogItem.intro": "{item}：価格・サイズ・カラー",
+  "CatalogItem.photos": "写真",
+  "CatalogItem.material": "素材",
+  "CatalogItem.fit": "シルエット",
+  "CatalogItem.care": "お手入れ",
+  "CatalogItem.inStock": "{choice}：在庫あり",
+  "CatalogItem.soldOut": "{choice}：売り切れ",
 } satisfies Catalog

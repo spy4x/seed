@@ -1,5 +1,5 @@
 /**
- * A person's copy of their data (#229, docs/data-export.md): what the profile and the operator
+ * A person's copy of their data (docs/data-export.md): what the profile and the operator
  * area read about one export, and the rules both sides share.
  *
  * @module

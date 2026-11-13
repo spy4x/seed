@@ -11,15 +11,15 @@ import {
 import { sha256Hex } from "@spy4x/platform/tokens"
 import {
   createRateLimitMiddleware,
-  denoServeRemoteAddr,
   type RateLimitContext,
+  serveRemoteAddr,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
 import { GUEST_STARTS_PER_HOUR } from "@domain/identity"
 import type { APIContext } from "../_types.ts"
 import type { AppAuthState } from "../services/sign-in.ts"
 
-/** Reset links one address may be sent per {@link RESET_ADDRESS_WINDOW_MS}, from any IP. */
+/** Reset codes one address may be sent per {@link RESET_ADDRESS_WINDOW_MS}, from any IP. */
 export const RESET_MAILS_PER_ADDRESS = 3
 
 /** The window of {@link RESET_MAILS_PER_ADDRESS}: one hour. */
@@ -91,36 +91,37 @@ export const SIGN_UP_CLIENT_IPV6_PREFIX = 48
  * (`X-Real-IP`, else the connection).
  */
 export function signUpClient(c: Context<APIContext>): string {
-  // `c.env` is what `deno serve` hands Hono, the same object the per-IP limits read.
-  const remoteAddr = denoServeRemoteAddr({ req: c.req.raw, env: c.env } as RateLimitContext)
+  // `c.env` is what `serve` (`@spy4x/platform/server/serve`) hands Hono, the same object the
+  // per-IP limits read.
+  const remoteAddr = serveRemoteAddr({ req: c.req.raw, env: c.env } as RateLimitContext)
   return clientIpBucket(clientIp(c.req.raw, remoteAddr, "x-real-ip"), {
     ipv6Prefix: SIGN_UP_CLIENT_IPV6_PREFIX,
   })
 }
 
 /**
- * Sign-in links one client, as {@link signUpClient} counts it, may have sent to one address per
- * {@link SIGN_IN_LINK_WINDOW_MS} (#391). Keyed by the address and the client together, like the
- * sign-up codes: a stranger who keeps asking for an address's links spends only their own share.
+ * Sign-in codes one client, as {@link signUpClient} counts it, may have sent to one address per
+ * {@link SIGN_IN_CODE_WINDOW_MS}. Keyed by the address and the client together, like
+ * the sign-up codes: a stranger who keeps asking for an address's codes spends only their own share.
  */
-export const SIGN_IN_LINK_MAILS_PER_CLIENT = 3
+export const SIGN_IN_CODE_MAILS_PER_CLIENT = 3
 
-/** Sign-in links all clients together may have sent to one address per window. */
-export const SIGN_IN_LINK_MAILS_PER_ADDRESS = 10
+/** Sign-in codes all clients together may have sent to one address per window. */
+export const SIGN_IN_CODE_MAILS_PER_ADDRESS = 10
 
-/** The window of both sign-in link budgets: one hour. */
-export const SIGN_IN_LINK_WINDOW_MS = 60 * 60_000
+/** The window of both sign-in code budgets: one hour. */
+export const SIGN_IN_CODE_WINDOW_MS = 60 * 60_000
 
-/** The store prefix of both sign-in link budgets. */
-export const SIGN_IN_LINK_STORE = `ratelimit-sign-in-link`
+/** The store prefix of both sign-in code budgets. */
+export const SIGN_IN_CODE_STORE = `ratelimit-sign-in-code`
 
-/** The keys of one address's sign-in link budgets: hashes, never the address. */
-export async function signInLinkBudgetKeys(
+/** The keys of one address's sign-in code budgets: hashes, never the address. */
+export async function signInCodeBudgetKeys(
   email: string,
   client: string,
 ): Promise<{ address: string; client: string }> {
   const hash = await sha256Hex(email)
-  return { address: `auth-sign-in-link:${hash}`, client: `auth-sign-in-link:${hash}:${client}` }
+  return { address: `auth-sign-in-code:${hash}`, client: `auth-sign-in-code:${hash}:${client}` }
 }
 
 /**
@@ -143,10 +144,17 @@ export const EMAIL_CHANGE_MAILS_PER_ADDRESS = 3
 /** The window of {@link EMAIL_CHANGE_MAILS_PER_ADDRESS}: one hour. */
 export const EMAIL_CHANGE_ADDRESS_WINDOW_MS = 60 * 60_000
 
+/**
+ * How many times `settings.limit` one operator's thumbnail budget holds. A page of a group's files
+ * asks for up to 25 tiles at once, so paging through images would run the normal budget out and
+ * refuse every other admin action for the rest of the window.
+ */
+export const THUMBNAIL_LIMIT_FACTOR = 10
+
 /** The rate limits the auth routes mount. Each one answers 429 with `Retry-After` when spent. */
 export interface AuthRateLimits {
   /**
-   * Strict limit per client IP, for sign-in, sign-up, asking for a reset link and using one, where
+   * Strict limit per client IP, for sign-in, sign-up, asking for a reset code and using one, where
    * no user is known yet. A sign-in with Google or GitHub spends one attempt when the provider
    * sends the browser back, and a second one when the person then confirms a new account;
    * leaving for the provider spends the normal limit.
@@ -163,7 +171,7 @@ export interface AuthRateLimits {
    */
   otpByUser: MiddlewareHandler<APIContext>
   /**
-   * Spends one of the client's {@link GUEST_STARTS_PER_HOUR} new guest accounts an hour (#224),
+   * Spends one of the client's {@link GUEST_STARTS_PER_HOUR} new guest accounts an hour,
    * counted per address as the sign-up mails are (an IPv6 client by its prefix), and says whether
    * it was allowed. Refuses the same way as `emailCodeByAddress` when the store fails: this budget
    * stands between a script and a database full of empty accounts.
@@ -172,7 +180,13 @@ export interface AuthRateLimits {
   /** Normal limit per signed-in user, else per client IP, for every other auth route. */
   normal: MiddlewareHandler<APIContext>
   /**
-   * Spends one of the address's {@link RESET_MAILS_PER_ADDRESS} reset links, whatever the IP, and
+   * The admin Files tab's image tiles: a budget per user of its own, {@link THUMBNAIL_LIMIT_FACTOR}
+   * times the normal one, so tiles never spend the normal budget. Lets a request through when its
+   * store fails, as `normal` does.
+   */
+  thumbnail: MiddlewareHandler<APIContext>
+  /**
+   * Spends one of the address's {@link RESET_MAILS_PER_ADDRESS} reset codes, whatever the IP, and
    * says whether it was allowed. Called by the route once it has read the address from the body.
    * A store failure throws, like the strict limit: this budget stands between an attacker and a
    * flood of mail to someone else's inbox.
@@ -180,7 +194,7 @@ export interface AuthRateLimits {
   resetByAddress(email: string): Promise<RateLimitDecision>
   /**
    * Spends one of the address's {@link EMAIL_CODE_MAILS_PER_ADDRESS} code mails, the same way
-   * `resetByAddress` spends a reset link, and refuses the same way when the store fails.
+   * `resetByAddress` spends a reset code, and refuses the same way when the store fails.
    */
   emailCodeByAddress(email: string): Promise<RateLimitDecision>
   /**
@@ -192,11 +206,11 @@ export interface AuthRateLimits {
    */
   signUpCode(c: Context<APIContext>, email: string): Promise<RateLimitDecision>
   /**
-   * Spends one of the client's {@link SIGN_IN_LINK_MAILS_PER_CLIENT} sign-in links to the address,
-   * then one of the address's {@link SIGN_IN_LINK_MAILS_PER_ADDRESS}, as `signUpCode` does, and
+   * Spends one of the client's {@link SIGN_IN_CODE_MAILS_PER_CLIENT} sign-in codes to the address,
+   * then one of the address's {@link SIGN_IN_CODE_MAILS_PER_ADDRESS}, as `signUpCode` does, and
    * refuses the same way when the store fails.
    */
-  signInLink(c: Context<APIContext>, email: string): Promise<RateLimitDecision>
+  signInCode(c: Context<APIContext>, email: string): Promise<RateLimitDecision>
   /**
    * Spends one of the account's {@link EMAIL_CHANGE_MAILS_PER_ACCOUNT} code mails to a new address,
    * and refuses the same way as `emailCodeByAddress` when the store fails.
@@ -222,7 +236,7 @@ export interface AuthRateLimitSettings {
    * Builds the store one limiter keeps its budgets in. `name` is that limiter's own key prefix:
    * `ratelimit-strict`, `ratelimit-otp`, `ratelimit-reset`, `ratelimit-email-code`,
    * `ratelimit-sign-up-code`, `ratelimit-email-change`, `ratelimit-email-change-address`,
-   * `ratelimit-guest` or `ratelimit-normal`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
+   * `ratelimit-guest`, `ratelimit-normal` or `ratelimit-thumbnail`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
    * in-process store.
    */
   store: (name: string) => RateLimitStore
@@ -250,12 +264,12 @@ export interface AuthRateLimitSettings {
  * attack they exist to stop. The normal
  * limit lets the request through and reports the error through `settings.onStoreError`, so sign-out
  * and `/me` keep working while Valkey is down, as the rest of the signed-in API does. The normal
- * limit uses `failOpenLimiter` for that; the others must never be wrapped in it. A correct
+ * and thumbnail limits use `failOpenLimiter` for that; the others must never be wrapped in it. A correct
  * one-time code whose slot cannot be given back keeps its response (the session cookie included),
  * and the slot stays spent; that error is reported through `settings.onStoreError` too.
  *
  * Shared budgets, on purpose: sign-in, sign-up and both halves of a password reset from one IP
- * spend one strict budget, since each guesses or probes an account. Asking for a reset link also
+ * spend one strict budget, since each guesses or probes an account. Asking for a reset code also
  * spends the address's own budget (`resetByAddress`), so many IPs together still cannot flood one
  * inbox. `/totp/check` and `/totp/connect/finish` spend one user's one-time-code
  * budget, so switching routes buys no extra guesses. The e-mail address routes (asking for a code,
@@ -278,7 +292,7 @@ export interface AuthRateLimitSettings {
  * limits guesses over days and years.
  *
  * Client address: the client IP comes from `X-Real-IP`, which Traefik overwrites on every request.
- * The connection's own address, which `deno serve` hands Hono as `env.remoteAddr`, is the
+ * The connection's own address, which `serve` hands Hono as `env.remoteAddr`, is the
  * fallback. `CF-Connecting-IP` and `X-Forwarded-For` are not read here. Only a trusted proxy may
  * send `X-Real-IP`: `requireProxyForForwardedHeaders` (`@spy4x/server/http/trusted-proxy`), in
  * front of every route, refuses a request that carries it, or either other header, from any other
@@ -325,16 +339,16 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     limit: SIGN_UP_CODE_MAILS_PER_ADDRESS,
     clock,
   })
-  // The same two budgets for sign-in links (#391), in a store of their own.
-  const linkStore = store(SIGN_IN_LINK_STORE)
-  const linkByClient = createStoreLimiter(linkStore, {
-    windowMs: SIGN_IN_LINK_WINDOW_MS,
-    limit: SIGN_IN_LINK_MAILS_PER_CLIENT,
+  // The same two budgets for sign-in codes, in a store of their own.
+  const codeStore = store(SIGN_IN_CODE_STORE)
+  const codeByClient = createStoreLimiter(codeStore, {
+    windowMs: SIGN_IN_CODE_WINDOW_MS,
+    limit: SIGN_IN_CODE_MAILS_PER_CLIENT,
     clock,
   })
-  const linkByAddress = createStoreLimiter(linkStore, {
-    windowMs: SIGN_IN_LINK_WINDOW_MS,
-    limit: SIGN_IN_LINK_MAILS_PER_ADDRESS,
+  const codeByAddress = createStoreLimiter(codeStore, {
+    windowMs: SIGN_IN_CODE_WINDOW_MS,
+    limit: SIGN_IN_CODE_MAILS_PER_ADDRESS,
     clock,
   })
   // Keyed by the account, so asking to move to someone else's address spends only the asker's.
@@ -359,6 +373,11 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     createStoreLimiter(store("ratelimit-normal"), { windowMs, limit: settings.limit, clock }),
     { limit: settings.limit, onError: settings.onStoreError },
   )
+  const thumbnailLimit = settings.limit * THUMBNAIL_LIMIT_FACTOR
+  const thumbnail = failOpenLimiter(
+    createStoreLimiter(store("ratelimit-thumbnail"), { windowMs, limit: thumbnailLimit, clock }),
+    { limit: thumbnailLimit, onError: settings.onStoreError },
+  )
   const userId = (_: Request, context: RateLimitContext<APIContext>) =>
     (context.get?.("auth") as AppAuthState | null | undefined)?.user.id?.toString()
   const noUser = () => undefined
@@ -366,17 +385,17 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
   const byUser = userThenIp<APIContext>(userId, { trustedProxy: "x-real-ip" })
   return {
     strictByIp: createRateLimitMiddleware(strict, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byIp,
       keyPrefix: "auth-strict:",
     }),
     strictByUser: createRateLimitMiddleware(strict, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth-strict:",
     }),
     otpByUser: createRateLimitMiddleware(otp, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth-otp:",
       // A correct code gives its slot back: only wrong codes run the budget out.
@@ -384,9 +403,14 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       onRefundError: (error) => settings.onStoreError(error),
     }),
     normal: createRateLimitMiddleware(normal, {
-      remoteAddr: denoServeRemoteAddr,
+      remoteAddr: serveRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth:",
+    }),
+    thumbnail: createRateLimitMiddleware(thumbnail, {
+      remoteAddr: serveRemoteAddr,
+      keyResolver: byUser,
+      keyPrefix: "auth-thumbnail:",
     }),
     resetByAddress: async (email) => await reset.check(`auth-reset:${await sha256Hex(email)}`),
     emailCodeByAddress: async (email) => await emailCode.check(await emailCodeBudgetKey(email)),
@@ -396,11 +420,11 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       if (!own.allowed) return own
       return await signUpByAddress.check(keys.address)
     },
-    signInLink: async (c, email) => {
-      const keys = await signInLinkBudgetKeys(email, signUpClient(c))
-      const own = await linkByClient.check(keys.client)
+    signInCode: async (c, email) => {
+      const keys = await signInCodeBudgetKeys(email, signUpClient(c))
+      const own = await codeByClient.check(keys.client)
       if (!own.allowed) return own
-      return await linkByAddress.check(keys.address)
+      return await codeByAddress.check(keys.address)
     },
     guestStart: async (c) => await guest.check(`auth-guest:${signUpClient(c)}`),
     emailChangeByUser: async (userId) => await emailChange.check(`auth-email-change:${userId}`),

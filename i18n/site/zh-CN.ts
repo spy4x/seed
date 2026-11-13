@@ -4,6 +4,7 @@ export default {
   "TryEntry.label": "体验在线演示",
   "TryEntry.line": "无需注册。你会得到一个带示例数据的访客账号，数据每晚清空。",
   "SiteNav.features": "功能",
+  "SiteNav.docs": "文档",
   "SiteNav.blog": "博客",
   "SiteNav.compare": "对比",
   "SiteNav.pricing": "价格",
@@ -117,13 +118,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "邮件、推送",
   "Architecture.webAppNote": "Preact，运行在浏览器中",
-  "Architecture.websiteNote": "Fresh，就像本页",
-  "Architecture.apiNote": "Hono，运行在 Deno 上",
+  "Architecture.websiteNote": "Preact，运行在服务端",
+  "Architecture.apiNote": "Deno · Node · Bun",
   "Architecture.postgresNote": "每一次更改",
   "Architecture.workerNote": "耗时的工作",
   "Architecture.mailNote": "以及清理",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "事件，同一事务",
   "Architecture.caption": "全部运行在一台服务器上，由 Traefik 统一入口，搭配 Valkey 和 Grafana",
   "Architecture.captionTop": "全部运行在一台服务器上，由 Traefik 统一入口，",
@@ -132,11 +133,11 @@ export default {
     "Seed 的整体结构：Web 应用和网站调用 API，API 把每一次更改及其事件写入 Postgres，Worker 根据这些事件发送邮件和推送。所有服务都运行在一台服务器上。",
   "Home.title": "Seed：基于 Web 标准的免费 SaaS 启动模板",
   "Home.description":
-    "基于 Web 标准、免费且 MIT 许可的 SaaS 启动模板：支持双重验证的登录、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线使用。运行在 Deno 上。",
+    "基于 Web 标准、免费且 MIT 许可的 SaaS 启动模板：双重验证、群组、Stripe 订阅、实时同步、离线使用、直接从设备打开的页面。可运行在 Deno、Node 和 Bun 上。",
   "HomeProof.tests": "测试文件，覆盖各个应用和库，全部在 CI 中运行",
   "HomeProof.licence": "许可证：无需账号，没有付费墙",
   "HomeStatus.signIn":
-    "注册、登录、邮箱验证、重置密码、Google 和 GitHub 登录、通行密钥、魔法链接、基于身份验证器应用的双重验证",
+    "注册、登录、邮箱验证、重置密码、Google 和 GitHub 登录、通行密钥、邮箱登录验证码、基于身份验证器应用的双重验证",
   "HomeStatus.guests": "访客账号：一键试用应用，添加一种登录方式即可保留账号",
   "HomeStatus.groups": "群组：成员、角色、邀请和所有权转让",
   "HomeStatus.export": "将群组导出为文件，或将文件导入为新群组",
@@ -154,10 +155,13 @@ export default {
   "HomeFaq.tryQuestion": "不注册账号能试用吗？",
   "HomeFaq.tryAnswer":
     "可以。点击“体验在线演示”，就会用一个带示例数据的访客账号打开应用，不需要邮箱或密码。你可以添加登录方式，但演示数据仍然每晚清空。使用 Seed 本身完全不需要账号：直接从 GitHub 克隆即可。",
+  "HomeFaq.fastQuestion": "为什么基于 Seed 的应用用起来这么快？",
+  "HomeFaq.fastAnswer":
+    "因为应用打开之后，显示你已经看过的内容不必等服务器。应用会在设备上保存每个列表的副本，立即用它显示页面，等服务器的回应到达后再替换。笔记列表的搜索和筛选都在设备上进行。打开应用时会先向服务器确认登录状态，首次访问会下载数据，保存更改也要等服务器。",
   "HomeFaq.freeQuestion": "Seed 真的免费吗？",
   "HomeFaq.freeAnswer":
     "是的。它采用 MIT 许可证：可以用于任意数量的产品，商用或非商用都行，也可以公开你的分支，无需任何账号。你只需为租用的一台服务器，以及你开启的服务（例如 Stripe 或邮件服务商）付费。",
-  "HomeFaq.stackQuestion": "为什么选 Deno 和 Preact，而不是 Next.js？",
+  "HomeFaq.stackQuestion": "为什么选 Hono 和 Preact，而不是 Next.js？",
   "HomeFaq.stackAnswer":
     "它们基于 Web 标准（<code>fetch</code>、<code>Request</code>、Web Crypto、ES 模块），启动快、依赖少，所以需要更新的东西更少，出问题的地方也更少。如果你在 Next.js 生态里工作，Next.js 启动模板会更适合你；<compare>对比页面</compare>列出了一些不错的选择。",
   "HomeFaq.clientQuestion": "可以用来做客户项目吗？",
@@ -166,10 +170,10 @@ export default {
   "HomeFaq.productionQuestion": "可以用于生产环境吗？",
   "HomeFaq.productionAnswer":
     "“目前可用”中列出的部分都有 CI 测试：每个 pull request 都会运行登录、个人资料、笔记和群组的测试，每次合并后会运行完整的测试套件。Seed 现在就能用，并且还在持续完善；在依赖某个部分之前，请先查看状态列表。",
-  "HomeHero.badge": "运行在 Deno 2 上",
+  "HomeHero.badge": "支持 Deno、Node 和 Bun",
   "HomeHero.title": "你的 SaaS 地基，已经搭好了。",
   "HomeHero.lead":
-    "Seed 是基于 Web 标准的免费 SaaS 启动模板，内置登录和双重验证（2FA）、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线应用和管理后台。它采用 MIT 许可，目前运行在 Deno 上，用 Docker Compose 部署到你租用的一台 Linux 服务器上即可。",
+    "Seed 是基于 Web 标准的免费 SaaS 启动模板，内置登录和双重验证（2FA）、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线应用和管理后台。它采用 MIT 许可，可运行在 Deno、Node 和 Bun 上，用 Docker Compose 部署到你租用的一台 Linux 服务器上即可。",
   "HomeHero.github": "在 GitHub 上查看",
   "HomeHero.status": "Seed 现在就能用，并且在公开开发中：<status>看看有哪些功能可用</status>。",
   "HomeHero.quickStart": "快速开始",
@@ -187,7 +191,7 @@ export default {
   "HomeFeatures.signInAlt":
     "个人资料的安全页面：密码、“添加通行密钥”按钮、已开启的双重验证，以及已登录设备列表的开头部分。",
   "HomeFeatures.signInText":
-    "邮箱密码登录（含验证码）、重置密码、Google 和 GitHub 登录、通行密钥、邮件登录链接、访客账号，以及基于身份验证器应用的双重验证。所有会话都能查看，也能随时结束。",
+    "邮箱密码登录（含验证码）、重置密码、Google 和 GitHub 登录、通行密钥、邮箱登录验证码、访客账号，以及基于身份验证器应用的双重验证。所有会话都能查看，也能随时结束。",
   "HomeFeatures.billingTitle": "按成员计费",
   "HomeFeatures.billingLink": "计费的工作原理",
   "HomeFeatures.billingText":
@@ -211,6 +215,12 @@ export default {
   "HomeFeatures.websiteText":
     "就是本站：服务端渲染，关闭 JavaScript 也能正常使用，支持九种语言，价格来自你的套餐目录，还有法律页面和双重确认订阅的邮件简报。",
   "HomeFeatures.all": "全部功能，附截图和状态",
+  "HomeSpeed.eyebrow": "天生就快",
+  "HomeSpeed.title": "点击之间不再转圈等待",
+  "HomeSpeed.text":
+    "大多数 Web 应用每次点击都要重新问一遍服务器，你只能等着。基于 Seed 的应用一旦打开，你访问过的页面会立即从设备上的副本打开，笔记列表的搜索和筛选也随输随出。片刻之后，服务器的最新副本会在后台替换设备上的副本。",
+  "HomeSpeed.demo": "试试看：在演示里随便点点",
+  "HomeSpeed.how": "了解原理",
   "HomeServer.eyebrow": "运行在你租用的一台服务器上",
   "HomeServer.title": "一台服务器，一条 <code>docker compose</code>，没有意外账单。",
   "HomeServer.text":
@@ -218,11 +228,13 @@ export default {
   "HomeServer.skip":
     "如果你想用 Serverless 函数或 Vercel，那 Seed 不适合你：它是为你自己掌控的服务器而设计的。",
   "HomeQuickStart.title": "四条命令，本地跑起来",
-  "HomeQuickStart.needs": "你需要 Deno 2 和 Docker；GitHub CLI 可选。",
+  "HomeQuickStart.needs":
+    "你需要 Docker 和 Deno 2；GitHub CLI 可选。如果你用 Node 或 Bun，<readme>README</readme> 会帮你装好 Deno，并给出对应的 npm 或 bun 命令。",
   "HomeQuickStart.text":
     "<init>init</init> 会复制 env 文件，并生成所有密钥和 Web 推送密钥；<dev>dev</dev> 会启动 Traefik 和其他所有服务。然后打开 <url>http://app.localhost</url>。<readme>README</readme> 列出了每项配置和部署方法。",
   "HomeQuickStart.agent": "也可以直接让你的 AI 编程助手来做：<prompt></prompt>。",
   "HomeQuickStart.terminal": "终端",
+  "HomeQuickStart.guide": "阅读分步指南",
   "HomeStatus.eyebrow": "如实说明",
   "HomeStatus.title": "目前进展",
   "HomeStatus.lead": "Seed 现在就能用，并且在公开开发中。下面列出了哪些功能已经可用，哪些还没有。",
@@ -246,6 +258,7 @@ export default {
   "Pricing.description":
     "Seed 基于 MIT 许可证免费提供，没有付费版。运行成本只有一台 Linux 服务器（按你的服务商价格），以及你开启的其他服务。",
   "Pricing.crumb": "价格",
+  "Pricing.saving": "{plan} 每月 {monthly}，或每年 {yearly}：比按月付款少 {saving}。",
   "PricingFaq.paidQuestion": "Seed 有付费版吗？",
   "PricingFaq.paidAnswer":
     "没有。没有专业版、没有许可证密钥，也没有保留任何功能。如果你需要帮助，可以聘请我：我只出售我的时间。",
@@ -320,13 +333,13 @@ export default {
   "FeatureSignIn.nav": "账号与登录",
   "FeatureSignIn.title": "登录，已搞定",
   "FeatureSignIn.lead":
-    "用户用邮箱和密码注册，并通过验证码验证邮箱。忘记密码可以重置，也可以用 Google 或 GitHub 继续、用通行密钥登录，或者通过邮件获取登录链接（没有账号时会顺便完成注册）。也可以先用访客账号试用应用，之后再添加登录方式。身份验证器应用可以开启双重验证（2FA）。用户能看到自己登录过的每台设备，并可以让其他设备退出登录。更改登录方式时需要验证身份，并会发送邮件通知。",
+    "用户用邮箱和密码注册，并通过验证码验证邮箱。忘记密码可以重置，也可以用 Google 或 GitHub 继续、用通行密钥登录，或者通过邮箱获取登录验证码（没有账号时会顺便完成注册）。也可以先用访客账号试用应用，之后再添加登录方式。身份验证器应用可以开启双重验证（2FA）。用户能看到自己登录过的每台设备，并可以让其他设备退出登录。更改登录方式时需要验证身份，并会发送邮件通知。",
   "FeatureSignIn.fact1": "密码通过 Web Crypto 用 PBKDF2-SHA-256 哈希，默认 600,000 轮",
   "FeatureSignIn.fact2": "签名的会话 Cookie，每次登录事件都有审计记录",
   "FeatureSignIn.fact3": "个人 API 令牌，只以带密钥的哈希形式存储",
   "FeatureSignIn.fact4": "通行密钥：只存储公钥，每次登录的挑战只能使用一次",
   "FeatureSignIn.fact5":
-    "魔法链接：一个链接即可登录或注册，只能使用一次，15 分钟内有效，并且只以哈希形式存储",
+    "邮箱登录验证码：一个 8 位验证码即可登录或注册，只能使用一次，10 分钟内有效，仅限发起请求的浏览器使用，且只以哈希形式存储",
   "FeatureSignIn.fact6":
     "访客账号（匿名登录）：访客一键开始，无需任何登录方式，之后可以在同一个账号上添加邮箱和密码、Google、GitHub 或通行密钥",
   "FeatureSignIn.fact7": "按登录名统计所有网络地址上的密码错误次数，超过后短暂锁定",
@@ -400,6 +413,16 @@ export default {
   "FeatureRealtime.fact2": "从休眠中唤醒的标签页会重新连接，并拉取错过的内容",
   "FeatureRealtime.fact3": "实时同步可以关闭：应用会改为定时轮询，使用体验不变",
   "FeatureRealtime.code": "阅读实时同步设计",
+  "FeatureFast.nav": "天生就快",
+  "FeatureFast.title": "页面先从设备打开，再与服务器同步",
+  "FeatureFast.lead":
+    "应用显示过的每个列表都会保存在设备上，已删除的笔记和群组除外。页面会立即显示这份副本，等服务器的回应到达后再换上，所以在打开的应用里切换页面不用等一次服务器往返。打开应用时会先向服务器确认登录状态，首次访问会下载数据，少数页面始终要询问服务器。",
+  "FeatureFast.fact1": "先显示设备上的副本，再用服务器的回应替换（基于 IndexedDB 的 cachedRead）",
+  "FeatureFast.fact2": "笔记列表的搜索和筛选在设备上的列表中进行，不会每按一个键就发一次请求",
+  "FeatureFast.fact3":
+    "仍要等服务器的：打开应用时的登录检查、已删除的笔记和群组，以及每次保存，比如更换套餐或发送邀请",
+  "FeatureFast.fact4": "没有网络时，笔记或标签的更改会在队列中等待，直到网络恢复",
+  "FeatureFast.code": "阅读设备副本的工作原理",
   "FeatureOffline.nav": "离线应用",
   "FeatureOffline.title": "没有网络也能打开的应用",
   "FeatureOffline.lead":
@@ -437,6 +460,17 @@ export default {
   "FeatureWorker.fact3": "一个任务就是一个定义：名称、处理函数，如果需要重复执行，再加上调度计划",
   "FeatureWorker.fact4": "失败的尝试会以逐渐延长的间隔重试；运营人员可以在管理后台看到每一次运行",
   "FeatureWorker.code": "阅读 docs/jobs.md",
+  "FeatureCatalog.nav": "商品目录",
+  "FeatureCatalog.title": "适合网店、菜单或租赁的商品目录",
+  "FeatureCatalog.lead":
+    "运营人员在管理后台添加商品，配上照片、颜色和尺码；网站把它们展示在搜索引擎看得懂的页面上，并标出已售罄的款式。",
+  "FeatureCatalog.fact1": "默认关闭，设置 CATALOG=true 即可开启；货币和语言另有两项设置",
+  "FeatureCatalog.fact2":
+    "价格以最小货币单位存储，文案支持你维护的每种语言，售罄按颜色和尺码分别记录",
+  "FeatureCatalog.fact3": "Worker 把照片转成 AVIF 和 WebP，管理后台的每次修改都写入审计日志",
+  "FeatureCatalog.fact4":
+    "在每个分享商品的地方各用一个追踪链接，由 Umami 统计：<guide>阅读商品目录指南</guide>",
+  "FeatureCatalog.code": "阅读商品目录代码",
   "FeatureYourFeature.nav": "你自己的功能",
   "FeatureYourFeature.title": "复制一个功能，就能添加一个新功能",
   "FeatureYourFeature.lead":
@@ -446,13 +480,11 @@ export default {
   "FeatureYourFeature.fact3": "每个 ID 都是按时间排序的 UUID（第 7 版）",
   "FeatureYourFeature.code": "阅读 docs/aggregates.md",
   "FeatureTierRuntime.eyebrow": "运行时",
-  "FeatureTierRuntime.nav": "运行时计划",
-  "FeatureTierRuntime.title": "目前运行在 Deno 上",
+  "FeatureTierRuntime.nav": "运行时",
+  "FeatureTierRuntime.title": "可运行在 Deno、Node 和 Bun 上",
   "FeatureTierRuntime.lead":
-    "Seed 目前运行在 Deno 上，接下来会做到无需改动就能在 Deno、Node 和 Bun 上运行，目前还没有确定日期。它的代码基于 Web 标准（fetch、Request、Web Crypto、WebSocket、ES 模块），所以大部分代码并不依赖运行时。2026 年 10 月，Deno 团队<announced>宣布</announced>将再提供一年支持，每月发布错误修复和安全更新，之后结束自己的开发工作；Deno 仍然是开源的。",
-  "FeatureTierRuntime.wip": "进行中",
-  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> 和 <name>Bun</name>",
-  "FeatureTierRuntime.follow": "在 GitHub 上关注计划（issue <issue>#623</issue>）",
+    "API、worker 和网站无需任何改动就能在 Deno、Node 和 Bun 上运行，每次改动 CI 都会在这三个运行时上分别启动它们。env 文件里的一行 APP_RUNTIME 决定用哪个运行时。代码基于 Web 标准（fetch、Request、Web Crypto、WebSocket、ES 模块）；Seed 自己的任务和测试运行在 Deno 上，npm 或 Bun 会替你装好 Deno。2026 年 10 月，Deno 团队<announced>宣布</announced>将再提供一年支持，每月发布错误修复和安全更新，之后结束自己的开发工作；Deno 仍然是开源的。",
+  "FeatureTierRuntime.pick": "如何选择运行时",
   "FeatureTierOperations.eyebrow": "运维",
   "FeatureTierOperations.title": "运行它、监控它、支持它的用户",
   "FeatureTierOperations.lead":
@@ -486,11 +518,11 @@ export default {
   "FeatureWebsite.title": "可直接改造的公开网站",
   "FeatureWebsite.lead":
     "就是本站：快速、服务端渲染，关闭 JavaScript 也能使用，包含价格页、法律页面、博客和邮件简报。",
-  "FeatureWebsite.fact1": "服务端使用 Fresh；每个操作都是真实的链接或表单",
+  "FeatureWebsite.fact1": "服务端渲染 Preact，用 Vite 构建；每个操作都是真实的链接或表单",
   "FeatureWebsite.fact2": "价格读取自应用的套餐目录",
   "FeatureWebsite.fact3": "双重确认订阅的邮件简报，一键退订，邮件以收件人的语言发送",
   "FeatureWebsite.fact4":
-    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源、文章结构化数据、文章网址变更后会自动跳转的旧链接，以及在文章发布或更新时立即通知搜索引擎的 IndexNow 推送",
+    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源、文章结构化数据、文章网址变更后会自动跳转的旧链接、文章列表中的封面图、注明原文地址的可选 Dev.to 转载、自动发布到 Telegram、Mastodon、Bluesky、Hashnode 和 LinkedIn，以及在文章发布或更新时立即通知搜索引擎的 IndexNow 推送",
   "FeatureWebsite.fact5": "在管理后台设置的联系方式，显示在页脚和结构化数据中",
   "FeatureWebsite.fact6":
     "可选的商品目录，适合网店，在管理后台编辑：商品照片、颜色、尺码、尺码表和售罄尺码，覆盖你销售的每种语言，并为每个商品和每个分享渠道生成一个短追踪链接",
@@ -515,7 +547,7 @@ export default {
     "不能。Seed 以常驻容器的形式，用 Docker Compose 运行在你租用的一台 Linux 服务器上，因为 API 需要保持 WebSocket 连接，Worker 需要持续消费队列。",
   "FeaturesFaq.runtimeQuestion": "Seed 能在 Node.js 或 Bun 上运行吗？",
   "FeaturesFaq.runtimeAnswer":
-    "还不能。Seed 目前运行在 Deno 上，让它同时支持 Deno、Node 和 Bun 的工作正在进行中。进展可以在 Seed 的 GitHub 上的 issue #623 中查看。",
+    "可以。API、后台 worker 和网站都能在 Deno、Node 或 Bun 上运行：env 文件里的一项设置 APP_RUNTIME 决定用哪个运行时。Seed 自己的任务和测试运行在 Deno 上，npm 或 Bun 会替你装好它，所以不用单独安装 Deno。",
   "FeaturesFaq.databaseQuestion": "Seed 能使用 Postgres 以外的数据库吗？",
   "FeaturesFaq.databaseAnswer":
     "不能。Seed 基于 Postgres 构建：它的迁移、查询和集成测试都以 Postgres 为前提。",
@@ -536,7 +568,7 @@ export default {
     "Seed 提供的功能：双重验证和社交账号登录、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线应用、管理后台、监控和备份。",
   "FeaturesHero.title": "Seed 提供的一切，以及还没有的部分",
   "FeaturesHero.lead":
-    "Seed 是一个免费、MIT 许可的 SaaS 启动模板，提供邮箱、Google 和 GitHub 登录、通行密钥、魔法链接、访客账号、双重验证、带角色的群组、按成员计费的 Stripe 订阅、实时更新、离线应用、管理后台、监控，以及可选的每日加密备份。下面每个部分都附有代码链接。",
+    "Seed 是一个免费、MIT 许可的 SaaS 启动模板，提供邮箱、Google 和 GitHub 登录、通行密钥、邮箱登录验证码、访客账号、双重验证、带角色的群组、按成员计费的 Stripe 订阅、实时更新、离线应用、管理后台、监控，以及可选的每日加密备份。下面每个部分都附有代码链接。",
   "FeaturesHero.note":
     "Seed 现在就能用，并且在公开开发中。缺少的部分会在受影响的功能旁标注“尚未完成”，如有对应的 issue，也会附上链接。",
   "Features.compare": "Seed 与其他方案的对比",
@@ -576,14 +608,14 @@ export default {
     "Seed 的管理后台：查找用户、结束其会话、退款、重新运行失败的任务。有风险的操作会先确认，所有操作都有记录。免费，MIT 许可。",
   "AdminTour.heroTitle": "为运营产品的人打造的管理后台",
   "AdminTour.heroLead":
-    "Seed 自带一个运行在独立域名上的运营后台。运营人员可以查找用户，查看其登录方式、会话和群组，并提供帮助：结束会话、发送重置密码链接、退款。有风险的操作会先确认，每个操作都会记入审计日志。",
+    "Seed 自带一个运行在独立域名上的运营后台。运营人员可以查找用户，查看其登录方式、会话和群组，并提供帮助：结束会话、发送重置密码邮件、退款。有风险的操作会先确认，每个操作都会记入审计日志。",
   "AdminTour.code": "阅读管理后台代码",
   "AdminTour.dashboard": "仪表盘",
   "AdminTour.dashboardText": "30 天内的用户数、注册数、活跃用户、群组和笔记。",
   "AdminTour.stats": "统计",
   "AdminTour.statsText": "来自你的 Umami 的网站访问量和下单点击。只显示总数。",
   "AdminTour.users": "用户",
-  "AdminTour.usersText": "查找用户、封禁用户、结束会话或发送重置链接。",
+  "AdminTour.usersText": "查找用户、封禁用户、结束会话或发送重置密码邮件。",
   "AdminTour.groups": "群组",
   "AdminTour.groupsText": "成员、邀请和文件。可以移除文件或更换所有者。",
   "AdminTour.billing": "账单",
@@ -591,7 +623,7 @@ export default {
   "AdminTour.newsletter": "邮件简报",
   "AdminTour.newsletterText": "谁订阅了，发送过什么。可将列表导出为 CSV。",
   "AdminTour.blog": "博客",
-  "AdminTour.blogText": "网站上每种语言的文章，从草稿到发布。",
+  "AdminTour.blogText": "网站上每种语言的文章，从草稿到发布，并自动发到你的各个渠道。",
   "AdminTour.contactLinks": "联系方式",
   "AdminTour.contactLinksText": "在网站页脚展示用户联系你的方式，无需重新部署。",
   "AdminTour.catalog": "商品目录",
@@ -605,7 +637,7 @@ export default {
   "AdminTour.tokens": "API 令牌",
   "AdminTour.tokensText": "所有 API 令牌、所属用户以及最后使用时间。",
   "AdminTour.operator": "运营人员",
-  "AdminTour.operatorText": "日常支持：查找用户、结束会话、发送重置密码链接、管理群组。",
+  "AdminTour.operatorText": "日常支持：查找用户、结束会话、发送重置密码邮件、管理群组。",
   "AdminTour.supervisor": "主管",
   "AdminTour.supervisorText": "还可以退款、立即取消订阅，以及把群组转交给另一位成员。",
   "AdminTour.administrator": "管理员",
@@ -655,7 +687,7 @@ export default {
   "CompareRow.makerkitLite": "Makerkit：仅限 Lite 套件",
   "CompareRow.openSource": "开源（MIT）",
   "CompareRow.password": "密码登录",
-  "CompareRow.magicLinks": "魔法链接",
+  "CompareRow.magicLinks": "免密码邮箱登录",
   "CompareRow.social": "社交账号登录",
   "CompareRow.socialNote": "Seed：Google、GitHub",
   "CompareRow.totp": "基于应用的双重验证",
@@ -674,6 +706,8 @@ export default {
   "CompareRow.blog": "博客",
   "CompareRow.audit": "审计日志",
   "CompareRow.realtime": "实时更新",
+  "CompareRow.instant": "设备上的数据",
+  "CompareRow.instantNote": "每个列表的副本都保存在设备上",
   "CompareRow.offline": "离线应用",
   "CompareRow.offlineNote": "离线写入会排队等待",
   "CompareRow.ops": "监控和备份",
@@ -782,6 +816,7 @@ export default {
   "Blog.published": "发布于<time>{date}</time>",
   "Blog.updated": "· 更新于<time>{date}</time>",
   "Blog.alsoIn": "其他语言：<links></links>",
+  "Blog.relatedFeature": "Seed 功能：{name} →",
   "Blog.minutes": {
     "other": "· 阅读约 {count} 分钟",
   },
@@ -850,25 +885,26 @@ export default {
   "FeaturePage.all": "所有功能",
   "FeaturePage.runtimeQuestion": "Seed 能在 Node 或 Bun 上运行吗？",
   "FeaturePage.runtimeAnswer":
-    "暂不支持。Seed 目前运行在 Deno 上，让它能在 Deno、Node 和 Bun 上运行的迁移工作正在进行中（#623）。运行时计划详见功能页面。",
+    "可以。API、后台 worker 和网站都能在 Deno、Node 或 Bun 上运行，由一项设置（APP_RUNTIME）决定。Seed 自己的任务运行在 Deno 上，npm 或 Bun 会替你装好它。详见功能页面的“运行时”部分。",
   "FeaturePageMissing.title": "这个功能页面不存在",
   "FeaturePageMissing.description": "它可能已经移动了位置。Seed 提供的每项功能都列在功能页面上。",
   "FeaturePageMissing.action": "查看所有功能",
   "FeaturePageSignIn.name": "登录",
   "FeaturePageSignIn.title": "SaaS 登录认证方案：无需第三方认证服务",
   "FeaturePageSignIn.description":
-    "通行密钥、邮箱登录链接、Google、GitHub 登录和双重验证，全部由你自己的 API 校验，无需认证服务，也不按用户收费。免费，MIT 许可。",
+    "通行密钥、邮箱登录验证码、Google、GitHub 登录和双重验证，全部由你自己的 API 校验，无需认证服务，也不按用户收费。免费，MIT 许可。",
   "FeaturePageSignIn.h1": "SaaS 通行密钥与登录认证，无需第三方认证服务",
   "FeaturePageSignIn.answer":
-    "Seed 支持通行密钥、邮箱登录链接、Google 和 GitHub 登录，全部由它自己的 API 在你的服务器上校验，不依赖第三方认证服务。密码、通行密钥和登录链接部署后即可使用，不按用户收费；Google 和 GitHub 登录各需在 env 文件中填写两个密钥。",
-  "FeaturePageSignIn.summary": "通行密钥、邮箱登录链接、Google、GitHub 和双重验证，无需认证服务。",
+    "Seed 支持通行密钥、邮箱登录验证码、Google 和 GitHub 登录，全部由它自己的 API 在你的服务器上校验，不依赖第三方认证服务。密码、通行密钥和登录验证码部署后即可使用，不按用户收费；Google 和 GitHub 登录各需在 env 文件中填写两个密钥。",
+  "FeaturePageSignIn.summary":
+    "通行密钥、邮箱登录验证码、Google、GitHub 和双重验证，无需认证服务。",
   "FeaturePageSignIn.how1":
-    "每次登录都由 API 自己校验，并返回一个签名的会话 Cookie。通行密钥使用浏览器自带的 WebAuthn：服务器只保存其公钥，每个登录挑战只能使用一次。登录链接可用于登录或注册，只能使用一次，有效期 15 分钟，并且只以哈希形式存储。",
+    "每次登录都由 API 自己校验，并返回一个签名的会话 Cookie。通行密钥使用浏览器自带的 WebAuthn：服务器只保存其公钥，每个登录挑战只能使用一次。邮箱登录验证码可用于登录或注册，只能使用一次，有效期 10 分钟，仅限发起请求的浏览器使用，且只以哈希形式存储。",
   "FeaturePageSignIn.how2":
     "身份验证器应用可以开启双重验证。个人资料页列出了进入账号的每种方式和每台已登录的设备；更改登录方式时需要验证身份，并会发送邮件通知。访客也可以先用访客账号开始，之后再添加登录方式。",
   "FeaturePageSignIn.authServiceQuestion": "我需要第三方认证服务吗？",
   "FeaturePageSignIn.authServiceAnswer":
-    "不需要。Seed 自己的 API 在你的服务器上校验密码、通行密钥、登录链接以及 Google 和 GitHub 返回的结果，所以不会按用户计费。",
+    "不需要。Seed 自己的 API 在你的服务器上校验密码、通行密钥、登录验证码以及 Google 和 GitHub 返回的结果，所以不会按用户计费。",
   "FeaturePageSignIn.passkeysQuestion": "Seed 支持通行密钥吗？",
   "FeaturePageSignIn.passkeysAnswer":
     "是的。用户可以在个人资料页添加通行密钥并用它登录；服务器只保存其公钥，每个登录挑战只能使用一次。",
@@ -1013,4 +1049,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "有备份吗？",
   "FeaturePageDeploy.backupAnswer":
     "有。可选开启的每日加密 restic 数据库备份，并附有书面恢复步骤。",
+  "Catalog.title": "商品目录",
+  "Catalog.intro": "在售的全部商品，附价格、尺码和颜色。",
+  "Catalog.categories": "分类",
+  "Catalog.all": "全部",
+  "Catalog.empty": "暂无在售商品",
+  "Catalog.emptyLead": "新商品准备好后会第一时间出现在这里。",
+  "Catalog.categoryIntro": "{category}：价格、尺码和颜色。",
+  "CatalogItem.intro": "{item}：价格、尺码和颜色。",
+  "CatalogItem.photos": "照片",
+  "CatalogItem.material": "材质",
+  "CatalogItem.fit": "版型",
+  "CatalogItem.care": "洗护",
+  "CatalogItem.inStock": "{choice}：有货",
+  "CatalogItem.soldOut": "{choice}：已售罄",
 } satisfies Catalog

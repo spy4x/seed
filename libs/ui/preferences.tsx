@@ -12,7 +12,7 @@ import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-
 import { useFormat, When } from "@spy4x/preact-ui/format"
 import { createFormatters, regionHourCycle } from "@spy4x/time/format"
 import { type LocaleOption, localeOptions } from "@spy4x/time/locale"
-import { timeZoneOptions, zoneCity, zoneLabel, zoneOffsetLabel } from "@spy4x/time/tz"
+import { zoneCity, zoneLabel, zoneOffsetLabel } from "@spy4x/time/tz"
 import type { AdminUserPreferences, Preferences, ThemePreference } from "@domain/identity"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { Rich } from "@spy4x/preact-ui/i18n"
@@ -21,6 +21,7 @@ import { LanguageDialog, languageName } from "@spy4x/preact-ui/language-picker"
 import type { AccountMenuLanguage } from "@spy4x/preact-system/account-menu"
 import { textDirection } from "@spy4x/platform/universal/i18n"
 import { useAdminText, useAppText } from "./i18n.ts"
+import { matching, TimeZonePicker } from "./time-zone-picker.tsx"
 
 /** The fields "Language and region" edits; the theme is under Appearance. */
 export type RegionPreferences = Pick<Preferences, "locale" | "timeZone" | "hourCycle">
@@ -86,7 +87,7 @@ const FAILURE_KEYS: Record<PreferencesFailure, string> = {
 }
 
 /** Each theme in one word, by its key in the `app` catalog. */
-const THEME_KEYS: Record<ThemePreference, string> = {
+export const THEME_KEYS: Record<ThemePreference, string> = {
   system: `Preferences.themeSystem`,
   light: `Preferences.themeLight`,
   dark: `Preferences.themeDark`,
@@ -112,10 +113,21 @@ function regions(language: string): LocaleOption[] {
 
 /**
  * A region format's name in `language` (English by default), `German (Germany)`, or the tag when
- * the list lacks it.
+ * the list lacks it. Extensions do not change the name: Automatic Arabic, `ar-EG-u-nu-latn`, is
+ * named as `ar-EG`.
  */
 export function regionName(locale: string, language = `en`): string {
-  return regions(language).find((option) => option.value === locale)?.name ?? locale
+  const base = baseLocale(locale)
+  return regions(language).find((option) => option.value === base)?.name ?? locale
+}
+
+/** `tag` without its extensions (`ar-EG-u-nu-latn` → `ar-EG`); an invalid tag stays as it is. */
+function baseLocale(tag: string): string {
+  try {
+    return new Intl.Locale(tag).baseName
+  } catch {
+    return tag
+  }
 }
 
 /** A clock as a person reads it. */
@@ -140,18 +152,11 @@ interface RegionItem {
   searchText: string
 }
 
-interface ZoneItem {
-  /** The zone to store, or `null` for Automatic. */
-  value: string | null
-  label: string
-  searchText: string
-}
-
 /** The clock's choices: the region format's own, or one the person picked. */
 const CLOCKS = [`format`, `h12`, `h23`] as const
 
 /**
- * The profile's "Language and region" section (#163): the region format, the time zone and the
+ * The profile's "Language and region" section: the region format, the time zone and the
  * clock, which follow the person to every device. One form, with no Save button: each change is
  * saved as it is made, on the version it was made on, so a change another device saved meanwhile
  * is refused and the form then shows the values that won. A line above the form shows a date and
@@ -192,23 +197,14 @@ export function RegionSection(props: PreferencesProps): JSX.Element {
     })),
   ], [device.locale, t])
 
-  const zoneItems = useMemo<ZoneItem[]>(() => [
-    {
-      value: null,
-      label: t.t(`Preferences.automatic`, { value: zoneLabel(device.timeZone, now) }),
-      searchText: `${t.t(`Preferences.automaticSearch`)} automatic device ${
-        device.timeZone.replaceAll(`_`, ` `)
-      }`.toLowerCase(),
-    },
-    ...timeZoneOptions(now).map((option) => ({
-      value: option.value,
-      label: zoneLabel(option.value, now),
-      searchText: option.searchText,
-    })),
-  ], [device.timeZone, t])
+  const automatic = useMemo(() => ({
+    label: t.t(`Preferences.automatic`, { value: zoneLabel(device.timeZone, now) }),
+    searchText: `${t.t(`Preferences.automaticSearch`)} automatic device ${
+      device.timeZone.replaceAll(`_`, ` `)
+    }`.toLowerCase(),
+  }), [device.timeZone, t])
 
   const region = regionItems.find((item) => item.value === shown.locale) ?? regionItems[0]
-  const zone = zoneItems.find((item) => item.value === shown.timeZone) ?? zoneItems[0]
   const resolvedClock = clockLabel(t, regionHourCycle(shown.locale ?? device.locale))
 
   return (
@@ -262,20 +258,13 @@ export function RegionSection(props: PreferencesProps): JSX.Element {
           hint={t.t(`Preferences.timeZoneHint`)}
         >
           {(wiring) => (
-            <Combobox<ZoneItem>
+            <TimeZonePicker
               id={wiring.id}
-              ariaLabel={t.t(`Preferences.timeZone`)}
-              placeholder={t.t(`Preferences.timeZonePlaceholder`)}
               aria-describedby={wiring["aria-describedby"]}
-              items={zoneItems}
-              value={zone}
-              getLabel={(item) => item.label}
-              filter={(items, query) => matching(items, query)}
-              onChange={(item) =>
-                item && item.value !== shown.timeZone && save({ timeZone: item.value })}
-              showClearButton={false}
-              listboxClass="max-h-60"
-              emptyMessage={(query) => t.t(`Preferences.timeZoneEmpty`, { query })}
+              value={shown.timeZone ?? null}
+              now={now}
+              automatic={automatic}
+              onChange={(timeZone) => save({ timeZone })}
             />
           )}
         </Field>
@@ -388,21 +377,8 @@ function pick(value: Preferences): RegionPreferences {
   return { locale: value.locale, timeZone: value.timeZone, hourCycle: value.hourCycle }
 }
 
-/** Every word of the query must appear in the option's label or its search text. */
-function matching<T extends { label: string; searchText: string }>(
-  items: readonly T[],
-  query: string,
-): T[] {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
-  if (words.length === 0) return [...items]
-  return items.filter((item) => {
-    const text = `${item.label.toLowerCase()} ${item.searchText}`
-    return words.every((word) => text.includes(word))
-  })
-}
-
 /**
- * The operator area's read-only "Language and region" group on a person's Overview (#163, #216):
+ * The operator area's read-only "Language and region" group on a person's Overview:
  * the person's language and choices, their local time now, and when they last changed them.
  * Operators cannot change them. "Automatic" is the person's device, which the operator cannot see:
  * the zone and region format the person signed up with are shown instead, when known. Names of
@@ -481,6 +457,19 @@ export function AdminPreferencesGroup(
 }
 
 /**
+ * A language's name for a reader of `inLanguage`: `ru` is "Russian" on an English page; `null` when
+ * `Intl` cannot read the tag.
+ */
+export function languageNameIn(language: string, inLanguage: string): string | null {
+  try {
+    const name = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
+    return name.charAt(0).toLocaleUpperCase(inLanguage) + name.slice(1)
+  } catch {
+    return null
+  }
+}
+
+/**
  * A language's name for a reader of `inLanguage`, with the name in the language itself after it
  * when the two differ, in that language: `German (Deutsch)`, so an operator who reads neither
  * still recognises it.
@@ -489,13 +478,8 @@ export function LanguageLabel(
   { language, inLanguage }: { language: string; inLanguage: string },
 ): JSX.Element {
   const own = languageName(language)
-  let theirs = own
-  try {
-    const text = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
-    theirs = text.charAt(0).toLocaleUpperCase(inLanguage) + text.slice(1)
-  } catch {
-    // A tag `Intl` cannot read: its own name alone.
-  }
+  // A tag `Intl` cannot read: its own name alone.
+  const theirs = languageNameIn(language, inLanguage) ?? own
   const ownName = <span lang={language} dir={textDirection(language)}>{own}</span>
   return theirs === own ? ownName : <>{theirs} ({ownName})</>
 }

@@ -7,7 +7,7 @@ import type { BlogProblem } from "@domain/blog"
 import { useAdminText } from "./i18n.ts"
 
 /**
- * The blog editor's figure problems (#620): the tags in a post's body that readers will not see,
+ * The blog editor's figure problems: the tags in a post's body that readers will not see,
  * in the Problems panel under the editor, in the preview where the figure would be, and in the
  * publish dialog. Each says why in the operator's language; the parser's or the schema's English
  * detail follows in mono.

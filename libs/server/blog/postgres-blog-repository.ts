@@ -1,5 +1,6 @@
 import type postgres from "postgres"
 import { likeContains } from "@spy4x/server/db"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
   ADMIN_BLOG_LIST_MAX,
   type AdminBlogCounts,
@@ -8,18 +9,21 @@ import {
   BLOG_AUDIT_KINDS,
   BLOG_POST_ENTITY,
   BLOG_PUBLISH_JOB,
+  BLOG_REVISIONS_KEPT,
   type BlogAuditKind,
   BlogError,
   type BlogPost,
   type BlogPostEdit,
   type BlogPostFields,
   type BlogPostStatus,
+  type BlogRevision,
+  type BlogRevisionSummary,
   type BlogTopic,
   BlogVersionConflictError,
 } from "@domain/blog"
 import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
 import { enqueueJob, JOB_AGGREGATE } from "../jobs/jobs.ts"
-import { queueIndexNow } from "./blog-indexnow-job.ts"
+import { queueBlogIndexNow } from "./blog-indexnow-job.ts"
 
 /** The operator behind a write, for its audit row. */
 export interface BlogActor {
@@ -39,6 +43,9 @@ export interface BlogPostRow {
   topic: string | null
   coverUrl: string | null
   coverAlt: string | null
+  coverFile: string | null
+  intro: string | null
+  relatedFeature: string | null
   bodyMd: string
   language: Language
   translationOf: string | null
@@ -52,6 +59,8 @@ export interface BlogPostRow {
   newsletterList: string | null
   newsletterSentAt: Date | null
   newsletterRecipients: number | null
+  crosspostedAt: Date | null
+  devtoUrl: string | null
   createdAt: Date
   updatedAt: Date
   version: number
@@ -67,6 +76,7 @@ export function toBlogPost(row: BlogPostRow): BlogPost {
     publishedAt: iso(row.publishedAt),
     contentUpdatedAt: iso(row.contentUpdatedAt),
     newsletterSentAt: iso(row.newsletterSentAt),
+    crosspostedAt: iso(row.crosspostedAt),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
@@ -121,7 +131,7 @@ async function checkTranslation(
   }
   if (original === id) throw translationInvalid(`A post cannot translate itself.`)
   // Held until the write ends, so a save that makes the original a translation itself waits for
-  // this one, and this one waits for it, and the two never build a chain (#530).
+  // this one, and this one waits for it, and the two never build a chain.
   const [target] = await tx<Pick<BlogPostRow, `language` | `translationOf`>[]>`
     SELECT language, translation_of FROM blog_posts WHERE id = ${original} FOR SHARE
   `
@@ -139,7 +149,7 @@ async function checkTranslation(
 }
 
 /**
- * The blog's reads and writes for the admin app (#395). It checks no role: only the operator area
+ * The blog's reads and writes for the admin app. It checks no role: only the operator area
  * calls it, behind its gate. Every write runs in one transaction that locks the post, checks the
  * version the operator saw, changes the post, queues its `blog.publish` job when one is due, and
  * writes the operator's audit row, so a write and its record are kept or undone together. Two
@@ -165,7 +175,7 @@ export class PostgresBlogRepository {
     const status = filter.status === null ? sql`TRUE` : sql`status = ${filter.status}`
     const posts = await sql<AdminBlogPostRowRaw[]>`
       SELECT id, slug, title, status, topic, language, translation_of, publish_at, published_at,
-        updated_at
+        updated_at, cover_url, cover_alt
       FROM blog_posts
       WHERE ${where} AND ${status}
       ORDER BY updated_at DESC, id DESC
@@ -196,6 +206,34 @@ export class PostgresBlogRepository {
     return row ? toBlogPost(row) : null
   }
 
+  /**
+   * The post's earlier versions, newest first, without their bodies; `null` when there is
+   * no post with `id`.
+   */
+  async revisions(id: string): Promise<BlogRevisionSummary[] | null> {
+    const [post] = await this.sql`SELECT 1 FROM blog_posts WHERE id = ${id}`
+    if (!post) return null
+    const rows = await this.sql<(Omit<BlogRevisionSummary, `savedAt`> & { savedAt: Date })[]>`
+      SELECT id, created_at AS saved_at, saved_by_name AS saved_by, title
+      FROM blog_post_revisions
+      WHERE post_id = ${id}
+      ORDER BY created_at DESC, id DESC
+    `
+    return rows.map((row) => ({ ...row, savedAt: row.savedAt.toISOString() }))
+  }
+
+  /** One earlier version of post `id` with every field, or `null` when the post has none such. */
+  async revision(id: string, revisionId: string): Promise<BlogRevision | null> {
+    const [row] = await this.sql<(Omit<BlogRevision, `savedAt`> & { savedAt: Date })[]>`
+      SELECT id, created_at AS saved_at, saved_by_name AS saved_by, title, slug, description,
+        seo_title, tldr, topic, cover_url, cover_alt, intro, related_feature, author_url, body_md,
+        language, translation_of
+      FROM blog_post_revisions
+      WHERE id = ${revisionId} AND post_id = ${id}
+    `
+    return row ? { ...row, tldr: [...row.tldr], savedAt: row.savedAt.toISOString() } : null
+  }
+
   /** Every topic any post carries, drafts included, with how many posts carry it, A to Z. */
   async topics(): Promise<BlogTopic[]> {
     return await this.sql<BlogTopic[]>`
@@ -216,14 +254,14 @@ export class PostgresBlogRepository {
       const [row] = await tx<BlogPostRow[]>`
         INSERT INTO blog_posts (
           id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, body_md,
-          language, translation_of, author_id, author_name, author_url
+          language, translation_of, author_id, author_name, author_url, intro, related_feature
         ) VALUES (
           ${id}, ${fields.slug}, ${fields.title}, ${fields.seoTitle}, ${fields.description},
           ${tx.array(fields.tldr)}::text[], ${fields.topic}, ${fields.coverUrl}, ${fields.coverAlt},
           ${fields.bodyMd}, ${fields.language}, ${fields.translationOf}, ${actor.userId},
           (SELECT NULLIF(btrim(concat_ws(' ', first_name, last_name)), '')
             FROM users WHERE id = ${actor.userId}),
-          ${fields.authorUrl}
+          ${fields.authorUrl}, ${fields.intro}, ${fields.relatedFeature}
         )
         ON CONFLICT (id) DO NOTHING
         RETURNING *
@@ -236,6 +274,7 @@ export class PostgresBlogRepository {
         ) return toBlogPost(first)
         throw new BlogError(`ID_ALREADY_EXISTS`, `A post with this id exists already.`)
       }
+      await keepRevision(tx, id, actor)
       await audit(tx, actor, BLOG_AUDIT_KINDS.created, row)
       return toBlogPost(row)
     })
@@ -257,6 +296,9 @@ export class PostgresBlogRepository {
       const current = await lock(tx, id, version)
       const fields: BlogPostFields = {
         ...edit,
+        // A post file's cover (`cover_file`) needs its description, which the admin app never
+        // edits: the parser drops the description of a post with no cover address.
+        coverAlt: edit.coverAlt ?? (current.coverFile === null ? null : current.coverAlt),
         language: edit.language ?? current.language,
         translationOf: edit.translationOf === undefined
           ? current.translationOf
@@ -275,7 +317,8 @@ export class PostgresBlogRepository {
         SET slug = ${fields.slug}, title = ${fields.title}, seo_title = ${fields.seoTitle},
           description = ${fields.description}, tldr = ${tx.array(fields.tldr)}::text[],
           topic = ${fields.topic}, cover_url = ${fields.coverUrl}, cover_alt = ${fields.coverAlt},
-          author_url = ${fields.authorUrl}, body_md = ${fields.bodyMd}, language = ${fields.language},
+          author_url = ${fields.authorUrl}, intro = ${fields.intro},
+          related_feature = ${fields.relatedFeature}, body_md = ${fields.bodyMd}, language = ${fields.language},
           translation_of = ${fields.translationOf},
           content_updated_at = CASE WHEN ${significantUpdate} AND status = 'published'
             THEN now() ELSE content_updated_at END,
@@ -283,7 +326,8 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
-      if (row.status === `published`) await queueIndexNow(tx, id)
+      await keepRevision(tx, id, actor)
+      if (row.status === `published`) await queueBlogIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.updated, row)
       return toBlogPost(row)
     })
@@ -292,7 +336,7 @@ export class PostgresBlogRepository {
   /**
    * Publishes a draft or scheduled post now (`at` is `null`), or schedules it for `at`, which
    * the caller has checked lies ahead. A `blog.publish` job is queued for `at`, or at once when a
-   * post going live now has a newsletter to send. `newsletterList` is the list to email when the
+   * post going live now has a newsletter to send or its cross-post was never settled. `newsletterList` is the list to email when the
    * post goes live, `null` for none, or `undefined` to keep the list the post has, so a client
    * that leaves it out never drops a scheduled post's email. Once a post's issue was queued, its
    * list stays as it was and nothing is sent again.
@@ -328,8 +372,10 @@ export class PostgresBlogRepository {
           RETURNING *
         `
       if (at !== null) await queuePublishJob(tx, id, { at })
-      else if (list !== null && !sent) await queuePublishJob(tx, id, { inMs: 0 })
-      if (at === null) await queueIndexNow(tx, id)
+      else if ((list !== null && !sent) || current.crosspostedAt === null) {
+        await queuePublishJob(tx, id, { inMs: 0 })
+      }
+      if (at === null) await queueBlogIndexNow(tx, id)
       await audit(
         tx,
         actor,
@@ -381,7 +427,7 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
-      await queueIndexNow(tx, id)
+      await queueBlogIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.unpublished, row)
       return toBlogPost(row)
     })
@@ -390,7 +436,7 @@ export class PostgresBlogRepository {
   /**
    * Gives the post a new slug, whatever its status. Once the post has been live, the old slug
    * redirects to the new one while the post is live: the database's trigger keeps it in
-   * `blog_slug_redirects` in this transaction (2026_12_13_0002_blog_slug_redirects.sql, #418).
+   * `blog_slug_redirects` in this transaction (2026_12_13_0002_blog_slug_redirects.sql).
    */
   async changeUrl(id: string, version: number, slug: string, actor: BlogActor): Promise<BlogPost> {
     return await this.write(async (tx) => {
@@ -404,7 +450,7 @@ export class PostgresBlogRepository {
         WHERE id = ${id}
         RETURNING *
       `
-      if (row.status === `published`) await queueIndexNow(tx, id)
+      if (row.status === `published`) await queueBlogIndexNow(tx, id)
       await audit(tx, actor, BLOG_AUDIT_KINDS.urlChanged, row, { from: current.slug })
       return toBlogPost(row)
     })
@@ -412,7 +458,7 @@ export class PostgresBlogRepository {
 
   /**
    * Deletes the post for good, whatever its status. A job waiting for it finds nothing. An
-   * original's translations stay linked (#530): the one in the main language, else the oldest,
+   * original's translations stay linked: the one in the main language, else the oldest,
    * becomes the original, and the others translate it.
    */
   async delete(id: string, version: number, actor: BlogActor): Promise<void> {
@@ -490,6 +536,59 @@ async function queuePublishJob(
     id,
     when,
   )
+}
+
+/**
+ * Keeps the fields post `id` has now as one of its earlier versions, saved by `actor`, in
+ * the save's transaction, and deletes its versions past the newest {@link BLOG_REVISIONS_KEPT}. A
+ * save that changed no field keeps nothing, so saving again and again does not push the older
+ * versions out. The operator's name, or else an address of theirs, is copied in, so the row
+ * still names them once the account is gone. The time is the clock's, not the transaction's
+ * start: a save that waited for another one's lock is the newer one.
+ */
+async function keepRevision(
+  tx: postgres.TransactionSql,
+  id: string,
+  actor: BlogActor,
+): Promise<void> {
+  await tx`
+    INSERT INTO blog_post_revisions (
+      id, post_id, slug, title, seo_title, description, tldr, topic, cover_url, cover_alt, intro,
+      related_feature, author_url, body_md, language, translation_of, saved_by_id, saved_by_name,
+      created_at
+    )
+    SELECT ${uuidV7()}, post.id, post.slug, post.title, post.seo_title, post.description,
+      post.tldr, post.topic, post.cover_url, post.cover_alt, post.intro, post.related_feature,
+      post.author_url, post.body_md,
+      post.language, post.translation_of, ${actor.userId},
+      COALESCE(
+        (SELECT NULLIF(btrim(concat_ws(' ', first_name, last_name)), '')
+          FROM users WHERE id = ${actor.userId}),
+        (SELECT min(email) FROM auth_email_owners WHERE user_id = ${actor.userId})
+      ),
+      clock_timestamp()
+    FROM blog_posts AS post
+    WHERE post.id = ${id} AND NOT EXISTS (
+      SELECT 1 FROM (
+        SELECT * FROM blog_post_revisions WHERE post_id = ${id}
+        ORDER BY created_at DESC, id DESC LIMIT 1
+      ) AS newest
+      WHERE (newest.slug, newest.title, newest.seo_title, newest.description, newest.tldr,
+          newest.topic, newest.cover_url, newest.cover_alt, newest.intro, newest.related_feature,
+          newest.author_url, newest.body_md, newest.language, newest.translation_of)
+        IS NOT DISTINCT FROM (post.slug, post.title, post.seo_title, post.description, post.tldr,
+          post.topic, post.cover_url, post.cover_alt, post.intro, post.related_feature,
+          post.author_url, post.body_md, post.language, post.translation_of)
+    )
+  `
+  await tx`
+    DELETE FROM blog_post_revisions
+    WHERE post_id = ${id} AND id NOT IN (
+      SELECT id FROM blog_post_revisions WHERE post_id = ${id}
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${BLOG_REVISIONS_KEPT}
+    )
+  `
 }
 
 /** Writes the operator's audit row of one action on `post`. Its details name the post's slug. */

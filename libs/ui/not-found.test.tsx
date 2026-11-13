@@ -1,5 +1,5 @@
 /**
- * The page an unknown address shows (#368), driven in a browser DOM (happy-dom): its heading, its
+ * The page an unknown address shows, driven in a browser DOM (happy-dom): its heading, its
  * sentence and where its one link goes, for a signed-in person, a signed-out visitor and an operator.
  */
 import { expect } from "@std/expect"

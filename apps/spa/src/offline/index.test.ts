@@ -398,11 +398,16 @@ describe("what the device keeps", () => {
       "auth:sign-out-owed": "1",
       "offline:owed-deletion": "[7]",
       "theme": "dark",
+      "language": "de",
       "install-prompt-dismissed": "1",
       "last-sign-in": `{"method":"password","email":"a***@example.com"}`,
     })
     const sent = `{"email":"ann@example.com","sentAt":1}`
-    const session = webStorage({ "draft": "Private text", "sign-in-link:sent": sent })
+    const session = webStorage({
+      "draft": "Private text",
+      "sign-in-code:sent": sent,
+      "sign-up-code:sent": sent,
+    })
     const restore = installWebStorage(local, session)
     try {
       await signOut(storage)
@@ -413,13 +418,14 @@ describe("what the device keeps", () => {
     expect([...local.entries.keys()].sort()).toEqual([
       "auth:sign-out-owed",
       "install-prompt-dismissed",
+      "language",
       "last-sign-in",
       // The choice, until the next sign-in: another tab's session end must not keep the queue.
       "offline:signed-out",
       "theme",
     ])
-    // The link this tab asked for stays, so "Check your inbox" survives a signed-out reload.
-    expect([...session.entries]).toEqual([["sign-in-link:sent", sent]])
+    // The codes this tab asked for stay, so "Check your inbox" keeps its wait after a reload.
+    expect([...session.entries]).toEqual([["sign-in-code:sent", sent], ["sign-up-code:sent", sent]])
   })
 
   it("saves no answer that arrives after the sign-out", async () => {

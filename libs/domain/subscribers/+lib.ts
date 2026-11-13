@@ -28,7 +28,7 @@ export function isSubscriberList(value: unknown): value is SubscriberList {
 export const SUBSCRIBER_TOKEN_MAX_LENGTH = 2048
 
 /**
- * The language of the page a subscribe or confirm request came from (#527), one the apps ship:
+ * The language of the page a subscribe or confirm request came from, one the apps ship:
  * the mails to the address are written in it. Left out, they are in the product's main language.
  */
 const pageLanguage = { "language?": type.enumerated(...LANGUAGES) } as const
@@ -70,7 +70,7 @@ export type UnsubscribeState = `confirm` | `done` | `not-recognised` | `error`
  */
 export type SubscriberTokenRefusal = `invalid` | `expired` | `not-recognised` | `limited`
 
-// The newsletter module of the operator area (#428): `/api/admin/newsletter/...`.
+// The newsletter module of the operator area: `/api/admin/newsletter/...`.
 
 /** How many subscribers one page of the operator's list holds. */
 export const ADMIN_SUBSCRIBERS_PAGE_SIZE = 25
@@ -98,7 +98,7 @@ export interface AdminSubscriberRow {
   /** When the address confirmed; `null` while it is pending. */
   confirmedAt: string | null
   /**
-   * The language its mails are written in (#527): the page it signed up on. One with none counts as
+   * The language its mails are written in: the page it signed up on. One with none counts as
    * the main language's.
    */
   language: Language

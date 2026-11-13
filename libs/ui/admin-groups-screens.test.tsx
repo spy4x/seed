@@ -1,5 +1,5 @@
 /**
- * The admin app's group screens (#426), driven in a browser DOM (happy-dom): what the search and
+ * The admin app's group screens, driven in a browser DOM (happy-dom): what the search and
  * the sort send, what the group's page offers to whom, what each confirmed action sends, and that
  * the person page links to their groups.
  */
@@ -10,6 +10,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters } from "@spy4x/time/format"
+import { seedAutomaticLocale } from "@platform/i18n.ts"
 import {
   ADMIN_GROUP_NO_FILTER,
   type AdminGroupDetail,
@@ -29,7 +30,7 @@ import {
 import { AdminUserScreen, type AdminUserScreenProps } from "./admin-user-screen.tsx"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
+import { ADMIN_PSEUDO, englishLeft, ZONE_LABEL } from "./i18n-testing.ts"
 
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
@@ -63,13 +64,13 @@ afterEach(async () => {
 /** The operator's format, pinned, so dates read the same whatever the machine's locale. */
 const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC`, hourCycle: null })
 
-async function mount(node: VNode): Promise<HTMLElement> {
+async function mount(node: VNode, format = FORMAT): Promise<HTMLElement> {
   if (!root) {
     root = document.createElement(`div`)
     document.body.append(root)
   }
   await act(() =>
-    render(<FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>, root!)
+    render(<FormatContext.Provider value={format}>{node}</FormatContext.Provider>, root!)
   )
   return root
 }
@@ -126,6 +127,7 @@ const family: AdminGroupRow = {
   id: GROUP_ID,
   name: `Family`,
   emoji: null,
+  timeZone: `Europe/Berlin`,
   color: null,
   owner: { id: 42, name: `Ada Lovelace`, email: `ada@example.com` },
   memberCount: 3,
@@ -162,6 +164,30 @@ describe(`the admin group list`, () => {
     find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `  ada  `
     await submit(`[data-e2e=admin-groups-submit]`)
     expect(calls).toEqual([[`search`, { ...filter, query: `ada`, page: 1 }]])
+  })
+
+  it(`groups the member and note counts in the operator's region format`, async () => {
+    const big = { ...family, memberCount: 1234, noteCount: 5678 }
+    const list = { groups: [big], total: 1, page: 1, pageSize: 25 }
+    const region = (locale: string) =>
+      createFormatters({ locale, timeZone: `UTC`, hourCycle: null })
+    const table = () => find(`[data-e2e=admin-groups-list]`).textContent
+
+    await mount(
+      <FormatContext.Provider value={region(`de-DE`)}>
+        <AdminGroupsListScreen {...listProps([], { list })} />
+      </FormatContext.Provider>,
+    )
+    expect(table()).toContain(`1.234`)
+    expect(table()).toContain(`5.678`)
+
+    await mount(
+      <FormatContext.Provider value={region(`en-US`)}>
+        <AdminGroupsListScreen {...listProps([], { list })} />
+      </FormatContext.Provider>,
+    )
+    expect(table()).toContain(`1,234`)
+    expect(table()).toContain(`5,678`)
   })
 
   it(`filters by a pressed status chip at once and drops it when pressed again`, async () => {
@@ -249,12 +275,64 @@ describe(`the admin group list`, () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupsListScreen {...listProps(calls)} />)
     expect(focused()).not.toBe(`admin-groups-count`)
+    await press(`nav`, `2`)
+    expect(calls).toEqual([[`page`, 2]])
     await mount(
       <AdminGroupsListScreen
         {...listProps(calls, { list: { groups: [family], total: 30, page: 2, pageSize: 25 } })}
       />,
     )
     expect(focused()).toBe(`admin-groups-count`)
+  })
+
+  it(`keeps focus in the search field when a search from page 2 brings back page 1`, async () => {
+    const calls: unknown[][] = []
+    const onPage2 = { list: { groups: [family], total: 30, page: 2, pageSize: 25 } }
+    await mount(<AdminGroupsListScreen {...listProps(calls, onPage2)} />)
+    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `ada`
+    find(`[data-e2e=admin-groups-search]`).focus()
+    await submit(`[data-e2e=admin-groups-submit]`)
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps(calls, { filter: { ...ADMIN_GROUP_NO_FILTER, query: `ada` } })}
+      />,
+    )
+    expect(calls[0]?.[0]).toBe(`search`)
+    expect(focused()).toBe(`admin-groups-search`)
+  })
+
+  it(`shows the address's search in the field when history goes back to it`, async () => {
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps([], { filter: { ...ADMIN_GROUP_NO_FILTER, query: `ada` } })}
+      />,
+    )
+    // A half-typed query makes the field dirty, so its default value no longer shows.
+    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `half-typed`
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps([], { filter: { ...ADMIN_GROUP_NO_FILTER, query: `family` } })}
+      />,
+    )
+    expect(find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value).toBe(`family`)
+  })
+
+  it(`keeps the search field usable while a search is pending, so focus stays in it`, async () => {
+    await mount(<AdminGroupsListScreen {...listProps([], { pending: true })} />)
+    const field = find<HTMLInputElement>(`[data-e2e=admin-groups-search]`)
+    expect(field.closest(`fieldset`)?.disabled ?? false).toBe(false)
+    expect(field.matches(`:disabled`)).toBe(false)
+  })
+
+  it(`gives the list's count the house focus ring`, async () => {
+    await mount(<AdminGroupsListScreen {...listProps([])} />)
+    expect(find(`[data-e2e=admin-groups-count]`).className.split(` `)).toEqual(
+      expect.arrayContaining([
+        `focus-visible:outline-hidden`,
+        `focus-visible:ring-2`,
+        `focus-visible:ring-focus`,
+      ]),
+    )
   })
 
   it(`shows a loading state, the API's message when it fails, and an empty one`, async () => {
@@ -419,6 +497,17 @@ describe(`one group in the admin app`, () => {
     expect(find(`[data-e2e=admin-group-status]`).textContent).toBe(`Active`)
   })
 
+  it(`shows the group's time zone as a fact after Created`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([])} />)
+
+    const zone = find(`[data-e2e=admin-group-time-zone]`)
+    expect(zone.textContent).toMatch(/^Berlin, Europe · GMT\+[12]$/)
+    const facts = [...root!.querySelectorAll(`dt`)].map((term) => term.textContent?.trim())
+    expect(facts.indexOf(`Time zone`)).toBe(facts.indexOf(`Created`) + 1)
+    // A zone name runs past a phone's column; cut short, its offset would be lost.
+    expect(zone.closest(`dd`)!.classList.contains(`truncate`)).toBe(false)
+  })
+
   it(`says when a group was made from an export file and who imported it, and nothing for one created empty`, async () => {
     await mount(<AdminGroupScreen {...groupProps([])} />)
     expect(has(`[data-e2e=admin-group-imported]`)).toBe(false)
@@ -515,6 +604,24 @@ describe(`one group in the admin app`, () => {
       `2 of 100 files · 2.4 MB of 200 MB`,
     )
     expect(find(`[data-e2e=admin-group-counts]`).textContent).toContain(`Files2 · 2.4 MB`)
+  })
+
+  it(`writes the group's file sizes in the operator's region format`, async () => {
+    const russian = createFormatters({ locale: `ru-RU`, timeZone: `UTC`, hourCycle: null })
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files` })} />, russian)
+    expect(find(`[data-e2e=admin-group-files-usage]`).textContent).toBe(
+      `2 of 100 files · 2,4 МБ of 200 МБ`,
+    )
+    expect(find(`[data-e2e=admin-group-counts]`).textContent).toContain(`Files2 · 2,4 МБ`)
+  })
+
+  it(`writes one kind of digit in the group's counts for Automatic Arabic`, async () => {
+    const locale = seedAutomaticLocale(`ar`, [`en-US`])
+    const arabic = createFormatters({ locale, timeZone: `UTC`, hourCycle: null })
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files` })} />, arabic)
+    const counts = find(`[data-e2e=admin-group-counts]`).textContent ?? ``
+    expect(counts).toContain(`2 · 2.4`)
+    expect(counts).not.toMatch(/[\u0660-\u0669\u06F0-\u06F9]/)
   })
 
   it(`searches by the typed name, trimmed, on page 1`, async () => {
@@ -650,6 +757,14 @@ describe(`one group in the admin app`, () => {
     expect(focused?.getAttribute(`tabindex`)).toBe(`-1`)
     expect(focused?.querySelector(`[data-e2e=admin-group-files]`)?.textContent).toContain(
       `No files yet.`,
+    )
+    // The house ring, so the browser's default outline never shows.
+    expect(focused?.className.split(` `)).toEqual(
+      expect.arrayContaining([
+        `focus-visible:outline-hidden`,
+        `focus-visible:ring-2`,
+        `focus-visible:ring-focus`,
+      ]),
     )
   })
 
@@ -875,6 +990,7 @@ describe("the group screens in en-XA", () => {
       /[a-z]+@example\.com/g,
       `receipt.pdf`,
       `IMG_0001.png`,
+      ZONE_LABEL,
     ])).toEqual([])
   })
 

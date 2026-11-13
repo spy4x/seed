@@ -1,11 +1,11 @@
 /**
- * The operator area's reads and writes over groups (#426): the searchable group list, one group's
+ * The operator area's reads and writes over groups: the searchable group list, one group's
  * page, its files, and the actions an operator takes on a group (revoke an invitation, remove a
  * member, transfer ownership, remove a file).
  *
  * Nothing written inside a group leaves here: no note or tag text, no group description, no note
  * title from the activity log, no invitation token or its hash. Counts and account facts only, but
- * for the Files tab (#478): a file's name and its note's title, so an operator can find the file a
+ * for the Files tab: a file's name and its note's title, so an operator can find the file a
  * report names. Opening or downloading a file writes an audit row naming the operator.
  *
  * Who may call these is the API's business (`apps/api/routes/admin/groups.ts`), except the rules
@@ -120,6 +120,7 @@ interface GroupRowRaw {
   name: string
   emoji: string | null
   color: GroupColor | null
+  timeZone: string
   ownerId: number
   ownerName: string
   ownerEmail: string | null
@@ -151,7 +152,7 @@ function lastActivityAt(sql: postgres.Sql) {
 /** The columns of {@link AdminGroupRow} over `groups g` joined to its owner `o`. */
 function groupColumns(sql: postgres.Sql) {
   return sql`
-    g.id, g.name, g.emoji, g.color, g.created_at, g.deleted_at,
+    g.id, g.name, g.emoji, g.color, g.time_zone, g.created_at, g.deleted_at,
     ${personColumns(sql, `o`, `owner`)},
     ${memberCount(sql)} AS member_count,
     (
@@ -180,6 +181,7 @@ function toGroupRow(row: GroupRowRaw): AdminGroupRow {
     name: row.name,
     emoji: row.emoji,
     color: row.color,
+    timeZone: row.timeZone,
     owner: toPerson(row.ownerId, row.ownerName, row.ownerEmail),
     memberCount: row.memberCount,
     noteCount: row.noteCount,
@@ -259,7 +261,7 @@ export async function listAdminGroups(
     WHERE ${where}
   `
   // The page is chosen first, reading only the columns its sort needs; the figures of a row (its
-  // owner's address, notes, plan) are read for the page's rows alone, not for every match (#462).
+  // owner's address, notes, plan) are read for the page's rows alone, not for every match.
   const keys = new Set(sortRules(filter.sort).map((rule) => rule.key))
   const rows = await sql<GroupRowRaw[]>`
     WITH page AS (
@@ -722,7 +724,7 @@ export async function transferOwnershipAsOperator(
 /**
  * One page of the group's files whose name holds `filter.query` (any case), newest first, those of
  * notes in the trash included, with how many match and the group's totals. Each with its name and
- * its note's title (#478). `null` when there is no such group.
+ * its note's title. `null` when there is no such group.
  */
 export async function readAdminGroupFiles(
   sql: postgres.Sql,
@@ -814,7 +816,9 @@ export async function findAdminGroupFile(
 /**
  * Writes the audit row of an operator opening (`open`) or downloading (`download`) one of the
  * group's files: the group's, marked as the operator's, naming the file. The group's own activity
- * log and its last activity leave these rows out.
+ * log and its last activity leave these rows out. A repeat of the same access to the same file by
+ * the same operator under the same `requestId` writes no second row (the partial unique index
+ * `idx_audit_events_file_access_once`); a `null` id never counts as a repeat.
  */
 export async function recordFileAccessAsOperator(
   sql: postgres.Sql,
@@ -822,15 +826,17 @@ export async function recordFileAccessAsOperator(
   groupId: string,
   file: Pick<AdminGroupStoredFile, "name" | "noteId">,
   access: "open" | "download",
+  requestId: string | null,
 ): Promise<void> {
   await writeAuditEvent(sql, {
     eventKind: access === `open` ? ADMIN_FILE_OPENED_KIND : ADMIN_FILE_DOWNLOADED_KIND,
     actorId: operator.id,
     groupId,
+    requestId: requestId ?? undefined,
     entityType: `note`,
     entityId: file.noteId,
     details: { name: file.name.slice(0, 100), [OPERATOR_DETAIL]: 1 },
-  })
+  }, { ignoreRepeat: true })
 }
 
 /**
@@ -872,7 +878,8 @@ export function adminGroupRows(sql: postgres.Sql) {
       groupId: string,
       file: Pick<AdminGroupStoredFile, "name" | "noteId">,
       access: "open" | "download",
-    ) => recordFileAccessAsOperator(sql, operator, groupId, file, access),
+      requestId: string | null,
+    ) => recordFileAccessAsOperator(sql, operator, groupId, file, access, requestId),
     removeFile: (operator: AdminGroupOperator, groupId: string, fileId: string) =>
       removeFileAsOperator(sql, operator, groupId, fileId),
   }

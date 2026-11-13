@@ -89,7 +89,7 @@ export const UPDATE_CHECK_GAP_MS = 60_000
 /**
  * The codec the socket uses, which calls `onUndecodable` for every frame it cannot read. A frame
  * this page cannot read means the server speaks a newer protocol: it was deployed after this page
- * loaded. The transport drops such a frame, so a call it answers would only time out (#458).
+ * loaded. The transport drops such a frame, so a call it answers would only time out.
  */
 export function versionAwareCodec(inner: MessageCodec, onUndecodable: () => void): MessageCodec {
   return {

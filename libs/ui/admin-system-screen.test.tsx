@@ -1,5 +1,5 @@
 /**
- * The System screen (#429), driven in a browser DOM (happy-dom): each card's state, and the queue
+ * The System screen, driven in a browser DOM (happy-dom): each card's state, and the queue
  * card's way to the Jobs module.
  */
 import { expect } from "@std/expect"
@@ -7,6 +7,8 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import { AdminHealth, type AdminSystemSnapshot } from "@domain/identity"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { AdminSystemScreen, type AdminSystemScreenProps } from "./admin-system-screen.tsx"
@@ -141,6 +143,17 @@ describe("system screen", () => {
     expect(find("[data-e2e=admin-system-summary]").textContent).toContain("Something is broken")
   })
 
+  it("writes the database's size in the operator's region format", async () => {
+    const russian = createFormatters({ locale: `ru-RU`, timeZone: `UTC` })
+    await mount(
+      <FormatContext.Provider value={russian}>
+        <AdminSystemScreen {...props([])} />
+      </FormatContext.Provider>,
+    )
+
+    expect(find("[data-e2e=admin-system-database]").textContent).toContain("9 МБ")
+  })
+
   it("shows the database's size, the newest migration and the build", async () => {
     await mount(<AdminSystemScreen {...props([])} />)
 
@@ -154,10 +167,19 @@ describe("system screen", () => {
     expect(build).not.toContain("abc1234def5678")
   })
 
-  it("caps the build card's fact list so each label sits beside its value", async () => {
+  it("gives the migrations card both columns, last, so a long migration name has room", async () => {
     await mount(<AdminSystemScreen {...props([])} />)
 
-    const list = find("[data-e2e=admin-system-build] [data-e2e=fact-list]")
+    const cards = [...document.querySelectorAll("[data-e2e=admin-system-cards] > [data-e2e]")]
+    const wide = cards.filter((card) => card.getAttribute("class")?.includes("lg:col-span-2"))
+    expect(wide.map((card) => card.getAttribute("data-e2e"))).toEqual(["admin-system-migrations"])
+    expect(cards.at(-1)?.getAttribute("data-e2e")).toBe("admin-system-migrations")
+  })
+
+  it("caps the migrations card's fact list so each label sits beside its value", async () => {
+    await mount(<AdminSystemScreen {...props([])} />)
+
+    const list = find("[data-e2e=admin-system-migrations] [data-e2e=fact-list]")
     expect(list.getAttribute("class")).toContain("max-w-xl")
   })
 

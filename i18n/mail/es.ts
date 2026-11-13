@@ -5,34 +5,41 @@ export default {
   "Mail.signIn": "Iniciar sesión",
   "Mail.openProfile": "Abrir tu perfil",
   "Mail.openGroup": "Abrir el grupo",
-  "PasswordResetMail.subject": "Restablece tu contraseña",
-  "PasswordResetMail.asked": "Alguien pidió restablecer la contraseña de tu cuenta en {host}.",
-  "PasswordResetMail.open": {
-    "one": "Abre este enlace en menos de {count} minuto para elegir una contraseña nueva.",
-    "many": "Abre este enlace en menos de {count} minutos para elegir una contraseña nueva.",
-    "other": "Abre este enlace en menos de {count} minutos para elegir una contraseña nueva.",
+  "Mail.dontShare": "No compartas este código. {host} nunca te lo pedirá.",
+  "PasswordResetMail.subject": "Tu código para restablecer tu contraseña",
+  "PasswordResetMail.asked":
+    "Alguien pidió restablecer la contraseña de tu cuenta en {host}. Escribe este código en la pestaña donde lo pediste:",
+  "PasswordResetMail.valid": {
+    "one":
+      "Solo sirve una vez y caduca en {count} minuto. Al usarlo, se cerrará tu sesión en todos tus dispositivos.",
+    "many":
+      "Solo sirve una vez y caduca en {count} minutos. Al usarlo, se cerrará tu sesión en todos tus dispositivos.",
+    "other":
+      "Solo sirve una vez y caduca en {count} minutos. Al usarlo, se cerrará tu sesión en todos tus dispositivos.",
   },
-  "PasswordResetMail.button": "Elegir una contraseña nueva",
-  "PasswordResetMail.once":
-    "El enlace solo funciona una vez. Al usarlo, se cerrará tu sesión en todos tus dispositivos.",
   "PasswordResetMail.ignore":
     "Si no lo pediste tú, ignora este correo. Tu contraseña seguirá siendo la misma.",
-  "SignInLinkMail.subject": "Tu enlace para iniciar sesión en {host}",
-  "SignInLinkMail.asked":
-    "Alguien pidió iniciar sesión en {host} con este correo electrónico el {when}.",
-  "SignInLinkMail.open": {
+  "PasswordResetNoticeMail.subject": "Restablece tu contraseña",
+  "PasswordResetNoticeMail.asked":
+    "El equipo de {host} te envía este correo para que puedas elegir una contraseña nueva para tu cuenta.",
+  "PasswordResetNoticeMail.how":
+    "Abre la página de abajo y escribe esta dirección de correo. Allí te enviaremos un código y podrás elegir la contraseña nueva.",
+  "PasswordResetNoticeMail.button": "Restablecer la contraseña",
+  "PasswordResetNoticeMail.ignore":
+    "Si no quieres una contraseña nueva, ignora este correo. Tu contraseña seguirá siendo la misma.",
+  "SignInCodeMail.subject": "Tu código para iniciar sesión en {host}",
+  "SignInCodeMail.asked":
+    "Alguien pidió iniciar sesión en {host} con este correo el {when}. Escribe este código en la pestaña donde lo pediste:",
+  "SignInCodeMail.valid": {
     "one":
-      "Abre este enlace en menos de {count} minuto para iniciar sesión. Si aún no hay una cuenta con este correo, se creará una.",
+      "Solo sirve una vez y caduca en {count} minuto. Si aún no hay una cuenta con este correo, se creará una.",
     "many":
-      "Abre este enlace en menos de {count} minutos para iniciar sesión. Si aún no hay una cuenta con este correo, se creará una.",
+      "Solo sirve una vez y caduca en {count} minutos. Si aún no hay una cuenta con este correo, se creará una.",
     "other":
-      "Abre este enlace en menos de {count} minutos para iniciar sesión. Si aún no hay una cuenta con este correo, se creará una.",
+      "Solo sirve una vez y caduca en {count} minutos. Si aún no hay una cuenta con este correo, se creará una.",
   },
-  "SignInLinkMail.button": "Iniciar sesión en {host}",
-  "SignInLinkMail.once":
-    "El enlace solo funciona una vez. Abre una página con un botón «Continuar» y no pasa nada hasta que lo pulses.",
-  "SignInLinkMail.ignore":
-    "Si no lo pediste tú, ignora este correo. Nadie puede iniciar sesión sin el enlace.",
+  "SignInCodeMail.ignore":
+    "Si no lo pediste tú, ignora este correo. Nadie puede iniciar sesión sin el código.",
   "EmailCodeMail.subject": "Tu código para confirmar tu correo electrónico",
   "EmailCodeMail.asked": "Escribe este código en {host} para confirmar tu correo electrónico.",
   "EmailCodeMail.valid": {

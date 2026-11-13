@@ -1,5 +1,5 @@
 /**
- * The newsletter module of the operator area (#428): its reads over the subscriber tables, the CSV
+ * The newsletter module of the operator area: its reads over the subscriber tables, the CSV
  * of a list, and the two actions on one address. Who may call them is the API's business
  * (`apps/api/routes/admin/newsletter.ts`); every audit row is the caller's too.
  *
@@ -52,7 +52,7 @@ function toRow(row: SubscriberDbRow): AdminSubscriberRow {
  * pending address once, with its newest confirm request. A request for an address that is already
  * listed is no pending address (the public form queues one for a listed address too, so the
  * answer tells nothing), and neither is a welcome mail's request. A confirmed address has its
- * stored language, a pending one its newest request's, and one with none the main language (#527).
+ * stored language, a pending one its newest request's, and one with none the main language.
  */
 function addresses(sql: postgres.Sql, list: SubscriberList) {
   return sql`

@@ -23,7 +23,8 @@ export interface BillingWebhookDependencies {
  * - A bad or missing signature, or one outside the time window: 400, nothing applied.
  * - A verified event this app does not handle, or a body it cannot read: 200, so the provider stops
  *   sending it.
- * - A verified event: applied once (a repeat changes nothing), then 200.
+ * - A verified event: applied once (a repeat changes nothing), then 200. One whose subscription bills
+ *   a price no plan maps to changes nothing and is logged, also 200.
  * - A failure while applying: 500, so the provider retries; nothing of it was kept.
  */
 export function createBillingWebhookRoute(
@@ -51,6 +52,12 @@ export function createBillingWebhookRoute(
       const outcome = await dependencies.applyEvent(parsed.event)
       if (outcome === "ignored" && "subscription" in parsed.event) {
         dependencies.log("warn: billing event names no group", parsed.event.id)
+      }
+      if (outcome === "unknown_price" && "subscription" in parsed.event) {
+        dependencies.log("warn: billing event bills a price no plan maps to", {
+          eventId: parsed.event.id,
+          priceId: parsed.event.subscription.priceId,
+        })
       }
       return c.json({ received: true, outcome })
     } catch (error) {

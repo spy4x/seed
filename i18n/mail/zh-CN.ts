@@ -5,24 +5,28 @@ export default {
   "Mail.signIn": "登录",
   "Mail.openProfile": "打开个人资料",
   "Mail.openGroup": "打开群组",
-  "PasswordResetMail.subject": "重置你的密码",
-  "PasswordResetMail.asked": "有人请求重置你在 {host} 的账号密码。",
-  "PasswordResetMail.open": {
-    "other": "请在 {count} 分钟内打开此链接，设置新密码。",
+  "Mail.dontShare": "不要把这个验证码告诉任何人。{host} 绝不会向你索要它。",
+  "PasswordResetMail.subject": "你的重置密码验证码",
+  "PasswordResetMail.asked":
+    "有人请求重置你在 {host} 的账号密码。请在发起请求的标签页中输入这个验证码：",
+  "PasswordResetMail.valid": {
+    "other": "验证码只能使用一次，{count} 分钟内有效。使用后，你会在所有设备上退出登录。",
   },
-  "PasswordResetMail.button": "设置新密码",
-  "PasswordResetMail.once": "此链接只能使用一次。使用后，你会在所有设备上退出登录。",
   "PasswordResetMail.ignore": "如果这不是你本人的操作，请忽略这封邮件，你的密码不会改变。",
-  "SignInLinkMail.subject": "你的 {host} 登录链接",
-  "SignInLinkMail.asked": "有人于{when}请求用这个邮箱登录 {host}。",
-  "SignInLinkMail.open": {
-    "other": "请在 {count} 分钟内打开此链接完成登录。如果这个邮箱还没有账号，会自动为你创建一个。",
+  "PasswordResetNoticeMail.subject": "重置你的密码",
+  "PasswordResetNoticeMail.asked": "这封邮件由 {host} 团队发送，方便你为账号设置新密码。",
+  "PasswordResetNoticeMail.how":
+    "打开下方页面，输入这个邮箱地址。我们会给你发送验证码，然后你就可以设置新密码。",
+  "PasswordResetNoticeMail.button": "重置密码",
+  "PasswordResetNoticeMail.ignore": "如果你不需要新密码，请忽略这封邮件，你的密码不会改变。",
+  "SignInCodeMail.subject": "你的 {host} 登录验证码",
+  "SignInCodeMail.asked":
+    "有人于{when}请求用这个邮箱登录 {host}。请在发起请求的标签页中输入这个验证码：",
+  "SignInCodeMail.valid": {
+    "other": "验证码只能使用一次，{count} 分钟内有效。如果这个邮箱还没有账号，会为你创建一个。",
   },
-  "SignInLinkMail.button": "登录 {host}",
-  "SignInLinkMail.once":
-    "此链接只能使用一次。它会打开一个带有“继续”按钮的页面，在你点击之前不会进行任何操作。",
-  "SignInLinkMail.ignore":
-    "如果这不是你本人的操作，请忽略这封邮件。没有这个链接，任何人都无法登录。",
+  "SignInCodeMail.ignore":
+    "如果这不是你本人的操作，请忽略这封邮件。没有这个验证码，任何人都无法登录。",
   "EmailCodeMail.subject": "你的邮箱验证码",
   "EmailCodeMail.asked": "请在 {host} 输入此验证码，以验证你的邮箱。",
   "EmailCodeMail.valid": {

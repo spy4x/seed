@@ -13,7 +13,7 @@ import { sessionState, signOutChosen } from "./session.ts"
 import { addDays, isoDateInTz, resolveWallClock } from "@spy4x/time/tz"
 
 /**
- * Guest accounts (#224) in the SPA: starting one from `/try`, the choice after a sign-in method
+ * Guest accounts in the SPA: starting one from `/try`, the choice after a sign-in method
  * turned out to be another account's, deleting a guest account, and the banner's "hide" on this
  * browser. Keeping an account goes through the sign-up and sign-in method paths, which the API
  * ties to the guest's session.

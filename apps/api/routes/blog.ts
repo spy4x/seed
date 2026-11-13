@@ -32,7 +32,7 @@ export interface PublicBlogReads {
 }
 
 /**
- * The public blog (#395), mounted at `/api/blog` for the public website, which renders every page
+ * The public blog, mounted at `/api/blog` for the public website, which renders every page
  * on its server. No session: everything here is public, and only live posts (published, their
  * time passed) are ever answered. A draft, a scheduled post and an unpublished one answer 404 like
  * an address that never existed.
@@ -40,12 +40,12 @@ export interface PublicBlogReads {
  * - `GET /posts?topic=` lists live posts, newest first.
  * - `GET /posts/:slug` answers one post, rendered, and up to three to read next. A slug a live post
  *   moved away from with "Change URL" answers `{ moved: { language, slug } }`, the post's current
- *   address, for the website to redirect to (#418); it is read only when no live post has the slug.
+ *   address, for the website to redirect to; it is read only when no live post has the slug.
  * - `GET /topics` lists the topics of live posts with their counts.
  * - `GET /feed` answers the newest posts with their full HTML, for the RSS feed.
  *
  * `limit` stands in front of every route: production mounts the public read limit
- * (`createPublicReadRateLimit`), per client IP (#416).
+ * (`createPublicReadRateLimit`), per client IP.
  */
 export function createPublicBlogRoute(reads: PublicBlogReads, limit?: MiddlewareHandler): Hono {
   const app = new Hono()

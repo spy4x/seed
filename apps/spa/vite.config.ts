@@ -15,6 +15,7 @@ import {
 } from "@spy4x/preact-theme/vite"
 import { nginxAddHeaders, securityHeaderList } from "@spy4x/server/http/security-headers"
 import { PROVIDER_AVATAR_ORIGINS } from "@domain/identity"
+import { PRODUCT_NAME } from "@ui/brand.ts"
 
 const SW_ENTRY = fromFileUrl(new URL("./src/sw.ts", import.meta.url))
 const BUILT_PAGE = fromFileUrl(new URL("./dist/index.html", import.meta.url))
@@ -32,7 +33,7 @@ const ERROR_TRACKER_VARIABLE = "$csp_error_tracker"
  *
  * - the error tracker the reporter posts to, when the deployment has one;
  * - the Google and GitHub image hosts, for the provider's picture of the person on "Create a new
- *   account?" (#142). The API drops a picture from any other host before it reaches the page.
+ *   account?". The API drops a picture from any other host before it reaches the page.
  *
  * The API and its WebSocket are on the SPA's own origin (the proxy routes `/api` and `/ws`), so
  * `'self'` covers them, as it covers the service worker, the web manifest and the fonts
@@ -81,9 +82,8 @@ export default defineConfig({
     webManifest({
       writeTextFile: Deno.writeTextFile,
       manifest: {
-        // Seed's own site: see docs/start-a-product.md
-        name: `Seed`,
-        short_name: `Seed`,
+        name: PRODUCT_NAME,
+        short_name: PRODUCT_NAME,
         // The light palette's canvas, as index.html's light theme-color: a manifest holds one.
         theme_color: `#f3f4f6`,
         background_color: `#f3f4f6`,
@@ -151,7 +151,7 @@ export default defineConfig({
       find: /^@ui\//,
       replacement: fromFileUrl(new URL("../../libs/ui/", import.meta.url)),
     }, {
-      // The catalogs (#216), `i18n/<namespace>/<language>.ts`, resolved like `@ui/`.
+      // The catalogs, `i18n/<namespace>/<language>.ts`, resolved like `@ui/`.
       find: /^@i18n\//,
       replacement: fromFileUrl(new URL("../../i18n/", import.meta.url)),
     }],

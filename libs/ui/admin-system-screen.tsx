@@ -19,13 +19,11 @@ import {
   AdminHealth,
   type AdminSystemSnapshot,
 } from "@domain/identity"
-import { When } from "@spy4x/preact-ui/format"
+import { useFormat, When } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
 import { ADMIN_JOB_PATHS } from "./admin-jobs-screen.tsx"
 import type { Navigate } from "./progressive.tsx"
-
-const NUMBER = new Intl.NumberFormat("en")
 
 /**
  * Each state's word and colour. The word always shows, so the colour is never the only sign.
@@ -72,9 +70,9 @@ export interface AdminSystemScreenProps {
 }
 
 /**
- * The System page (#429): the health of the stack as status cards with an OK, Warning or Error
+ * The System page: the health of the stack as status cards with an OK, Warning or Error
  * badge (database, cache, job queue, backup, migrations, build). The queue's card links to the Jobs
- * module (#394), at its failed runs while any failed. Names and states only: no setting, address
+ * module, at its failed runs while any failed. Names and states only: no setting, address
  * of a service or secret reaches this page.
  */
 export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
@@ -137,6 +135,7 @@ function SystemBody(
 ): JSX.Element {
   const { database, cache, fileStore, queue, backup, migrations, build } = snapshot
   const t = useAdminText()
+  const format = useFormat()
   const summary = SUMMARY[snapshot.health] ?? SUMMARY[AdminHealth.ERROR]
   const reachable = (ms: number, ok: boolean) =>
     ok ? t.t(`AdminSystem.reachableIn`, { ms }) : t.t(`AdminSystem.noAnswer`)
@@ -147,8 +146,9 @@ function SystemBody(
         <Notice tone={summary.tone}>{t.t(summary.key)}</Notice>
       </div>
       {
-        /* Two columns at most: a third left each card so narrow that its labels wrapped and the
-          newest migration's name broke mid-word at 1440 px (#453). */
+        /* Two columns at most: a third left each card so narrow that its labels wrapped. The
+          migrations card spans both, last, so a long migration name stays on one line at 1440 px;
+          six half cards before it leave no gap. */
       }
       <section
         aria-label={t.t(`AdminSystem.services`)}
@@ -164,7 +164,9 @@ function SystemBody(
             value: reachable(database.latencyMs, database.reachable),
           }, {
             label: t.t(`AdminSystem.size`),
-            value: database.sizeBytes === null ? unknown : formatBytes(database.sizeBytes),
+            value: database.sizeBytes === null
+              ? unknown
+              : formatBytes(database.sizeBytes, format.locale),
           }, {
             label: t.t(`AdminSystem.version`),
             value: database.version ? `Postgres ${database.version}` : unknown,
@@ -211,7 +213,7 @@ function SystemBody(
               label: t.t(`AdminSystem.dueNow`),
               value: (
                 <>
-                  {NUMBER.format(queue.due)}
+                  {format.number(queue.due)}
                   {queue.oldestDueAt && (
                     <span class="ms-1 text-muted">
                       <Rich
@@ -223,12 +225,12 @@ function SystemBody(
                 </>
               ),
             },
-            { label: t.t(`AdminSystem.running`), value: NUMBER.format(queue.running) },
-            { label: t.t(`AdminSystem.retrying`), value: NUMBER.format(queue.retrying) },
-            { label: t.t(`AdminSystem.scheduled`), value: NUMBER.format(queue.scheduled) },
+            { label: t.t(`AdminSystem.running`), value: format.number(queue.running) },
+            { label: t.t(`AdminSystem.retrying`), value: format.number(queue.retrying) },
+            { label: t.t(`AdminSystem.scheduled`), value: format.number(queue.scheduled) },
             {
               label: t.t(`AdminSystem.failedDays`, { count: ADMIN_FAILED_JOBS_DAYS }),
-              value: NUMBER.format(queue.failed),
+              value: format.number(queue.failed),
             },
           ]}
         />
@@ -248,27 +250,8 @@ function SystemBody(
           }]}
         />
         <StatusCard
-          title={t.t(`AdminSystem.migrations`)}
-          health={migrations.health}
-          dataE2E="admin-system-migrations"
-          facts={[{ label: t.t(`AdminSystem.applied`), value: NUMBER.format(migrations.applied) }, {
-            label: t.t(`AdminSystem.newest`),
-            value: (
-              <span class="font-mono text-xs">
-                {migrations.latest ?? t.t(`AdminSystem.none`)}
-              </span>
-            ),
-          }, {
-            label: t.t(`AdminSystem.appliedAt`),
-            value: migrations.latestAt
-              ? <When at={migrations.latestAt} />
-              : t.t(`AdminSystem.never`),
-          }]}
-        />
-        <StatusCard
           title={t.t(`AdminSystem.build`)}
           dataE2E="admin-system-build"
-          class="lg:col-span-2"
           facts={[
             {
               label: t.t(`AdminSystem.version`),
@@ -288,6 +271,25 @@ function SystemBody(
               value: <When at={build.startedAt} />,
             },
           ]}
+        />
+        <StatusCard
+          title={t.t(`AdminSystem.migrations`)}
+          health={migrations.health}
+          dataE2E="admin-system-migrations"
+          class="lg:col-span-2"
+          facts={[{ label: t.t(`AdminSystem.applied`), value: format.number(migrations.applied) }, {
+            label: t.t(`AdminSystem.newest`),
+            value: (
+              <span class="font-mono text-xs">
+                {migrations.latest ?? t.t(`AdminSystem.none`)}
+              </span>
+            ),
+          }, {
+            label: t.t(`AdminSystem.appliedAt`),
+            value: migrations.latestAt
+              ? <When at={migrations.latestAt} />
+              : t.t(`AdminSystem.never`),
+          }]}
         />
       </section>
     </>
@@ -323,7 +325,7 @@ function StatusCard(
       <CardBody class="flex flex-col gap-3">
         {
           /* The rows pad themselves; the card already does at its edges. The width cap keeps each
-            label beside its value on a card that spans the page, such as the build's (#407). */
+            label beside its value on a card that spans the page, such as the migrations'. */
         }
         <FactList facts={facts} class="-my-3 max-w-xl" />
         {hint && <p class="text-xs text-muted">{hint}</p>}

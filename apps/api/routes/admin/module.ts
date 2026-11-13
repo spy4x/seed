@@ -1,4 +1,5 @@
 import type { FileStore, ServerFiles } from "@server/files/files.ts"
+import type { NotesSetup } from "@server/notes/setup.ts"
 import type { CatalogSetup } from "@server/catalog/setup.ts"
 import type { WebsiteStatsContext } from "./stats.ts"
 import type { Hono, MiddlewareHandler } from "hono"
@@ -26,6 +27,8 @@ export interface AdminModuleContext {
   subscribers: SubscribersSetup | null
   /** The normal per-user budget the session routes spend too. Every module route spends it. */
   limit: MiddlewareHandler<APIContext>
+  /** The groups module's image tiles' own per-user budget (`createAuthRateLimits().thumbnail`). */
+  thumbnailLimit: MiddlewareHandler<APIContext>
   /**
    * Spends one of an address's reset links, from the budget "Forgot password" spends too
    * (`createAuthRateLimits().resetByAddress`). Throws when its store fails.
@@ -37,32 +40,39 @@ export interface AdminModuleContext {
    */
   emit(event: UserSignedOutEvent | PushDevicesUpdatedEvent | UserProfileUpdatedEvent): void
   now(): Date
-  /** The secret that signs the audit log's page cursors (#429), the one note cursors use. */
+  /** The secret that signs the audit log's page cursors, the one note cursors use. */
   cursorSecret: string
-  /** Whether the cache (Valkey) answers, for the System page (#429). */
+  /** Whether the cache (Valkey) answers, for the System page. */
   cacheConnected(): Promise<boolean>
-  /** Whether the file store answers, for the System page (#392). */
+  /** Whether the file store answers, for the System page. */
   fileStoreReachable(): Promise<boolean>
   /** Reads a small file from the file store (`FileStore.read`). */
   readFile: FileStore["read"]
-  /** The release tag and commit the API was built from, or `null` each for a local build (#429). */
+  /** The release tag and commit the API was built from, or `null` each for a local build. */
   build: { version: string | null; commit: string | null }
   /**
    * The public website's address from `MPA_DOMAIN` (`readSiteUrl`), or `null` while it is not
    * deployed. Read on its own, so it holds while the newsletter is off.
    */
   siteUrl: string | null
-  /** The payment provider for the billing module (#196); `provider` is `null` while billing is off. */
+  /**
+   * When the LinkedIn sign-in expires (`LINKEDIN_TOKEN_EXPIRES_AT`, `readLinkedinExpiry`), or
+   * `null` when unset. Only the date: the token never reaches the API. Left out, it is `null`.
+   */
+  linkedinExpiresAt?: string | null
+  /** The payment provider for the billing module; `provider` is `null` while billing is off. */
   billing: {
     provider: Required<BillingProvider> | null
     graceDays: number
     dashboardUrl: string | null
   }
-  /** Whether the catalog is on (`CATALOG=true`), with its currency and languages (#466). */
+  /** Whether the catalog is on (`CATALOG=true`), with its currency and languages. */
   catalog: CatalogSetup
-  /** The file store's server-side writes, for files that pass through the API (#466). */
+  /** Whether the notes are on (`readNotesSetup`); left out, they are. */
+  notes?: NotesSetup
+  /** The file store's server-side writes, for files that pass through the API. */
   files: Pick<ServerFiles, `put` | `read` | `delete`>
-  /** Stats' Umami settings, or which are missing, and the website's item address (#485). */
+  /** Stats' Umami settings, or which are missing, and the website's item address. */
   websiteStats: WebsiteStatsContext
 }
 

@@ -2,7 +2,7 @@
 // A feature page exists in every language the site serves: its words are keys of the `site`
 // catalog, named in `features-data.tsx`.
 import type { ComponentChildren, JSX } from "preact"
-import type { FreshContext } from "fresh"
+import type { Context } from "@spy4x/preact-server"
 import type { Language } from "@domain/identity"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { IconArrowRight, IconArrowUpRight } from "@spy4x/preact-icons"
@@ -78,15 +78,15 @@ export const handler = define.handlers({
           jsonLd: pageJsonLd(t, ctx.state.webAppOrigin, page, language),
         }}
       >
-        <FeaturePageBody page={page} demo={demoAddress(ctx.state.spaOrigin, page)} />
+        <FeaturePageBody page={page} demo={demoAddress(ctx.state, page)} />
       </SiteFrame>,
     )
   },
 })
 
 /** The demo's `/try`, opening on the screen where the feature shows when the page names one. */
-function demoAddress(spaOrigin: string, page: FeaturePage): string {
-  const start = spaLinks(spaOrigin).try
+function demoAddress(state: Parameters<typeof spaLinks>[0], page: FeaturePage): string {
+  const start = spaLinks(state).try
   return page.demo ? `${start}?${new URLSearchParams({ next: page.demo })}` : start
 }
 
@@ -325,7 +325,7 @@ function OtherFeatures({ current }: { current: string }): JSX.Element {
 }
 
 /** The 404 of an address with no feature page, and the way to every feature. */
-function renderNotFound(ctx: FreshContext<State>): Response | Promise<Response> {
+function renderNotFound(ctx: Context<State>): Response | Promise<Response> {
   const t = siteTranslator(ctx.state.language)
   return ctx.render(
     <SiteFrame

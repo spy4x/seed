@@ -11,6 +11,7 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { Input, Select, Textarea } from "@spy4x/preact-ui/input"
+import { Link } from "@spy4x/preact-ui/link"
 import { languageName } from "@spy4x/preact-ui/language-picker"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { ListField } from "@spy4x/preact-ui/list-field"
@@ -27,6 +28,8 @@ import {
   BLOG_COVER_ALT_MAX_LENGTH,
   BLOG_COVER_URL_MAX_LENGTH,
   BLOG_DESCRIPTION_MAX_LENGTH,
+  BLOG_INTRO_MAX_LENGTH,
+  BLOG_RELATED_FEATURE_MAX_LENGTH,
   BLOG_SEO_TITLE_MAX_LENGTH,
   BLOG_SLUG_MAX_LENGTH,
   BLOG_SLUG_PATTERN,
@@ -40,8 +43,11 @@ import {
   blogPostPath,
   type BlogPostStatus,
   type BlogProblem,
+  type BlogRevision,
+  type BlogSharingCounts,
   isHttpsUrl,
 } from "@domain/blog"
+import type { BlogHistoryState } from "./admin-blog-history.tsx"
 import { DEFAULT_LANGUAGE, type Language, LANGUAGES } from "@domain/identity"
 import { ADMIN_BLOG_PATHS, BlogStatusBadge } from "./admin-blog-list.tsx"
 import { Dialogs } from "./admin-blog-dialogs.tsx"
@@ -66,6 +72,8 @@ export interface BlogDraft {
   description: string
   seoTitle: string
   tldr: string[]
+  /** The sentences that open the post's newsletter issue and cross-posts. */
+  intro: string
   topic: string
   coverUrl: string
   coverAlt: string
@@ -75,25 +83,32 @@ export interface BlogDraft {
   translationOf: string
   /** The page the author's name links to on the post, or `` for none. */
   authorUrl: string
+  /** The slug of the website's feature page the post links, or `` for none. */
+  relatedFeature: string
 }
 
 /** The editor's messages: one per field, `at` for the publish time, `form` for the rest. */
 export type BlogFormErrors = Partial<Record<BlogField | `at` | `form`, string>>
 
-/** The fields in the order the page shows them, so focus goes to the first one in error. */
+/**
+ * The fields in the order the page shows them, the settings in their four groups, so focus
+ * goes to the first one in error.
+ */
 export const BLOG_FIELD_ORDER: readonly BlogField[] = [
   `title`,
   `bodyMd`,
   `slug`,
+  `language`,
+  `translationOf`,
+  `topic`,
   `description`,
   `seoTitle`,
   `tldr`,
-  `topic`,
-  `language`,
-  `translationOf`,
-  `authorUrl`,
+  `intro`,
   `coverUrl`,
   `coverAlt`,
+  `relatedFeature`,
+  `authorUrl`,
 ]
 
 /** The fields that sit in the settings column, which a phone folds away. */
@@ -102,9 +117,11 @@ const SETTINGS_FIELDS: ReadonlySet<BlogField> = new Set([
   `description`,
   `seoTitle`,
   `tldr`,
+  `intro`,
   `topic`,
   `language`,
   `translationOf`,
+  `relatedFeature`,
   `authorUrl`,
   `coverUrl`,
   `coverAlt`,
@@ -123,6 +140,7 @@ export function emptyBlogDraft(): BlogDraft {
     description: ``,
     seoTitle: ``,
     tldr: [],
+    intro: ``,
     topic: ``,
     coverUrl: ``,
     coverAlt: ``,
@@ -130,17 +148,38 @@ export function emptyBlogDraft(): BlogDraft {
     language: DEFAULT_LANGUAGE,
     translationOf: ``,
     authorUrl: ``,
+    relatedFeature: ``,
   }
 }
 
-/** A saved post's fields, as the editor shows them. */
-export function blogDraftOf(post: BlogPost): BlogDraft {
+/** The fields a post and its earlier versions share: what the editor edits. */
+export type BlogDraftSource = Pick<
+  BlogPost,
+  | `title`
+  | `slug`
+  | `description`
+  | `seoTitle`
+  | `tldr`
+  | `topic`
+  | `coverUrl`
+  | `coverAlt`
+  | `intro`
+  | `relatedFeature`
+  | `bodyMd`
+  | `language`
+  | `translationOf`
+  | `authorUrl`
+>
+
+/** A saved post's fields, or an earlier version's, as the editor shows them. */
+export function blogDraftOf(post: BlogDraftSource): BlogDraft {
   return {
     title: post.title,
     slug: post.slug,
     description: post.description,
     seoTitle: post.seoTitle ?? ``,
     tldr: [...post.tldr],
+    intro: post.intro ?? ``,
     topic: post.topic ?? ``,
     coverUrl: post.coverUrl ?? ``,
     coverAlt: post.coverAlt ?? ``,
@@ -148,6 +187,7 @@ export function blogDraftOf(post: BlogPost): BlogDraft {
     language: post.language,
     translationOf: post.translationOf ?? ``,
     authorUrl: post.authorUrl ?? ``,
+    relatedFeature: post.relatedFeature ?? ``,
   }
 }
 
@@ -242,6 +282,9 @@ export interface BlogOriginal {
   id: string
   title: string
   language: Language
+  /** The original's cover, which a translation of it takes. */
+  coverUrl: string | null
+  coverAlt: string | null
 }
 
 /** Which dialog is open. `publish-now` and `reschedule` are the publish dialog on a scheduled post. */
@@ -253,6 +296,7 @@ export type BlogDialog =
   | `unpublish`
   | `change-url`
   | `delete`
+  | `history`
 
 /** What the publish dialog sends: now (`at` is `null`) or at a time, and the list to email. */
 export interface BlogPublishChoice {
@@ -282,6 +326,8 @@ export interface BlogPreview {
 export interface AdminBlogEditorScreenProps {
   /** The post as saved, or `null` on the create page. */
   post: BlogPost | null
+  /** A live post's sharing counts, for the publishing facts; left out until they are read. */
+  sharing?: BlogSharingCounts | null
   /** The post is still being read. */
   loading: boolean
   /** No post has this id. */
@@ -320,7 +366,7 @@ export interface AdminBlogEditorScreenProps {
   /** Renders the body for the Preview tab. Called when the tab opens. */
   onPreview: () => void
   /**
-   * The tags in the body that readers will not see, by line (#620), from the last check that
+   * The tags in the body that readers will not see, by line, from the last check that
    * worked. The Problems panel lists them and the publish dialog warns about them.
    */
   problems: readonly BlogProblem[]
@@ -337,13 +383,21 @@ export interface AdminBlogEditorScreenProps {
   onUnpublish: () => void
   onChangeUrl: (slug: string) => void
   onDelete: () => void
+  /** The History dialog's list and the version picked. */
+  history: BlogHistoryState
+  /** Picks a version in History, which reads it. */
+  onSelectRevision: (id: string) => void
+  /** Puts a version's fields in the editor as unsaved changes and closes History. */
+  onRestoreRevision: (revision: BlogRevision) => void
+  /** Reads History's list, or the picked version, again. */
+  onRetryHistory: () => void
   /** The time a schedule must lie after. */
   now: Date
   navigate?: Navigate
 }
 
 /**
- * One post's editor (#396): the title and the Markdown body with a Write and a Preview tab in the
+ * One post's editor: the title and the Markdown body with a Write and a Preview tab in the
  * writing column, and the post's settings in a 20rem column beside it from `lg` up (folded under
  * "Post settings" on a phone). The header names the status and whether the text is saved, and
  * holds the actions the status allows: a draft is saved and published; a scheduled or published
@@ -514,6 +568,12 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
       root.current?.querySelector<HTMLElement>(`#${BLOG_PROBLEMS_ID} button`)?.focus()
     )
   }
+  // History's "Restore this version": the fields change, the dialog closes, and focus moves to the
+  // title, the first field a version holds, so the keyboard carries on from the top of the form.
+  const restoreRevision = (revision: BlogRevision) => {
+    props.onRestoreRevision(revision)
+    setTimeout(() => root.current?.querySelector<HTMLElement>(`#blog-title`)?.focus())
+  }
 
   const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
   const openPreview = (next: string) => {
@@ -603,6 +663,12 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
           </DropdownItem>
         </>
       )}
+      <DropdownItem
+        onClick={() => props.onOpenDialog(`history`)}
+        dataE2E="admin-blog-history-open"
+      >
+        {t.t(`AdminBlogEditor.history`)}
+      </DropdownItem>
       <DropdownItem
         danger
         onClick={() => props.onOpenDialog(`delete`)}
@@ -744,7 +810,7 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
           <div class="sm:hidden">{saveButton(`min-h-11 w-full`)}</div>
         </Stack>
       </ScreenForm>
-      <Dialogs {...props} onGoToProblems={goToProblems} />
+      <Dialogs {...props} onGoToProblems={goToProblems} onRestore={restoreRevision} />
     </>
   )
 }
@@ -831,9 +897,9 @@ function Counter({ length, shown, id }: { length: number; shown: number; id: str
 }
 
 /**
- * The settings column: the address, what search results and previews show, the key points, the
- * topic, the language, the author's link and the cover, then where publishing stands. Below `lg`
- * it folds under "Post settings".
+ * The settings column: where publishing stands, then four groups in the order of the design:
+ * the address and language, the summary, the cover and the links. Below `lg` it folds
+ * under "Post settings".
  */
 function Settings(
   props: AdminBlogEditorScreenProps & { locked: boolean; open: boolean; onToggle: () => void },
@@ -844,8 +910,7 @@ function Settings(
   const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
   const description = Array.from(value.description).length
   const seo = Array.from(value.seoTitle).length
-  const cover = value.coverUrl.trim()
-  // A published post's address carries its language: where a new language moves it (#530).
+  // A published post's address carries its language: where a new language moves it.
   const movedTo = locked && post && value.language !== post.language
     ? blogPostPath({ language: value.language, slug: post.slug })
     : null
@@ -870,220 +935,333 @@ function Settings(
       </button>
       <div
         id="blog-settings"
-        class={`${props.open ? `flex` : `hidden`} flex-col gap-4 lg:flex`}
+        class={`${props.open ? `flex` : `hidden`} flex-col gap-8 lg:flex`}
         data-e2e="admin-blog-settings"
       >
         {post && <PublishingFacts {...props} />}
-        <Field
-          id={blogFieldId(`slug`)}
-          label={t.t(`AdminBlogEditor.slug`)}
-          hint={locked ? t.t(`AdminBlogEditor.slugLocked`) : value.slug
-            ? (
-              <Rich
-                parts={t.parts(`AdminBlogEditor.slugHint`, {
-                  path: blogPostPath({ language: value.language, slug: value.slug }),
-                })}
-                tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
-              />
-            )
-            : t.t(`AdminBlogEditor.slugHintEmpty`)}
-          error={message(`slug`)}
+        <SettingsGroup
+          title={t.t(`AdminBlogEditor.groupAddress`)}
+          data-e2e="admin-blog-group-address"
         >
-          <Input
-            class="font-mono text-sm"
-            data-e2e="admin-blog-slug"
-            maxLength={BLOG_SLUG_MAX_LENGTH}
-            autocomplete="off"
-            spellcheck={false}
-            readOnly={locked}
-            value={value.slug}
-            onInput={(e) => edit({ slug: e.currentTarget.value })}
-          />
-        </Field>
-        <Field
-          id={blogFieldId(`description`)}
-          label={t.t(`AdminBlogEditor.description`)}
-          hint={
-            <span class="flex justify-between gap-2">
-              <span>{t.t(`AdminBlogEditor.descriptionHint`)}</span>
-              <Counter length={description} shown={BLOG_DESCRIPTION_SHOWN} id="blog-desc-count" />
-            </span>
-          }
-          error={message(`description`)}
-        >
-          <Textarea
-            rows={3}
-            data-e2e="admin-blog-description"
-            maxLength={BLOG_DESCRIPTION_MAX_LENGTH}
-            value={value.description}
-            onInput={(e) => edit({ description: e.currentTarget.value })}
-          />
-        </Field>
-        <Field
-          id={blogFieldId(`seoTitle`)}
-          label={t.t(`AdminBlogEditor.seoTitle`)}
-          hint={
-            <span class="flex justify-between gap-2">
-              <span>{t.t(`AdminBlogEditor.seoTitleHint`)}</span>
-              <Counter length={seo} shown={BLOG_SEO_TITLE_SHOWN} id="blog-seo-count" />
-            </span>
-          }
-          error={message(`seoTitle`)}
-        >
-          <Input
-            data-e2e="admin-blog-seo-title"
-            maxLength={BLOG_SEO_TITLE_MAX_LENGTH}
-            autocomplete="off"
-            value={value.seoTitle}
-            onInput={(e) => edit({ seoTitle: e.currentTarget.value })}
-          />
-        </Field>
-        <ListField
-          id={blogFieldId(`tldr`)}
-          label={t.t(`AdminBlogEditor.keyPoints`)}
-          hint={t.t(`AdminBlogEditor.keyPointsHint`)}
-          value={value.tldr}
-          onChange={(tldr) => edit({ tldr })}
-          max={BLOG_TLDR_MAX}
-          maxLength={BLOG_TLDR_ITEM_MAX_LENGTH}
-          error={message(`tldr`)}
-          labels={{
-            item: (n) => t.t(`AdminBlogEditor.keyPoint`, { n }),
-            remove: (n) => t.t(`AdminBlogEditor.removeKeyPoint`, { n }),
-            add: t.t(`AdminBlogEditor.addPoint`),
-          }}
-        />
-        <Field
-          id={blogFieldId(`topic`)}
-          label={t.t(`AdminBlogEditor.topic`)}
-          hint={t.t(`AdminBlogEditor.topicHint`)}
-          error={message(`topic`)}
-        >
-          <Input
-            data-e2e="admin-blog-topic"
-            list="blog-topics"
-            maxLength={BLOG_TOPIC_MAX_LENGTH}
-            autocomplete="off"
-            value={value.topic}
-            onInput={(e) => edit({ topic: e.currentTarget.value })}
-          />
-        </Field>
-        <datalist id="blog-topics">
-          {props.topics.map((topic) => <option key={topic} value={topic} />)}
-        </datalist>
-        <Field
-          id={blogFieldId(`language`)}
-          label={t.t(`AdminBlogEditor.language`)}
-          hint={movedTo !== null
-            ? (
-              <span data-e2e="admin-blog-language-moves">
+          <Field
+            id={blogFieldId(`slug`)}
+            label={t.t(`AdminBlogEditor.slug`)}
+            hint={locked ? t.t(`AdminBlogEditor.slugLocked`) : value.slug
+              ? (
                 <Rich
-                  parts={t.parts(`AdminBlogEditor.languageMoves`, { path: movedTo })}
+                  parts={t.parts(`AdminBlogEditor.slugHint`, {
+                    path: blogPostPath({ language: value.language, slug: value.slug }),
+                  })}
                   tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
                 />
+              )
+              : t.t(`AdminBlogEditor.slugHintEmpty`)}
+            error={message(`slug`)}
+          >
+            <Input
+              class="font-mono text-sm"
+              data-e2e="admin-blog-slug"
+              maxLength={BLOG_SLUG_MAX_LENGTH}
+              autocomplete="off"
+              spellcheck={false}
+              readOnly={locked}
+              value={value.slug}
+              onInput={(e) => edit({ slug: e.currentTarget.value })}
+            />
+          </Field>
+          <Field
+            id={blogFieldId(`language`)}
+            label={t.t(`AdminBlogEditor.language`)}
+            hint={movedTo !== null
+              ? (
+                <span data-e2e="admin-blog-language-moves">
+                  <Rich
+                    parts={t.parts(`AdminBlogEditor.languageMoves`, { path: movedTo })}
+                    tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
+                  />
+                </span>
+              )
+              : t.t(`AdminBlogEditor.languageHint`)}
+            error={message(`language`)}
+          >
+            <Select
+              data-e2e="admin-blog-language"
+              value={value.language}
+              options={LANGUAGES.map((language) => ({
+                value: language,
+                label: languageName(language),
+              }))}
+              onChange={(e) => edit({ language: e.currentTarget.value as Language })}
+            />
+          </Field>
+          <Field
+            id={blogFieldId(`translationOf`)}
+            label={t.t(`AdminBlogEditor.translationOf`)}
+            hint={t.t(`AdminBlogEditor.translationOfHint`)}
+            error={message(`translationOf`)}
+          >
+            <Select
+              data-e2e="admin-blog-translation-of"
+              value={value.translationOf}
+              options={[
+                { value: ``, label: t.t(`AdminBlogEditor.translationNone`) },
+                ...props.originals
+                  .filter((original) =>
+                    original.language !== value.language || original.id === value.translationOf
+                  )
+                  .map((original) => ({
+                    value: original.id,
+                    label: `${original.title} (${languageName(original.language)})`,
+                  })),
+              ]}
+              onChange={(e) => edit(translationPatch(e.currentTarget.value, props.originals))}
+            />
+          </Field>
+          <Field
+            id={blogFieldId(`topic`)}
+            label={t.t(`AdminBlogEditor.topic`)}
+            hint={t.t(`AdminBlogEditor.topicHint`)}
+            error={message(`topic`)}
+          >
+            <Input
+              data-e2e="admin-blog-topic"
+              list="blog-topics"
+              maxLength={BLOG_TOPIC_MAX_LENGTH}
+              autocomplete="off"
+              value={value.topic}
+              onInput={(e) => edit({ topic: e.currentTarget.value })}
+            />
+          </Field>
+          <datalist id="blog-topics">
+            {props.topics.map((topic) => <option key={topic} value={topic} />)}
+          </datalist>
+        </SettingsGroup>
+        <SettingsGroup
+          title={t.t(`AdminBlogEditor.groupSummary`)}
+          data-e2e="admin-blog-group-summary"
+        >
+          <Field
+            id={blogFieldId(`description`)}
+            label={t.t(`AdminBlogEditor.description`)}
+            hint={
+              <span class="flex justify-between gap-2">
+                <span>{t.t(`AdminBlogEditor.descriptionHint`)}</span>
+                <Counter length={description} shown={BLOG_DESCRIPTION_SHOWN} id="blog-desc-count" />
               </span>
-            )
-            : t.t(`AdminBlogEditor.languageHint`)}
-          error={message(`language`)}
-        >
-          <Select
-            data-e2e="admin-blog-language"
-            value={value.language}
-            options={LANGUAGES.map((language) => ({
-              value: language,
-              label: languageName(language),
-            }))}
-            onChange={(e) => edit({ language: e.currentTarget.value as Language })}
+            }
+            error={message(`description`)}
+          >
+            <Textarea
+              rows={3}
+              data-e2e="admin-blog-description"
+              maxLength={BLOG_DESCRIPTION_MAX_LENGTH}
+              value={value.description}
+              onInput={(e) => edit({ description: e.currentTarget.value })}
+            />
+          </Field>
+          <Field
+            id={blogFieldId(`seoTitle`)}
+            label={t.t(`AdminBlogEditor.seoTitle`)}
+            hint={
+              <span class="flex justify-between gap-2">
+                <span>{t.t(`AdminBlogEditor.seoTitleHint`)}</span>
+                <Counter length={seo} shown={BLOG_SEO_TITLE_SHOWN} id="blog-seo-count" />
+              </span>
+            }
+            error={message(`seoTitle`)}
+          >
+            <Input
+              data-e2e="admin-blog-seo-title"
+              maxLength={BLOG_SEO_TITLE_MAX_LENGTH}
+              autocomplete="off"
+              value={value.seoTitle}
+              onInput={(e) => edit({ seoTitle: e.currentTarget.value })}
+            />
+          </Field>
+          <ListField
+            id={blogFieldId(`tldr`)}
+            label={t.t(`AdminBlogEditor.keyPoints`)}
+            hint={t.t(`AdminBlogEditor.keyPointsHint`)}
+            value={value.tldr}
+            onChange={(tldr) => edit({ tldr })}
+            max={BLOG_TLDR_MAX}
+            maxLength={BLOG_TLDR_ITEM_MAX_LENGTH}
+            error={message(`tldr`)}
+            labels={{
+              item: (n) => t.t(`AdminBlogEditor.keyPoint`, { n }),
+              remove: (n) => t.t(`AdminBlogEditor.removeKeyPoint`, { n }),
+              add: t.t(`AdminBlogEditor.addPoint`),
+            }}
           />
-        </Field>
-        <Field
-          id={blogFieldId(`translationOf`)}
-          label={t.t(`AdminBlogEditor.translationOf`)}
-          hint={t.t(`AdminBlogEditor.translationOfHint`)}
-          error={message(`translationOf`)}
-        >
-          <Select
-            data-e2e="admin-blog-translation-of"
-            value={value.translationOf}
-            options={[
-              { value: ``, label: t.t(`AdminBlogEditor.translationNone`) },
-              ...props.originals
-                .filter((original) =>
-                  original.language !== value.language || original.id === value.translationOf
-                )
-                .map((original) => ({
-                  value: original.id,
-                  label: `${original.title} (${languageName(original.language)})`,
-                })),
-            ]}
-            onChange={(e) => edit({ translationOf: e.currentTarget.value })}
-          />
-        </Field>
-        <Field
-          id={blogFieldId(`authorUrl`)}
-          label={t.t(`AdminBlogEditor.authorUrl`)}
-          hint={t.t(`AdminBlogEditor.authorUrlHint`)}
-          error={message(`authorUrl`)}
-        >
-          <Input
-            type="url"
-            inputMode="url"
-            data-e2e="admin-blog-author-url"
-            maxLength={BLOG_AUTHOR_URL_MAX_LENGTH}
-            autocomplete="off"
-            spellcheck={false}
-            value={value.authorUrl}
-            onInput={(e) => edit({ authorUrl: e.currentTarget.value })}
-          />
-        </Field>
-        <Field
-          id={blogFieldId(`coverUrl`)}
-          label={t.t(`AdminBlogEditor.coverUrl`)}
-          hint={t.t(`AdminBlogEditor.coverUrlHint`)}
-          error={message(`coverUrl`)}
-        >
-          <Input
-            type="url"
-            inputMode="url"
-            data-e2e="admin-blog-cover-url"
-            maxLength={BLOG_COVER_URL_MAX_LENGTH}
-            autocomplete="off"
-            value={value.coverUrl}
-            onInput={(e) => edit({ coverUrl: e.currentTarget.value })}
-          />
-        </Field>
-        {cover !== `` && (
-          <>
-            <Field
-              id={blogFieldId(`coverAlt`)}
-              label={t.t(`AdminBlogEditor.coverAlt`)}
-              hint={t.t(`AdminBlogEditor.coverAltHint`)}
-              error={message(`coverAlt`)}
-            >
-              <Input
-                data-e2e="admin-blog-cover-alt"
-                maxLength={BLOG_COVER_ALT_MAX_LENGTH}
-                autocomplete="off"
-                value={value.coverAlt}
-                onInput={(e) => edit({ coverAlt: e.currentTarget.value })}
-              />
-            </Field>
-            {isHttpsUrl(cover) && (
-              <img
-                src={cover}
-                alt=""
-                class="aspect-[1200/630] w-full rounded-primary border border-subtle bg-hover object-cover"
-                loading="lazy"
-                referrerpolicy="no-referrer"
-              />
-            )}
-            <p class="text-xs text-muted">
-              {t.t(`AdminBlogEditor.coverPrivacy`)}
-            </p>
-          </>
-        )}
+          <Field
+            id={blogFieldId(`intro`)}
+            label={t.t(`AdminBlogEditor.intro`)}
+            hint={t.t(`AdminBlogEditor.introHint`)}
+            error={message(`intro`)}
+          >
+            <Textarea
+              data-e2e="admin-blog-intro"
+              rows={3}
+              maxLength={BLOG_INTRO_MAX_LENGTH}
+              value={value.intro}
+              onInput={(e) => edit({ intro: e.currentTarget.value })}
+            />
+          </Field>
+        </SettingsGroup>
+        <CoverSettings {...props} />
+        <SettingsGroup title={t.t(`AdminBlogEditor.groupLinks`)} data-e2e="admin-blog-group-links">
+          <Field
+            id={blogFieldId(`relatedFeature`)}
+            label={t.t(`AdminBlogEditor.relatedFeature`)}
+            hint={t.t(`AdminBlogEditor.relatedFeatureHint`)}
+            error={message(`relatedFeature`)}
+          >
+            <Input
+              data-e2e="admin-blog-related-feature"
+              maxLength={BLOG_RELATED_FEATURE_MAX_LENGTH}
+              autocomplete="off"
+              spellcheck={false}
+              value={value.relatedFeature}
+              onInput={(e) => edit({ relatedFeature: e.currentTarget.value })}
+            />
+          </Field>
+          <Field
+            id={blogFieldId(`authorUrl`)}
+            label={t.t(`AdminBlogEditor.authorUrl`)}
+            hint={t.t(`AdminBlogEditor.authorUrlHint`)}
+            error={message(`authorUrl`)}
+          >
+            <Input
+              type="url"
+              inputMode="url"
+              data-e2e="admin-blog-author-url"
+              maxLength={BLOG_AUTHOR_URL_MAX_LENGTH}
+              autocomplete="off"
+              spellcheck={false}
+              value={value.authorUrl}
+              onInput={(e) => edit({ authorUrl: e.currentTarget.value })}
+            />
+          </Field>
+        </SettingsGroup>
       </div>
     </aside>
+  )
+}
+
+/** One group of the settings column under a muted heading, named by it for screen readers. */
+function SettingsGroup(
+  props: { title: string; "data-e2e": string; children: ComponentChildren },
+): JSX.Element {
+  const id = `${props[`data-e2e`]}-heading`
+  return (
+    <section aria-labelledby={id} class="flex flex-col gap-4" data-e2e={props[`data-e2e`]}>
+      <h2 id={id} class="text-sm font-medium text-muted">{props.title}</h2>
+      {props.children}
+    </section>
+  )
+}
+
+/**
+ * What choosing `translationOf` changes: a translation takes its original's cover, as the cover
+ * group says, so the post shows the same picture in every language.
+ */
+export function translationPatch(
+  translationOf: string,
+  originals: readonly BlogOriginal[],
+): Partial<BlogDraft> {
+  const original = originals.find((entry) => entry.id === translationOf)
+  if (!original) return { translationOf }
+  return { translationOf, coverUrl: original.coverUrl ?? ``, coverAlt: original.coverAlt ?? `` }
+}
+
+/**
+ * The cover group: the address, its description and a 16:9 thumbnail, or "This picture did not
+ * load." for an address that answers no picture. A translation shows its original's cover
+ * instead, read-only.
+ */
+function CoverSettings(props: AdminBlogEditorScreenProps): JSX.Element {
+  const { value, onChange } = props
+  const t = useAdminText()
+  const message = (field: BlogField) => blogErrorText(t, props.errors[field])
+  const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
+  const cover = value.coverUrl.trim()
+  // The address that failed, so a new address gets a fresh try.
+  const [broken, setBroken] = useState<string | null>(null)
+  const original = value.translationOf === ``
+    ? null
+    : props.originals.find((entry) => entry.id === value.translationOf)
+  const thumbnail = isHttpsUrl(cover) && (
+    broken === cover
+      ? (
+        <p class="text-sm text-muted" role="status" data-e2e="admin-blog-cover-broken">
+          {t.t(`AdminBlogEditor.coverBroken`)}
+        </p>
+      )
+      : (
+        <img
+          key={cover}
+          src={cover}
+          alt=""
+          class="aspect-video w-full rounded-primary border border-subtle bg-hover object-cover"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          data-e2e="admin-blog-cover-thumbnail"
+          onError={() => setBroken(cover)}
+        />
+      )
+  )
+  return (
+    <SettingsGroup title={t.t(`AdminBlogEditor.groupCover`)} data-e2e="admin-blog-group-cover">
+      {value.translationOf !== ``
+        ? (
+          <>
+            <p class="text-sm text-muted" data-e2e="admin-blog-cover-of">
+              {t.t(`AdminBlogEditor.coverOf`, { title: original?.title ?? `` })}
+            </p>
+            {thumbnail}
+          </>
+        )
+        : (
+          <>
+            <Field
+              id={blogFieldId(`coverUrl`)}
+              label={t.t(`AdminBlogEditor.coverUrl`)}
+              hint={t.t(`AdminBlogEditor.coverUrlHint`)}
+              error={message(`coverUrl`)}
+            >
+              <Input
+                type="url"
+                inputMode="url"
+                data-e2e="admin-blog-cover-url"
+                maxLength={BLOG_COVER_URL_MAX_LENGTH}
+                autocomplete="off"
+                value={value.coverUrl}
+                onInput={(e) => edit({ coverUrl: e.currentTarget.value })}
+              />
+            </Field>
+            {cover !== `` && (
+              <>
+                {thumbnail}
+                <Field
+                  id={blogFieldId(`coverAlt`)}
+                  label={t.t(`AdminBlogEditor.coverAlt`)}
+                  hint={t.t(`AdminBlogEditor.coverAltHint`)}
+                  error={message(`coverAlt`)}
+                >
+                  <Input
+                    data-e2e="admin-blog-cover-alt"
+                    maxLength={BLOG_COVER_ALT_MAX_LENGTH}
+                    autocomplete="off"
+                    value={value.coverAlt}
+                    onInput={(e) => edit({ coverAlt: e.currentTarget.value })}
+                  />
+                </Field>
+                <p class="text-xs text-muted">{t.t(`AdminBlogEditor.coverPrivacy`)}</p>
+              </>
+            )}
+          </>
+        )}
+    </SettingsGroup>
   )
 }
 
@@ -1095,7 +1273,7 @@ function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null 
   const { post } = props
   const format = useFormat()
   const t = useAdminText()
-  // A post settled as never emailed has a send time and no list: nothing went (#414).
+  // A post settled as never emailed has a send time and no list: nothing went.
   const emailedAt = post?.newsletterList != null ? post.newsletterSentAt : null
   if (!post || post.status === `draft` && emailedAt === null) return null
   return (
@@ -1134,6 +1312,26 @@ function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null 
             />
           </p>
         )}
+      {post.status === `published` && props.sharing && props.sharing.total > 0 && (
+        <p class="flex flex-wrap gap-x-2" data-e2e="admin-blog-shared">
+          <span>
+            {t.t(`AdminBlogEditor.sharedOn`, {
+              done: props.sharing.done,
+              total: props.sharing.total,
+            })}
+            {props.sharing.toDo > 0 &&
+              ` · ${t.t(`AdminBlogEditor.sharingToDo`, { count: props.sharing.toDo })}`}
+          </span>
+          <Link
+            href={`${ADMIN_BLOG_PATHS.post(post.id)}/sharing`}
+            navigate={props.navigate}
+            class="pc-link"
+            data-e2e="admin-blog-sharing-link"
+          >
+            {t.t(`AdminBlogEditor.sharingChecklist`)}
+          </Link>
+        </p>
+      )}
       {post.status === `published` && (
         <Checkbox
           checked={props.significantUpdate}

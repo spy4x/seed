@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals"
 import type { ApiResult } from "@spy4x/platform/api"
 import {
+  BillingPeriod,
   type GroupBilling,
   type PersonTrial,
   providerPageUrl,
@@ -114,9 +115,16 @@ export function createBillingStore(
     }
   }
 
-  /** Opens the provider's checkout for `planId`. */
-  function checkout(groupId: string, planId: string): Promise<void> {
-    return open(groupId, "/checkout", CHECKOUT_UNREACHABLE, { planId })
+  /**
+   * Opens the provider's checkout for `planId`, billed per `period`. The period is always sent, so
+   * a plan sold both ways never leaves the provider to guess.
+   */
+  function checkout(
+    groupId: string,
+    planId: string,
+    period: BillingPeriod = BillingPeriod.Monthly,
+  ): Promise<void> {
+    return open(groupId, "/checkout", CHECKOUT_UNREACHABLE, { planId, period })
   }
 
   /** Opens the provider's portal, where the owner changes the card or plan, or cancels. */

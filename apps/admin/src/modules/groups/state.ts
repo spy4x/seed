@@ -1,7 +1,9 @@
 import { batch, signal } from "@preact/signals"
 import type { ToastStore } from "@spy4x/preact-signals/toast"
 import { downloadResponseAsFile } from "@spy4x/platform/browser/download"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
+  ADMIN_GROUP_FILE_REQUEST_PARAM,
   type AdminGroupDetail,
   type AdminGroupFile,
   type AdminGroupFileFilter,
@@ -43,15 +45,20 @@ export interface GroupsFilesState {
   notice: string | null
 }
 
-/** What a download needs from the platform: a raw `fetch` and the file save. Tests pass fakes. */
+/**
+ * What a download needs from the platform: a raw `fetch`, the file save and the id that names one
+ * download. Tests pass fakes.
+ */
 export interface GroupsFilePorts {
   fetch: (path: string, init: RequestInit) => Promise<Response>
   save: (response: Response, filename: string) => Promise<void>
+  newId: () => string
 }
 
 const browserFiles: GroupsFilePorts = {
   fetch: (path, init) => fetch(path, init),
   save: (response, filename) => downloadResponseAsFile(response, filename),
+  newId: uuidV7,
 }
 
 /** The notice when the file to download is gone: the same words as the API's 404 on a removal. */
@@ -188,16 +195,19 @@ export function createGroupsState(
 
     /**
      * Saves one file to the device: the bytes come through the admin API, which writes the audit
-     * row. A file someone removed shows a notice above the list and the list is read again; the
-     * admin app never navigates to an error page.
+     * row. The address names this download with a fresh id, so the API writes one row however
+     * often the browser fetches that address (Chromium fetches it twice). A file someone removed
+     * shows a notice above the list and the list is read again; the admin app never navigates to
+     * an error page.
      */
     async downloadFile(groupId: string, file: AdminGroupFile): Promise<void> {
       files.value = { ...files.value, notice: null }
       let notice: string
       try {
-        const response = await ports.fetch(adminGroupFilePath(groupId, file.id, `download`), {
-          credentials: `same-origin`,
-        })
+        const path = `${adminGroupFilePath(groupId, file.id, `download`)}?${new URLSearchParams({
+          [ADMIN_GROUP_FILE_REQUEST_PARAM]: ports.newId(),
+        })}`
+        const response = await ports.fetch(path, { credentials: `same-origin` })
         if (response.ok) {
           await ports.save(response, file.name)
           return

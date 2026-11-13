@@ -2,6 +2,7 @@ import type { Query } from "@spy4x/platform/cqrs"
 import { pluralize } from "@spy4x/platform/universal/text"
 import type { Actor } from "@domain/identity"
 import { GroupError, GroupRole } from "./+lib.ts"
+import { PRODUCT_ACTIVITY_KINDS, type ProductEntityType } from "./product-activity.ts"
 
 /**
  * How long the worker keeps a group's activity: events older than this many days are deleted. A
@@ -13,8 +14,11 @@ export const AUDIT_RETENTION_DAYS = 365
 export const ACTIVITY_PAGE_MAX = 100
 export const ACTIVITY_PAGE_DEFAULT = 50
 
-/** What an audit event can point at besides a member: the thing the event is about. */
-export type AuditEntityType = "note" | "invitation" | "tag"
+/**
+ * What an audit event can point at besides a member: the thing the event is about. A product adds
+ * its own things through `ProductEntityType` (`product-activity.ts`).
+ */
+export type AuditEntityType = "note" | "invitation" | "tag" | ProductEntityType
 
 /** Short facts an event keeps for its sentence: names, roles, a count. Never a body or an address. */
 export type AuditDetails = Record<string, string | number>
@@ -27,6 +31,7 @@ export const ACTIVITY_KINDS = [
   "group.created",
   "group.renamed",
   "group.details_updated",
+  "group.time_zone_changed",
   "group.deleted",
   "group.restored",
   "group.member_role_changed",
@@ -52,6 +57,35 @@ export const ACTIVITY_KINDS = [
   "tag.updated",
   "tag.deleted",
 ] as const
+
+/** The `app` catalog key of an event's sentence, and the values it fills in. */
+export interface ProductActivityMessage {
+  key: string
+  values: Record<string, string | number>
+}
+
+/**
+ * A kind of group activity a product adds to Seed's: how its event reads in the group's activity
+ * panel, in `describeActivity` and in the admin audit log. A product lists its kinds in
+ * `PRODUCT_ACTIVITY_KINDS` (`product-activity.ts`); a Seed kind of the same name wins.
+ */
+export interface ProductActivityKind {
+  /**
+   * The stored `audit_events.event_kind`, such as `household.base_currency_changed`: two lower-case
+   * words joined by a dot, each of at most 31 letters and underscores, or the admin audit filter
+   * cannot name it.
+   */
+  kind: string
+  /** The `admin` catalog key of the event's title in the admin audit log and its event filter. */
+  label: string
+  /**
+   * The sentence of the activity panel, from the event's details. The panel fills in `{who}` and
+   * `{target}`; a message marks what members typed with `<value>…</value>`, as Seed's do.
+   */
+  message(details: AuditDetails): ProductActivityMessage
+  /** The English sentence `describeActivity` returns, with `who` already worded. */
+  describe(who: string, details: AuditDetails): string
+}
 
 /**
  * The key an operator's action from the admin area adds to its audit row's details. Its presence,
@@ -181,10 +215,12 @@ function quoted(value: unknown): string {
  * operator wrote from the admin area reads "Support team". An actor whose account is gone reads
  * "Deleted user"; a missing target reads "a member". An event whose facts
  * were not kept (one written before the log existed) gets the shortest true sentence; a kind this
- * code does not know still reads as an event, never as a code.
+ * code does not know still reads as an event, never as a code. A product's kind (`productKinds`)
+ * reads as its own `describe` says.
  */
 export function describeActivity(
   event: Pick<ActivityEvent, "kind" | "actor" | "target" | "details">,
+  productKinds: readonly ProductActivityKind[] = PRODUCT_ACTIVITY_KINDS,
 ): string {
   const who = OPERATOR_DETAIL in event.details
     ? SUPPORT_TEAM_LABEL
@@ -208,6 +244,13 @@ export function describeActivity(
     }
     case "group.details_updated":
       return `${who} changed the group's description, colour or emoji`
+    case "group.time_zone_changed": {
+      const from = typeof details.from === "string" ? details.from : null
+      const to = typeof details.to === "string" ? details.to : null
+      return from && to
+        ? `${who} changed the time zone from ${from} to ${to}`
+        : `${who} changed the time zone`
+    }
     case "group.deleted":
       return `${who} deleted the group`
     case "group.restored":
@@ -303,6 +346,7 @@ export function describeActivity(
         : deleted
     }
     default:
-      return `${who} changed something in the group`
+      return productKinds.find((product) => product.kind === event.kind)?.describe(who, details) ??
+        `${who} changed something in the group`
   }
 }

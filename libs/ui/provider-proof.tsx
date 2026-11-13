@@ -10,6 +10,7 @@ import {
 import { providerStartPath } from "./auth-screen.tsx"
 import { SCREEN_PATHS, withNext } from "./progressive.tsx"
 import { useAppText } from "./i18n.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 
 /**
  * What an account with no password confirms a step with, where the others type their password:
@@ -18,9 +19,9 @@ import { useAppText } from "./i18n.ts"
 export interface ProviderProof {
   /** The providers the account signs in with. */
   providers: readonly OAuthProviderId[]
-  /** The account has a passkey (#222). */
+  /** The account has a passkey. */
   passkeys?: boolean
-  /** A sign-in link reaches the account: it has a proven address (#391). */
+  /** A sign-in code reaches the account: it has a proven address. */
   emailLink?: boolean
   /** This device signed in with one of them less than `PROVIDER_PROOF_MINUTES` minutes ago. */
   fresh: boolean
@@ -36,7 +37,7 @@ export interface ProviderProof {
 /**
  * The proof an account with these sign-in methods confirms with, or `null` for an account that
  * has a password, or while the methods are not known. `emailLink` says a sign-in link reaches the
- * account, which then needs no linked method at all: one made by a link has none (#391).
+ * account, which then needs no linked method at all: one made by a link has none.
  */
 export function providerProofOf(
   methods: readonly SignInMethod[] | null | undefined,
@@ -55,6 +56,17 @@ export function providerProofOf(
 }
 
 /**
+ * The account's ways in, as one phrase for a sentence: "Google or a passkey". A passkey and an
+ * e-mail code are named too, so an account with neither provider still gets a whole sentence.
+ */
+export function proofMethods(proof: ProviderProof, t: Translator<string>): string {
+  const names = proof.providers.map((provider) => OAUTH_PROVIDER_NAMES[provider])
+  if (proof.passkeys) names.push(t.t(`ProviderProof.passkey`))
+  if (proof.emailLink) names.push(t.t(`ProviderProof.link`))
+  return new Intl.ListFormat(t.language, { type: `disjunction` }).format(names)
+}
+
+/**
  * Stands where a dialog would ask for the password. After a sign-in a moment ago it says that no
  * password is needed. Otherwise it sends the person to the provider to sign in again, with `next`
  * as the page to come back to; each link is a plain one, because the browser must leave the app.
@@ -63,10 +75,7 @@ export function ProviderProofNotice(
   { proof, next }: { proof: ProviderProof; next: string },
 ): JSX.Element {
   const t = useAppText()
-  const names = proof.providers.map((provider) => OAUTH_PROVIDER_NAMES[provider])
-  if (proof.passkeys) names.push(t.t(`ProviderProof.passkey`))
-  if (proof.emailLink) names.push(t.t(`ProviderProof.link`))
-  const methods = new Intl.ListFormat(t.language, { type: `disjunction` }).format(names)
+  const methods = proofMethods(proof, t)
   if (proof.fresh) {
     return (
       <p class="text-sm text-muted" data-e2e="provider-proof-fresh">
@@ -103,13 +112,13 @@ export function ProviderProofNotice(
           </Button>
         ))}
         {proof.emailLink && (
-          // A plain link: the link's page reloads into the app once used.
+          // A plain link: the code page reloads into the app once the code is used.
           <Button
-            href={withNext(SCREEN_PATHS.signInLink, next)}
+            href={withNext(SCREEN_PATHS.signInCode, next)}
             variant="secondary"
             data-e2e="provider-proof-link"
           >
-            {t.t(`AuthScreen.emailSignInLink`)}
+            {t.t(`AuthScreen.emailSignInCode`)}
           </Button>
         )}
       </Cluster>

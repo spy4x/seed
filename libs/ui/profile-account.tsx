@@ -62,6 +62,11 @@ export interface AccountSectionProps {
   /** Opens the e-mail dialog at its address step, whenever this turns true (`?email`). */
   openEmailAddress?: boolean
   /**
+   * The dialog opened because `openEmailCode` or `openEmailAddress` asked for it. The app drops the
+   * ask (the `?verify` or `?email` in the address), so a reload does not open the dialog again.
+   */
+  onEmailOpened?: () => void
+  /**
    * Given only when the address could not be read: the row gives way to the failure and a way to
    * read it again.
    */
@@ -69,21 +74,21 @@ export interface AccountSectionProps {
   /** What an account with no password confirms an address change with. */
   providerProof?: ProviderProof | null
   /**
-   * A guest's account type row (#224), drawn first. With it the e-mail row is left out: a guest
+   * A guest's account type row, drawn first. With it the e-mail row is left out: a guest
    * adds an address on `/keep`, which that row leads to.
    */
   guestRow?: ComponentChildren
-  /** The "Your data" row (#229). Without it the section has none. */
+  /** The "Your data" row. Without it the section has none. */
   dataExport?: DataExportRowProps
-  /** The "Profile picture" row (#228), above the name. Without it the section has none. */
+  /** The "Profile picture" row, above the name. Without it the section has none. */
   picture?: PictureRowProps
 }
 
 /**
- * The profile's Account section: the profile picture (#228), the name, edited in a dialog, the e-mail address, changed in
+ * The profile's Account section: the profile picture, the name, edited in a dialog, the e-mail address, changed in
  * one dialog that asks for the new address and the password, then for the code mailed there. While
  * an address waits for its code the row offers "Enter code" too, which opens the same dialog at the
- * code. Last, "Your data": a copy of everything the app keeps about the person (#229).
+ * code. Last, "Your data": a copy of everything the app keeps about the person.
  */
 export function AccountSection(
   {
@@ -94,6 +99,7 @@ export function AccountSection(
     emailChange,
     openEmailCode,
     openEmailAddress,
+    onEmailOpened,
     onRetryEmail,
     providerProof,
     guestRow,
@@ -111,11 +117,15 @@ export function AccountSection(
   // A link asks for the code (`?verify`): open it whenever that ask arrives, also while the section
   // stays on screen, and once the address it is for has been read.
   useEffect(() => {
-    if (openEmailCode && target) setEmailStep("code")
+    if (!openEmailCode || !target) return
+    setEmailStep("code")
+    onEmailOpened?.()
   }, [openEmailCode, Boolean(target)])
   // The password dialog asks for an address first (`?email`): open the address step, once read.
   useEffect(() => {
-    if (openEmailAddress && email) setEmailStep("address")
+    if (!openEmailAddress || !email) return
+    setEmailStep("address")
+    onEmailOpened?.()
   }, [openEmailAddress, Boolean(email)])
   const cancelName = () => {
     setEditingName(false)
@@ -282,7 +292,7 @@ function EmailValue(
     return (
       <span data-e2e="email-current">
         {provider === null ? t.t(`ProfileAccount.noneUsername`) : provider === ""
-          // A passkey carries no address (#222).
+          // A passkey carries no address.
           ? t.t(`ProfileAccount.none`)
           : t.t(`ProfileAccount.noneProvider`, { provider })}
       </span>

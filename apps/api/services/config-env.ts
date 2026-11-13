@@ -17,7 +17,7 @@ export const envSchema = type({
   RATE_LIMITER_OTP_WINDOW_MS: "string.integer.parse",
   RATE_LIMITER_OTP_LIMIT: "string.integer.parse",
   DOMAIN: "string > 0",
-  /** The admin app's own host (#146); unset or empty turns the operator area off. */
+  /** The admin app's own host; unset or empty turns the operator area off. */
   "ADMIN_DOMAIN?": "string",
   /**
    * The proxies allowed to name the client in `X-Real-IP`, comma-separated: container names or IP
@@ -42,11 +42,16 @@ export const envSchema = type({
   S3_SECRET_ACCESS_KEY: "string > 0",
   /** `https://<key>@<host>/<project>` of an error tracker; unset or empty turns reporting off. */
   "ERROR_REPORT_DSN?": "string",
-  /** Guest accounts (#224, docs/guests.md): on unless `false`. */
+  /** Guest accounts (docs/guests.md): on unless `false`, and off whenever `SIGN_UP=invite`. */
   "GUEST_MODE?": "string",
   /** The public demo (docs/demo.md): on only when `true`. */
   "DEMO_MODE?": "string",
-  /** The SPA (docs/deploy.md, "Without the SPA"): on unless `false`. */
+  /**
+   * Who may make an account (docs/deploy.md, "Who may sign up"): `open`, anyone, or `invite`, only
+   * people a member invited. Unset or empty: `open`. Anything else stops the API at start.
+   */
+  "SIGN_UP?": "'open' | 'invite'",
+  /** The SPA (docs/apps.md, "Without the SPA"): on unless `false`. */
   "SPA?": "string",
   /**
    * What one person may upload to note attachments per hour (docs/files.md, "Upload budget"):
@@ -76,7 +81,7 @@ export function readApiEnv(reader?: EnvReader) {
 }
 
 /**
- * Whether the SPA runs (docs/deploy.md, "Without the SPA"): on unless `SPA=false`, which closes
+ * Whether the SPA runs (docs/apps.md, "Without the SPA"): on unless `SPA=false`, which closes
  * every account route on every host but the admin host, sign-up among them.
  */
 export function isSpaOn(env: { SPA?: string }): boolean {

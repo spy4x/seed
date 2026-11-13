@@ -1,6 +1,7 @@
 import { type } from "arktype"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import type { Command, Query } from "@spy4x/platform/cqrs"
+import { BillingPeriod } from "@spy4x/billing"
 import type { Actor } from "@domain/identity"
 import { canManageBilling, canRead, GroupRole } from "@domain/groups"
 
@@ -13,7 +14,10 @@ import { canManageBilling, canRead, GroupRole } from "@domain/groups"
 /** The plan every group is on until a paid subscription says otherwise. */
 export const FREE_PLAN_ID = "free"
 
-/** The paid plan. Its provider price comes from the environment (`STRIPE_PRICE_PRO`). */
+/**
+ * The paid plan. Its provider prices come from the environment: `STRIPE_PRICE_PRO` bills it
+ * monthly, and `STRIPE_PRICE_PRO_YEARLY` yearly when the plan has a {@link Plan.yearlyAmount}.
+ */
 export const PRO_PLAN_ID = "pro"
 
 // #region Entitlements
@@ -63,12 +67,25 @@ export interface AttachmentRules {
 export type EntitlementNeed = { feature: FeatureKey } | { limit: LimitKey }
 // #endregion Entitlements
 
+/**
+ * How often a paid plan bills: `@spy4x/billing`'s own enum, so a period read from the provider's
+ * price needs no mapping. Its numbers match preact-components' `BillingInterval`, so a screen passes
+ * it to `PricingTable` as it is.
+ */
+export { BillingPeriod }
+
 /** One plan of the catalog, as the pricing page shows it. */
 export interface Plan {
   id: string
   name: string
-  /** In the currency's smallest unit: `900` is €9.00. */
+  /** The monthly price, in the currency's smallest unit: `900` is €9.00. */
   amount: number
+  /**
+   * The yearly price, in the same unit and per member too for a {@link perSeat} plan, or `null` when
+   * the plan is sold monthly only. Set, checkout offers both periods and the provider needs a
+   * second price (`docs/billing.md`).
+   */
+  yearlyAmount: number | null
   currency: string
   description: string
   features: string[]
@@ -78,15 +95,20 @@ export interface Plan {
   attachments: AttachmentRules
   /**
    * Days of free trial this plan offers; `0` for none. Each person gets one trial, whichever group
-   * they first open a checkout for (docs/billing.md, "Trials").
+   * they first open a checkout for (docs/billing-lifecycle.md, "Trials").
    */
   trialDays: number
   /**
-   * The plan bills `amount` per member a month, the owner included, so the subscription's quantity
+   * The plan bills its price per member, the owner included, so the subscription's quantity
    * follows the group's member count. A pending invitation takes no seat, the same count
    * `maxMembers` caps.
    */
   perSeat: boolean
+  /**
+   * Days after the first payment within which the product refunds it in full, shown next to the
+   * checkout button. Leave it out unless the product honours it: the page then promises nothing.
+   */
+  refundDays?: number
 }
 
 /** Every plan, free first. The paid ones are the ones a checkout may name. */
@@ -95,6 +117,7 @@ export const PLANS: readonly Plan[] = [
     id: FREE_PLAN_ID,
     name: "Free",
     amount: 0,
+    yearlyAmount: null,
     currency: "EUR",
     description: "For trying things out.",
     features: ["Up to 10 notes", "Up to 3 members", "100 files, 200 MB in all"],
@@ -115,6 +138,7 @@ export const PLANS: readonly Plan[] = [
     id: PRO_PLAN_ID,
     name: "Pro",
     amount: 900,
+    yearlyAmount: null,
     currency: "EUR",
     description: "For a group that relies on it.",
     features: [
@@ -142,26 +166,70 @@ export const PLANS: readonly Plan[] = [
 /** The plans a checkout may name: every plan but the free one. */
 export const PAID_PLANS: readonly Plan[] = PLANS.filter((plan) => plan.id !== FREE_PLAN_ID)
 
-/** The plan with this id, or `null`. */
-export function findPlan(id: string): Plan | null {
-  return PLANS.find((plan) => plan.id === id) ?? null
+/** The plan with this id in `plans` ({@link PLANS} unless a test passes its own), or `null`. */
+export function findPlan(id: string, plans: readonly Plan[] = PLANS): Plan | null {
+  return plans.find((plan) => plan.id === id) ?? null
+}
+
+/** The periods a plan is sold for: monthly always, yearly too when it has a yearly price. */
+export function periodsOf(plan: Plan): BillingPeriod[] {
+  return plan.yearlyAmount === null
+    ? [BillingPeriod.Monthly]
+    : [BillingPeriod.Monthly, BillingPeriod.Yearly]
+}
+
+/** What the plan costs for one period (per member for a per-member plan), or `null` when not sold. */
+export function priceOf(plan: Plan, period: BillingPeriod): number | null {
+  return period === BillingPeriod.Monthly ? plan.amount : plan.yearlyAmount
+}
+
+/**
+ * What paying yearly saves over twelve monthly payments, in the currency's smallest unit; `0` when
+ * the plan has no yearly price or the yearly price saves nothing.
+ */
+export function yearlySavingOf(plan: Plan): number {
+  return plan.yearlyAmount === null ? 0 : Math.max(0, plan.amount * 12 - plan.yearlyAmount)
 }
 
 /**
  * What a group may do: its plan's entitlements, or {@link UNLIMITED} while billing is off, since
- * nobody could pay to lift a cap. An id no plan has gets the free plan's.
+ * nobody could pay to lift a cap. An id no plan has gets the free plan's. `plans` is the catalog,
+ * {@link PLANS} unless a test passes its own.
  */
-export function entitlementsOf(planId: string, billingEnabled: boolean): Entitlements {
+export function entitlementsOf(
+  planId: string,
+  billingEnabled: boolean,
+  plans: readonly Plan[] = PLANS,
+): Entitlements {
   if (!billingEnabled) return UNLIMITED
-  return (findPlan(planId) ?? PLANS[0]).entitlements
+  return (plans.find((plan) => plan.id === planId) ?? plans[0]).entitlements
+}
+
+/**
+ * Whether the free plan allows nothing: every cap is 0, except `maxMembers`, which lets the owner
+ * alone in. Every limit key counts, a product's own ones (such as accounts) too. A product that is
+ * paid from sign-up sets its free caps so, and its new owners are then sent to checkout (see
+ * {@link needsFirstPlan}). `plans` is the catalog, {@link PLANS} unless a test passes its own.
+ */
+export function freePlanAllowsNothing(plans: readonly Plan[] = PLANS): boolean {
+  const free = plans.find((plan) => plan.id === FREE_PLAN_ID)
+  if (!free) return false
+  return Object.entries(free.entitlements.limits).every(([key, cap]) =>
+    key === "maxMembers" ? cap !== null && cap <= 1 : cap === 0
+  )
 }
 
 /**
  * The file rules of a group's plan. With billing off every group has the free plan's: unlike the
- * caps of {@link entitlementsOf}, they are never lifted.
+ * caps of {@link entitlementsOf}, they are never lifted. `plans` is the catalog, {@link PLANS}
+ * unless a test passes its own.
  */
-export function attachmentRulesOf(planId: string, billingEnabled: boolean): AttachmentRules {
-  return ((billingEnabled ? findPlan(planId) : null) ?? PLANS[0]).attachments
+export function attachmentRulesOf(
+  planId: string,
+  billingEnabled: boolean,
+  plans: readonly Plan[] = PLANS,
+): AttachmentRules {
+  return ((billingEnabled ? findPlan(planId, plans) : null) ?? plans[0]).attachments
 }
 
 /** The outbox event kind a plan change is recorded under, on the group's change log. */
@@ -213,6 +281,11 @@ export interface StoredSubscription {
   /** The seats the provider last reported it bills, or `null` when it reported none. */
   quantity: number | null
   /**
+   * How often the price the provider last reported bills, or `null` when that price is in no plan.
+   * It always comes from the provider's price, never from what the checkout asked for.
+   */
+  period: BillingPeriod | null
+  /**
    * Whether the provider ever reported this subscription active, so it has paid at least once. Only
    * then does a failed payment keep the plan for the grace period.
    */
@@ -249,12 +322,14 @@ export function graceEndsAt(subscription: StoredSubscription, graceDays: number)
  * The plan a group is on at `now`: the subscription's plan while it is trialing or active, or past
  * due for less than `graceDays`, and only until {@link accessEndsAt}; else the free plan. Nothing is
  * deleted when the grace ends; the group only gets the free plan's entitlements, and a payment that
- * makes it active brings the plan back.
+ * makes it active brings the plan back. `plans` is the catalog, {@link PLANS} unless a test passes
+ * its own.
  */
 export function effectivePlanId(
   subscription: StoredSubscription | null,
   now: Date,
   graceDays: number,
+  plans: readonly Plan[] = PLANS,
 ): string {
   if (subscription === null || subscription.planId === null) return FREE_PLAN_ID
   const graceEnd = graceEndsAt(subscription, graceDays)
@@ -263,7 +338,7 @@ export function effectivePlanId(
   if (!paid) return FREE_PLAN_ID
   const accessEnd = accessEndsAt(subscription)
   if (accessEnd !== null && now.getTime() >= accessEnd.getTime()) return FREE_PLAN_ID
-  return findPlan(subscription.planId) ? subscription.planId : FREE_PLAN_ID
+  return findPlan(subscription.planId, plans) ? subscription.planId : FREE_PLAN_ID
 }
 
 /** Days before the end of a trial that its owner is told it is ending. */
@@ -363,20 +438,26 @@ export function handoverTrialDays(
 /**
  * Whether the provider bills the group per member: its subscription is live and its plan is
  * {@link Plan.perSeat}. A past-due subscription past its grace still counts, since the provider
- * keeps charging it; the subscription's quantity then follows the member count.
+ * keeps charging it; the subscription's quantity then follows the member count. `plans` is the
+ * catalog, {@link PLANS} unless a test passes its own.
  */
-export function isSeatBilled(subscription: StoredSubscription | null): boolean {
+export function isSeatBilled(
+  subscription: StoredSubscription | null,
+  plans: readonly Plan[] = PLANS,
+): boolean {
   if (!hasLiveSubscription(subscription) || subscription?.planId == null) return false
-  return findPlan(subscription.planId)?.perSeat === true
+  return findPlan(subscription.planId, plans)?.perSeat === true
 }
 
 /** The per-member price a group pays, as the invitation form shows it before a new member joins. */
 export interface SeatPrice {
   /** Members the group pays for now, the owner included. */
   seats: number
-  /** The price of one seat a month, in the currency's smallest unit. */
+  /** The price of one seat for one {@link period}, in the currency's smallest unit. */
   amount: number
   currency: string
+  /** How often the group is billed. */
+  period: BillingPeriod
 }
 
 /**
@@ -405,6 +486,11 @@ export interface GroupBilling {
   cancelAtPeriodEnd: boolean
   /** When the trial ends, or `null` when there is none. */
   trialEnd: Date | null
+  /**
+   * How often the group's live subscription bills, or `null` when it has none or its price is in no
+   * plan. Every member reads it, like the plan.
+   */
+  period: BillingPeriod | null
   /** What the owner is told about the subscription; always `null` for anyone else. */
   notice: BillingNotice | null
   /** Whether the person asking may open checkout or the portal: billing is on and they own it. */
@@ -426,7 +512,8 @@ export interface GroupBilling {
  * (see {@link effectivePlanId}). `members` is the group's member count, the owner included.
  * `handedOver` is true when the group's provider customer belongs to an owner who has since
  * transferred the group: the subscription then is not the current owner's to manage, so the view
- * offers a checkout instead and gives no notice about it.
+ * offers a checkout instead and gives no notice about it. `plans` is the catalog, {@link PLANS}
+ * unless a test passes its own.
  */
 export function toGroupBilling(
   subscription: StoredSubscription | null,
@@ -437,25 +524,44 @@ export function toGroupBilling(
   graceDays: number,
   members: number,
   handedOver = false,
+  plans: readonly Plan[] = PLANS,
 ): GroupBilling {
-  const seatPlan = enabled && isSeatBilled(subscription) ? findPlan(subscription!.planId!) : null
+  const live = enabled && hasLiveSubscription(subscription) ? subscription : null
+  const seatPlan = enabled && isSeatBilled(subscription, plans)
+    ? findPlan(subscription!.planId!, plans)
+    : null
+  const seatPeriod = subscription?.period ?? BillingPeriod.Monthly
+  const seatAmount = seatPlan && priceOf(seatPlan, seatPeriod)
   return {
     enabled,
-    planId: enabled ? effectivePlanId(subscription, now, graceDays) : FREE_PLAN_ID,
+    planId: enabled ? effectivePlanId(subscription, now, graceDays, plans) : FREE_PLAN_ID,
     status: enabled ? subscription?.status ?? null : null,
     currentPeriodEnd: enabled ? subscription?.currentPeriodEnd ?? null : null,
     cancelAtPeriodEnd: enabled ? subscription?.cancelAtPeriodEnd ?? false : false,
     trialEnd: enabled ? subscription?.trialEnd ?? null : null,
+    period: live?.period ?? null,
     notice: enabled && canManageBilling(role) && !handedOver
       ? billingNoticeOf(subscription, now, graceDays)
       : null,
     canManage: enabled && canManageBilling(role),
     subscribed: enabled && hasLiveSubscription(subscription) && !handedOver,
     hasCustomer: enabled && hasCustomer,
-    seatPrice: seatPlan
-      ? { seats: members, amount: seatPlan.amount, currency: seatPlan.currency }
+    // A period the plan no longer sells has no price to show.
+    seatPrice: seatPlan && seatAmount !== null
+      ? { seats: members, amount: seatAmount, currency: seatPlan.currency, period: seatPeriod }
       : null,
   }
+}
+
+/**
+ * Whether the group's owner should choose a plan before anything else: the free plan allows nothing
+ * ({@link freePlanAllowsNothing}), billing is on, the person reading is the owner, and the group is
+ * on the free plan and never had a subscription. An abandoned checkout leaves no subscription, so
+ * this stays true after it; a group that paid once and lapsed is not new and gets `false`.
+ */
+export function needsFirstPlan(billing: GroupBilling, plans: readonly Plan[] = PLANS): boolean {
+  return billing.enabled && billing.canManage && billing.planId === FREE_PLAN_ID &&
+    billing.status === null && !billing.subscribed && freePlanAllowsNothing(plans)
 }
 
 /** A date as JSON carries it, an ISO string, back to a date; `undefined` for anything else. */
@@ -469,10 +575,16 @@ function jsonDate(value: unknown): Date | null | undefined {
 function readSeatPrice(value: unknown): SeatPrice | null | undefined {
   if (value === null) return null
   if (typeof value !== "object" || value === undefined) return undefined
-  const { seats, amount, currency } = value as Record<string, unknown>
+  const { seats, amount, currency, period } = value as Record<string, unknown>
   const whole = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0
   if (!whole(seats) || !whole(amount) || typeof currency !== "string") return undefined
-  return { seats, amount, currency }
+  if (!isBillingPeriod(period)) return undefined
+  return { seats, amount, currency, period }
+}
+
+/** Whether `value` is one of the {@link BillingPeriod} numbers. */
+function isBillingPeriod(value: unknown): value is BillingPeriod {
+  return value === BillingPeriod.Monthly || value === BillingPeriod.Yearly
 }
 
 function readNotice(value: unknown): BillingNotice | null | undefined {
@@ -497,13 +609,14 @@ export function readGroupBilling(value: unknown): GroupBilling | null {
   const trialEnd = jsonDate(billing.trialEnd)
   const notice = readNotice(billing.notice)
   const seatPrice = readSeatPrice(billing.seatPrice)
+  const period = billing.period
   if (
     typeof enabled !== "boolean" || typeof planId !== "string" ||
     typeof cancelAtPeriodEnd !== "boolean" || typeof canManage !== "boolean" ||
     typeof subscribed !== "boolean" || typeof hasCustomer !== "boolean" ||
     !(status === null || (typeof status === "number" && status in BillingStatus)) ||
     currentPeriodEnd === undefined || trialEnd === undefined || notice === undefined ||
-    seatPrice === undefined
+    seatPrice === undefined || !(period === null || isBillingPeriod(period))
   ) {
     return null
   }
@@ -514,6 +627,7 @@ export function readGroupBilling(value: unknown): GroupBilling | null {
     currentPeriodEnd,
     cancelAtPeriodEnd,
     trialEnd,
+    period,
     notice,
     canManage,
     subscribed,
@@ -523,8 +637,8 @@ export function readGroupBilling(value: unknown): GroupBilling | null {
 }
 
 /**
- * The trial a person may still start (`GET /api/billing/trial`). A trial is given once per person
- * (#205): the first group whose checkout they open gets it, and their later groups check out
+ * The trial a person may still start (`GET /api/billing/trial`). A trial is given once per person:
+ * the first group whose checkout they open gets it, and their later groups check out
  * without one. The create-group page says which.
  */
 export interface PersonTrial {
@@ -552,8 +666,13 @@ export function readPersonTrial(value: unknown): PersonTrial | null {
   return { enabled: trial.enabled, used: trial.used, groupId: trial.groupId, days: trial.days }
 }
 
-/** The longest trial any paid plan starts with, in days. */
-export const LONGEST_TRIAL_DAYS = Math.max(0, ...PAID_PLANS.map((plan) => plan.trialDays))
+/**
+ * The longest trial any paid plan starts with, in days. `plans` is the catalog, {@link PLANS}
+ * unless a test passes its own.
+ */
+export function longestTrialDays(plans: readonly Plan[] = PLANS): number {
+  return Math.max(0, ...plans.map((plan) => plan.trialDays))
+}
 
 export type BillingErrorCode =
   | "ALREADY_SUBSCRIBED"
@@ -561,6 +680,7 @@ export type BillingErrorCode =
   | "GROUP_NOT_FOUND"
   | "INVALID_REQUEST"
   | "NO_SUBSCRIPTION"
+  | "PERIOD_NOT_OFFERED"
   | "PROVIDER_ERROR"
   | "ROLE_INSUFFICIENT"
   | "UNKNOWN_PLAN"
@@ -681,8 +801,15 @@ export function assertCanManageBilling(role: GroupRole | null): void {
 // #endregion Authorization
 
 // #region Request schemas
-/** `POST /api/groups/:groupId/billing/checkout`, from the Billing tab: the plan chosen. */
-export const billingCheckoutRequestSchema = type({ planId: "0 < string <= 64", "+": "reject" })
+/**
+ * `POST /api/groups/:groupId/billing/checkout`, from the Billing tab: the plan chosen, and how
+ * often to bill it ({@link BillingPeriod}, monthly when left out).
+ */
+export const billingCheckoutRequestSchema = type({
+  planId: "0 < string <= 64",
+  "period?": type.enumerated(BillingPeriod.Monthly, BillingPeriod.Yearly),
+  "+": "reject",
+})
 export type BillingCheckoutRequest = typeof billingCheckoutRequestSchema.infer
 // #endregion Request schemas
 
@@ -691,6 +818,8 @@ export interface BillingCheckoutPayload {
   actor: Actor
   groupId: string
   planId: string
+  /** How often to bill the plan; the checkout refuses a period the plan is not sold for. */
+  period: BillingPeriod
   idempotencyKey?: string
 }
 
@@ -746,6 +875,11 @@ export type BillingApplyOutcome =
   | "stale"
   /** Stored, but it names no group of this app, or is not about a subscription. */
   | "ignored"
+  /**
+   * Its subscription bills a price no plan maps to: nothing changed or stored, and the webhook logs
+   * it so the operator adds the price to the settings and resends it (`docs/billing.md`).
+   */
+  | "unknown_price"
 
 /**
  * Where billing is kept. `applyEvent` stores the provider's event id and applies the event in one

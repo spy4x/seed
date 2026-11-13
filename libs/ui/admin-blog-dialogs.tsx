@@ -9,8 +9,13 @@ import { DateTimeField } from "@spy4x/preact-ui/date-time-field"
 import { Input, Select } from "@spy4x/preact-ui/input"
 import { languageName } from "@spy4x/preact-ui/language-picker"
 import { Stack } from "@spy4x/preact-ui/layout"
-import { RadioGroup } from "@spy4x/preact-ui/radio"
-import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN, blogPostPath } from "@domain/blog"
+import { RadioChips } from "@spy4x/preact-ui/radio-chips"
+import {
+  BLOG_SLUG_MAX_LENGTH,
+  BLOG_SLUG_PATTERN,
+  blogPostPath,
+  type BlogRevision,
+} from "@domain/blog"
 import type { AdminBlogEditorScreenProps } from "./admin-blog-editor.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAdminText } from "./i18n.ts"
@@ -18,9 +23,16 @@ import { Isolated } from "@spy4x/preact-ui/bdi"
 import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { blogProblemKey, BlogProblemText } from "./admin-blog-problems.tsx"
+import { BlogHistoryDialog } from "./admin-blog-history.tsx"
 
-/** What the dialogs take besides the screen's props: the Problems panel's "Go to problems". */
-type DialogsProps = AdminBlogEditorScreenProps & { onGoToProblems: () => void }
+/**
+ * What the dialogs take besides the screen's props: the Problems panel's "Go to problems", and
+ * History's restore, which also moves focus to the editor's first field.
+ */
+type DialogsProps = AdminBlogEditorScreenProps & {
+  onGoToProblems: () => void
+  onRestore: (revision: BlogRevision) => void
+}
 
 /** A path inside a sentence: code, isolated, never machine-translated. */
 function path(text: string): JSX.Element {
@@ -28,7 +40,7 @@ function path(text: string): JSX.Element {
 }
 
 /**
- * The blog editor's dialogs (#396): publish or schedule, unschedule, unpublish, change the URL and
+ * The blog editor's dialogs: publish or schedule, unschedule, unpublish, change the URL and
  * delete. Each one confirms; the ones that cannot be undone are drawn as danger.
  *
  * @module
@@ -46,6 +58,17 @@ export function Dialogs(props: DialogsProps): JSX.Element | null {
     cancelLabel: t.t(`AdminBlogDialogs.cancel`),
   }
   switch (dialog) {
+    case `history`:
+      return (
+        <BlogHistoryDialog
+          history={props.history}
+          now={props.now}
+          onSelect={props.onSelectRevision}
+          onRestore={props.onRestore}
+          onRetry={props.onRetryHistory}
+          onClose={props.onCloseDialog}
+        />
+      )
     case `publish`:
     case `publish-now`:
     case `reschedule`:
@@ -123,7 +146,7 @@ function DialogBody(
   )
 }
 
-/** The new address of a published post, with the note that old links redirect to it (#418). */
+/** The new address of a published post, with the note that old links redirect to it. */
 function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
   const t = useAdminText()
   const old = props.post?.slug ?? ``
@@ -195,7 +218,7 @@ function inAnHour(now: Date): string {
  * on and the post was never emailed; the button then says so too. A scheduled post's list is
  * dropped while the newsletter is off, and a line says so, since the API refuses a list then.
  *
- * With tags in the body that readers will not see (#620), a warning lists them and its "Go to
+ * With tags in the body that readers will not see, a warning lists them and its "Go to
  * problems" takes first focus; the confirm button then says "anyway". It never blocks: a broken
  * tag hides one figure, and blocking would trap a post whose component a later deploy removed.
  */
@@ -221,8 +244,8 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
   const late = at === null || new Date(at).getTime() <= now.getTime()
   const atError = scheduling && tried && late ? t.t(`AdminBlogDialogs.futureTime`) : null
   const target = list ?? chosen?.list ?? null
-  // The issue goes only to the subscribers of the post's language (#527), so a list with none in
-  // it offers no email at all (#530).
+  // The issue goes only to the subscribers of the post's language, so a list with none in
+  // it offers no email at all.
   const readers = chosen?.byLanguage[value.language] ?? 0
   const sending = canEmail && emailing && target !== null && (chosen === undefined || readers > 0)
   const language = (text: string) => <span lang={value.language}>{text}</span>
@@ -288,17 +311,19 @@ function PublishDialog(props: DialogsProps & { title: string }): JSX.Element {
           </Notice>
         )}
         {dialog === `publish` && (
-          <RadioGroup
-            legend={t.t(`AdminBlogDialogs.when`)}
-            name="blog-publish-when"
-            data-e2e="admin-blog-when"
-            options={[
-              { value: `now`, label: t.t(`AdminBlogDialogs.now`) },
-              { value: `schedule`, label: t.t(`AdminBlogDialogs.whenSchedule`) },
-            ]}
-            value={when}
-            onChange={(next) => setWhen(next === `schedule` ? `schedule` : `now`)}
-          />
+          // `RadioChips` takes no attributes of its own, so the hook sits on a wrapper.
+          <div data-e2e="admin-blog-when">
+            <RadioChips
+              legend={t.t(`AdminBlogDialogs.when`)}
+              name="blog-publish-when"
+              options={[
+                { value: `now`, label: t.t(`AdminBlogDialogs.now`) },
+                { value: `schedule`, label: t.t(`AdminBlogDialogs.whenSchedule`) },
+              ]}
+              value={when}
+              onChange={(next) => setWhen(next === `schedule` ? `schedule` : `now`)}
+            />
+          </div>
         )}
         {scheduling
           ? (

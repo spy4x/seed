@@ -8,8 +8,13 @@ import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import type { ProductActivityKind } from "@domain/groups"
+import app from "@i18n/app/en.ts"
 import {
   type ActivityRow,
+  ActivitySentence,
   GroupActivityPanel,
   type GroupActivityPanelProps,
 } from "./group-activity-panel.tsx"
@@ -64,6 +69,20 @@ describe("group activity panel", () => {
     expect(text).toContain("Ada renamed the group from “Home” to “Family”")
     expect(page).toContain("3 hours ago")
     expect(page).toContain(`data-e2e="activity-2"`)
+  })
+
+  it("names both zones of a time zone change by city and offset, as they were that day", () => {
+    const page = html({
+      events: [
+        row(1, {
+          kind: "group.time_zone_changed",
+          at: "2026-01-15T12:00:00.000Z",
+          details: { from: "UTC", to: "Europe/Berlin" },
+        }),
+      ],
+    })
+    const text = page.replaceAll(/<\/?bdi[^>]*>/g, "")
+    expect(text).toContain("Ada changed the time zone from UTC · GMT+0 to Berlin, Europe · GMT+1")
   })
 
   it("links a note that is still in the group and leaves a gone one as text", () => {
@@ -155,5 +174,51 @@ describe("group activity panel", () => {
     expect(root.querySelector(`[data-e2e="activity-more"]`)).toBeNull()
     await act(() => render(null, root))
     document.body.innerHTML = ""
+  })
+})
+
+describe("a product's own activity kind", () => {
+  const currencyChanged: ProductActivityKind = {
+    kind: `household.base_currency_changed`,
+    label: `AdminAuditEvent.baseCurrencyChanged`,
+    message: (details) => ({
+      key: `GroupActivity.baseCurrencyChanged`,
+      values: { from: details.from, to: details.to },
+    }),
+    describe: (who) => `${who} changed the main currency`,
+  }
+  // The product's key sits in its own copy of the `app` catalog; this translator stands in for it.
+  const t = createTranslator({
+    language: `en`,
+    catalogs: [{
+      source: {
+        ...app,
+        "GroupActivity.baseCurrencyChanged":
+          `<who>{who}</who> changed the main currency from <value>{from}</value> to <value>{to}</value>`,
+      },
+    }],
+  })
+  const sentence = (kind: string) =>
+    renderToString(
+      <I18nContext.Provider value={t}>
+        <ActivitySentence
+          event={row(1, { kind, details: { from: `EUR`, to: `USD` } })}
+          productKinds={[currencyChanged]}
+        />
+      </I18nContext.Provider>,
+    )
+
+  it("reads as the product's translated sentence, with what members typed isolated", () => {
+    const page = sentence(currencyChanged.kind)
+    expect(page.replaceAll(/<\/?bdi[^>]*>/g, ``)).toBe(
+      `Ada changed the main currency from EUR to USD`,
+    )
+    expect(page).toContain(`<bdi>EUR</bdi>`)
+  })
+
+  it("leaves a kind neither Seed nor the product knows as the generic sentence", () => {
+    expect(sentence(`household.renamed`).replaceAll(/<\/?bdi[^>]*>/g, ``)).toBe(
+      `Ada changed something in the group`,
+    )
   })
 })

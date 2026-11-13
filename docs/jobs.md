@@ -58,7 +58,8 @@ Give the definition a `repeat`:
 The worker writes the first run when it starts (`startRepeatingJobs`), once per kind: a cron job at
 its next matching minute. After each run, whether it succeeded or was given up, it writes the next
 one. So a repeating job has one waiting row at a time. The nightly cleanup (`outbox.cleanup`) runs
-at `0 3 * * *`.
+at `0 3 * * *`, and the blog's sharing results read (`blog.share-results`, [blog.md](blog.md#sharing-results))
+at `17 * * * *`.
 
 ## Failures
 

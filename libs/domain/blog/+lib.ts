@@ -11,11 +11,13 @@ import {
   sitePath,
 } from "../identity/preferences.ts"
 import type { BlogPreviewSegment, BlogProblem, BlogSegment } from "./figures.ts"
+import type { AdminBlogSharingSummary } from "./sharing.ts"
 
 export * from "./figures.ts"
+export * from "./sharing.ts"
 
 /**
- * The blog (#395): posts an operator writes in the admin app and the public website shows once
+ * The blog: posts an operator writes in the admin app and the public website shows once
  * they are published. A post is a draft, scheduled for a time, or published. `docs/blog.md` walks
  * through the life of a post; the SQL is `libs/server/blog/`.
  *
@@ -28,7 +30,6 @@ export * from "./figures.ts"
 
 /** The longest slug: the post's address is `/blog/<slug>`. */
 export const BLOG_SLUG_MAX_LENGTH = 100
-/** The longest title. */
 export const BLOG_TITLE_MAX_LENGTH = 200
 /** The longest search-result title; search engines show about 60 characters. */
 export const BLOG_SEO_TITLE_MAX_LENGTH = 70
@@ -40,6 +41,10 @@ export const BLOG_TLDR_MAX = 5
 export const BLOG_TLDR_ITEM_MAX_LENGTH = 200
 /** The longest topic name. */
 export const BLOG_TOPIC_MAX_LENGTH = 50
+/** The longest intro, the sentences that open a post's newsletter issue and cross-post. */
+export const BLOG_INTRO_MAX_LENGTH = 600
+/** The longest related feature: the slug of a feature page, `/features/<slug>`. */
+export const BLOG_RELATED_FEATURE_MAX_LENGTH = 100
 /** The longest cover image address. */
 export const BLOG_COVER_URL_MAX_LENGTH = 2000
 /** The longest cover description. */
@@ -60,6 +65,8 @@ export const BLOG_SCHEDULE_MAX_DAYS = 5 * 366
 export const BLOG_READ_NEXT_COUNT = 3
 /** How many posts the RSS feed carries, newest first. */
 export const BLOG_FEED_COUNT = 20
+/** How many earlier versions a post keeps; a save deletes the older ones. */
+export const BLOG_REVISIONS_KEPT = 50
 
 /**
  * A post's address on the public website, in the language it is written in: `/blog/<slug>` in the
@@ -94,8 +101,17 @@ export interface BlogPost {
   topic: string | null
   /** An `https:` address, or `null` for no cover. */
   coverUrl: string | null
-  /** Set whenever `coverUrl` is. */
+  /** Set whenever `coverUrl` or `coverFile` is. */
   coverAlt: string | null
+  /**
+   * A cover kept as a file beside Seed's own posts (`seed-posts/covers/<name>.webp`), which the
+   * website serves. Only the post files set it; the admin app reads it and never writes it.
+   */
+  coverFile: string | null
+  /** Two or three sentences that open the newsletter issue and the cross-post; not on the page. */
+  intro: string | null
+  /** The slug of the website's feature page the post is about, linked under the byline. */
+  relatedFeature: string | null
   bodyMd: string
   /** The language the post is written in; the website lists it on that language's index. */
   language: Language
@@ -123,13 +139,17 @@ export interface BlogPost {
   newsletterSentAt: string | null
   /** How many confirmed subscribers the list had when the issue was queued. */
   newsletterRecipients: number | null
+  /** When the Dev.to cross-post was settled, once ever: made, or skipped. */
+  crosspostedAt: string | null
+  /** The Dev.to article's address, when the cross-post was made. */
+  devtoUrl: string | null
   createdAt: string
   updatedAt: string
   /** Starts at 1 and grows by one with every change; every write must name it. */
   version: number
 }
 
-/** One row of the admin list. */
+/** One row of the admin list, with the cover a translation of it takes. */
 export type AdminBlogPostRow = Pick<
   BlogPost,
   | `id`
@@ -142,6 +162,8 @@ export type AdminBlogPostRow = Pick<
   | `publishAt`
   | `publishedAt`
   | `updatedAt`
+  | `coverUrl`
+  | `coverAlt`
 >
 
 /** How many posts each status chip of the admin list counts. */
@@ -156,6 +178,8 @@ export interface AdminBlogCounts {
 export interface AdminBlogListResponse {
   posts: AdminBlogPostRow[]
   counts: AdminBlogCounts
+  /** Left out by the repository; the route adds it. */
+  sharing?: AdminBlogSharingSummary
 }
 
 /** One topic and how many posts carry it. */
@@ -188,7 +212,7 @@ export interface RenderedBlogBody {
 
 /**
  * A mailing list the publish dialog offers, with how many confirmed subscribers it has in each
- * language: a post's issue goes only to its language's (#527). A language with none is left out.
+ * language: a post's issue goes only to its language's. A language with none is left out.
  */
 export interface BlogNewsletterList {
   list: string
@@ -219,14 +243,19 @@ export interface PublicBlogPostSummary {
   /** The last significant update, or `null`. */
   updatedAt: string | null
   readingMinutes: number
+  /** An `https:` cover, or `null`. */
+  coverUrl: string | null
+  /** A cover file the website serves itself (`BlogPost.coverFile`), or `null`. */
+  coverFile: string | null
 }
 
 /** One published post, as the public website renders it. No id, author account or address. */
 export interface PublicBlogPost extends PublicBlogPostSummary {
   seoTitle: string | null
   tldr: string[]
-  coverUrl: string | null
   coverAlt: string | null
+  /** The slug of the feature page the post is about, or `null`. */
+  relatedFeature: string | null
   /** The body: HTML chunks with the component tags between them, unchecked. */
   segments: BlogSegment[]
   headings: BlogHeading[]
@@ -249,7 +278,40 @@ export interface BlogTranslation {
 /** One item of the RSS feed: the summary, the cover and the full body. */
 export type PublicBlogFeedItem =
   & PublicBlogPostSummary
-  & Pick<PublicBlogPost, `segments` | `headings` | `authorName` | `coverUrl`>
+  & Pick<PublicBlogPost, `segments` | `headings` | `authorName`>
+
+/**
+ * One earlier version of a post in the editor's History list: who saved it, when, and the
+ * title it had. `savedBy` is the operator's name or address as it was, `null` when they had none.
+ */
+export interface BlogRevisionSummary {
+  id: string
+  savedAt: string
+  savedBy: string | null
+  title: string
+}
+
+/** One earlier version with every field the editor saves, as History shows and restores it. */
+export interface BlogRevision extends BlogRevisionSummary {
+  slug: string
+  description: string
+  seoTitle: string | null
+  tldr: string[]
+  topic: string | null
+  coverUrl: string | null
+  coverAlt: string | null
+  intro: string | null
+  relatedFeature: string | null
+  authorUrl: string | null
+  bodyMd: string
+  language: Language
+  translationOf: string | null
+}
+
+/** The answer of `GET /api/admin/blog/posts/:id/revisions`: newest first, without bodies. */
+export interface BlogRevisionListResponse {
+  revisions: BlogRevisionSummary[]
+}
 
 /** The answer of `POST /api/admin/blog/preview`: the body with a marker at each parse problem. */
 export interface BlogPreviewBody extends Omit<RenderedBlogBody, `segments`> {
@@ -262,6 +324,7 @@ export interface BlogPreviewBody extends Omit<RenderedBlogBody, `segments`> {
 
 export type BlogErrorCode =
   | `POST_NOT_FOUND`
+  | `REVISION_NOT_FOUND`
   | `INVALID_REQUEST`
   | `ID_ALREADY_EXISTS`
   | `SLUG_TAKEN`
@@ -280,7 +343,7 @@ export class BlogError extends Error {
     public readonly code: BlogErrorCode,
     message: string,
     public readonly field: BlogField | null = null,
-    /** Why it failed, by code, so a screen says it in the person's language (#275). */
+    /** Why it failed, by code, so a screen says it in the person's language. */
     failed?: FieldError,
   ) {
     super(message)
@@ -319,6 +382,8 @@ const postFields = {
   "coverUrl?": `string | null`,
   "coverAlt?": `string | null`,
   "authorUrl?": `string | null`,
+  "intro?": `string | null`,
+  "relatedFeature?": `string | null`,
   bodyMd: `string`,
   /** One of the languages the apps ship; left out, the product's main language. */
   "language?": type.enumerated(...LANGUAGES),
@@ -381,6 +446,8 @@ export type BlogField =
   | `coverUrl`
   | `coverAlt`
   | `authorUrl`
+  | `intro`
+  | `relatedFeature`
   | `bodyMd`
   | `language`
   | `translationOf`
@@ -396,6 +463,8 @@ export interface BlogPostFields {
   coverUrl: string | null
   coverAlt: string | null
   authorUrl: string | null
+  intro: string | null
+  relatedFeature: string | null
   bodyMd: string
   language: Language
   translationOf: string | null
@@ -440,8 +509,8 @@ export function isHttpsUrl(url: string): boolean {
 /**
  * Trims and checks a post's fields. Throws {@link BlogError} with the field it is about: a
  * missing title or description, a slug that is no slug, more than {@link BLOG_TLDR_MAX} key
- * points, a cover or author link that is not `https:`, a cover with no description, a text past
- * its column, or a NUL or broken character anywhere.
+ * points, a cover or author link that is not `https:`, a cover with no description, a related
+ * feature that is no slug, a text past its column, or a NUL or broken character anywhere.
  */
 export function parseBlogPostFields(
   input: Pick<BlogPostCreateRequest, Exclude<keyof BlogPostCreateRequest, `id`>>,
@@ -460,6 +529,8 @@ export function parseBlogPostFields(
     coverUrl: optional(input.coverUrl),
     coverAlt: optional(input.coverAlt),
     authorUrl: optional(input.authorUrl),
+    intro: optional(input.intro),
+    relatedFeature: optional(input.relatedFeature),
     bodyMd: input.bodyMd,
     language: isLanguage(input.language) ? input.language : DEFAULT_LANGUAGE,
     translationOf: input.translationOf ?? null,
@@ -473,6 +544,8 @@ export function parseBlogPostFields(
     [`coverUrl`, fields.coverUrl],
     [`coverAlt`, fields.coverAlt],
     [`authorUrl`, fields.authorUrl],
+    [`intro`, fields.intro],
+    [`relatedFeature`, fields.relatedFeature],
     [`bodyMd`, fields.bodyMd],
     ...fields.tldr.map((point): [BlogField, string] => [`tldr`, point]),
   ]
@@ -574,6 +647,24 @@ export function parseBlogPostFields(
       )
     }
   }
+  if (fields.intro !== null && characters(fields.intro) > BLOG_INTRO_MAX_LENGTH) {
+    fail(
+      `intro`,
+      `Keep the intro to ${BLOG_INTRO_MAX_LENGTH} characters.`,
+      tooLong(BLOG_INTRO_MAX_LENGTH),
+    )
+  }
+  if (
+    fields.relatedFeature !== null &&
+    (characters(fields.relatedFeature) > BLOG_RELATED_FEATURE_MAX_LENGTH ||
+      !BLOG_SLUG_PATTERN.test(fields.relatedFeature))
+  ) {
+    fail(
+      `relatedFeature`,
+      `Enter a feature page's address, such as "realtime" for /features/realtime.`,
+      { code: `slug` },
+    )
+  }
   if (characters(fields.bodyMd) > BLOG_BODY_MAX_LENGTH) {
     fail(
       `bodyMd`,
@@ -586,7 +677,7 @@ export function parseBlogPostFields(
 
 /**
  * A save's fields: {@link BlogPostFields} with `language` and `translationOf` only when the request
- * named them, so a save that leaves them out keeps the post's language and its link (#530).
+ * named them, so a save that leaves them out keeps the post's language and its link.
  */
 export type BlogPostEdit =
   & Omit<BlogPostFields, `language` | `translationOf`>
@@ -656,8 +747,29 @@ export type BlogAuditKind = typeof BLOG_AUDIT_KINDS[keyof typeof BLOG_AUDIT_KIND
 /** The job that publishes a scheduled post at its time and queues its newsletter issue. */
 export const BLOG_PUBLISH_JOB = `blog.publish`
 
+/** The job that cross-posts a live post to Dev.to once ever, after its live check. */
+export const BLOG_CROSSPOST_JOB = `blog.crosspost`
+
+/**
+ * The jobs that post a live post to one channel by themselves, by kind, each about one share row
+ * (docs/blog.md). Dev.to keeps {@link BLOG_CROSSPOST_JOB}, about the post.
+ */
+export const BLOG_POST_JOBS = {
+  telegram: `blog.post-telegram`,
+  mastodon: `blog.post-mastodon`,
+  bluesky: `blog.post-bluesky`,
+  hashnode: `blog.post-hashnode`,
+  linkedin: `blog.post-linkedin`,
+} as const
+
+/** A kind one of {@link BLOG_POST_JOBS} posts to. */
+export type BlogPostJobKind = keyof typeof BLOG_POST_JOBS
+
 /** The job that tells IndexNow a post's addresses changed: it went live, changed, moved or left. */
 export const BLOG_INDEXNOW_JOB = `blog.indexnow`
+
+/** The repeating job that reads how each posted copy did on the channels that report it. */
+export const BLOG_SHARE_RESULTS_JOB = `blog.share-results`
 
 /** An IndexNow key: 8 to 128 letters, digits and dashes, as the protocol asks. */
 const INDEXNOW_KEY_PATTERN = /^[A-Za-z0-9-]{8,128}$/

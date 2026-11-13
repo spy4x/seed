@@ -23,14 +23,14 @@ export interface PublicCatalogReads {
   /** The bytes and type of one width of a published item's photo, or `null`. */
   photo(id: string, file: string): Promise<{ bytes: Uint8Array; contentType: string } | null>
   /**
-   * Where the tracking link with `code` sends a visitor (#483), or `null` for an unknown code, an
+   * Where the tracking link with `code` sends a visitor, or `null` for an unknown code, an
    * item that is not published, or tracking off. `counted`: Umami has counted the visit already.
    */
   link(code: string, counted: boolean): Promise<string | null>
 }
 
 /**
- * The public catalog (#466), mounted at `/api/catalog` for the public website, and only while the
+ * The public catalog, mounted at `/api/catalog` for the public website, and only while the
  * catalog is on (`CATALOG=true`). No session. Only published items leave: a draft or hidden item
  * answers 404 like one that never existed.
  *

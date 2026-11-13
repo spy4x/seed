@@ -1,7 +1,7 @@
 /**
- * What a person's data export holds (#229, docs/data-export.md): one section per kind of row, each
+ * What a person's data export holds (docs/data-export.md): one section per kind of row, each
  * a list of rows in the JSON file and a CSV file of its own. A new table that holds a person's
- * data adds its section here (docs/aggregates.md, "The person's data export").
+ * data adds its section here (docs/aggregate-lifecycle.md, "Put it in the person's data export").
  *
  * The rule every section keeps: a row is in the export only when it is about the person or was
  * made by them, and it carries no other person's data and no secret. In a shared group that means
@@ -123,7 +123,7 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       ORDER BY id`,
   },
   {
-    // The linked Telegram account (#269, docs/telegram.md): Seed keeps its user id only, no
+    // The linked Telegram account (docs/telegram.md): Seed keeps its user id only, no
     // Telegram name and no messages.
     name: `telegram`,
     columns: [`telegramUserId`, `linkedAt`],
@@ -274,6 +274,31 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
     rows: (sql, userId) =>
       sql`SELECT id, slug, title, status, published_at, created_at
       FROM blog_posts WHERE author_id = ${userId}
+      ORDER BY created_at, id`,
+  },
+  {
+    // The imports the person started, in groups they still belong to: never the file's bytes or
+    // its rows, only what the import was and what it did (docs/imports.md).
+    name: `imports`,
+    columns: [
+      `id`,
+      `groupId`,
+      `kind`,
+      `fileName`,
+      `fileSize`,
+      `rowCount`,
+      `savedCount`,
+      `errorCount`,
+      `failure`,
+      `createdAt`,
+      `committedAt`,
+      `undoneAt`,
+    ],
+    rows: (sql, userId) =>
+      sql`SELECT id, group_id, kind, file_name, file_size, row_count, saved_count, error_count,
+        failure, created_at, committed_at, undone_at
+      FROM imports
+      WHERE user_id = ${userId} AND group_id IN (${memberOf(sql, userId)})
       ORDER BY created_at, id`,
   },
   {

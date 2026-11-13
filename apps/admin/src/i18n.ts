@@ -1,5 +1,5 @@
 /**
- * The admin app's languages (#216): its English catalogs, bundled, and one loader per other language.
+ * The admin app's languages: its English catalogs, bundled, and one loader per other language.
  * Each loader is a fixed `import()`, so the build makes one chunk per language and loads only the
  * one shown. Only a member of `LANGUAGES` reaches a loader (`createLanguages`).
  *

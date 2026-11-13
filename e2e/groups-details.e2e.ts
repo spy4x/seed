@@ -2,7 +2,7 @@ import { type APIRequestContext, type Browser, type Page } from "@playwright/tes
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -54,6 +54,7 @@ test.describe("group details", () => {
         data: { id: groupId, name: "Flat" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(page.request, apiBase, groupId)
       const added = await request.post(`${apiBase}/api/test/add-member`, {
         data: { login: member, groupId, role: 1 },
       })
@@ -100,6 +101,17 @@ test.describe("group details", () => {
       )
       expect(loads).toBe(0)
 
+      // The group's zone: picked from the list, saved, and read by the member as a fact.
+      const zone = page.locator("#group-time-zone")
+      await zone.fill("tokyo")
+      await page.getByRole("option", { name: /^Tokyo, Asia/ }).click()
+      await expect(zone).toHaveValue(/^Tokyo, Asia · GMT\+9$/)
+      await page.locator("[data-e2e=group-save]").click()
+      await expect(page.locator("[data-e2e=group-save]")).toHaveCount(0)
+      await expect(memberPage.locator("[data-e2e=group-general-time-zone]"))
+        .toContainText("Tokyo, Asia · GMT+9", { timeout: 3_000 })
+      expect(loads).toBe(0)
+
       // The list and the picker show the same mark.
       await gotoApp(page, "/groups", page.locator("[data-e2e=group-item-name]").first())
       await expect(page.locator(`[data-e2e=group-${groupId}] [data-e2e=group-mark]`))
@@ -114,7 +126,7 @@ test.describe("group details", () => {
       // The same edit, made through the API by a viewer, is refused.
       const refused = await memberPage.request.put(`${apiBase}/api/groups/${groupId}/details`, {
         headers: { ...headers, "idempotency-key": uuidV7() },
-        data: { description: "Mine", color: "#b91c1c", emoji: null },
+        data: { description: "Mine", color: "#b91c1c", emoji: null, timeZone: "UTC" },
       })
       expect(refused.status()).toBe(403)
     } finally {

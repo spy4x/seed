@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { openGroups, openNotes } from "./fixtures/groups.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { freePlanAllowsNothing, payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -17,7 +17,7 @@ async function cleanup(request: APIRequestContext, email: string, { soft = false
 }
 
 test.describe("exporting and importing a group", () => {
-  test("the owner exports a group to a file and imports it as a new group with the same notes", async ({ page, request }) => {
+  test("the owner exports a group to a file and imports it as a new group with the same notes, or is told the free plan holds no note when it allows nothing", async ({ page, request }) => {
     const email = `e2e-group-file-${uuidV7().slice(-8)}@example.com`
     await cleanup(request, email)
     try {
@@ -34,6 +34,7 @@ test.describe("exporting and importing a group", () => {
         data: { id: groupId, name: "Family" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(page.request, apiBase, groupId)
       const titles = ["Groceries", "Holiday plan", "School run"]
       for (const title of titles) {
         const note = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
@@ -57,6 +58,12 @@ test.describe("exporting and importing a group", () => {
       await page.getByRole("menuitem", { name: "Import a group…" }).click()
       await expect(page).toHaveURL("/groups/import")
       await page.locator("input[type=file]").setInputFiles(file)
+      // An imported group starts on the free plan, so a plan that allows no note refuses the file.
+      if (await freePlanAllowsNothing(request, apiBase)) {
+        await expect(page.locator("[data-e2e=plan-refusal]"))
+          .toHaveAttribute("data-entitlement", "maxNotes")
+        return
+      }
       await expect(page.locator("[data-e2e=group-import-heading]")).toHaveText(
         "Contains: 3 notes, 0 tags, settings.",
       )
@@ -71,7 +78,7 @@ test.describe("exporting and importing a group", () => {
       await expect(page.locator("[data-e2e=group-general-name]")).toHaveText("Family copy")
 
       await openNotes(page, "Family copy")
-      await expect(page.locator("[data-e2e=note-item-title]")).toHaveCount(3, { timeout: 5_000 })
+      await expect(page.locator("[data-e2e=note-item-title]")).toHaveCount(3)
       expect((await page.locator("[data-e2e=note-item-title]").allTextContents()).sort())
         .toEqual(titles)
       // The original is still there, with its notes.

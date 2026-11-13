@@ -10,7 +10,7 @@ import { NoteCreateCommand, NoteMoveCommand, NoteRestoreCommand } from "@domain/
 import { type EntitlementNeeds, needsFeature, needsRoom } from "./entitlement-gate.ts"
 
 /**
- * Every command a plan can refuse, in one list (`docs/billing.md`, "Entitlements"). A command not
+ * Every command a plan can refuse, in one list (`docs/billing-plans.md`, "What each plan allows"). A command not
  * listed here is never refused for its plan, and no query is.
  */
 export const ENTITLEMENT_NEEDS: EntitlementNeeds = new Map([
@@ -41,9 +41,10 @@ export const ENTITLEMENT_NEEDS: EntitlementNeeds = new Map([
       return source !== null && canMutateNotes(source)
     },
   ),
-  // Moving a whole group adds every one of its notes to the target group, and how many is not known
-  // here. The gate is judged to refuse nothing (`judges` is `false`) but still reads the target's
-  // cap into `allowance`; the write counts the notes it moves under the group's lock and refuses
+  // Moving a whole group adds every one of its rows to the target group, and how many is not known
+  // here. The gate is judged to refuse nothing (`judges` is `false`) but still reads every cap of
+  // the target's plan into `allowances` (the limit named here is only the entry's key); each
+  // movable aggregate counts what it moves under the group's lock against its own cap and refuses
   // the move that would pass it, so a group with nothing to move is never refused for a full
   // target.
   needsRoom(GroupMoveAllCommand, "maxNotes", (command) => command.data.toGroupId, () => false),

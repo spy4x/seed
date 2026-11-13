@@ -204,6 +204,36 @@ Deno.test("data export: lists the files the person attached, never another perso
   })
 })
 
+Deno.test("data export: lists the imports the person started, never the file or another person's", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor, owner } = await team(sql)
+    const [mine, theirs] = [uuidV7(), uuidV7()]
+    await sql`
+      INSERT INTO imports (id, group_id, user_id, kind, status, file_name, file_size, file)
+      VALUES
+        (${mine}, ${groupId}, ${editor}, 'notes', 1, 'mine.csv', 15, ${
+      new TextEncoder().encode(`file-secret-row`)
+    }),
+        (${theirs}, ${groupId}, ${owner}, 'notes', 1, 'owners.csv', 3, NULL)
+    `
+
+    const files = unzip(await buildDataExport(sql, editor, new Date()))
+
+    const { imports } = JSON.parse(files[`data.json`]).sections
+    expect(imports[0]).not.toHaveProperty(`file`)
+    expect(imports).toEqual([expect.objectContaining({
+      id: mine,
+      groupId,
+      kind: `notes`,
+      fileName: `mine.csv`,
+      fileSize: 15,
+    })])
+    const text = Object.values(files).join(`\n`)
+    expect(text).not.toContain(`owners.csv`)
+    expect(text).not.toContain(`file-secret-row`)
+  })
+})
+
 Deno.test("data export: holds no secret, token, hash or key, nor another person's address", async () => {
   await withSchema(async (sql) => {
     const { groupId, editor } = await team(sql)

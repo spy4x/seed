@@ -46,10 +46,15 @@ import type { ServerFiles } from "../files/files.ts"
  *
  * `jobs` is {@link JOBS} unless a test passes its own list. `files` is where the data export jobs
  * keep the person's file; without it they fail and are retried (docs/data-export.md). With
- * `telegram`, a notification also goes to the person's linked Telegram chat (#269); without it,
- * those jobs send nothing. `imageScratch` is where image processing writes its files (#464);
+ * `telegram`, a notification also goes to the person's linked Telegram chat; without it,
+ * those jobs send nothing. `imageScratch` is where image processing writes its files;
  * without it, those jobs fail and are retried. With `indexNow`, the `blog.indexnow` job tells
- * IndexNow that a post's addresses changed (#418); without it, that job sends nothing.
+ * IndexNow that a post's addresses changed, and the `catalog.indexnow` job those of an item, named
+ * as `catalogPages` says; without it, those jobs send nothing. With
+ * `crosspost`, a live post is cross-posted to Dev.to once; without it, it is skipped.
+ * `fetcher` is how `blog.publish` asks the website whether a post is live; tests pass a fake.
+ * With `shareResults`, the hourly `blog.share-results` job reads each posted copy's numbers;
+ * without it, that job reads nothing.
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
@@ -66,6 +71,12 @@ export function createOutboxProcessor(
   telegram: JobDeps["telegram"] = null,
   imageScratch: JobDeps["imageScratch"] = null,
   indexNow: JobDeps["indexNow"] = null,
+  crosspost: JobDeps["crosspost"] = null,
+  fetcher: JobDeps["fetch"] = globalThis.fetch,
+  shareResults: JobDeps["shareResults"] = null,
+  autoPost: JobDeps["autoPost"] = undefined,
+  catalogPages: JobDeps["catalogPages"] = undefined,
+  notes: JobDeps["notes"] = undefined,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {
@@ -80,6 +91,12 @@ export function createOutboxProcessor(
     telegram,
     imageScratch,
     indexNow,
+    crosspost,
+    shareResults,
+    autoPost,
+    catalogPages,
+    notes,
+    fetch: fetcher,
   }
   const kinds = jobs.map((job) => job.kind)
   const twice = kinds.filter((kind, index) => kinds.indexOf(kind) !== index)

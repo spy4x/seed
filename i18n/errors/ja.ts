@@ -14,6 +14,13 @@ export default {
   "Field.before": "{rule}より前の日付を指定してください。",
   "Field.categorySlugTaken":
     "このアドレスは別のカテゴリーで使われています。別のものを選んでください。",
+  "Field.channelAddress": "アドレスを入力してください。",
+  "Field.channelHttps": "リンクはhttps://で始めてください。",
+  "Field.channelLanguages": "言語を1つ以上選んでください。",
+  "Field.channelName": "名前を入力してください。",
+  "Field.channelNameTaken": "この名前はほかのチャンネルで使われています。",
+  "Field.channelSource": "ソースタグを入力してください。",
+  "Field.channelSourceTaken": "このソースタグはほかのチャンネルで使われています。",
   "Field.contactValue": "この連絡先の種類としては正しくないようです。形式を確認してください。",
   "Field.divisor": "{rule}の倍数を入力してください。",
   "Field.domain": "ここには入力できない種類の値です。",
@@ -100,6 +107,7 @@ export default {
   "Reason.CATEGORY_NOT_FOUND": "このカテゴリーはもう存在しません。別のものを選んでください。",
   "Reason.CATEGORY_REQUIRED":
     "公開するアイテムにはカテゴリーが必要です。カテゴリーを選ぶか、先にアイテムを非公開にしてください。",
+  "Reason.CHANNEL_NOT_FOUND": "このチャンネルはもう存在しません。",
   "Reason.DEMO_ADMIN_ELSEWHERE":
     "これはデモ用の管理者アカウントです。管理画面からログインしてください。",
   "Reason.DEMO_REFUSED":
@@ -137,13 +145,17 @@ export default {
   "Reason.LINK_NOT_FOUND": "このリンクはもう存在しません。",
   "Reason.MEMBER_NOT_FOUND": "この人はグループのメンバーではありません。",
   "Reason.MFA_REQUIRED": "先にワンタイムコードを入力してください。",
+  "Reason.HAS_SHARES": "このチャンネルには共有の記録があるため、アーカイブのみできます。",
   "Reason.NAME_MISMATCH": "グループ名が一致しません。表示されているとおりに入力してください。",
+  "Reason.NAME_TAKEN": "この名前はほかのチャンネルで使われています。",
   "Reason.NEWSLETTER_OFF": "ニュースレターがオフのため、メールで送信できません。",
   "Reason.NOTE_FULL": "このメモに添付できるファイルは上限に達しています。先に1つ外してください。",
   "Reason.NOTE_NOT_FOUND": "このメモはもう存在しません。",
   "Reason.NOTHING_TO_MOVE": "移動するものはありません。",
   "Reason.NOTIFICATION_NOT_FOUND": "この通知はもう存在しません。",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "この記事はすでに公開されています。",
+  "Reason.NOT_AUTOMATIC":
+    "このチャンネルは自動で投稿しません。先に「自動で投稿する」をオンにしてください。",
   "Reason.NOT_PUBLISHED": "まだ公開されていません。",
   "Reason.NOT_SCHEDULED": "この記事は予約されていません。",
   "Reason.NO_SUBSCRIPTION": "このグループにはサブスクリプションがありません。",
@@ -152,6 +164,8 @@ export default {
   "Reason.PASSWORD_INVALID": "パスワードが違います。もう一度お試しください。",
   "Reason.PASSWORD_LOCKED":
     "パスワードを何度も間違えました。しばらく待ってから、もう一度お試しください。",
+  "Reason.PERIOD_NOT_OFFERED":
+    "このプランはその請求期間では購入できません。もう一方を選んでください。",
   "Reason.PHOTO_CONTENT": "ファイルの中身が画像の種類と一致しません。",
   "Reason.PHOTO_NOT_FOUND": "この写真はもう存在しません。",
   "Reason.PHOTO_TOO_LARGE": "写真が大きすぎます。",
@@ -160,6 +174,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "グループのプランにはこの機能が含まれていません。",
   "Reason.PLAN_LIMIT_REACHED": "グループのプランの上限に達しました。",
   "Reason.POST_NOT_FOUND": "この記事はもう存在しません。",
+  "Reason.REVISION_NOT_FOUND": "この以前の版はもう存在しません。",
   "Reason.PROVIDER_ERROR": "決済サービスから応答がありませんでした。もう一度お試しください。",
   "Reason.REQUEST_ORIGIN_INVALID":
     "このリクエストの送信元を確認できませんでした。ページを再読み込みして、もう一度お試しください。",
@@ -168,8 +183,9 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "検索回数が多すぎます。1分ほど待ってから、もう一度お試しください。",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "メンバーを追加するたびにグループの請求額が増えることを確認してください。",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "このリンクは別のブラウザでリクエストされました。そのブラウザで開いてください。",
+  "Reason.SHARE_NOT_FOUND": "この共有の記録はもう存在しません。",
+  "Reason.SIGN_UP_CLOSED":
+    "このサーバーでは招待がないと新規登録できません。メンバーに招待を依頼してください。",
   "Reason.SLUG_LOCKED":
     "記事を公開するとアドレスは固定されます。変更するには「URLを変更」を使ってください。",
   "Reason.SLUG_TAKEN": "このアドレスはすでに使われています。別のものを選んでください。",
@@ -184,6 +200,7 @@ export default {
   "Reason.TOKEN_NOT_FOUND": "このトークンはもう存在しません。",
   "Reason.TOKEN_SCOPE": "このトークンにはこの操作の権限がありません。",
   "Reason.TOO_MANY": "上限に達しています。先に1つ削除してください。",
+  "Reason.TOO_MANY_CHANNELS": "これ以上チャンネルを追加できません。先に1つ削除してください。",
   "Reason.TOO_MANY_LINKS": "これ以上リンクを追加できません。先に1つ外してください。",
   "Reason.TOO_MANY_TOKENS": "これ以上トークンを追加できません。先に1つ取り消してください。",
   "Reason.TOO_SOON": "前回のリクエストから1日経っていません。明日もう一度お試しください。",
@@ -193,6 +210,7 @@ export default {
   "Reason.UPLOAD_BUDGET":
     "1時間あたりのアップロード上限に達しました。しばらくしてからお試しください。",
   "Reason.UPLOAD_NOT_FOUND": "このアップロードはもう存在しません。",
+  "Reason.UTM_SOURCE_TAKEN": "このソースタグはほかのチャンネルで使われています。",
   "Reason.USER_NOT_ACTIVE": "このアカウントは有効ではありません。",
   "Reason.VERSION_CONFLICT":
     "ほかの人がこの内容を変更しました。再読み込みすると変更内容を確認できます。",

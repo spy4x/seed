@@ -27,7 +27,10 @@ export function createGroupExportHandler(
 ): CommandHandler<GroupExportCommand> {
   return async ({ data }) => {
     assertCanExportGroup(await dependencies.roleOf(data.groupId, data.actor.userId))
-    return await dependencies.porter.exportGroup(data.groupId, data.actor.userId, data.requestId)
+    return await dependencies.porter.exportGroup(data.groupId, data.actor.userId, data.requestId, {
+      format: data.format,
+      language: data.language,
+    })
   }
 }
 

@@ -4,9 +4,9 @@ import { UserRole } from "@domain/identity"
 import type { GroupColor, GroupRole } from "./+lib.ts"
 
 // ---------------------------------------------------------------------------------------------
-// The operator area's groups module (#426): `/api/admin/groups/...`. Counts and account facts
+// The operator area's groups module: `/api/admin/groups/...`. Counts and account facts
 // only: no note body, tag or description text ever reaches these shapes. The one exception is a
-// file's name and its note's title on the Files tab (#478), so an operator can find a file.
+// file's name and its note's title on the Files tab, so an operator can find a file.
 // ---------------------------------------------------------------------------------------------
 
 /** How many groups one page of the operator's group list shows. */
@@ -40,6 +40,8 @@ export interface AdminGroupRow {
   name: string
   emoji: string | null
   color: GroupColor | null
+  /** The zone the group's days are cut in, such as `Europe/Berlin`. */
+  timeZone: string
   owner: AdminGroupPerson
   memberCount: number
   /** Notes that are not deleted. A count, never their text. */
@@ -65,7 +67,7 @@ export interface AdminGroupListResponse {
 
 /** One member of a group, as the operator sees them. */
 export interface AdminGroupMember extends AdminGroupPerson {
-  /** Their profile picture (#228); `null` or absent for none. */
+  /** Their profile picture; `null` or absent for none. */
   pictureId?: string | null
   role: GroupRole
   /** The person's role in the product, which decides whether an operator may act on them. */
@@ -141,7 +143,7 @@ export const ADMIN_GROUP_FILE_SEARCH_MAX_LENGTH = 100
 /**
  * One file on a note of the group, as the operator sees it: its name, type, size, uploader, date
  * and its note's title. The name and the title are the exception to "counts only": an operator
- * needs them to find an abusive file among many (#478).
+ * needs them to find an abusive file among many.
  */
 export interface AdminGroupFile {
   id: string
@@ -191,6 +193,13 @@ export function adminGroupFileFilterQuery(filter: AdminGroupFileFilter): string 
  * only, not audited), shown in place (`open`) or saved (`download`), each of the last two audited.
  */
 export type AdminGroupFileAccess = "thumbnail" | "open" | "download"
+
+/**
+ * The query parameter that names one Open or Download: a UUID the admin app makes per action. The
+ * audit row keeps it, and a second request with the same one writes no second row, so a browser
+ * that fetches the address again (Chromium's download machinery does) is counted once.
+ */
+export const ADMIN_GROUP_FILE_REQUEST_PARAM = "requestId"
 
 /** The admin API's path of one file's bytes: `/api/admin/groups/:id/files/:fileId/open`. */
 export function adminGroupFilePath(

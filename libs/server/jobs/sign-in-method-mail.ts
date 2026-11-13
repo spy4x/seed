@@ -8,8 +8,8 @@ import { PASSKEY_METHOD } from "../auth/passkeys.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 
 /**
- * The job that tells a person a sign-in method was linked to their account or unlinked from it
- * (#385). Its aggregate id is a row of `sign_in_method_changes`.
+ * The job that tells a person a sign-in method was linked to their account or unlinked from it.
+ * Its aggregate id is a row of `sign_in_method_changes`.
  */
 export const SIGN_IN_METHOD_MAIL_JOB = "auth.sign-in-method-mail"
 

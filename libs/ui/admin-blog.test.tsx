@@ -1,5 +1,5 @@
 /**
- * The blog's admin pages (#396), driven in a browser DOM (happy-dom): what the list's chips and
+ * The blog's admin pages, driven in a browser DOM (happy-dom): what the list's chips and
  * search send, the editor's errors and where focus goes, the Preview tab, and what each dialog
  * sends, the newsletter list above all.
  */
@@ -8,7 +8,14 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
-import type { AdminBlogListResponse, BlogPost, BlogProblem } from "@domain/blog"
+import type {
+  AdminBlogListResponse,
+  BlogPost,
+  BlogProblem,
+  BlogRevision,
+  BlogRevisionSummary,
+} from "@domain/blog"
+import { useState } from "preact/hooks"
 import { LANGUAGES } from "@domain/identity"
 import { languageName } from "@spy4x/preact-ui/language-picker"
 import {
@@ -19,6 +26,8 @@ import {
 import {
   AdminBlogEditorScreen,
   type AdminBlogEditorScreenProps,
+  type BlogDialog,
+  type BlogDraft,
   blogDraftErrors,
   blogDraftOf,
   blogErrorText,
@@ -27,6 +36,7 @@ import {
   followTitle,
 } from "./admin-blog-editor.tsx"
 import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
+import { type BlogHistoryState, NO_BLOG_HISTORY } from "./admin-blog-history.tsx"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: "http://admin.localhost/blog" })
@@ -142,6 +152,8 @@ const listed: AdminBlogListResponse = {
       publishAt: "2026-10-01T10:00:00.000Z",
       publishedAt: "2026-10-01T10:00:00.000Z",
       updatedAt: "2026-10-02T10:00:00.000Z",
+      coverUrl: null,
+      coverAlt: null,
     },
   ],
   counts: { all: 3, draft: 1, scheduled: 1, published: 1 },
@@ -187,6 +199,12 @@ describe("the blog list", () => {
     const none = { posts: [], counts: { all: 0, draft: 0, scheduled: 0, published: 0 } }
     await mount(<AdminBlogListScreen {...listProps([], { list: none })} />)
     expect(find("[data-e2e=admin-blog-none]").textContent).toContain("No posts yet")
+    // The page's h1 is the only heading above it, so the empty state is an h2.
+    expect([...document.querySelectorAll("h1, h2, h3, h4")].map((h) => h.tagName)).toEqual([
+      "H1",
+      "H2",
+    ])
+    expect(find("[data-e2e=admin-blog-none] h2").textContent).toBe("No posts yet")
     await mount(
       <AdminBlogListScreen
         {...listProps([], { list: none, filter: { status: null, query: "x" } })}
@@ -221,6 +239,9 @@ const saved: BlogPost = {
   topic: "Infra",
   coverUrl: null,
   coverAlt: null,
+  coverFile: null,
+  intro: null,
+  relatedFeature: null,
   bodyMd: "## Why\n\nIt is fast.",
   language: "en",
   translationOf: null,
@@ -234,6 +255,8 @@ const saved: BlogPost = {
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
+  crosspostedAt: null,
+  devtoUrl: null,
   createdAt: "2026-10-20T10:00:00.000Z",
   updatedAt: "2026-10-20T10:00:00.000Z",
   version: 3,
@@ -285,6 +308,10 @@ function editorProps(
     onUnpublish: () => calls.push(["unpublish"]),
     onChangeUrl: (slug) => calls.push(["change-url", slug]),
     onDelete: () => calls.push(["delete"]),
+    history: NO_BLOG_HISTORY,
+    onSelectRevision: (id) => calls.push(["select-revision", id]),
+    onRestoreRevision: (revision) => calls.push(["restore", revision.id]),
+    onRetryHistory: () => calls.push(["retry-history"]),
     now: NOW,
     ...overrides,
   }
@@ -307,17 +334,21 @@ describe("the blog editor", () => {
     expect(calls.at(-1)).toEqual(["save"])
   })
 
-  it("sets the post's language, and the post it translates from those in other languages (#527)", async () => {
+  it("sets the post's language, and the post it translates from those in other languages, taking its cover (#527, #733)", async () => {
     const calls: unknown[][] = []
     const english = {
       id: "01a184ae-0000-7000-8000-000000000001",
       title: "Hello world",
       language: "en" as const,
+      coverUrl: "https://images.example.com/hello.webp",
+      coverAlt: "A seedling",
     }
     const german = {
       id: "01a184ae-0000-7000-8000-000000000002",
       title: "Hallo",
       language: "de" as const,
+      coverUrl: null,
+      coverAlt: null,
     }
     const value = { ...blogDraftOf(saved), language: "de" as const }
     await mount(
@@ -339,8 +370,93 @@ describe("the blog editor", () => {
 
     expect(calls).toEqual([
       ["change", { ...value, language: "es" }],
-      ["change", { ...value, translationOf: english.id }],
+      ["change", {
+        ...value,
+        translationOf: english.id,
+        coverUrl: "https://images.example.com/hello.webp",
+        coverAlt: "A seedling",
+      }],
     ])
+  })
+
+  it("groups the settings under four headings, in the order focus follows (#733)", async () => {
+    await mount(<AdminBlogEditorScreen {...editorProps([])} />)
+    const groups = [...document.querySelectorAll("[data-e2e=admin-blog-settings] section h2")]
+    expect(groups.map((heading) => heading.textContent)).toEqual([
+      "Address & language",
+      "Summary",
+      "Cover",
+      "Links",
+    ])
+    const inGroup = (group: string) =>
+      [...find(`[data-e2e=admin-blog-group-${group}]`).querySelectorAll("[data-e2e]")]
+        .map((element) => element.getAttribute("data-e2e"))
+    expect(inGroup("address")).toEqual([
+      "admin-blog-slug",
+      "admin-blog-language",
+      "admin-blog-translation-of",
+      "admin-blog-topic",
+    ])
+    expect(inGroup("cover")).toEqual(["admin-blog-cover-url"])
+    expect(inGroup("links")).toEqual(["admin-blog-related-feature", "admin-blog-author-url"])
+    expect(find("[data-e2e=admin-blog-group-cover]").getAttribute("aria-labelledby"))
+      .toBe("admin-blog-group-cover-heading")
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], { errors: { relatedFeature: "Bad.", coverUrl: "Bad." } })}
+      />,
+    )
+    await settle()
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-blog-cover-url")
+  })
+
+  it("draws a cover address as a 16:9 thumbnail, and says so when the picture does not load (#733)", async () => {
+    const value = {
+      ...blogDraftOf(saved),
+      coverUrl: "https://images.example.com/a.webp",
+      coverAlt: "A chart",
+    }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { value })} />)
+    const thumbnail = find<HTMLImageElement>("[data-e2e=admin-blog-cover-thumbnail]")
+    expect(thumbnail.getAttribute("src")).toBe("https://images.example.com/a.webp")
+    expect(thumbnail.className).toContain("aspect-video")
+    expect(find("[data-e2e=admin-blog-group-cover]").textContent).toContain(
+      "A 16:9 picture, https:// address.",
+    )
+
+    await act(() => {
+      thumbnail.dispatchEvent(new window.Event("error") as unknown as Event)
+    })
+    expect(has("[data-e2e=admin-blog-cover-thumbnail]")).toBe(false)
+    expect(find("[data-e2e=admin-blog-cover-broken]").textContent).toBe(
+      "This picture did not load.",
+    )
+  })
+
+  it("shows a translation the cover of its original, read-only, instead of the cover fields (#733)", async () => {
+    const english = {
+      id: "01a184ae-0000-7000-8000-000000000001",
+      title: "Hello world",
+      language: "en" as const,
+      coverUrl: "https://images.example.com/hello.webp",
+      coverAlt: "A seedling",
+    }
+    const value = {
+      ...blogDraftOf(saved),
+      language: "de" as const,
+      translationOf: english.id,
+      coverUrl: english.coverUrl,
+      coverAlt: english.coverAlt,
+    }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { value, originals: [english] })} />)
+    expect(has("[data-e2e=admin-blog-cover-url]")).toBe(false)
+    expect(has("[data-e2e=admin-blog-cover-alt]")).toBe(false)
+    expect(find("[data-e2e=admin-blog-cover-of]").textContent).toBe(
+      "Uses the cover of: Hello world",
+    )
+    expect(find<HTMLImageElement>("[data-e2e=admin-blog-cover-thumbnail]").getAttribute("src"))
+      .toBe(english.coverUrl)
   })
 
   it("says where an empty slug comes from instead of drawing a placeholder address", async () => {
@@ -405,6 +521,29 @@ describe("the blog editor", () => {
     expect(find<HTMLInputElement>("[data-e2e=admin-blog-author-url]").value)
       .toBe("https://example.com/about")
     expect(blogDraftOf(saved).authorUrl).toBe("")
+  })
+
+  it("passes a typed intro and related feature up, and shows saved ones in their fields (#733)", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...editorProps(calls)} />)
+    const intro = find<HTMLTextAreaElement>("[data-e2e=admin-blog-intro]")
+    expect(document.querySelector(`label[for="${intro.id}"]`)?.textContent).toBe("Intro")
+    await type("[data-e2e=admin-blog-intro]", "Two sentences.")
+    await type("[data-e2e=admin-blog-related-feature]", "realtime")
+    expect(calls).toEqual([
+      ["change", { ...blogDraftOf(saved), intro: "Two sentences." }],
+      ["change", { ...blogDraftOf(saved), relatedFeature: "realtime" }],
+    ])
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], {
+          post: { ...saved, intro: "Saved intro.", relatedFeature: "offline" },
+        })}
+      />,
+    )
+    expect(find<HTMLTextAreaElement>("[data-e2e=admin-blog-intro]").value).toBe("Saved intro.")
+    expect(find<HTMLInputElement>("[data-e2e=admin-blog-related-feature]").value).toBe("offline")
   })
 
   it("opens the folded settings and focuses the first field in error", async () => {
@@ -492,6 +631,24 @@ describe("the blog editor", () => {
     expect(when.querySelector("legend")?.textContent).toBe("When")
     expect([...when.querySelectorAll("label")].map((label) => label.textContent?.trim()))
       .toEqual(["Now", "Schedule"])
+  })
+
+  it("draws the times to publish as choice chips, and shows the date only for Schedule", async () => {
+    await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish" })} />)
+    const when = find("[data-e2e=admin-blog-when]")
+    // RadioChips hides each radio inside its chip; a plain radio group shows the browser's radio.
+    const radios = [...when.querySelectorAll<HTMLInputElement>("input[type=radio]")]
+    expect(radios.map((radio) => radio.className)).toEqual(["sr-only", "sr-only"])
+    expect(radios.every((radio) => radio.name === "blog-publish-when")).toBe(true)
+    expect(
+      [...when.querySelectorAll("label")].every((label) => label.className.includes("min-h-11")),
+    )
+      .toBe(true)
+    expect(has("#blog-publish-at")).toBe(false)
+    await clickOn(radios[1])
+    expect(has("#blog-publish-at")).toBe(true)
+    await clickOn(find("[data-e2e=admin-blog-when] input[value=now]"))
+    expect(has("#blog-publish-at")).toBe(false)
   })
 
   it("publishes a draft now without email until the box is ticked", async () => {
@@ -632,6 +789,8 @@ describe("the blog editor", () => {
       newsletterList: "news",
       newsletterSentAt: "2026-10-01T09:00:05.000Z",
       newsletterRecipients: 312,
+      crosspostedAt: null,
+      devtoUrl: null,
     }
     await mount(<AdminBlogEditorScreen {...editorProps([], { post: sent })} />)
     expect(find("[data-e2e=admin-blog-emailed]").textContent).toContain("Emailed to 312 on")
@@ -713,10 +872,184 @@ describe("the blog editor", () => {
 
 // #endregion
 
+// #region History
+
+/** Two earlier versions of `saved`, newest first: Lee's rewrite and the first draft. */
+const REVISIONS: BlogRevision[] = [
+  {
+    ...blogDraftOf(saved),
+    seoTitle: null,
+    topic: null,
+    coverUrl: null,
+    coverAlt: null,
+    authorUrl: null,
+    translationOf: null,
+    id: "019a0f00-0000-7000-8000-000000000002",
+    savedAt: "2026-10-23T09:57:00.000Z",
+    savedBy: "Lee Park",
+    title: "Jobs, rewritten",
+    bodyMd: "Worse.",
+  },
+  {
+    ...blogDraftOf(saved),
+    seoTitle: null,
+    topic: null,
+    coverUrl: null,
+    coverAlt: null,
+    authorUrl: null,
+    translationOf: null,
+    id: "019a0f00-0000-7000-8000-000000000001",
+    savedAt: "2026-10-22T10:00:00.000Z",
+    savedBy: null,
+    title: "Jobs, first draft",
+    description: "The first description.",
+    bodyMd: "The good paragraph.\n\nAnd a second one.",
+  },
+]
+
+const summaryOf = ({ id, savedAt, savedBy, title }: BlogRevision): BlogRevisionSummary => ({
+  id,
+  savedAt,
+  savedBy,
+  title,
+})
+
+/**
+ * The editor with what the admin app's state does around History: opening it reads the list and
+ * the newest version, picking one reads it, and restoring puts its fields in the editor.
+ */
+function HistoryHarness(
+  { calls, revisions }: { calls: unknown[][]; revisions: BlogRevision[] },
+) {
+  const [dialog, setDialog] = useState<BlogDialog | null>(null)
+  const [value, setValue] = useState<BlogDraft>(blogDraftOf(saved))
+  const [history, setHistory] = useState<BlogHistoryState>(NO_BLOG_HISTORY)
+  const pick = (id: string) =>
+    setHistory((open) => ({
+      ...open,
+      selectedId: id,
+      selected: revisions.find((revision) => revision.id === id) ?? null,
+    }))
+  return (
+    <AdminBlogEditorScreen
+      {...editorProps(calls, {
+        dialog,
+        value,
+        history,
+        saveStatus: value.title === saved.title ? "saved" : "unsaved",
+        onOpenDialog: (next) => {
+          setDialog(next)
+          setHistory({ ...NO_BLOG_HISTORY, revisions: revisions.map(summaryOf) })
+          if (revisions[0]) pick(revisions[0].id)
+        },
+        onCloseDialog: () => {
+          calls.push(["close"])
+          setDialog(null)
+        },
+        onSelectRevision: (id) => {
+          calls.push(["select-revision", id])
+          pick(id)
+        },
+        onRestoreRevision: (revision) => {
+          calls.push(["restore", revision.id])
+          setValue(blogDraftOf(revision))
+          setDialog(null)
+        },
+      })}
+    />
+  )
+}
+
+/** Opens "More actions", then its History item. */
+async function openHistory(): Promise<void> {
+  await clickOn(find("[data-e2e=admin-blog-menu]"))
+  await clickOn(find("[data-e2e=admin-blog-history-open]"))
+}
+
+describe("the blog editor's History", () => {
+  it("lists earlier versions newest first, shows the one picked, and restores it into the editor with focus on the title (#418)", async () => {
+    const calls: unknown[][] = []
+    await mount(<HistoryHarness calls={calls} revisions={REVISIONS} />)
+    await openHistory()
+
+    const dialog = find("dialog[open][data-e2e=admin-blog-history]")
+    const rows = [...dialog.querySelectorAll<HTMLInputElement>("input[type=radio]")]
+    expect(rows.map((row) => row.closest("label")?.textContent)).toEqual([
+      "Jobs, rewritten3 minutes ago · Lee Park",
+      "Jobs, first draft1 day ago · Unknown",
+    ])
+    // The newest is picked and shown; its exact time sits on the row's <time> for hover.
+    expect(rows[0].checked).toBe(true)
+    expect(find("[data-e2e=admin-blog-history-body]").textContent).toBe("Worse.")
+    expect(dialog.querySelector("time")?.getAttribute("title")).toBeTruthy()
+
+    await act(() => {
+      rows[1].checked = true
+      rows[1].dispatchEvent(new window.Event("change", { bubbles: true }) as unknown as Event)
+    })
+    expect(find("[data-e2e=admin-blog-history-preview] h3").textContent).toBe("Jobs, first draft")
+    expect(find("[data-e2e=admin-blog-history-saved]").textContent).toContain("by Unknown")
+    expect(find("[data-e2e=admin-blog-history-body]").textContent)
+      .toBe("The good paragraph.\n\nAnd a second one.")
+
+    // Cancel comes first and Restore last, the house order of a dialog's footer.
+    const footer = [...dialog.querySelectorAll("footer button")].map((b) => b.textContent?.trim())
+    expect(footer).toEqual(["Cancel", "Restore this version"])
+    await clickOn(button("Restore this version"))
+    await settle()
+
+    expect(calls).toContainEqual(["restore", REVISIONS[1].id])
+    expect(has("dialog[open][data-e2e=admin-blog-history]")).toBe(false)
+    expect(find<HTMLInputElement>("#blog-title").value).toBe("Jobs, first draft")
+    expect(find<HTMLTextAreaElement>("[data-e2e=admin-blog-description]").value).toBe(
+      "The first description.",
+    )
+    expect(find<HTMLTextAreaElement>("[data-e2e=admin-blog-body]").value)
+      .toBe("The good paragraph.\n\nAnd a second one.")
+    expect(document.activeElement?.id).toBe("blog-title")
+  })
+
+  it("says how versions come to be when a post has none, and offers nothing to restore (#418)", async () => {
+    await mount(<HistoryHarness calls={[]} revisions={[]} />)
+    await openHistory()
+    expect(find("[data-e2e=admin-blog-history-empty]").textContent)
+      .toBe("No earlier versions yet. Each save keeps one.")
+    expect(has("[data-e2e=admin-blog-history-restore]")).toBe(false)
+  })
+
+  it("shows why the list could not be read, and reads it again on Try again (#418)", async () => {
+    const calls: unknown[][] = []
+    const history = { ...NO_BLOG_HISTORY, listError: "Couldn't reach the server." }
+    await mount(
+      <AdminBlogEditorScreen {...editorProps(calls, { dialog: "history", history })} />,
+    )
+    expect(find("[data-e2e=admin-blog-history-error]").textContent)
+      .toContain("Couldn't reach the server.")
+    await clickOn(button("Try again"))
+    expect(calls).toEqual([["retry-history"]])
+  })
+
+  it("closes on Escape and gives focus back to More actions (#418)", async () => {
+    const calls: unknown[][] = []
+    await mount(<HistoryHarness calls={calls} revisions={REVISIONS} />)
+    await openHistory()
+    const dialog = find("dialog[open][data-e2e=admin-blog-history]")
+    await act(() => {
+      dialog.dispatchEvent(new window.Event("cancel", { cancelable: true }) as unknown as Event)
+    })
+    await settle()
+    expect(calls).toContainEqual(["close"])
+    expect(has("dialog[open][data-e2e=admin-blog-history]")).toBe(false)
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-blog-menu")
+  })
+})
+
+// #endregion
+
 /** What the fake live figure in the preview says. */
 const LIVE_FIGURE = "Live"
 
-/** Two broken tags on lines 3 and 5 of a five-line body (#620). */
+/** Two broken tags on lines 3 and 5 of a five-line body. */
 const FIGURE_BODY = "Intro.\n\n<CostCalc members={4} />\n\n<CostCalculator members={0} />"
 const FIGURE_PROBLEMS: BlogProblem[] = [
   {

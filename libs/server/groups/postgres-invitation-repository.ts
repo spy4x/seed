@@ -284,12 +284,32 @@ export class PostgresInvitationRepository {
   }
 
   /**
+   * The address of the invitation `ref` names while it still works: not revoked, declined, used
+   * up or expired, in a group that is not deleted. `email` is `null` for a link anyone may use.
+   * `null` when no such invitation exists. What a sign-up on a closed server asks (`SIGN_UP`).
+   */
+  async usable(ref: InvitationLookup): Promise<{ email: string | null } | null> {
+    const [row] = await this.sql<{ email: string | null }[]>`
+      SELECT group_invitations.email
+      FROM group_invitations
+      INNER JOIN groups ON groups.id = group_invitations.group_id AND groups.deleted_at IS NULL
+      WHERE ${refFilter(this.sql, ref)}
+        AND group_invitations.revoked_at IS NULL
+        AND group_invitations.declined_at IS NULL
+        AND group_invitations.uses < group_invitations.max_uses
+        AND group_invitations.expires_at > CURRENT_TIMESTAMP
+    `
+    return row ?? null
+  }
+
+  /**
    * Accepts an invitation, in one transaction: on locked rows it checks that the invitation still
    * works, that an address-bound one belongs to `userId`, that they are not a member yet, that
    * they never accepted it before (a removed member cannot rejoin through the same link), that the
    * plan allows its role and that the group has room. It adds the membership with the invitation's
    * role, records who accepted, counts the use, writes the audit row, records the group's change
-   * and makes the group the person's selected one.
+   * and makes the group the person's selected one. Built over a transaction (a sign-up by
+   * invitation, `apps/api/services/sign-up-gate.ts`), it runs in a savepoint of it.
    */
   async accept(
     ref: InvitationLookup,
@@ -297,7 +317,7 @@ export class PostgresInvitationRepository {
     plan: InvitationPlan,
     requestId?: string,
   ): Promise<GroupInvitationAcceptResult> {
-    return await this.sql.begin(async (tx: postgres.TransactionSql) => {
+    const run = async (tx: postgres.TransactionSql): Promise<GroupInvitationAcceptResult> => {
       const [user] = await tx`
         SELECT id FROM users WHERE id = ${userId} AND deleted_at IS NULL FOR NO KEY UPDATE
       `
@@ -355,7 +375,10 @@ export class PostgresInvitationRepository {
       await recordAccessChange(tx, invitation.groupId, userId, INVITATION_EVENTS.memberJoined, [])
       const selected = await storeSelection(tx, userId, invitation.groupId)
       return { groupId: invitation.groupId, role: invitation.role, selected }
-    })
+    }
+    return "savepoint" in this.sql
+      ? await (this.sql as postgres.TransactionSql).savepoint(run)
+      : await this.sql.begin(run)
   }
 
   /**

@@ -16,11 +16,13 @@ import {
   claimAdminBillingAction,
   isOwnerOrMember,
   listAdminBillingCustomers,
+  listNeverPaidGroups,
   readAdminBillingFigures,
   readAdminBillingRecord,
   releaseAdminBillingAction,
 } from "@server/billing/admin-billing.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
+import { TEST_PLANS } from "../../libs/domain/billing/test-plans.ts"
 
 /**
  * The operator area's billing module (#196) against a real Postgres built from schema.sql: the
@@ -73,7 +75,7 @@ Deno.test(`admin billing: monthly revenue and counts match a hand count of the s
   await withSchema(async (sql) => {
     const repository = new PostgresGroupRepository(sql)
     const owner = await insertUser(sql)
-    // Hand count, Pro at 900 cents per seat a month:
+    // Hand count, the test catalog's Pro at 900 cents per seat a month:
     //   Active ×3 seats, twice     5400  paying (two groups, same price and seats)
     //   Past due, no quantity       900  paying, past due (one seat)
     //   Trial ×5, ends in 3 days      0  trial ending soon
@@ -98,7 +100,7 @@ Deno.test(`admin billing: monthly revenue and counts match a hand count of the s
     }
     await sql`INSERT INTO billing_events (id, event_type, received_at) VALUES ('evt_1', 1, ${NOW})`
 
-    const figures = await readAdminBillingFigures(sql, NOW)
+    const figures = await readAdminBillingFigures(sql, NOW, TEST_PLANS)
 
     expect(figures).toEqual({
       monthlyRevenue: [{ amount: 8100, currency: `EUR` }],
@@ -241,5 +243,56 @@ Deno.test(`admin billing: a key acts and audits once, and is refused for another
     expect(await isOwnerOrMember(sql, groupId, owner)).toBe(true)
     expect(await isOwnerOrMember(sql, groupId, viewer)).toBe(true)
     expect(await isOwnerOrMember(sql, groupId, operator)).toBe(false)
+  })
+})
+
+Deno.test(`admin billing: never paid lists the groups no subscription ever paid for, newest first`, async () => {
+  await withSchema(async (sql) => {
+    const repository = new PostgresGroupRepository(sql)
+    const owner = await insertUser(sql)
+    await sql`UPDATE users SET first_name = 'Ada', last_name = 'Lovelace' WHERE id = ${owner}`
+    await sql`
+      INSERT INTO auth_keys (user_id, method, subject, email)
+      VALUES (${owner}, 'email', 'ada@example.com', 'ada@example.com')
+    `
+    const make = async (name: string, daysAgo: number) => {
+      const { group } = await repository.create({ id: uuidV7(), name }, owner)
+      await sql`
+        UPDATE groups SET created_at = ${new Date(NOW.getTime() - daysAgo * DAY)}
+        WHERE id = ${group.id}
+      `
+      return group.id
+    }
+    const older = await make(`Older`, 9)
+    const newer = await make(`Newer`, 1)
+    // A trial that has not paid yet has never paid either.
+    const trial = await subscribe(sql, repository, owner, {
+      name: `Trial`,
+      status: BillingStatus.Trialing,
+      trialEndInDays: 5,
+    })
+    await sql`UPDATE groups SET created_at = ${new Date(
+      NOW.getTime() - 5 * DAY,
+    )} WHERE id = ${trial}`
+    const paid = await subscribe(sql, repository, owner, {
+      name: `Paid`,
+      status: BillingStatus.Canceled,
+    })
+    await sql`UPDATE subscriptions SET ever_active = TRUE WHERE group_id = ${paid}`
+    const trashed = await make(`Trashed`, 0)
+    await sql`UPDATE groups SET deleted_at = ${NOW} WHERE id = ${trashed}`
+
+    const first = await listNeverPaidGroups(sql, 1, 2)
+
+    expect(first.total).toBe(3)
+    expect(first.groups.map((group) => group.groupId)).toEqual([newer, trial])
+    expect(first.groups[0]).toEqual({
+      groupId: newer,
+      groupName: `Newer`,
+      owner: { id: owner, name: `Ada Lovelace`, email: `ada@example.com` },
+      createdAt: new Date(NOW.getTime() - DAY).toISOString(),
+    })
+    const second = await listNeverPaidGroups(sql, 2, 2)
+    expect(second.groups.map((group) => group.groupId)).toEqual([older])
   })
 })

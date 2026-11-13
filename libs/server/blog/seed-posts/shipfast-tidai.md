@@ -11,6 +11,8 @@ tldr:
   - 如果付费的是团队，选一个自带群组、角色和按成员计费的模板。
   - Stripe 不支持中国大陆的公司，但支持香港公司；选模板前先确认收款方式。
 topic: 问答
+intro: "ShipFast 是个好工具包，但它不是唯一的选择，也不免费。我从价格、许可证、技术栈、团队功能和托管方式比较了七个模板，每个事实都附有来源。"
+coverAlt: "平静水面上排成一列的七艘形状各异的帆船，其中一艘是紫色的。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
@@ -34,7 +36,7 @@ ShipFast 是 Marc Lou 做的 Next.js 模板。它的[销售页](https://shipfa.s
 | 模板                                                                  | 价格                      | 许可证              | 技术栈                                   | 团队与角色      | 部署                                    |
 | --------------------------------------------------------------------- | ------------------------- | ------------------- | ---------------------------------------- | --------------- | --------------------------------------- |
 | [ShipFast](https://shipfa.st/)                                        | 199 或 249 美元，一次性   | 付费，不可再分发    | Next.js；MongoDB 或 Supabase             | 未提及          | 以 Vercel 作为免费选项                  |
-| [Seed](https://github.com/spy4x/seed)                                 | 免费                      | MIT                 | Deno、Hono、Fresh、Preact；Postgres      | 有，按成员计费  | 一台自己的 Linux 服务器，Docker Compose |
+| [Seed](https://github.com/spy4x/seed)                                 | 免费                      | MIT                 | Deno、Hono、Preact；Postgres             | 有，按成员计费  | 一台自己的 Linux 服务器，Docker Compose |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)                   | 免费                      | MIT                 | Wasp（React、Node.js、Prisma）；Postgres | 未提及          | 一条命令部署到 Railway 或 Fly.io        |
 | [ShipFree](https://github.com/revokslab/shipfree)                     | 免费                      | MIT                 | Next.js、Bun、Drizzle；Postgres          | 未提及          | Vercel 或 Docker                        |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)        | 免费                      | MIT                 | Next.js、Drizzle；Postgres               | Owner 和 Member | Vercel                                  |

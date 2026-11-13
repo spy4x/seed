@@ -1,7 +1,21 @@
 # AGENTS.md — Seed
 
-Read `README.md` and `CONTRIBUTING.md` first. The global agent instructions own Git Flow, review
-and cleanup; this file adds what is specific to this repo.
+The global agent instructions own Git Flow, review and cleanup; this file adds what is specific
+to this repo. Every doc is listed in [docs/README.md](docs/README.md).
+
+In Seed's own repository, also read `AGENTS.seed.md`. A product deletes that file and this line.
+
+## Commands
+
+```sh
+deno task check                       # lint, fmt, types and every unit test
+deno task fix                         # lint and fmt fixes
+deno task dev                         # the development stack in compose
+deno task e2e:local e2e/notes.e2e.ts  # one browser spec, on a stack of its own
+deno task test libs/ui/notes.test.tsx # one test file, with its group's grants
+```
+
+[docs/development.md](docs/development.md) lists every task.
 
 ## Three layers of UI
 
@@ -19,7 +33,7 @@ both to a screen.
 
 The three apps have different jobs. The SPA (`apps/spa`) is the product: everything a signed-in
 person does happens there. The admin app (`apps/admin`) is the operator area, on a host of its own.
-The MPA (`apps/mpa`, Fresh) is the product's public website: the home page, pricing, the legal pages
+The MPA (`apps/mpa`, Preact on a small Fresh-compatible layer built with Vite) is the product's public website: the home page, pricing, the legal pages
 and the newsletter. It has no session, links to the SPA for sign-in and sign-up, and renders no
 `libs/ui` screen except the newsletter's (`subscribe-screen.tsx`).
 
@@ -39,7 +53,9 @@ says what is missing. Do not copy the gap into a new screen.
   (`@spy4x/preact-system/boundary`) over every module, with this repository's app aliases.
 - **Built on preact-components' forms.** A form here is `ScreenForm` (`libs/ui/progressive.tsx`):
   `EnhancedForm` with its status taken from the screen's `pending` prop, so a pending form is
-  disabled and refuses a second submit. A form takes its submit over with `onSubmit`; only the
+  disabled and refuses a second submit. The exception is a list's search form (admin Users and
+  Groups): it leaves `pending` out, because a disabled fieldset drops focus out of the field, and
+  its busy submit button refuses a second search instead. A form takes its submit over with `onSubmit`; only the
   newsletter's pass `action` too. A screen whose whole form the library already has draws that
   instead: the sign-in screens (`AuthScreen`, `AdminSignInScreen`) use preact-system's `AuthForm`,
   and the billing screens use `PlanCard`'s and `PricingTable`'s forms and a `<form>`, each inside a
@@ -82,33 +98,12 @@ The public website (`apps/mpa`, seedsaas.com) describes the product's features: 
 feature cards, `/features`, `/pricing` and `/compare`, and the components they render
 (`apps/mpa/components/`). A change that adds, modifies or removes a feature updates every page that
 names it in the same PR, so the site never lists a feature the product lacks and never leaves out
-one it has. The owner asked for this on 2026-10-19: "create the rule".
+one it has.
 
-`deno task lighthouse` (CI step `browser`) measures the website against the Lighthouse budget
-of the global agent rules. The pages it measures are listed in
-`apps/mpa/lighthouse/lighthouserc.json`.
-
-## Product screenshots
-
-The public website (`apps/mpa/static/shots/`) and the README (`docs/screenshots/`) show pictures of
-the product. When a change alters a photographed screen significantly (the shell, a screen's
-layout, its primary action, the palette), re-capture both sets in a PR of their own with the
-`recapture-shots` skill (`.claude/skills/recapture-shots/SKILL.md`), once the change is merged. A
-small change (a wording, a spacing nudge) does not need it. When unsure, ask the owner. The owner
-asked for this on 2026-10-16: "do that automatically when screens/UI/UX change significantly (not
-every small change). If unsure if screenshots to be remade - ask me." On 2026-10-17 the owner
-agreed that the skill covers the README pictures too.
-
-The admin panel video on the website's `/admin` page (`apps/mpa/media/video/`) shows the admin
-app's screens too. When a change alters a screen the video shows significantly, re-record the
-video with `deno task video:admin` in the same follow-up PR as the screenshots, and update
-`apps/mpa/admin-video.ts` (its length, size, upload date and transcript) to match. The skill says
-how. On 2026-10-20 the owner, asked whether the video should join this rule, answered: "Add."
-
-The website's three feature loops (realtime, offline, shortcuts; `apps/mpa/media/video/*-loop-*`)
-film the SPA's screens. When a change alters a screen a loop shows significantly, re-record that
-loop with `deno task loops <name>` in `apps/mpa`, in the same follow-up PR. On 2026-11-03 the
-owner, asked whether the loops should join this rule, answered: "I agree."
+`deno task lighthouse` (CI step `lighthouse`) measures the website against the Lighthouse budget
+in the global `design` skill. The pages it measures are listed in
+`apps/mpa/lighthouse/lighthouserc.json`; a pull request measures only those in
+`apps/mpa/lighthouse/quick.ts`.
 
 ## The public demo
 
@@ -117,48 +112,19 @@ sample data for every new account and a nightly wipe, turned on by `DEMO_MODE=tr
 [docs/demo.md](docs/demo.md).
 A change that adds, edits or removes a table, a column or anything else in the database structure
 updates the demo's wipe and seed in the same PR, as that doc's "When the database changes" says,
-so the demo keeps working and shows the new feature. The owner asked for this on 2026-10-19: "a local AGENTS.md instruction (or a
-reference to a separate doc) about how it works and that we should update wipe/seed script when we
-add/edit/remove tables or schema or db structure overall."
+so the demo keeps working and shows the new feature.
 
 ## Blog
 
-Seed's own posts (seedsaas.com) are Markdown files in `libs/server/blog/seed-posts/`, whose
-`README.md` shows the format; they load only in demo mode ([docs/demo.md](docs/demo.md#seeds-own-blog-posts)).
 A product writes its posts in the admin app. How to write a post: the shared `blog-post` skill.
-
-- **Changelog.** A monthly "What's new in Seed" post, and a post of its own for a major change: a
-  new module, or something products must act on when they sync. The owner, 2026-11-01: "I agree,
-  let's keep it as an local instruction/rule."
-- **Ideas go to the owner first.** Propose a post in chat (title, reader, the search question it
-  answers, outline, interactive part) and file its issue only after the owner says yes. The
-  owner, 2026-11-01: "I prefer it asks me this in the chat, before creating a github issue."
 
 ## Handoff
 
 [docs/handoff.md](docs/handoff.md) holds the map of the repository, the decisions already made and
 the traps in this codebase. Read its "Traps in this codebase" before changing the API or the tests.
 
-## The live demo is not production
-
-The template's own server, which runs the live demo the README links to, is not in production
-yet: nobody depends on it and nothing of this project on it has to be kept. The owner said so on
-2026-10-14. An agent may change that server without asking: deploy to it, edit its env file
-(`infra/envs/.env.prod`, which `deno task deploy` copies there), change or reset its database, and
-delete this project's data under `.volumes/`. Other projects run on the same server and are not
-ours to touch.
-
-This holds for the template only. A product started from the template deletes this section: its
-server holds real people's data.
-
 ## Products built on Seed
 
 A product starts as a copy of Seed and keeps taking Seed's later changes as a patch:
 [docs/products.md](docs/products.md) says how. Keep that recipe working: a change to it, or to
 what a product must record, updates that doc in the same PR.
-
-## Financy
-
-Financy is being rebuilt on Seed, as the first product built on it. Seed decides how Financy's
-code looks; Financy says which features it needs. A feature any product would need is built here
-first and Financy takes it with a sync. Do not port Financy's old structure into Seed.

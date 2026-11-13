@@ -1,5 +1,5 @@
 /**
- * A person's data exports (#229, docs/data-export.md): asking for one, reading where it stands and
+ * A person's data exports (docs/data-export.md): asking for one, reading where it stands and
  * finding the file to download. The worker builds the file (`libs/server/jobs/data-export.ts`).
  * Every call takes the person's own id and reads only their rows.
  *

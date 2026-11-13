@@ -27,7 +27,7 @@ function timedCopy(
 }
 
 /**
- * The local data the benchmark page (#440) measures, with this module's own code: the changes pull
+ * The local data the benchmark page measures, with this module's own code: the changes pull
  * into an empty copy, and the device copy read back with no network.
  */
 export const benchmarkLocalData: BenchmarkLocalData = {

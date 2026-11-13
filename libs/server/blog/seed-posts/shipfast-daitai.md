@@ -11,6 +11,8 @@ tldr:
   - 顧客がチームなら、グループ・ロール・メンバー単位の課金が最初から入ったものを選びましょう。
   - ShipFast は翻訳機能を掲げていません。Seed は日本語を含む 9 言語に対応しています。
 topic: 質問
+intro: "ShipFast は良いキットですが、唯一の選択肢ではなく、無料でもありません。七つのボイラープレートを価格、ライセンス、技術スタック、チーム機能、ホスティングで比べ、すべての事実に出典を付けました。"
+coverAlt: "静かな水面に並ぶ形の違う七艘の帆船、そのうち一艘は紫色。"
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
@@ -34,7 +36,7 @@ ShipFast は Marc Lou 氏による Next.js のボイラープレートです。[
 | テンプレート                                                          | 価格                            | ライセンス          | 技術スタック                             | チームとロール             | ホスティング                               |
 | --------------------------------------------------------------------- | ------------------------------- | ------------------- | ---------------------------------------- | -------------------------- | ------------------------------------------ |
 | [ShipFast](https://shipfa.st/)                                        | 199 または 249 ドル（買い切り） | 有料、再配布不可    | Next.js、MongoDB または Supabase         | 記載なし                   | 無料の選択肢として Vercel                  |
-| [Seed](https://github.com/spy4x/seed)                                 | 無料                            | MIT                 | Deno、Hono、Fresh、Preact、Postgres      | あり（メンバー単位の課金） | 自前の Linux サーバー 1 台、Docker Compose |
+| [Seed](https://github.com/spy4x/seed)                                 | 無料                            | MIT                 | Deno、Hono、Preact、Postgres             | あり（メンバー単位の課金） | 自前の Linux サーバー 1 台、Docker Compose |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)                   | 無料                            | MIT                 | Wasp（React、Node.js、Prisma）、Postgres | 記載なし                   | Railway か Fly.io にコマンド 1 つ          |
 | [ShipFree](https://github.com/revokslab/shipfree)                     | 無料                            | MIT                 | Next.js、Bun、Drizzle、Postgres          | 記載なし                   | Vercel または Docker                       |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)        | 無料                            | MIT                 | Next.js、Drizzle、Postgres               | Owner と Member            | Vercel                                     |

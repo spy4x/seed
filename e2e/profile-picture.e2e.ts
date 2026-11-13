@@ -6,13 +6,13 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The profile picture (#228): a person uploads one, replaces it and removes it in Profile →
+ * The profile picture: a person uploads one, replaces it and removes it in Profile →
  * Account, and every replaced or removed object leaves the file store. A file that is not the
  * image it claims, or not an image the row takes, is refused. An operator removes a person's
  * picture from the admin app.
  *
  * The worker of this stack has no file store and no `vips` (`infra/scripts/e2e-local.sh`), so a
- * picture stays Preparing (#464): the row says so, and no page shows it yet. Serving a picture once
+ * picture stays Preparing: the row says so, and no page shows it yet. Serving a picture once
  * the worker has made its WebP is covered by tests/integration/profile-pictures.integration.test.ts
  * and `shownPictureId` in libs/domain/identity/profile-picture.test.ts.
  */
@@ -196,9 +196,10 @@ test.describe("the profile picture", () => {
       await ops.goto(`${adminBase}/users?q=${encodeURIComponent(email)}`)
       await ops.locator("[data-e2e=admin-users-list] tbody tr a").first().click()
       await expect(ops.locator("[data-e2e=admin-user-title]")).toHaveText(email)
-      // The page names a picture; its bytes answer 404 until the worker has made the WebP, so the
-      // avatar shows initials meanwhile.
-      await expect(ops.locator("[data-e2e=admin-user-picture]")).not.toContainText("None")
+      // The worker has not made the WebP yet, so the page says so and shows the initials.
+      await expect(ops.locator("[data-e2e=admin-user-picture-state]")).toHaveText(
+        "Preparing the picture…",
+      )
 
       await ops.locator("[data-e2e=admin-user-menu]").click()
       await ops.locator("[data-e2e=admin-remove-picture-open]").click()

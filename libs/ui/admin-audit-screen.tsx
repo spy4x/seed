@@ -15,10 +15,10 @@ import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
-import { BLOG_AUDIT_KINDS } from "@domain/blog"
+import { BLOG_AUDIT_KINDS, BLOG_SHARING_AUDIT_KINDS } from "@domain/blog"
 import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
 import { CATALOG_AUDIT_KINDS } from "@domain/catalog"
-import { ACTIVITY_KINDS } from "@domain/groups"
+import { ACTIVITY_KINDS, PRODUCT_ACTIVITY_KINDS, type ProductActivityKind } from "@domain/groups"
 import {
   accountAuditEvent,
   activityAuditEvent,
@@ -69,6 +69,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   "group.created": `AdminAuditEvent.groupCreated`,
   "group.renamed": `AdminAuditEvent.groupRenamed`,
   "group.details_updated": `AdminAuditEvent.groupDetailsUpdated`,
+  "group.time_zone_changed": `AdminAuditEvent.groupTimeZoneChanged`,
   "group.deleted": `AdminAuditEvent.groupDeleted`,
   "group.restored": `AdminAuditEvent.groupRestored`,
   "group.member_role_changed": `AdminAuditEvent.memberRoleChanged`,
@@ -107,6 +108,13 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [BLOG_AUDIT_KINDS.unpublished]: `AdminAuditEvent.blogUnpublished`,
   [BLOG_AUDIT_KINDS.urlChanged]: `AdminAuditEvent.blogUrlChanged`,
   [BLOG_AUDIT_KINDS.deleted]: `AdminAuditEvent.blogDeleted`,
+  [BLOG_SHARING_AUDIT_KINDS.channelCreated]: `AdminAuditEvent.blogChannelCreated`,
+  [BLOG_SHARING_AUDIT_KINDS.channelUpdated]: `AdminAuditEvent.blogChannelUpdated`,
+  [BLOG_SHARING_AUDIT_KINDS.channelArchived]: `AdminAuditEvent.blogChannelArchived`,
+  [BLOG_SHARING_AUDIT_KINDS.channelRestored]: `AdminAuditEvent.blogChannelRestored`,
+  [BLOG_SHARING_AUDIT_KINDS.channelDeleted]: `AdminAuditEvent.blogChannelDeleted`,
+  [BLOG_SHARING_AUDIT_KINDS.shareChanged]: `AdminAuditEvent.blogShareChanged`,
+  [BLOG_SHARING_AUDIT_KINDS.resultsEntered]: `AdminAuditEvent.blogShareResultsEntered`,
   [CONTACT_LINK_AUDIT_KINDS.created]: `AdminAuditEvent.contactLinkCreated`,
   [CONTACT_LINK_AUDIT_KINDS.updated]: `AdminAuditEvent.contactLinkUpdated`,
   [CONTACT_LINK_AUDIT_KINDS.deleted]: `AdminAuditEvent.contactLinkDeleted`,
@@ -134,12 +142,14 @@ const ACTIVITY_LABELS: Record<string, string> = {
 /**
  * What an entry's event is called, in the operator's language: one whole message per event code.
  * An event this page does not know shows its code. A sign-in or sign-up by e-mail link names the
- * method in the title (#391), from the entry's `identifier`.
+ * method in the title, from the entry's `identifier`. A product's kind (`productKinds`) shows its
+ * `label`.
  */
 export function auditEventLabel(
   t: Translator<string>,
   event: string,
   identifier: string | null = null,
+  productKinds: readonly ProductActivityKind[] = PRODUCT_ACTIVITY_KINDS,
 ): string {
   const parsed = parseAuditEvent(event)
   if (!parsed) return event
@@ -147,7 +157,8 @@ export function auditEventLabel(
     return auditEventTitle(t, parsed.eventType, identifier) ??
       t.t(`AdminAudit.accountEvent`, { code: String(parsed.eventType) })
   }
-  const key = ACTIVITY_LABELS[parsed.kind]
+  const key = ACTIVITY_LABELS[parsed.kind] ??
+    productKinds.find((product) => product.kind === parsed.kind)?.label
   return key ? t.t(key) : parsed.kind
 }
 
@@ -161,8 +172,14 @@ function entryTone(entry: AdminAuditEntry): TimelineTone {
   return entry.byOperator ? "warning" : "neutral"
 }
 
-/** Every event the filter offers: the account events, then group activity, then operator actions. */
-function eventOptions(t: Translator<string>): SelectOption[] {
+/**
+ * Every event the filter offers: the account events, then group activity (Seed's kinds, then the
+ * product's), then operator actions.
+ */
+export function eventOptions(
+  t: Translator<string>,
+  productKinds: readonly ProductActivityKind[] = PRODUCT_ACTIVITY_KINDS,
+): SelectOption[] {
   const label = (key: string, event: string | undefined, code: string) =>
     t.t(key, { event: event ? t.t(event) : code })
   return [
@@ -173,6 +190,10 @@ function eventOptions(t: Translator<string>): SelectOption[] {
     ...ACTIVITY_KINDS.map((kind) => ({
       value: activityAuditEvent(kind),
       label: label(`AdminAudit.optionGroup`, ACTIVITY_LABELS[kind], kind),
+    })),
+    ...productKinds.map(({ kind, label: event }) => ({
+      value: activityAuditEvent(kind),
+      label: label(`AdminAudit.optionGroup`, event, kind),
     })),
     ...ADMIN_OPERATOR_ACTIVITY_KINDS.map((kind) => ({
       value: activityAuditEvent(kind),
@@ -217,7 +238,7 @@ export interface AdminAuditScreenProps {
 }
 
 /**
- * The audit log (#429): every entry across the product, newest first. The account trail of each
+ * The audit log: every entry across the product, newest first. The account trail of each
  * person, group activity and the operators' own actions are one list, filtered by event, person,
  * operator, UTC days and IP address. Each person links to their page. The table is dense; the
  * timeline reads like a story. The primary action downloads what the filter shows as CSV.

@@ -8,7 +8,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, submitAuthForm } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { createGroup, openGroups, openNotes } from "./fixtures/groups.ts"
-import { signUpInPage, signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpInPage, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The core flows on a page whose `/config.json` says `realtime: false` (ADR 003, "the proof of the
@@ -160,6 +160,7 @@ test.describe("the app with the WebSocket module switched off", () => {
         data: { id: groupId, name: "Polling team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(first.page.request, apiBase, groupId)
       const added = await request.post(`${apiBase}/api/test/add-member`, {
         data: { login: member, groupId, role: EDITOR },
       })

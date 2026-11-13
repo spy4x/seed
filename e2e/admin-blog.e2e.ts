@@ -5,9 +5,9 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The blog's admin pages (#396): an operator writes a post from the keyboard, previews it as the
+ * The blog's admin pages: an operator writes a post from the keyboard, previews it as the
  * public page renders it, schedules it, publishes it now, finds it on the list, changes its URL and
- * deletes it.
+ * deletes it. A post that went live gets a sharing checklist, and the list counts what is left.
  */
 
 const appBase = "http://app.localhost"
@@ -115,7 +115,10 @@ test("an operator writes, previews, schedules, publishes, moves and deletes a po
 
     // Scheduled for a time ahead.
     await ops.locator("[data-e2e=admin-blog-publish]").click()
-    await ops.getByRole("radio", { name: "Schedule" }).check()
+    // A choice chip hides its radio, so the chip's label takes the click.
+    const schedule = ops.getByRole("radio", { name: "Schedule" })
+    await ops.locator("label", { has: schedule }).click()
+    await expect(schedule).toBeChecked()
     await ops.getByLabel("Date and time").fill("2031-03-04T10:00")
     await ops.getByRole("button", { name: "Schedule" }).click()
     await expect(ops.locator("[data-e2e=toasts]")).toContainText("Scheduled for")
@@ -140,7 +143,7 @@ test("an operator writes, previews, schedules, publishes, moves and deletes a po
     await expect(rows).toHaveCount(1)
     await expect(rows.first()).toContainText("Published")
 
-    // Change URL moves it; the old address now leads to the new one (#418).
+    // Change URL moves it; the old address now leads to the new one.
     const moved = `${slug}-moved`
     await ops.locator("[data-e2e=admin-blog-row]").click()
     await ops.locator("[data-e2e=admin-blog-menu]").click()
@@ -163,6 +166,160 @@ test("an operator writes, previews, schedules, publishes, moves and deletes a po
     await expect(ops.locator("[data-e2e=toasts]")).toContainText("Post deleted.")
     for (const gone of [slug, moved]) {
       expect((await request.get(`${appBase}/api/blog/posts/${gone}`)).status()).toBe(404)
+    }
+  } finally {
+    await admin?.close()
+  }
+})
+
+test("an operator brings an earlier version of a post back from History, by the keyboard (#418)", async ({ browser, request }) => {
+  let admin: BrowserContext | null = null
+  try {
+    const signedIn = await operatorPage(browser, request)
+    admin = signedIn.admin
+    const ops = signedIn.ops
+    const title = `History post ${uuidV7().slice(-6)}`
+
+    // Two saves: the first text, then a worse one over it.
+    await ops.goto(`${adminBase}/blog/new`)
+    const body = ops.locator("[data-e2e=admin-blog-body]")
+    await ops.locator("[data-e2e=admin-blog-title-field]").fill(title)
+    await ops.locator("[data-e2e=admin-blog-description]").fill("A post with a past.")
+    await body.fill("The good paragraph.")
+    await ops.keyboard.press("ControlOrMeta+s")
+    await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}$/)
+    await expect(ops.locator("[data-e2e=admin-blog-saved]")).toHaveText("Saved")
+    await body.fill("Worse.")
+    await ops.keyboard.press("ControlOrMeta+s")
+    await expect(ops.locator("[data-e2e=admin-blog-saved]")).toHaveText("Saved")
+
+    // History lists both saves, newest first, and shows the newest.
+    const menu = ops.locator("[data-e2e=admin-blog-menu]")
+    await menu.click()
+    await ops.locator("[data-e2e=admin-blog-history-open]").click()
+    const history = ops.getByRole("dialog", { name: "History" })
+    const versions = history.getByRole("radio")
+    await expect(versions).toHaveCount(2)
+    await expect(history.locator("[data-e2e=admin-blog-history-body]")).toHaveText("Worse.")
+    const axe = await new AxeBuilder({ page: ops })
+      .include("[data-e2e=admin-blog-history]")
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"])
+      .analyze()
+    expect(axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`))
+      .toEqual([])
+
+    // The arrow key picks the older one; Tab reaches its text, then the footer.
+    await versions.first().focus()
+    await ops.keyboard.press("ArrowDown")
+    await expect(versions.nth(1)).toBeChecked()
+    await expect(history.locator("[data-e2e=admin-blog-history-body]"))
+      .toHaveText("The good paragraph.")
+    await ops.keyboard.press("Tab")
+    await expect(history.locator("[data-e2e=admin-blog-history-body]")).toBeFocused()
+
+    // Restore puts it in the editor unsaved, and focus on the title.
+    await history.getByRole("button", { name: "Restore this version" }).click()
+    await expect(history).toBeHidden()
+    await expect(body).toHaveValue("The good paragraph.")
+    await expect(ops.locator("[data-e2e=admin-blog-title-field]")).toBeFocused()
+    await expect(ops.locator("[data-e2e=toasts]")).toContainText("Earlier version restored.")
+
+    // Escape closes History and gives focus back to More actions.
+    await menu.click()
+    await ops.locator("[data-e2e=admin-blog-history-open]").click()
+    await expect(history).toBeVisible()
+    await ops.keyboard.press("Escape")
+    await expect(history).toBeHidden()
+    await expect(menu).toBeFocused()
+  } finally {
+    await admin?.close()
+  }
+})
+
+test("an operator adds a sharing channel, pastes a live post's link on it, and the list's to-do count drops", async ({ browser, request }) => {
+  let admin: BrowserContext | null = null
+  try {
+    const signedIn = await operatorPage(browser, request)
+    admin = signedIn.admin
+    const ops = signedIn.ops
+    const suffix = uuidV7().slice(-6)
+    const title = `Shared post ${suffix}`
+    const slug = title.toLowerCase().replaceAll(" ", "-")
+    const channel = `E2E Reddit ${suffix}`
+
+    // A live English post.
+    await ops.goto(`${adminBase}/blog/new`)
+    await ops.locator("[data-e2e=admin-blog-title-field]").fill(title)
+    await ops.locator("[data-e2e=admin-blog-description]").fill("A post to share.")
+    await ops.locator("[data-e2e=admin-blog-body]").fill("Worth sharing.")
+    await ops.getByRole("button", { name: "Add point" }).click()
+    await ops.getByLabel("Key point 1", { exact: true }).fill("Worth sharing")
+    await ops.keyboard.press("ControlOrMeta+s")
+    await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}$/)
+    await ops.locator("[data-e2e=admin-blog-publish]").click()
+    await ops.getByRole("alertdialog").locator("[data-e2e=confirm-dialog-confirm]").click()
+    await expect(ops.locator("[data-e2e=toasts]")).toContainText("Published.")
+
+    // A Reddit channel for English posts, old ones included, added from the keyboard.
+    await ops.goto(`${adminBase}/blog/channels`)
+    await expect(ops.locator("[data-e2e=blog-channels-title]")).toBeVisible()
+    await ops.keyboard.press("c")
+    await expect(ops).toHaveURL(`${adminBase}/blog/channels/new`)
+    await ops.locator("[data-e2e=blog-channel-name]").fill(channel)
+    await expect(ops.locator("[data-e2e=blog-channel-source]")).toHaveValue(
+      `e2e-reddit-${suffix}`,
+    )
+    await ops.locator("[data-e2e=blog-channel-address]").fill("https://www.reddit.com/r/e2e/")
+    await ops.locator("[data-e2e=blog-channel-save]").click()
+    await expect(ops).toHaveURL(`${adminBase}/blog/channels`)
+    await expect(ops.locator("[data-e2e=blog-channel-list]")).toContainText(channel)
+
+    // The list counts the post's channels to do and links to its checklist.
+    const list = async () => {
+      await ops.goto(`${adminBase}/blog`)
+      await ops.locator("[data-e2e=admin-blog-search]").fill(slug)
+      await ops.keyboard.press("Enter")
+      const rows = ops.locator("[data-e2e=admin-blog-list] tbody tr")
+      await expect(rows).toHaveCount(1)
+      return rows.first()
+    }
+    const toDo = (await list()).locator("[data-e2e=admin-blog-sharing]:visible")
+    await expect(toDo).toHaveText(/^\d+ to do$/)
+    const before = Number((await toDo.textContent())!.split(" ")[0])
+    await toDo.click()
+    await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}\/sharing$/)
+
+    // The row keys work on a fresh load: j reaches the first row, s opens Skip on its reason
+    // field, Escape closes it, and p moves to the row's link field.
+    const first = ops.locator("[data-e2e=blog-share-row]").first()
+    await expect(first).toBeVisible()
+    await ops.keyboard.press("j")
+    await expect(first).toBeFocused()
+    await ops.keyboard.press("s")
+    await expect(ops.locator("[data-e2e=blog-share-skip-reason]")).toBeFocused()
+    await ops.keyboard.press("Escape")
+    await expect(ops.locator("[data-e2e=blog-share-skip-dialog]")).toBeHidden()
+    await expect(first).toBeFocused()
+    await ops.keyboard.press("p")
+    await expect(first.locator("[data-e2e=blog-share-link]")).toBeFocused()
+
+    // The channel's row takes the link and moves to Posted.
+    const row = ops.locator("[data-e2e=blog-share-row]", { hasText: channel })
+    await expect(row).toHaveAttribute("data-state", "todo")
+    await row.locator("[data-e2e=blog-share-link]").fill(
+      "https://www.reddit.com/r/e2e/comments/abc/shared/",
+    )
+    await row.locator("[data-e2e=blog-share-mark-posted]").click()
+    await expect(ops.locator("[data-e2e=toasts]")).toContainText("Marked posted.")
+    await expect(row).toHaveAttribute("data-state", "posted")
+
+    // Back on the list, one channel fewer is left.
+    const after = await list()
+    if (before === 1) await expect(after).toContainText("Done")
+    else {
+      await expect(after.locator("[data-e2e=admin-blog-sharing]:visible")).toHaveText(
+        `${before - 1} to do`,
+      )
     }
   } finally {
     await admin?.close()

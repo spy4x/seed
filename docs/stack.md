@@ -16,7 +16,7 @@ what is running and how it is deployed.
 | --- | ----- | --------- |
 | `apps/api` | Deno, Hono | REST plus the `/api/ws` socket for group calls (ADR 002) |
 | `apps/spa` | Preact, Vite, PWA | Group, note, profile and push calls over the socket; REST for auth, bootstrap and the pull |
-| `apps/mpa` | Fresh | The public website; REST to the API for the newsletter only |
+| `apps/mpa` | Preact, a small Fresh-compatible layer built with Vite ([website-server.md](website-server.md)) | The public website; REST to the API for the newsletter only |
 | `apps/worker` | Deno | No inbound transport; drains `outbox_events` |
 
 ## Services in compose
@@ -116,7 +116,7 @@ Where they send is the only difference between the two modes, and the env file a
 **Bundled** (the default of `infra/envs/.env.example`): `COMPOSE_PROFILES` contains `monitoring`,
 and `VM_REMOTE_WRITE_URL` and `VLOGS_URL` are empty. Compose then also runs VictoriaMetrics,
 VictoriaLogs, Grafana, vmalert and Alertmanager, and vmagent and Vector send to them. Grafana is on
-`127.0.0.1:3000` of the machine, with no public address (docs/deploy.md, "Admin consoles"; user
+`127.0.0.1:3000` of the machine, with no public address (docs/operator-access.md, "Admin consoles"; user
 `admin`, password `GRAFANA_PASS`), with both data sources already there
 (`infra/configs/grafana-datasources.yml`); it downloads the VictoriaLogs data source plugin, at the
 version pinned in the Compose file, at its first start. Both databases keep 14 days, under
@@ -353,7 +353,7 @@ baked into the build; the container writes them to `/config.json` when it starts
   checks it with an arktype schema. A missing or invalid file gives the defaults (no error tracker)
   and a console warning, never a blank page.
 - **Offline:** the service worker stores `/config.json` with the app shell and answers from that
-  copy when the network fails (`docs/offline.md`, "The app shell").
+  copy when the network fails (`docs/offline-app-shell.md`).
 - **The content security policy:** the same start-up runs `apps/spa/csp-connect.sh`, which lets the
   page post to the origin of `SPA_ERROR_REPORT_DSN` and to no other site
   ([security-headers.md](security-headers.md)).
@@ -370,7 +370,7 @@ vertical, through per-service resource limits.
 
 CI is Woodpecker: `.woodpecker/ci.yml` on every pull request, push to `main` and version tag. Its
 steps are listed once, in [woodpecker-ci-setup.md](woodpecker-ci-setup.md). A `v*` tag also
-publishes the images (`.woodpecker/release.yml`). Deploys are not wired up
+publishes the images (`.woodpecker/release.yml`). A product can deploy every push to `main`
 (`.woodpecker/deploy.yml.example`).
 
 ## Conventions worth keeping

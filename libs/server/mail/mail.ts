@@ -7,7 +7,7 @@
  *   ignored there.
  * - **Production** uses SMTP when every `SMTP_*` key is set. With any of them missing, mail is
  *   off: nothing is sent and the caller logs {@link mailOffWarning} once at start-up. The console
- *   sender never runs in production, since it prints the body, a reset link included, and
+ *   sender never runs in production, since it prints the body, a reset code included, and
  *   container logs are shipped.
  *
  * `@spy4x/email` reads no environment by design, so the template maps its own variables here.
@@ -22,7 +22,7 @@ import type { EmailMessage } from "@spy4x/email/message"
 import type { Sql } from "@spy4x/server/db"
 import { type Catalog, createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { createFormatters, type Formatters, type HourCycle } from "@spy4x/time/format"
-import { BillingNoticeKind, findPlan, FREE_PLAN_ID, PRO_PLAN_ID } from "@domain/billing"
+import { BillingNoticeKind, findPlan, FREE_PLAN_ID, type Plan, PLANS } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import type { Language } from "@domain/identity"
 import appEn from "@i18n/app/en.ts"
@@ -91,7 +91,7 @@ export function readMailSetup(env: { get(name: string): string | undefined }): M
 /** The start-up warning for a setup that sends nothing: it names the keys, never a value. */
 export function mailOffWarning(setup: MailSetup): string | null {
   if (setup.transport !== MailTransport.Off) return null
-  return `warning: mail is off, so password reset links and e-mail codes are not sent. Set ${
+  return `warning: mail is off, so sign-in, sign-up and password reset codes are not sent. Set ${
     setup.missing.join(", ")
   } to send them.`
 }
@@ -125,7 +125,7 @@ export interface MailBrand {
 }
 
 /**
- * Who reads a mail (#277): the language it is written in, and the region format, zone and clock
+ * Who reads a mail: the language it is written in, and the region format, zone and clock
  * its dates use. {@link readMailReader} reads it for an account.
  */
 export interface MailReader {
@@ -251,6 +251,21 @@ export type Block =
   /** A code to type: alone on its line, large in the HTML. */
   | { code: string }
 
+/** How a code is drawn in the HTML part: a monospace box that selects whole. */
+const CODE_STYLE = [
+  `display:inline-block`,
+  `padding:8px 16px`,
+  `border:1px solid #d4d4d8`,
+  `border-radius:8px`,
+  `background:#f4f4f5`,
+  `font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace`,
+  `font-size:24px`,
+  `font-weight:600`,
+  `letter-spacing:2px`,
+  `user-select:all`,
+  `-webkit-user-select:all`,
+].join(`;`)
+
 /**
  * The tags a catalog message may use, and the element each draws. Any other is plain text. The
  * HTML part also draws an isolated value (see {@link isolate}) as `<bdi>`.
@@ -300,10 +315,9 @@ export function compose(
   const html = blocks.map((block) => {
     if (`key` in block) return `<p>${messageHtml(t, block.key, block.values)}</p>`
     if (`code` in block) {
-      // A code reads left to right in every language: a `-` at its edge stays where it is typed.
-      return `<p style="font-size:24px;font-weight:600;letter-spacing:2px"><span dir="ltr">${
-        escapeHtml(block.code)
-      }</span></p>`
+      // A code reads left to right in every language: a `-` at its edge stays where it is typed. A
+      // monospace box tells `l` from `I` and `0` from `O`, and one click or tap selects it whole.
+      return `<p><span dir="ltr" style="${CODE_STYLE}">${escapeHtml(block.code)}</span></p>`
     }
     if (`link` in block) {
       return `<p><a href="${escapeHtml(block.link)}">${escapeHtml(block.label)}</a></p>`
@@ -343,36 +357,56 @@ function hostOf(brand: MailBrand): string {
   return new URL(brand.webAppUrl).host
 }
 
-/** The mail that carries a password reset link. */
+/**
+ * The mail that carries a password-reset code. The code works only in the tab that asked;
+ * the mail holds no link, so nothing in it resets anything by itself.
+ */
 export function passwordResetMail(
   brand: MailBrand,
-  { to, link, validMinutes, reader }: {
+  { to, code, validMinutes, reader }: {
     to: string
-    link: string
+    code: string
     validMinutes: number
     reader: MailReader
   },
 ): EmailMessage {
   const w = writerFor(reader)
+  const host = hostOf(brand)
   return compose(brand, w.t, to, w.t.t(`PasswordResetMail.subject`), [
-    { key: `PasswordResetMail.asked`, values: { host: hostOf(brand) } },
-    { key: `PasswordResetMail.open`, values: { count: validMinutes } },
-    { link, label: w.t.t(`PasswordResetMail.button`) },
-    { key: `PasswordResetMail.once` },
+    { key: `PasswordResetMail.asked`, values: { host } },
+    { code },
+    { key: `PasswordResetMail.valid`, values: { count: validMinutes } },
+    { key: `Mail.dontShare`, values: { host } },
     { key: `PasswordResetMail.ignore` },
   ])
 }
 
 /**
- * The mail that carries a sign-in link (#391). The same mail whether or not an account uses the
- * address: the link signs in to the account, or creates one. It says that opening the link does
- * nothing until the person presses Continue, so the extra press reads as expected.
+ * The mail an operator's password reset sends. No browser waits for a code, so it
+ * carries none: it links to the page where the person asks for one.
  */
-export function signInLinkMail(
+export function passwordResetNoticeMail(
   brand: MailBrand,
-  { to, link, validMinutes, at, reader }: {
+  { to, link, reader }: { to: string; link: string; reader: MailReader },
+): EmailMessage {
+  const w = writerFor(reader)
+  return compose(brand, w.t, to, w.t.t(`PasswordResetNoticeMail.subject`), [
+    { key: `PasswordResetNoticeMail.asked`, values: { host: hostOf(brand) } },
+    { key: `PasswordResetNoticeMail.how` },
+    { button: link, label: w.t.t(`PasswordResetNoticeMail.button`) },
+    { key: `PasswordResetNoticeMail.ignore` },
+  ])
+}
+
+/**
+ * The mail that carries a sign-in code. The same mail whether or not an account uses
+ * the address: the code signs in to the account, or creates one, and only in the tab that asked.
+ */
+export function signInCodeMail(
+  brand: MailBrand,
+  { to, code, validMinutes, at, reader }: {
     to: string
-    link: string
+    code: string
     validMinutes: number
     at: Date
     reader: MailReader
@@ -380,12 +414,12 @@ export function signInLinkMail(
 ): EmailMessage {
   const w = writerFor(reader)
   const host = hostOf(brand)
-  return compose(brand, w.t, to, w.t.t(`SignInLinkMail.subject`, { host }), [
-    { key: `SignInLinkMail.asked`, values: { host, when: w.moment(at) } },
-    { key: `SignInLinkMail.open`, values: { count: validMinutes } },
-    { button: link, label: w.t.t(`SignInLinkMail.button`, { host }) },
-    { key: `SignInLinkMail.once` },
-    { key: `SignInLinkMail.ignore` },
+  return compose(brand, w.t, to, w.t.t(`SignInCodeMail.subject`, { host }), [
+    { key: `SignInCodeMail.asked`, values: { host, when: w.moment(at) } },
+    { code },
+    { key: `SignInCodeMail.valid`, values: { count: validMinutes } },
+    { key: `Mail.dontShare`, values: { host } },
+    { key: `SignInCodeMail.ignore` },
   ])
 }
 
@@ -486,7 +520,7 @@ export function accountRestoredMail(
 }
 
 /**
- * The mail that tells a person their data export is ready (#229). It links to the profile, never
+ * The mail that tells a person their data export is ready. It links to the profile, never
  * to the file: the download needs the person's session.
  */
 export function dataExportReadyMail(
@@ -512,13 +546,13 @@ export interface SignInMethodChangedMailInput {
   /** `true` for a link, `false` for an unlink. */
   linked: boolean
   at: Date
-  /** The method is a passkey (#222), which is added and removed rather than linked. */
+  /** The method is a passkey, which is added and removed rather than linked. */
   passkey?: boolean
   reader: MailReader
 }
 
 /**
- * The mail sent when a sign-in method is linked to the account or unlinked from it (#385), so a
+ * The mail sent when a sign-in method is linked to the account or unlinked from it, so a
  * change made by someone else in an open session does not go unnoticed. A link is a new way in,
  * an unlink takes one away; either way the mail says which provider and when, and what to do when
  * it was not the owner.
@@ -573,7 +607,7 @@ export interface ApiTokenCreatedMailInput {
 
 /**
  * The mail sent when a personal API token is created, so a token made by someone else in a stolen
- * session does not go unnoticed (#293). It says which token and what it can do, and how to end it:
+ * session does not go unnoticed. It says which token and what it can do, and how to end it:
  * revoke it on the profile page, and change the password, which revokes every token.
  */
 export function apiTokenCreatedMail(
@@ -622,12 +656,8 @@ export interface BillingNoticeMailInput {
    */
   trialHasCard: boolean
   reader: MailReader
-}
-
-/** Each plan's name, by its key in the `app` catalog, as the billing screen names it. */
-const PLAN_KEYS: Record<string, string> = {
-  [FREE_PLAN_ID]: `GroupBillingPanel.planFree`,
-  [PRO_PLAN_ID]: `GroupBillingPanel.planPro`,
+  /** The plan catalog that names `planId`: `PLANS` unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 /**
@@ -638,14 +668,15 @@ const PLAN_KEYS: Record<string, string> = {
  */
 export function billingNoticeMail(
   brand: MailBrand,
-  { to, kind, groupName, planId, at, link, planKeptUntil, trialHasCard, reader }:
+  { to, kind, groupName, planId, at, link, planKeptUntil, trialHasCard, reader, plans = PLANS }:
     BillingNoticeMailInput,
 ): EmailMessage {
   const w = writerFor(reader)
   const utc = w.format.utc()
-  const plan = planId && PLAN_KEYS[planId]
-    ? w.t.t(PLAN_KEYS[planId])
-    : findPlan(planId ?? ``)?.name ?? w.t.t(`BillingNoticeMail.paidPlan`)
+  // The billing screen's names: the free plan's translated, a paid plan's the catalog's brand name.
+  const plan = planId === FREE_PLAN_ID
+    ? w.t.t(`GroupBillingPanel.planFree`)
+    : findPlan(planId ?? ``, plans)?.name ?? w.t.t(`BillingNoticeMail.paidPlan`)
   const values = { plan, group: isolate(groupName), date: utc.date(at, `long`) }
   const [subject, what, next] = {
     [BillingNoticeKind.TrialEnding]: [

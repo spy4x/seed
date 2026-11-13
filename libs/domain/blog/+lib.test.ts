@@ -2,6 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import {
   BLOG_AUTHOR_URL_MAX_LENGTH,
+  BLOG_INTRO_MAX_LENGTH,
   BLOG_TLDR_MAX,
   BlogError,
   blogSlugProblem,
@@ -42,6 +43,7 @@ describe(`parseBlogPostFields`, () => {
       coverUrl: null,
       coverAlt: `left over`,
       authorUrl: `   `,
+      intro: ` `,
     })).toEqual({
       ...FIELDS,
       seoTitle: null,
@@ -50,6 +52,8 @@ describe(`parseBlogPostFields`, () => {
       coverUrl: null,
       coverAlt: null,
       authorUrl: null,
+      intro: null,
+      relatedFeature: null,
       language: `en`,
       translationOf: null,
     })
@@ -63,6 +67,21 @@ describe(`parseBlogPostFields`, () => {
   it(`refuses a slug that is no slug`, () => {
     for (const slug of [`Hello`, `hello world`, `-hello`, `hello--world`, `../admin`, ``]) {
       expect(refusedField({ ...FIELDS, slug })).toBe(`slug`)
+    }
+  })
+
+  it(`keeps an intro trimmed and refuses one past ${BLOG_INTRO_MAX_LENGTH} characters (#733)`, () => {
+    expect(parseBlogPostFields({ ...FIELDS, intro: ` Two sentences. ` }).intro)
+      .toBe(`Two sentences.`)
+    expect(refusedField({ ...FIELDS, intro: `a`.repeat(BLOG_INTRO_MAX_LENGTH) })).toBeNull()
+    expect(refusedField({ ...FIELDS, intro: `a`.repeat(BLOG_INTRO_MAX_LENGTH + 1) })).toBe(`intro`)
+  })
+
+  it(`takes a related feature only as a feature page's slug (#733)`, () => {
+    expect(parseBlogPostFields({ ...FIELDS, relatedFeature: ` realtime ` }).relatedFeature)
+      .toBe(`realtime`)
+    for (const relatedFeature of [`/features/realtime`, `Realtime`, `../admin`, `a b`]) {
+      expect(refusedField({ ...FIELDS, relatedFeature })).toBe(`relatedFeature`)
     }
   })
 

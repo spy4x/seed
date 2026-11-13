@@ -1,6 +1,6 @@
 import "./app.css"
 import type { ComponentChildren, ComponentType } from "preact"
-import { useEffect, useState } from "preact/hooks"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { SWUpdater } from "@spy4x/preact-system/sw-updater"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Toastr } from "@spy4x/preact-ui/toastr"
@@ -42,15 +42,16 @@ import { toasts } from "./state/toasts.ts"
 import { AuthView } from "./views/AuthView.tsx"
 import { ConfirmSignUpView } from "./views/ConfirmSignUpView.tsx"
 import { SignUpCodeView } from "./views/SignUpCodeView.tsx"
-import { LinkOpenView, LinkRequestView } from "./views/SignInLinkViews.tsx"
+import { SignInCodeView } from "./views/SignInCodeView.tsx"
 import { GuestTakenView, KeepView, TryView } from "./views/GuestViews.tsx"
-import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView.tsx"
+import { ForgotPasswordView } from "./views/PasswordResetView.tsx"
 import { GroupsView } from "./views/GroupsView.tsx"
 import { SubscribeView, SubscriptionConfirmView, UnsubscribeView } from "./views/SubscribeViews.tsx"
 import { GroupEditorView, GroupPage } from "./views/GroupEditorView.tsx"
 import { GroupImportView } from "./views/GroupImportView.tsx"
 import { NotificationsView } from "./views/NotificationsView.tsx"
 import { OverviewRedirect, OverviewView } from "./views/OverviewView.tsx"
+import { HomeView } from "./views/HomeView.tsx"
 import { InstallOffer } from "./views/InstallOffer.tsx"
 import { InvitationView } from "./views/InvitationView.tsx"
 import { notificationsStore } from "./state/notifications.ts"
@@ -134,14 +135,17 @@ const PAGES: {
   "/sign-up/confirm": () => <ConfirmSignUpView />,
   "/sign-up/code": () => <SignUpCodeView />,
   "/sign-in": () => <AuthView key="sign-in" screen="sign-in" />,
-  "/sign-in/link": () => <LinkRequestView />,
-  "/sign-in/link/open": () => <LinkOpenView />,
+  "/sign-in/code": () => <SignInCodeView />,
+  // Sign-in once mailed a link: an old bookmark or mail opens the code page, keeping `next`.
+  "/sign-in/link": () => <Redirect to={SCREEN_PATHS.signInCode + location.search} replace />,
+  "/sign-in/link/open": () => <Redirect to={SCREEN_PATHS.signInCode} replace />,
   "/try": () => <TryView />,
   "/keep": () => <KeepView />,
   "/keep/taken": () => <GuestTakenView />,
   "/totp": () => <AuthView key="one-time-code" screen="one-time-code" />,
   "/forgot-password": () => <ForgotPasswordView />,
-  "/reset-password": () => <ResetPasswordView />,
+  // The reset once mailed a link to this page; the code step lives on `/forgot-password`.
+  "/reset-password": () => <Redirect to={SCREEN_PATHS.forgotPassword} replace />,
   "/subscribe": () => <SubscribeView />,
   "/subscribe/confirm": () => <SubscriptionConfirmView />,
   "/unsubscribe": () => <UnsubscribeView />,
@@ -169,12 +173,12 @@ const PAGES: {
   "/tokens/new": () => <ApiTokenNewView />,
   "/benchmark": () => <BenchmarkPage />,
   "/profile/:section?": (params) => <ProfileView section={params.section} />,
-  "/": () => <Redirect to={NOTE_PATHS.list} replace />,
+  "/": () => <HomeView />,
 }
 
 /**
  * One `<Route>` per row of the route table, in its order, then the page for an address none of
- * them answers (#368): `visitor` when nobody is signed in. Wouter's `Switch` draws the first child
+ * them answers: `visitor` when nobody is signed in. Wouter's `Switch` draws the first child
  * whose `path` matches, and a child with no `path` matches every address, so the not-found screen
  * is a plain last child: no route, since it is no page of the table.
  */
@@ -216,29 +220,47 @@ function Frame() {
   // document body when signing out swaps the shell. The app has no page titles yet, so the tab's
   // title stays.
   const [path] = useLocation()
-  // Moving between the profile's sections, the settings layout moves focus to the new section's
-  // heading itself; the announcer leaves it there.
-  useRouteAnnouncer({ path: announcedPage(path), keepPageFocus: isProfilePath(path) })
-  if (session.user && !session.isMfaRequired) {
-    return (
-      <AppShell user={session.user} wsStatus={connectionDisplay(session)}>
-        <InstallOffer />
-        <Routes />
-      </AppShell>
-    )
-  }
+  // A load of the home page (every sign-in without a `next`) is replaced by the page it opens
+  // (`HomeView`). That page is still the load, so the announcer starts afresh there, once, and
+  // moves no focus: the first Tab reaches the skip link, as on any other load.
+  const homeLoad = useRef(path === SCREEN_PATHS.home)
+  const leftHome = useRef(false)
+  if (homeLoad.current && path !== SCREEN_PATHS.home) leftHome.current = true
+  // The announcer stays first in the fragment, so a swap of the frame keeps it mounted.
   return (
-    <PublicFrame canSignOut={canSignOut(session)}>
-      <SignInGate />
-      <Routes visitor />
-    </PublicFrame>
+    <>
+      <RouteAnnouncer key={leftHome.current ? `after-home` : `load`} path={path} />
+      {session.user && !session.isMfaRequired
+        ? (
+          <AppShell user={session.user} wsStatus={connectionDisplay(session)}>
+            <InstallOffer />
+            <Routes />
+          </AppShell>
+        )
+        : (
+          <PublicFrame canSignOut={canSignOut(session)}>
+            <SignInGate />
+            <Routes visitor />
+          </PublicFrame>
+        )}
+    </>
   )
 }
 
 /**
+ * Announces each route change ({@link useRouteAnnouncer}). Moving between the profile's sections,
+ * the settings layout moves focus to the new section's heading itself; the announcer leaves it
+ * there.
+ */
+function RouteAnnouncer({ path }: { path: string }) {
+  useRouteAnnouncer({ path: announcedPage(path), keepPageFocus: isProfilePath(path) })
+  return null
+}
+
+/**
  * Clears the device once nobody is signed in. After the person's own sign-out or account deletion
- * nothing of theirs stays (#206); when the server ended the session (it expired, or was ended
- * elsewhere), their queue of unsent writes stays for their next sign-in (#612).
+ * nothing of theirs stays; when the server ended the session (it expired, or was ended
+ * elsewhere), their queue of unsent writes stays for their next sign-in.
  */
 function wipeSignedOut(): Promise<void> {
   return signOutChosen.value ? wipeDevice() : wipeDeviceKeepingQueue()
@@ -263,7 +285,7 @@ export function App() {
 
   useEffect(() => {
     // The user is remembered for the next start with no network. Signed out, the device keeps
-    // nothing of anyone (#206) but the unsent queue of a session the server ended (#612).
+    // nothing of anyone but the unsent queue of a session the server ended.
     const { user, isReady, isMfaRequired } = sessionState.value
     if (user && !isMfaRequired) {
       signOutChosen.value = false
@@ -271,7 +293,7 @@ export function App() {
     } else if (isReady && !user) void wipeSignedOut()
   }, [sessionState.value.user, sessionState.value.isReady, sessionState.value.isMfaRequired])
 
-  // The sign-in page of this browser later says which method the person used (#142).
+  // The sign-in page of this browser later says which method the person used.
   useEffect(() => void rememberSignIn(sessionState.value), [
     sessionState.value.user?.id,
     sessionState.value.isMfaRequired,
@@ -330,7 +352,7 @@ export function App() {
   }, [
     sessionState.value.user?.id,
     sessionState.value.isMfaRequired,
-    // Keeping a guest account ends the guest's session and starts a new one (#374): the socket,
+    // Keeping a guest account ends the guest's session and starts a new one: the socket,
     // still open on the old one, is opened again on the new cookie.
     isGuest(sessionState.value.user),
   ])
@@ -350,10 +372,12 @@ export function App() {
         <Toastr
           toasts={toasts.list.value}
           onDismiss={toasts.remove}
-          // From `md` up, where the rail replaces the phone's tab bar, the stack sits at the bottom
-          // right, clear of the page header's "More actions" menu (#236); on a phone it stays at
-          // the top, clear of the tab bar.
-          class="md:top-auto! md:bottom-(--toastr-gap)!"
+          // The stack sits at the bottom, clear of the page header's title and "More actions" menu.
+          // On a phone it sits 1rem above the tab bar: the bar's 64 px row, its 1 px top
+          // rule and the device's bottom inset. From `md` up, where the rail replaces the bar, it
+          // sits in the bottom right corner.
+          corner="bottom-right"
+          class="max-md:bottom-[calc(5rem+1px+env(safe-area-inset-bottom,0px))]!"
           dataE2E="toasts"
         />
         <SWUpdater />

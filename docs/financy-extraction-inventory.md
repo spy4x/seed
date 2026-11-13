@@ -77,7 +77,7 @@ currency code itself stays behind. Financy's helpers are a good reference for th
 - `libs/shared/types/+index.ts` — split here into `libs/platform/types` + `libs/domain/identity`.
 - `libs/shared/rpc/+index.ts` — inspect before deciding; likely superseded by the REST/CQRS
   boundary.
-- `docs/offline-first-with-dexie.md` — superseded by `docs/design/group-sync.md`, which is
+- `docs/offline-first-with-dexie.md` — superseded by `docs/archive/group-sync.md`, which is
   cursor-based and group-scoped. Keep Financy's doc only as background reading.
 
 ## Suggested extraction order
@@ -89,7 +89,7 @@ Each line is intended to be one small PR.
 3. e2e auth/test helpers (unblocks any later offline→reconnect test).
 4. Preact signal helpers, URL filter hook, cookie helper.
 5. Realtime transport — only after the topology decision in
-   [realtime design](design/realtime-websockets.md) lands as an ADR.
+   [realtime design](archive/realtime-websockets.md) lands as an ADR.
 6. Ops: backup and deploy scripts, then CI, then age64 env encryption.
 
 ## Maintenance

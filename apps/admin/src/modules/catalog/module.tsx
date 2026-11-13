@@ -93,6 +93,11 @@ function ItemView(
     return () => clearTimeout(timer)
   }, [editor.item])
   const catalog = state.catalog.value
+  const tracking = catalog?.tracking === true
+  // The share links' numbers come after the item, so the editor never waits for them.
+  useEffect(() => {
+    if (tracking && editor.item) void state.readItemStats(editor.item.id)
+  }, [editor.item?.id, tracking])
   return (
     <>
       <AdminCatalogItemScreen
@@ -125,6 +130,7 @@ function ItemView(
             links: editor.links,
             copying: editor.copying,
             onCopy: (sourceId) => void state.copyLink(sourceId),
+            stats: editor.stats,
           }
           : undefined}
         navigate={context.navigate}
@@ -258,8 +264,8 @@ function SourceView(
 }
 
 /**
- * The shop's catalog (#466): items with photos, colours and sizes, their categories, and the
- * sources of their tracking links (#483). Shown only while the API has it on (`CATALOG=true`).
+ * The shop's catalog: items with photos, colours and sizes, their categories, and the
+ * sources of their tracking links. Shown only while the API has it on (`CATALOG=true`).
  */
 export const catalogModule: AdminModule = {
   id: `catalog`,

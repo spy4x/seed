@@ -1,5 +1,5 @@
 /**
- * The Telegram bot in the API (#269, docs/telegram.md): the link codes the app hands out, the
+ * The Telegram bot in the API (docs/telegram.md): the link codes the app hands out, the
  * links the bot makes and ends, each with its audit row, and the bot's start-up (the webhook or
  * polling, and the command menu). Off without `TELEGRAM_BOT_TOKEN`: `createTelegramRuntime` is
  * never called, and the routes answer that the bot is off.

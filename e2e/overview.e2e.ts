@@ -4,7 +4,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The group overview (#219): the rail's first link opens the selected group's overview, a widget
+ * The group overview: the rail's first link opens the selected group's overview, a widget
  * hidden from its card's menu stays hidden after a reload (the layout is kept in the person's
  * preferences on the server), and "Reset layout" brings it back. A group the person is not in
  * reads as one that does not exist.

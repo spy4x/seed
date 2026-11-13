@@ -120,7 +120,7 @@ function NotificationsTab(
   )
 }
 
-/** API tokens across people, and a person's tokens, push devices and notifications (#427). */
+/** API tokens across people, and a person's tokens, push devices and notifications. */
 export const apiTokensModule: AdminModule = {
   id: `api-tokens`,
   nav: { name: `AdminNav.apiTokens`, href: ADMIN_API_TOKENS_PATH, Icon: IconKey },

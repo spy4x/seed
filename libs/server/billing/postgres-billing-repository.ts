@@ -11,6 +11,8 @@ import {
   BillingNoticeKind,
   type BillingRepository,
   findPlan,
+  type Plan,
+  PLANS,
   type StoredSubscription,
 } from "@domain/billing"
 import type { GroupRole } from "@domain/groups"
@@ -33,6 +35,7 @@ interface CustomerRow extends postgres.Row {
 interface HeldRow extends postgres.Row {
   planId: string | null
   status: number
+  billingPeriod: number | null
   cancelAtPeriodEnd: boolean
   trialEnd: Date | null
 }
@@ -67,7 +70,11 @@ const PAYING_STATUSES: readonly SubscriptionStatus[] = [
  * after its signature passes.
  */
 export class PostgresBillingRepository implements BillingRepository {
-  constructor(private readonly sql: postgres.Sql) {}
+  /** `plans` is the catalog, `PLANS` unless a test passes its own. */
+  constructor(
+    private readonly sql: postgres.Sql,
+    private readonly plans: readonly Plan[] = PLANS,
+  ) {}
 
   async get(groupId: string): Promise<StoredSubscription | null> {
     const row = (
@@ -82,6 +89,7 @@ export class PostgresBillingRepository implements BillingRepository {
           past_due_since,
           trial_end,
           quantity,
+          billing_period AS period,
           ever_active
         FROM subscriptions
         WHERE group_id = ${groupId}
@@ -98,6 +106,7 @@ export class PostgresBillingRepository implements BillingRepository {
         pastDueSince: row.pastDueSince,
         trialEnd: row.trialEnd,
         quantity: row.quantity,
+        period: row.period,
         everActive: row.everActive,
       }
       : null
@@ -183,8 +192,16 @@ export class PostgresBillingRepository implements BillingRepository {
    *
    * The group comes from the checkout's `reference` (the group id), or else from the customer an
    * earlier event stored. An event that names no group of this app is stored and ignored.
+   *
+   * The stored period is the one of the price the provider reports (`subscription.period`), never
+   * anything a checkout asked for. An event whose subscription bills a price no plan maps to changes
+   * nothing and is not stored (`unknown_price`): its period cannot be known, and a paid plan is never
+   * granted, kept or taken away on a price the app does not sell. Once the price is in the settings,
+   * the provider's resend of the same event applies.
    */
   async applyEvent(event: BillingEvent): Promise<BillingApplyOutcome> {
+    // Not stored, so the provider's resend applies once the price is in the settings.
+    if (isSubscriptionEvent(event) && event.subscription.planId === null) return "unknown_price"
     return await this.sql.begin(async (transaction: postgres.TransactionSql) => {
       const stored = await transaction`
         INSERT INTO billing_events (id, event_type) VALUES (${event.id}, ${event.type})
@@ -201,16 +218,16 @@ export class PostgresBillingRepository implements BillingRepository {
       const rank = EVENT_RANK[event.type]
       // A different subscription than the one held takes over when it pays, whatever the held one's
       // status, or when the held one has ended. One that does not pay, such as a late failed charge
-      // or the end of an old subscription, never takes the plan of the one held (#242).
+      // or the end of an old subscription, never takes the plan of the one held.
       const paying = PAYING_STATUSES.includes(subscription.status)
       // The grace period counts from the first past-due event of this subscription: a later one
       // (Stripe's `unpaid` arrives as past due too) keeps the stored start, and any other status
       // clears it.
       const pastDue = subscription.status === SubscriptionStatus.PastDue
-      // Only a subscription that has paid gets the grace period (#247): `ever_active` turns true at
+      // Only a subscription that has paid gets the grace period: `ever_active` turns true at
       // its first active event and stays true while the same subscription is held.
       const active = subscription.status === SubscriptionStatus.Active
-      // A customer handed over by a transfer of ownership (#250) only runs out the subscription
+      // A customer handed over by a transfer of ownership only runs out the subscription
       // the group holds: none of its subscriptions takes the group back, even one that pays.
       const handedOver = (await transaction`
         SELECT 1 FROM billing_handed_over_customers
@@ -218,7 +235,7 @@ export class PostgresBillingRepository implements BillingRepository {
       `).length > 0
       const before = (
         await transaction<HeldRow[]>`
-          SELECT plan_id, status, cancel_at_period_end, trial_end
+          SELECT plan_id, status, billing_period, cancel_at_period_end, trial_end
           FROM subscriptions WHERE group_id = ${group.id} FOR UPDATE
         `
       )[0]
@@ -236,7 +253,8 @@ export class PostgresBillingRepository implements BillingRepository {
           trial_end,
           quantity,
           ever_active,
-          provider_customer_id
+          provider_customer_id,
+          billing_period
         ) VALUES (
           ${group.id},
           ${subscription.id},
@@ -250,7 +268,8 @@ export class PostgresBillingRepository implements BillingRepository {
           ${subscription.trialEnd},
           ${subscription.quantity},
           ${active},
-          ${subscription.customerId}
+          ${subscription.customerId},
+          ${subscription.period ?? null}
         )
         ON CONFLICT (group_id) DO UPDATE SET
           provider_subscription_id = EXCLUDED.provider_subscription_id,
@@ -273,6 +292,7 @@ export class PostgresBillingRepository implements BillingRepository {
             AND subscriptions.provider_subscription_id = EXCLUDED.provider_subscription_id
           ),
           provider_customer_id = EXCLUDED.provider_customer_id,
+          billing_period = EXCLUDED.billing_period,
           updated_at = CURRENT_TIMESTAMP
         WHERE (subscriptions.provider_event_at, subscriptions.provider_event_rank)
             <= (EXCLUDED.provider_event_at, EXCLUDED.provider_event_rank)
@@ -296,7 +316,7 @@ export class PostgresBillingRepository implements BillingRepository {
       // One customer pays for one group. A customer another group already holds stays with it, so
       // an event naming it is still applied instead of failing on the unique index forever. A
       // handed-over customer written back here stays handed over: `customerOf` reads through
-      // `billing_handed_over_customers` (#250).
+      // `billing_handed_over_customers`.
       await transaction`
         INSERT INTO billing_customers (group_id, provider_customer_id)
         SELECT ${group.id}, ${subscription.customerId}
@@ -311,17 +331,18 @@ export class PostgresBillingRepository implements BillingRepository {
       // started before someone joined, is corrected by the worker.
       if (
         subscription.status !== SubscriptionStatus.Canceled &&
-        subscription.planId !== null && findPlan(subscription.planId)?.perSeat &&
+        subscription.planId !== null && findPlan(subscription.planId, this.plans)?.perSeat &&
         subscription.quantity !==
           await new PostgresInvitationRepository(transaction).countMembers(group.id)
       ) {
         await queueSeatSync(transaction, group.id)
       }
-      // Only a new plan or status is news to the group's pages; a renewal that moves the period's end
-      // is not. The owner pays, so the change is theirs; a deleted group still records it, so a
+      // Only a new plan, status or billing period is news to the group's pages; a renewal that moves
+      // the period's end is not. The owner pays, so the change is theirs; a deleted group still records it, so a
       // restore shows the plan the provider reported meanwhile.
       const changed = before === undefined || before.planId !== subscription.planId ||
-        before.status !== subscription.status
+        before.status !== subscription.status ||
+        before.billingPeriod !== (subscription.period ?? null)
       if (!changed) return "applied"
       await recordGroupChange(
         transaction,

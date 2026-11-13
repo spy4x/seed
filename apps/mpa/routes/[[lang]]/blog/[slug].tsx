@@ -1,6 +1,5 @@
 import type { JSX } from "preact"
-import type { FreshContext } from "fresh"
-import { Head } from "fresh/runtime"
+import { type Context, Head } from "@spy4x/preact-server"
 import type { BlogTranslation, PublicBlogPost, PublicBlogPostSummary } from "@domain/blog"
 import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
 import { Button } from "@spy4x/preact-ui/button"
@@ -22,7 +21,9 @@ import {
   readPost,
   TOC_MIN_MINUTES,
 } from "../../../blog.ts"
+import { coverImage, listCoverImage, ogCard } from "../../../blog-covers.ts"
 import { CtaBand } from "../../../components/cta-band.tsx"
+import { featurePage } from "../../../features-data.tsx"
 import {
   AUTHOR_URL,
   NewsletterForm,
@@ -31,6 +32,7 @@ import {
   sectionLinks,
   SITE_NAME,
   SiteFrame,
+  type SitePageHead,
   spaLinks,
 } from "../../../site.tsx"
 import { define, type State } from "../../../utils.ts"
@@ -62,7 +64,7 @@ export const POST_NOT_FOUND = postNotFound(siteEnglishText())
  * A post is written in one language and lives at that language's address (`/de/blog/<slug>` for
  * German); another language's address redirects there for good, so a link from before posts had a
  * language still works. A slug the post had before "Change URL" redirects to its current address
- * for good too, in every language, while the post is live (#418). Its page names its live
+ * for good too, in every language, while the post is live. Its page names its live
  * translations as language versions (`hreflang`) and links them by name under the byline, and
  * names nothing when it has none.
  */
@@ -74,7 +76,6 @@ export const handler = define.handlers({
     const { post, readNext } = found
     if (post.language !== ctx.state.language) return ctx.redirect(postAddress(post), 301)
     const origin = ctx.state.webAppOrigin
-    const cover = post.coverUrl === null ? null : { url: post.coverUrl, alt: post.coverAlt ?? `` }
     const t = siteTranslator(ctx.state.language)
     const body = resolveBody(post.segments, post.headings, await postFigures())
     warnHiddenFigures(post.slug, body.problems)
@@ -86,7 +87,7 @@ export const handler = define.handlers({
           title: post.seoTitle ?? post.title,
           description: post.description,
           ogType: `article`,
-          image: cover ?? undefined,
+          image: shareImage(origin, post),
           jsonLd: postJsonLd(t, origin, post),
           alternates: [post, ...post.translations].map((version) => ({
             language: version.language,
@@ -105,7 +106,7 @@ export const handler = define.handlers({
         {ctx.state.newsletter ? <NewsletterBand /> : (
           <CtaBand
             title={t.t(`Blog.ctaTitle`, { site: SITE_NAME })}
-            demoHref={spaLinks(ctx.state.spaOrigin).try}
+            demoHref={spaLinks(ctx.state).try}
           />
         )}
         <ReadNext posts={readNext} />
@@ -114,8 +115,20 @@ export const handler = define.handlers({
   },
 })
 
+/**
+ * The picture a link to the post shows: a Seed post's card (its title over its cover), else its
+ * cover, else nothing, and the site's own image is shared.
+ */
+function shareImage(origin: string, post: PublicBlogPost): SitePageHead[`image`] {
+  const card = ogCard(post)
+  if (card) return { url: absolute(origin, card.src), alt: post.title, ...card }
+  const cover = coverImage(post)
+  return cover ? { url: absolute(origin, cover.src), alt: post.coverAlt ?? `` } : undefined
+}
+
 /** The post's structured data: the `BlogPosting` and its trail, Home › Blog › the post. */
 function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost): unknown[] {
+  const cover = coverImage(post)
   const url = `${origin}${postAddress(post)}`
   const blog = `${origin}${localePath(post.language, BLOG_PATH)}`
   return [
@@ -123,7 +136,10 @@ function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost)
       url,
       headline: post.title,
       description: post.description,
-      image: post.coverUrl ?? { url: `${origin}/og/home.png`, ...OG_IMAGE_SIZE },
+      // A file's size is known; a product's https cover is named alone.
+      image: post.coverFile !== null && cover
+        ? { url: absolute(origin, cover.src), width: cover.width, height: cover.height }
+        : post.coverUrl ?? { url: `${origin}/og/home.png`, ...OG_IMAGE_SIZE },
       datePublished: new Date(post.publishedAt),
       dateModified: post.updatedAt === null ? undefined : new Date(post.updatedAt),
       author: postAuthor(post),
@@ -163,12 +179,20 @@ export function postAuthor(
 
 /**
  * The page's side gutter, around a post's column. The article, the newsletter and "Read next" all
- * sit in one centred column of 42 rem inside it, so the three start at one left edge (#416).
+ * sit in one centred column of 42 rem inside it, so the three start at one left edge.
  */
 const GUTTER = `px-4 sm:px-6 lg:px-8`
 
 /** The post's reading column, inside {@link GUTTER}. */
 const COLUMN = `mx-auto w-full max-w-2xl`
+
+/** How wide the cover is drawn: the column's 672 px from 720 px, else the screen less its gutters. */
+const COVER_SIZES = `(min-width: 720px) 672px, calc(100vw - 32px)`
+
+/** `src` as a full address: a file cover is a path on this website. */
+function absolute(origin: string, src: string): string {
+  return src.startsWith(`/`) ? `${origin}${src}` : src
+}
 
 /**
  * The article itself. A post of {@link TOC_MIN_MINUTES} minutes or more with sections gets "On this
@@ -185,6 +209,8 @@ function PostBody(
     ? post.headings.filter(({ depth }) => depth === 2)
     : []
   const toc = sections.length > 0
+  const cover = coverImage(post)
+  const feature = post.relatedFeature === null ? undefined : featurePage(post.relatedFeature)
   return (
     <div class={`${GUTTER} py-12 lg:py-16`}>
       <div
@@ -244,6 +270,16 @@ function PostBody(
                 </span>
               )}
             </p>
+            {feature && (
+              <p class="text-sm" data-e2e="blog-post-feature">
+                <a
+                  href={href(`/features/${feature.slug}`)}
+                  class="inline-flex min-h-11 items-center rounded-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus sm:min-h-0"
+                >
+                  {t.t(`Blog.relatedFeature`, { name: t.t(feature.name) })}
+                </a>
+              </p>
+            )}
             {post.translations.length > 0 && (
               <p class="text-sm text-muted" data-e2e="blog-post-translations">
                 {rich(`Blog.alsoIn`, {
@@ -252,12 +288,14 @@ function PostBody(
               </p>
             )}
           </header>
-          {post.coverUrl && (
+          {cover && (
             <img
-              src={post.coverUrl}
+              src={cover.src}
+              srcset={cover.srcset}
+              sizes={cover.srcset && COVER_SIZES}
               alt={post.coverAlt ?? ``}
-              width={1200}
-              height={630}
+              width={cover.width}
+              height={cover.height}
               loading="eager"
               fetchpriority="high"
               decoding="async"
@@ -289,7 +327,7 @@ function PostBody(
 
 /**
  * The post's live translations, each named in its own language and linked at its own address, as
- * a list in the page's language: "Deutsch, Español and Français" (#530).
+ * a list in the page's language: "Deutsch, Español and Français".
  */
 function TranslationLinks(
   { translations }: { translations: readonly BlogTranslation[] },
@@ -321,7 +359,7 @@ function TranslationLinks(
 
 /**
  * The newsletter as the post's one call to action: in the post's column, under a heading the size
- * of "Read next", so it reads as part of the post and not as a second title (#416).
+ * of "Read next", so it reads as part of the post and not as a second title.
  */
 function NewsletterBand(): JSX.Element {
   const { t } = useSite()
@@ -368,6 +406,7 @@ function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.E
                 publishedAt: post.publishedAt,
                 readMinutes: post.readingMinutes,
                 lang: post.language,
+                image: listCoverImage(post),
               }))}
             />
           </>
@@ -381,7 +420,7 @@ function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.E
 }
 
 /** The 404 of a post that is not live: why, and the way to the posts that are. */
-function renderNotFound(ctx: FreshContext<State>): Response | Promise<Response> {
+function renderNotFound(ctx: Context<State>): Response | Promise<Response> {
   const t = siteTranslator(ctx.state.language)
   const notFound = postNotFound(t)
   return ctx.render(

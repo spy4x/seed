@@ -91,7 +91,7 @@ function ContactLinkEditorView(
   )
 }
 
-/** The website's contact links: the list and the editor (#465). */
+/** The website's contact links: the list and the editor. */
 export const contactLinksModule: AdminModule = {
   id: `contact-links`,
   nav: {

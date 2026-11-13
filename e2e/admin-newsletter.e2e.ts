@@ -6,7 +6,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The newsletter page of the operator area (#428): a visitor subscribes and confirms on the
+ * The newsletter page of the operator area: a visitor subscribes and confirms on the
  * website, then an operator finds the address, exports the list and removes it. The confirm link
  * the visitor was mailed no longer adds them back.
  */

@@ -7,15 +7,14 @@ import { buildMethods as buildMethodsBase } from "@spy4x/platform/cache"
 import { ONE_MONTH_IN_SECONDS } from "@spy4x/platform/universal/time-constants"
 import { createCacheService } from "./cache-service.ts"
 
-// `RedisKvStore` requires a non-empty key prefix (the template's own kv store did not scope its
-// keys at all). "api" is this app's own namespace: every key this cache writes now reads
-// `api:<prefix>_<id>` instead of the old unprefixed `<prefix>_<id>` — this is a genuine change,
-// not merely a rename. A rollback past that change: docs/handoff.md, trap 11.
+// `RedisKvStore` requires a non-empty key prefix. "api" is this app's own namespace: every key
+// this cache writes reads `api:<prefix>_<id>`. A rollback to unprefixed keys: docs/handoff.md,
+// trap 11.
 /** The API's one Valkey connection, shared by the cache and the auth rate limits. */
 export const kv = await RedisKvStore.connect(config.kv.hostname, config.kv.port, "api", {
   password: config.kv.password,
 })
-console.log(`✅ Connected to KV`) // kept from the old client's connect log
+console.log(`✅ Connected to KV`)
 const cacheService = createCacheService(kv)
 
 function buildMethods<T>(prefix: string, schema?: Type) {

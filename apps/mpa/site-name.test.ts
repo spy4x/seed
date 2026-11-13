@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import type { Catalog } from "@spy4x/platform/universal/i18n"
 import AppWrapper from "./routes/_app.tsx"
 import Home from "./routes/index.tsx"
@@ -20,8 +20,8 @@ import siteJa from "@i18n/site/ja.ts"
 import siteZhCn from "@i18n/site/zh-CN.ts"
 
 /**
- * A product built on Seed sets `SITE_NAME` and `SITE_ICON` in `brand.ts` to rename its newsletter
- * (#472). The name is a module constant that equals "Seed" here, so a rendered page cannot tell it
+ * A product built on Seed sets `SITE_NAME` and `SITE_ICON` in `brand.ts` to rename its newsletter.
+ * The name is a module constant that equals "Seed" here, so a rendered page cannot tell it
  * from a literal "Seed". The catalog test makes sure no newsletter message spells a name; the
  * render tests make sure the pages fill the name into the neutral wording.
  */

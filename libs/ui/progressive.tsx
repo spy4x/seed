@@ -59,7 +59,10 @@ export const API_DOCS_PATH = "/docs/api"
 
 /** The pages these screens link to. */
 export const SCREEN_PATHS = {
-  /** The app's home, which opens the notes. */
+  /**
+   * The app's home: where sign-in lands without a `next`. It opens the notes, or the Billing tab for
+   * the owner of a new group when the free plan allows nothing.
+   */
   home: "/",
   signIn: "/sign-in",
   signUp: "/sign-up",
@@ -69,16 +72,14 @@ export const SCREEN_PATHS = {
   signUpCode: "/sign-up/code",
   oneTimeCode: "/totp",
   forgotPassword: "/forgot-password",
-  /** Asks for the address a sign-in link goes to, then says to check the inbox (#391). */
-  signInLink: "/sign-in/link",
-  /** The page a sign-in link opens, with its token in the fragment. */
-  signInLinkOpen: "/sign-in/link/open",
+  /** Asks for the address a sign-in code goes to, then for the code. */
+  signInCode: "/sign-in/code",
   /** The profile: its list of sections on a phone, its first section from `md` up. */
   profile: "/profile",
   groups: "/groups",
   /** The in-app inbox. */
   notifications: "/notifications",
-  /** The benchmark page (#440): development builds and the public demo only. */
+  /** The benchmark page: development builds and the public demo only. */
   benchmark: "/benchmark",
   /**
    * The e-mail address, on the profile's Account section, with the dialog open at its code while an
@@ -126,7 +127,7 @@ export const NEXT_PARAM = "next"
  *
  * Every hop that carries `next` checks it again here, since a person can edit each one: the
  * sign-in and sign-up pages, their posts, the one-time-code page and its post. OAuth sign-in
- * (spy4x/template#141) plugs in here too: its start route checks `next` with this, keeps the
+ * plugs in here too: its start route checks `next` with this, keeps the
  * result in the flow state (`OAuthPendingFlow`) and redirects to that stored value after the
  * callback, never to a value read from the callback's query.
  */
@@ -150,9 +151,12 @@ export function withNext(path: string, next: string | null): string {
   return next ? `${path}?${new URLSearchParams({ [NEXT_PARAM]: next })}` : path
 }
 
-/** Where a finished sign-in goes: the checked `next`, or the notes list without one. */
+/**
+ * Where a finished sign-in goes: the checked `next`, or the app's home without one, which decides
+ * between the notes and the plan (`apps/spa/src/views/HomeView.tsx`).
+ */
 export function afterSignIn(next: string | null): string {
-  return next ?? NOTE_PATHS.list
+  return next ?? SCREEN_PATHS.home
 }
 
 /** Where the group overview lives: `/overview` opens the selected group's. */

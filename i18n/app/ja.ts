@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "このメモにファイルを添付",
+  "AppShell.copyNoteLink": "このメモのリンクをコピー",
+  "AppShell.deleteNote": "このメモを削除",
+  "AppShell.duplicateNote": "このメモを複製",
+  "AppShell.moveNote": "このメモを別のグループに移動",
   "AttachmentMessages.load": "ファイルを読み込めませんでした",
   "AttachmentMessages.type":
     "{name}は添付できません。添付できるのはJPEG、PNG、WebP、GIFの画像とPDFファイルのみです。",
@@ -56,6 +60,9 @@ export default {
     "<who>{who}</who>がグループ名を「<value>{from}</value>」から「<value>{to}</value>」に変更しました",
   "GroupActivity.detailsUpdated":
     "<who>{who}</who>がグループの説明、色、または絵文字を変更しました",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who>がタイムゾーンを<value>{from}</value>から<value>{to}</value>に変更しました",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who>がタイムゾーンを変更しました",
   "GroupActivity.deleted": "<who>{who}</who>がグループを削除しました",
   "GroupActivity.restored": "<who>{who}</who>がグループを復元しました",
   "GroupActivity.roleChanged": "<who>{who}</who>が<target>{target}</target>のロールを変更しました",
@@ -225,6 +232,11 @@ export default {
       "新しいグループは無料プランから始まります。{count}日間の無料トライアルは、最初に有料プランに切り替えたグループに適用されます。",
   },
   "GroupEditor.readOnly": "このグループの詳細を変更できるのは管理者とオーナーだけです。",
+  "GroupEditor.timeZoneHint": "グループ全員の日と月が、このタイムゾーンの午前0時に始まります。",
+  "GroupEditor.timeZoneInvalid":
+    "このタイムゾーンは使えません。リストから別のものを選んでください。",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "編集中に、ほかの人がこれを{zone}に変更しました。自分の選択を使うには保存を、やめるには「破棄」を押してください。",
   "GroupEditor.nameRequired": "名前を入力してください。",
   "GroupEditor.nameInvalid": "改行や不可視文字を含めず、100文字以内で入力してください。",
   "GroupEditor.descriptionTooLong": {
@@ -345,7 +357,7 @@ export default {
   "GroupInvitations.verifyEmail": "メールアドレスを確認",
   "GroupInvitations.notForYou":
     "この招待は別のメールアドレス宛てに送られています。ご自身のアドレスであれば、先に<link>プロフィール</link>で確認するか、そのアドレスを使っているアカウントでログインしてください。",
-  "GroupInvitations.somethingWrong": "問題が発生しました。もう一度お試しください。",
+  "GroupInvitations.somethingWrong": "招待の操作を完了できませんでした。もう一度お試しください。",
   "GroupInvitations.unreachable": "サーバーに接続できません。もう一度お試しください。",
   "GroupMembers.unnamed": "名前のないメンバー",
   "GroupMembers.title": "メンバー",
@@ -410,7 +422,7 @@ export default {
   "GroupTransfer.failed": "グループを譲渡できませんでした",
   "GroupTransfer.unreachable": "サーバーに接続できません。もう一度お試しください。",
   "GroupTransfer.tooManyAttempts": "試行回数が多すぎます。数分待ってから、もう一度お試しください。",
-  "GroupTransfer.somethingWrong": "問題が発生しました。もう一度お試しください。",
+  "GroupTransfer.somethingWrong": "オーナー権限を譲渡できませんでした。もう一度お試しください。",
   "Groups.title": "グループ",
   "Groups.new": "新しいグループ",
   "Groups.import": "グループをインポート…",
@@ -462,7 +474,6 @@ export default {
   "InvitationNew.discardLeave": "変更を破棄",
   "InvitationNew.discardStay": "編集を続ける",
   "GroupBillingPanel.planFree": "無料",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "other":
       "支払いに失敗しました。{plan}を続けるには、{count}日以内（{date}まで）に「カードを変更」からカード情報を更新してください。",
@@ -470,7 +481,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "支払いに失敗したため、グループは無料プランに切り替わりました。{plan}に戻すには、「カードを変更」からカード情報を更新してください。",
   "GroupBillingPanel.offline": "サーバーに接続できません。もう一度お試しください。",
-  "GroupBillingPanel.unreadable": "プランを読み込めませんでした。",
+  "GroupBillingPanel.unreadable": "プランを読み込めませんでした",
   "GroupBillingPanel.unsafePage":
     "決済サービスから、このアプリでは開けないアドレスが返されました。",
   "GroupBillingPanel.checkoutUnreachable":
@@ -478,8 +489,7 @@ export default {
   "GroupBillingPanel.portalUnreachable":
     "Stripeの請求ページを開けませんでした。接続を確認して、もう一度お試しください。",
   "GroupBillingPanel.title": "請求",
-  "GroupBillingPanel.description":
-    "<group>{group}</group>の毎月のお支払い。請求はStripeが処理します。",
+  "GroupBillingPanel.description": "<group>{group}</group>のお支払い。請求はStripeが処理します。",
   "GroupBillingPanel.loading": "プランを読み込んでいます",
   "GroupBillingPanel.statusTrial": "トライアル中",
   "GroupBillingPanel.statusRenews": "{date}に更新",
@@ -520,7 +530,7 @@ export default {
   "GroupBillingPanel.confirming":
     "Stripeがプランを確認しています。このページは自動で更新されます。",
   "GroupBillingPanel.paymentMethod": "支払い方法",
-  "GroupBillingPanel.paymentMethodText": "Stripeが毎月請求するカードです。",
+  "GroupBillingPanel.paymentMethodText": "このプランの料金をStripeが請求するカードです。",
   "GroupBillingPanel.changeCard": "カードを変更",
   "GroupBillingPanel.invoices": "請求書",
   "GroupBillingPanel.invoicesText": "すべての請求書と領収書を閲覧・ダウンロードできます。",
@@ -529,16 +539,59 @@ export default {
   "GroupBillingPanel.cancelFree": "{date}より前に解約すれば、料金はかかりません。",
   "GroupBillingPanel.cancelKeep": "期間の終わりまで{plan}を使えます。",
   "GroupBillingPanel.cancelPlan": "プランを解約",
+  "GroupBillingPanel.periodTitle": "請求期間",
+  "GroupBillingPanel.monthly": "月払い",
+  "GroupBillingPanel.yearly": "年払い",
+  "GroupBillingPanel.priceYear": "{plan}の料金は、メンバー1人あたり年額{price}です。",
+  "GroupBillingPanel.priceForGroupYear": {
+    "other": "メンバー{count}人の場合、<group>{group}</group>のお支払いは年額{total}です。",
+  },
+  "GroupBillingPanel.saving": "月払いより{amount}お得です。",
+  "GroupBillingPanel.finePrintYear":
+    "メンバー1人ごとに毎年請求されます。いつでも解約でき、期間の終わりまで{plan}を使えます。",
+  "GroupBillingPanel.trialThenYear":
+    "その後は、解約しない限り<group>{group}</group>に年額{total}が請求されます。",
+  "GroupBillingPanel.seatsYear": {
+    "other": "年額{total}（オーナーを含むメンバー{count}人 × {price}）",
+  },
+  "GroupBillingPanel.periodMonthly":
+    "現在は月払いです。年払いなら年額{price}で、{saving}お得です。",
+  "GroupBillingPanel.periodYearly": "現在は年払いです。月払いなら月額{price}です。",
+  "GroupBillingPanel.periodHint": "確定する前に、今日のお支払い額がStripeに表示されます。",
+  "GroupBillingPanel.switchYearly": "年払いに切り替える",
+  "GroupBillingPanel.switchMonthly": "月払いに切り替える",
+  "GroupBillingPanel.startHeading": "<plan>{plan}</plan>プランで始める",
+  "GroupBillingPanel.unitMonth": "/月",
+  "GroupBillingPanel.unitYear": "/年",
+  "GroupBillingPanel.unitMemberMonth": "メンバー1人あたり/月",
+  "GroupBillingPanel.unitMemberYear": "メンバー1人あたり/年",
+  "GroupBillingPanel.wholeGroup": {
+    "other": "グループ全体の料金です（メンバー{count}人まで）。",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "グループ全体の料金です。",
+  "GroupBillingPanel.continueToPayment": "支払いに進む",
+  "GroupBillingPanel.priceFlat": "{plan}の料金は、グループ全体で月額{price}です。",
+  "GroupBillingPanel.priceFlatYear": "{plan}の料金は、グループ全体で年額{price}です。",
+  "GroupBillingPanel.finePrintFlat":
+    "毎月請求されます。いつでも解約でき、期間の終わりまで{plan}を使えます。",
+  "GroupBillingPanel.finePrintFlatYear":
+    "毎年請求されます。いつでも解約でき、期間の終わりまで{plan}を使えます。",
+  "GroupBillingPanel.refund": {
+    "other": "気が変わったら、{count}日以内にお申し出いただければ全額返金します。",
+  },
+  "GroupBillingPanel.joinInstead":
+    "ほかの人のグループに参加する場合は、支払いはせずに、そのグループのオーナーから招待リンクをもらってください。",
+  "HomeView.opening": "アプリを開いています…",
   "GroupBillingView.trialStarted": {
     "other": "{plan}の{count}日間トライアルが始まりました",
   },
   "GroupBillingView.trialUntil": "「{group}」は{date}まで{plan}を利用できます。",
   "GroupBillingView.paid": "{plan}をご利用中です",
   "GroupBillingView.paidText": "Stripeが「{group}」のお支払いを確認しました。",
-  "NotificationsScreen.loadFailed": "通知を読み込めませんでした。",
-  "NotificationsScreen.loadMoreFailed": "これ以上通知を読み込めませんでした。",
-  "NotificationsScreen.readFailed": "既読にできませんでした。",
-  "NotificationsScreen.readAllFailed": "既読にできませんでした。",
+  "NotificationsScreen.loadFailed": "通知を読み込めませんでした",
+  "NotificationsScreen.loadMoreFailed": "続きの通知を読み込めませんでした",
+  "NotificationsScreen.readFailed": "既読にできませんでした",
+  "NotificationsScreen.readAllFailed": "すべて既読にできませんでした",
   "NotificationsScreen.invitedViewer": "「<group>{group}</group>」に閲覧者として招待されました。",
   "NotificationsScreen.invitedEditor": "「<group>{group}</group>」に編集者として招待されました。",
   "NotificationsScreen.invitedAdmin": "「<group>{group}</group>」に管理者として招待されました。",
@@ -635,6 +688,8 @@ export default {
   "OverviewScreen.emptyGroup": "{group}にはまだメモがありません",
   "OverviewScreen.emptyGroupText": "グループのメンバーがメモを追加すると、概要が埋まっていきます。",
   "OverviewScreen.newNote": "新しいメモ",
+  "OverviewScreen.choosePlanText": "追加を始めるには、プランを選んでください。",
+  "OverviewScreen.choosePlan": "プランを選ぶ",
   "OverviewScreen.allHidden": "すべてのウィジェットが非表示です",
   "OverviewScreen.allHiddenText": "表示したいウィジェットを選んでください。",
   "OverviewScreen.gridLabel": "{group}の概要",
@@ -644,6 +699,7 @@ export default {
   "OverviewScreen.customRange": "期間を指定",
   "OverviewScreen.rangeTooLong": "1年以内の期間を選んでください。",
   "OverviewScreen.asOf": "{time}時点",
+  "OverviewScreen.zoneNote": "{city}時間",
   "OverviewScreen.hide": "ウィジェットを非表示",
   "OverviewView.opening": "概要を開いています…",
   "OverviewView.saveFailed":
@@ -678,6 +734,9 @@ export default {
     "このグループのプランでは、メンバーのロールを下げたり外したりはできますが、上げることはできません。",
   "PlanRefusalNotice.openBilling": "「請求」タブを開く",
   "PlanRefusalNotice.askOwner": "グループのオーナーにプランのアップグレードを依頼してください。",
+  "PlanRefusalNotice.noPlanTitle": "{group}には有料プランがありません",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "このグループには有料プランがありません",
+  "PlanRefusalNotice.noPlanText": "追加を始めるには、プランを選んでください。",
   "GuestProfile.accountType": "アカウントの種類",
   "GuestProfile.guestAccount": "ゲストアカウント。このブラウザからしか開けません。",
   "GuestProfile.methods": "ログイン方法",
@@ -805,7 +864,7 @@ export default {
   "GuestScreens.signOutAnyway": "ログアウトする",
   "GuestScreens.signOutText":
     "このアカウントにはログイン方法がないため、再びログインすることはできません。中のデータはすべて失われます。",
-  "GuestScreens.offline": "オフラインです。接続してから、もう一度お試しください。",
+  "GuestScreens.offline": "サーバーに接続できません。もう一度お試しください。",
   "GuestScreens.providerFailed":
     "{provider}での手続きが完了しませんでした。アカウントは変更されていません。もう一度試すか、別の方法を選んでください。",
   "GuestScreens.noPasskey":
@@ -820,34 +879,34 @@ export default {
   "OAuthNotice.kept":
     "ログイン方法を追加しました。今後はどのデバイスからでもこの方法でログインできます。",
   "OAuthNotice.guestTaken": "そのログイン方法は別のアカウントのものです。",
-  "PasswordResetScreen.forgotFailed": "リンクを送信できませんでした",
+  "PasswordResetScreen.forgotFailed": "コードを送信できませんでした",
   "PasswordResetScreen.resetFailed": "パスワードを変更できませんでした",
+  "PasswordResetScreen.sentTitle": "パスワード再設定コードを入力",
   "PasswordResetScreen.sent":
-    "このメールアドレスのアカウントがあれば、パスワード再設定用のリンクを送信しました。",
+    "<email>{email}</email>で登録されたアカウントがあれば、そのアドレスにコードを送信しました。",
   "PasswordResetScreen.forgotDescription": {
     "other":
-      "登録したメールアドレスを入力してください。新しいパスワードを設定するためのリンクをお送りします。リンクは1回だけ、{count}分間有効です。",
+      "登録したメールアドレスを入力してください。新しいパスワードを設定するためのコードをお送りします。コードは{count}分間有効です。",
   },
   "PasswordResetScreen.remembered": "思い出しましたか？<link>ログインに戻る</link>",
-  "PasswordResetScreen.send": "リンクを送信",
+  "PasswordResetScreen.send": "コードを送信",
   "PasswordResetScreen.doneTitle": "パスワードを変更しました",
   "PasswordResetScreen.done":
     "すべてのデバイスからログアウトしました。新しいパスワードでログインしてください。",
   "PasswordResetScreen.signIn": "ログイン",
-  "PasswordResetScreen.askNew": "新しいリンクをリクエスト",
   "PasswordResetScreen.chooseTitle": "新しいパスワードを設定",
   "PasswordResetScreen.choose":
     "<email>{email}</email>のパスワードです。保存すると、すべてのデバイスからログアウトされます。",
-  "PasswordResetScreen.expired":
-    "リンクの期限が切れましたか？<link>新しいリンクをリクエスト</link>",
+  "PasswordResetScreen.expired": "時間切れですか？<link>新しいコードを受け取る</link>",
+  "PasswordResetScreen.tookTooLong": "時間切れです。新しいコードを受け取ってください。",
   "PasswordResetScreen.newPassword": "新しいパスワード",
   "PasswordResetScreen.newPasswordHint": "{min}〜{max}文字。",
   "PasswordResetScreen.saving": "保存しています…",
   "PasswordResetScreen.save": "新しいパスワードを保存",
   "MoveNote.title": "グループに移動",
   "MoveNote.cancel": "キャンセル",
-  "MoveNote.question":
-    "「<title>{title}</title>」の移動先を選んでください。そのグループの全員に表示されます。",
+  "MoveNote.hint": "移動先のグループの全員に表示されます。",
+  "MoveNote.move": "移動",
   "NewNote.title": "新しいメモ",
   "NewNote.close": "閉じる",
   "NewNote.titleLabel": "タイトル",
@@ -923,6 +982,8 @@ export default {
   "NoteEditor.tags": "タグ",
   "NoteEditorView.createdTitle": "メモを追加しました",
   "NoteEditorView.created": "「{title}」を作成しました。",
+  "NoteEditorView.copyTitle": "{title}（コピー）",
+  "NoteEditorView.duplicateFailed": "メモを複製できませんでした",
   "NoteEditorView.savedTitle": "メモを保存しました",
   "NoteEditorView.saved": "「{title}」を保存しました。",
   "NoteEditorView.unsaved": "保存していない変更があります。今移動すると、変更は失われます。",
@@ -989,7 +1050,7 @@ export default {
     "other": "{count}件選択中",
   },
   "Notes.cancelSelect": "キャンセル",
-  "Notes.moveTo": "グループに移動",
+  "Notes.moveTo": "移動先のグループ",
   "Notes.moving": "移動しています…",
   "Notes.move": "移動",
   "Notes.updated": "<date>{date}</date>に更新",
@@ -1007,7 +1068,6 @@ export default {
   "NotesFilter.allTags": "すべてのタグを含む",
   "NotesFilter.author": "作成者",
   "NotesFilter.anyone": "全員",
-  "NotesFilter.you": "自分",
   "NotesFilter.search": "メモを検索",
   "NotesFilter.mine": "自分が作成",
   "NotesFilter.sortUpdated": "最終更新日",
@@ -1084,7 +1144,7 @@ export default {
       "オフラインで作成したタグを保存できなかったため、メモ{count}件からそのタグを外しました。メモはタグなしで保存されています。",
   },
   "OfflineStatus.theirs": "サーバーのバージョン",
-  "OfflineStatus.theirsUnknown": "サーバーのバージョンを取得できません。",
+  "OfflineStatus.theirsUnknown": "現在は取得できません。",
   "OfflineStatus.untitledNote": "無題のメモ",
   "OfflineStatus.useServers": "サーバーの内容を使う",
   "OfflineStatus.youDeletedNote": "このメモは自分で削除しました。",
@@ -1127,6 +1187,8 @@ export default {
   "Preferences.updatedElsewhere": "別のデバイスから設定が更新されました。",
   "SeatPriceConfirm.hint":
     "メンバーが1人増えるごとに月額{price}が加算されるため、あと1人加わるとグループの料金は{now}から{next}になります。今の期間の残りの差額は、次回の請求書で請求されます。",
+  "SeatPriceConfirm.hintYear":
+    "メンバーが1人増えるごとに年額{price}が加算されるため、あと1人加わるとグループの料金は{now}から{next}になります。今の期間の残りの差額は、次回の請求書で請求されます。",
   "SeatPriceConfirm.accept": "参加者が増えるごとに料金が上がることに同意します",
   "ProfileAccount.name": "名前",
   "ProfileAccount.notSet": "未設定",
@@ -1349,7 +1411,7 @@ export default {
   "ProfileView.tokenRevoked": "トークンを取り消しました",
   "ProfileView.tokenRevokedBody": "そのトークンはもう使えません。",
   "ProviderProof.passkey": "パスキー",
-  "ProviderProof.link": "ログインリンク",
+  "ProviderProof.link": "メールのコード",
   "ProviderProof.fresh": "少し前に{methods}でログインしたため、パスワードは不要です。",
   "ProviderProof.needed": {
     "other":
@@ -1357,51 +1419,26 @@ export default {
   },
   "ProviderProof.passkeyAgain": "もう一度パスキーでログイン",
   "ProviderProof.providerAgain": "もう一度{provider}でログイン",
-  "SignInLinkScreen.sendFailed":
-    "リンクを送信できませんでした。少し待ってから、もう一度お試しください。",
-  "SignInLinkScreen.unreachable":
-    "サーバーに接続できませんでした。接続を確認して、もう一度「続行」を押してください。",
-  "SignInLinkScreen.openFailed":
-    "ログインできませんでした。「続行」を押してもう一度試すか、新しいリンクをリクエストしてください。",
-  "SignInLinkScreen.title": "リンクでログイン",
-  "SignInLinkScreen.description":
-    "ログイン用のリンクをメールでお送りします。そのメールアドレスのアカウントがまだない場合は、リンクから作成されます。",
-  "SignInLinkScreen.ratherPassword": "パスワードを使いますか？<link>ログインに戻る</link>",
-  "SignInLinkScreen.submit": "リンクをメールで受け取る",
-  "SignInLinkScreen.sent": {
+  "SignInCodeScreen.sendFailed":
+    "コードを送信できませんでした。少し待ってからもう一度お試しください。",
+  "SignInCodeScreen.title": "メールのコードでログイン",
+  "SignInCodeScreen.description":
+    "ここに入力するコードをメールでお送りします。そのメールアドレスのアカウントがまだない場合は、コードで作成されます。",
+  "SignInCodeScreen.ratherPassword": "パスワードを使いますか？<link>ログインに戻る</link>",
+  "SignInCodeScreen.submit": "コードをメールで受け取る",
+  "SignInCodeScreen.confirmTitle": "本人確認",
+  "SignInCodeScreen.confirmDescription":
+    "<email>{email}</email>にコードをお送りします。次の画面でそのコードを入力して、本人確認を完了してください。",
+  "CodeStep.sent": "<email>{email}</email>にコードを送信しました。",
+  "CodeStep.invalid": "コードは8文字です。抜けている文字がないか確認してください。",
+  "SignInCodeScreen.guest":
+    "ゲストとしてアプリを使っています。ログインすると、ここで作ったものはこのメールアドレスで保存されます。このメールアドレスのアカウントがすでにある場合は、先にお尋ねします。",
+  "CodeStep.deadTitle": "このコードはもう使えません",
+  "CodeStep.dead": {
     "other":
-      "<email>{email}</email>にログインリンクを送信しました。リンクは1回だけ、{count}分間有効です。",
+      "コードは{count}分間、1回だけ使えます。間違えられるのは数回までです。新しいコードを受け取り、いちばん新しいメールに記載されたコードを使ってください。",
   },
-  "SignInLinkScreen.openHere":
-    "このデバイスでログインするには、このデバイスでリンクを開いてください。",
-  "SignInLinkScreen.newLink": "新しいリンクを送信",
-  "SignInLinkScreen.waiting": {
-    "other":
-      "届いていませんか？迷惑メールフォルダを確認してください。{count}秒後に新しいリンクを送信できます。",
-  },
-  "SignInLinkScreen.resent":
-    "新しいリンクを送信しました。どれか1つが使われるまで、以前のリンクも有効です。",
-  "SignInLinkScreen.refusedTitle": "このリンクはもう使えません",
-  "SignInLinkScreen.refused": {
-    "other":
-      "ログインリンクは1回だけ、{count}分間有効です。新しいリンクをリクエストして、最新のメールのリンクを使ってください。",
-  },
-  "SignInLinkScreen.elsewhereTitle": "このリンクは別のブラウザでリクエストされました",
-  "SignInLinkScreen.elsewhere":
-    "ログインは行われず、ゲストアカウントも変更されていません。ここでログインするには、このブラウザで新しいリンクをリクエストしてください。",
-  "SignInLinkScreen.incompleteTitle": "このリンクは不完全です",
-  "SignInLinkScreen.incomplete":
-    "メールのリンクをもう一度開くか、新しいリンクをリクエストしてください。",
-  "SignInLinkScreen.backToApp": "アプリに戻る",
-  "SignInLinkScreen.finishTitle": "ログインを完了",
-  "SignInLinkScreen.finish":
-    "続行すると、このデバイスでログインします。新しいメールアドレスの場合は、アカウントが作成されます。",
-  "SignInLinkScreen.signedInAs":
-    "現在<email>{email}</email>でログインしています。続行すると、代わりにリンクのアカウントでログインします。",
-  "SignInLinkScreen.guest":
-    "ゲストとしてアプリを使っています。このブラウザでリンクをリクエストした場合、続行するとこのゲストアカウントがリンクのメールアドレスで保存されます。そのメールアドレスのアカウントがすでにある場合は、先に確認します。",
-  "SignInLinkScreen.signingIn": "ログインしています…",
-  "SignInLinkScreen.stay": "ログインしたままにする",
+  "CodeStep.differentEmail": "別のメールアドレスを使う",
   "SignInMethods.failed": "ログイン方法を変更できませんでした",
   "SignInMethods.loadFailed":
     "ログイン方法を読み込めませんでした。接続を確認して、もう一度お試しください。",
@@ -1450,18 +1487,12 @@ export default {
   "SignInMethods.passkeyNotSaved": "パスキーを保存できませんでした。もう一度お試しください。",
   "SignInMethods.passkeyOnDevice": "このデバイスには、このアカウントのパスキーがすでにあります。",
   "SignUpCodeScreen.checkFailed": "コードを確認できませんでした",
-  "SignUpCodeScreen.offline": "オフラインです。接続してから、もう一度お試しください。",
+  "SignUpCodeScreen.offline": "サーバーに接続できません。もう一度お試しください。",
   "SignUpCodeScreen.title": "受信トレイを確認してください",
   "SignUpCodeScreen.loading": "読み込んでいます…",
-  "SignUpCodeScreen.sent": {
-    "other": "<email>{email}</email>にコードを送信しました。コードは{count}分間有効です。",
-  },
-  "SignUpCodeScreen.wrongAddress":
-    "メールアドレスが違いますか？<button>別のアドレスを使う</button>",
   "SignUpCodeScreen.code": "コード",
   "SignUpCodeScreen.checking": "確認しています…",
   "SignUpCodeScreen.resend": "新しいコードを送信",
-  "SignUpCodeScreen.resent": "新しいコードを送信しました。",
   "SignUpCodeScreen.resendFailed": "新しいコードを送信できませんでした",
   "SignUpCodeScreen.existsTitle": "すでにアカウントをお持ちです",
   "SignUpCodeScreen.exists":
@@ -1497,20 +1528,25 @@ export default {
   "SignedInDevices.lastActive": "最終アクティブ<when></when>",
   "SignedInDevices.ip": "<label>IPアドレス</label> <ip>{ip}</ip>",
   "Search.search": "検索",
-  "Search.placeholder": "メモとグループを検索",
+  "Search.placeholder": "検索またはコマンドを実行",
   "Search.close": "検索を閉じる",
   "Search.loading": "検索しています…",
   "Search.error": "検索できませんでした。検索語を変えてもう一度お試しください。",
   "Search.tooShort": {
     "other": "メモを検索するには{count}文字以上入力してください。",
   },
-  "Search.empty": "「{query}」に一致するメモやグループはありません。",
+  "Search.empty": "「{query}」に一致する項目はありません。",
   "Search.emptyOnDevice":
     "このデバイスには「{query}」に一致するものはありません。オンラインに戻ってから、もう一度検索してください。",
   "Search.notes": "メモ",
   "Search.notesOnDevice": "このデバイス上のメモ",
   "Search.groups": "グループ",
-  "Search.actions": "操作",
+  "Search.create": "作成",
+  "Search.settings": "設定",
+  "Search.account": "アカウント",
+  "Search.switchTo": "{group} に切り替える",
+  "Search.installApp": "アプリをインストール",
+  "Search.needsConnection": "接続が必要です",
   "Search.untitled": "無題のメモ",
   "Search.current": "現在",
   "Search.inGroup": "{group}内",
@@ -1523,7 +1559,6 @@ export default {
   "Search.openOverview": "概要を開く",
   "Search.openNotifications": "通知を開く",
   "Search.openProfile": "プロフィールを開く",
-  "Search.profileDetail": "名前、メールアドレス、パスワード、2段階認証",
   "Search.downloadData": "データをダウンロード",
   "Search.downloadDetail": "プロフィール、グループ、メモをまとめたZIP",
   "Search.changePicture": "プロフィール写真を変更",
@@ -1536,7 +1571,7 @@ export default {
   "Shortcuts.switchLabel": "1キーショートカット",
   "Shortcuts.inFields": "入力欄で入力している間は、ショートカットは使えません。",
   "Shortcuts.off": "このデバイスでは1キーショートカットがオフになっています。",
-  "Shortcuts.search": "メモとグループを検索",
+  "Shortcuts.search": "検索またはコマンドを実行",
   "Shortcuts.newNoteRow": "新しいメモ",
   "Shortcuts.undo": "メモの削除を元に戻す（メッセージの表示中）",
   "Shortcuts.notifications": "通知",
@@ -1635,7 +1670,7 @@ export default {
   },
   "TelegramBot.stale": {
     "other":
-      "このボタンはもう使えません。すでに使用されたか、新しいボタンに置き換えられたか、発行から{count}分以上経っています。このチャットを連携するには、アプリで新しいコードを作成してください。",
+      "このボタンはもう使えません。すでに使用された、新しいボタンに置き換えられた、発行から{count}分以上経った、アカウントのパスワードがリセットまたは変更された、またはアカウントが削除またはブロックされた可能性があります。このチャットを連携するには、アプリで新しいコードを作成してください。",
   },
   "TelegramBot.privateOnly": "それは個別チャットで送ってください。",
   "TelegramBot.codeSpent":
@@ -1701,7 +1736,7 @@ export default {
   "ApiTokenNewView.discardMessage": "このトークンはまだ作成されていません。",
   "ApiTokenNewView.discard": "変更を破棄",
   "ApiTokenNewView.keepEditing": "編集を続ける",
-  "ApiTokens.failed": "APIトークンで問題が発生しました。",
+  "ApiTokens.failed": "APIトークンを読み込めないか、取り消せませんでした。もう一度お試しください。",
   "ApiTokens.savedCopyTitle": "保存されたAPIトークン一覧",
   "ApiTokens.savedCopyBody":
     "サーバーに接続できません。このデバイスに保存された一覧（{time}時点）を表示しています。それ以降に作成または取り消したトークンは含まれていません。",
@@ -1770,7 +1805,9 @@ export default {
   "AuthScreen.forgotten": "完了しました。このブラウザは前回のログイン方法を記憶しません。",
   "AuthScreen.lastPassword": "前回はパスワード<email>（{email}）</email>でログインしました。",
   "AuthScreen.lastPasskey": "前回はパスキー<email>（{email}）</email>でログインしました。",
-  "AuthScreen.lastLink": "前回はメールのリンク<email>（{email}）</email>でログインしました。",
+  "AuthScreen.lastLink": "前回はメールのコードでログインしました<email>（{email}）</email>。",
+  "AuthScreen.emailSignInCode": "ログインコードをメールで受け取る",
+  "AuthScreen.emailSignUpCode": "登録コードをメールで受け取る",
   "AuthScreen.lastProvider": "前回は{provider}<email>（{email}）</email>でログインしました。",
   "AuthScreen.forget": "アカウントが違いますか？別のアカウントを使う",
   "AuthScreen.openProfile": "プロフィールを開く",
@@ -1782,8 +1819,6 @@ export default {
   "AuthScreen.haveAccount": "すでにアカウントをお持ちですか？<link>ログイン</link>",
   "AuthScreen.lostDevice": "デバイスをなくしましたか？<link>ログインに戻る</link>",
   "AuthScreen.sending": "送信しています…",
-  "AuthScreen.emailSignInLink": "ログインリンクをメールで受け取る",
-  "AuthScreen.emailSignUpLink": "登録リンクをメールで受け取る",
   "AuthScreen.orCreate": "またはアカウントを作成",
   "AuthScreen.createAccount": "アカウントを作成",
   "AuthScreen.continue": "続行",
@@ -1813,7 +1848,7 @@ export default {
   "EmailScreen.verifyFailed": "コードを確認できませんでした",
   "EmailScreen.sendFailed": "新しいコードを送信できませんでした",
   "EmailScreen.changeFailed": "メールアドレスを変更できませんでした",
-  "EmailScreen.loadFailed": "メールアドレスを読み込めませんでした。",
+  "EmailScreen.loadFailed": "メールアドレスを読み込めませんでした",
   "EmailScreen.enterCode": "コードを入力",
   "EmailScreen.banner":
     "<email>{email}</email>に送ったコードで、メールアドレスを確認してください。",
@@ -1910,7 +1945,7 @@ export default {
   "Benchmark.noLargeBody":
     "ジェネレーターでグループを作成してから、このページを再読み込みしてください：",
   "Benchmark.copyCommand": "コマンドをコピー",
-  "Benchmark.noLargeFoot": "サイズとグループの削除方法はdocs/capacity.mdにあります。",
+  "Benchmark.noLargeFoot": "サイズとグループの削除方法はdocs/large-group.mdにあります。",
   "Benchmark.lastStoppedTitle": "前回の実行は「{measure}」で停止しました",
   "Benchmark.lastStoppedBody":
     "実行が終わる前にタブが閉じました。多くの場合、メモリかストレージの不足が原因です。グループ：{group}、開始：{time}。",
@@ -1925,4 +1960,13 @@ export default {
   "Search.benchmarkDetail": "大きなグループがこのデバイスでどれだけ快適に動くかを測定",
   "Shortcuts.runBenchmark": "ベンチマークを実行",
   "Shortcuts.copyResults": "結果をコピー",
+  "NoteSpreadsheet.id": "ID",
+  "NoteSpreadsheet.title": "タイトル",
+  "NoteSpreadsheet.text": "本文",
+  "NoteSpreadsheet.tagIds": "タグID",
+  "NoteSpreadsheet.created": "作成日時",
+  "NoteSpreadsheet.updated": "最終更新日時",
+  "GroupSpreadsheets.readme":
+    "このグループのデータを表計算ファイルにしたものです。項目の種類ごとに1つのCSVファイルがあり、文字コードはUTF-8、1行目は見出しです。日時はISO 8601形式（UTC）です。グループを別のアプリに移すには、代わりにJSONファイルをダウンロードしてください。インポートできるのはJSONファイルだけです。",
+  "GroupSpreadsheets.notSpreadsheets": "表計算ファイルにないもの（JSONファイルに含まれます）：",
 } satisfies Catalog

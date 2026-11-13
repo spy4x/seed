@@ -35,7 +35,7 @@ const STATUS = {
 } as const
 
 /**
- * A person's API tokens (#167), mounted at `/api/tokens`. Only a signed-in session with its second
+ * A person's API tokens, mounted at `/api/tokens`. Only a signed-in session with its second
  * factor reaches them, never a token: tokens are accepted at `/api/v1` alone.
  *
  * - `GET /` lists the live tokens: `{ tokens }`.
@@ -43,7 +43,7 @@ const STATUS = {
  *   `{ token, secret }`. The secret is in this answer only. `password` is the person's current
  *   password, asked again because a stolen session does not have it: 400 `PASSWORD_INVALID`
  *   without the right one, 429 `PASSWORD_LOCKED` with `Retry-After` after too many wrong ones at
- *   any signed-in step (#406). The owner is mailed that a token was created.
+ *   any signed-in step. The owner is mailed that a token was created.
  * - `DELETE /:id` revokes one: `{ success: true }`, or 404 when the person has no such token.
  *
  * A refusal answers the API's error body (docs/api-errors.md): the message the web app shows, the
@@ -52,7 +52,7 @@ const STATUS = {
 export function createApiTokensRoute(dependencies: ApiTokensRouteDependencies): Hono<APIContext> {
   return new Hono<APIContext>()
     .onError((error, c) => {
-      // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
+      // Too many wrong passwords at the signed-in steps: the lock they all share runs.
       if (error instanceof PasswordLockedError) {
         c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
         return errorResponse(c, `rate_limited`, {

@@ -35,6 +35,7 @@ import {
   claimAdminBillingAction,
   isOwnerOrMember,
   listAdminBillingCustomers,
+  listNeverPaidGroups,
   readAdminBillingFigures,
   readAdminBillingRecord,
   releaseAdminBillingAction,
@@ -44,7 +45,7 @@ import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule, AdminModuleContext } from "./module.ts"
 import { errorResponse, validationResponse } from "../../services/error-response.ts"
 
-/** The answer to every customer route while billing is off (decision 10 of #196). */
+/** The answer to every customer route while billing is off. */
 export const ADMIN_BILLING_OFF = `Billing is not set up`
 export const ADMIN_BILLING_NOT_FOUND = `This group has no subscription`
 export const ADMIN_BILLING_MEMBER =
@@ -77,6 +78,7 @@ export interface AdminBillingSettings {
 export interface AdminBillingStore {
   figures(now: Date): Promise<AdminBillingFigures>
   list(filter: AdminBillingFilter, pageSize: number): ReturnType<typeof listAdminBillingCustomers>
+  neverPaid(page: number, pageSize: number): ReturnType<typeof listNeverPaidGroups>
   record(groupId: string): Promise<AdminBillingRecord | null>
   isOwnerOrMember(groupId: string, userId: number): Promise<boolean>
   claim(claim: AdminBillingClaim): ReturnType<typeof claimAdminBillingAction>
@@ -96,6 +98,7 @@ export function createAdminBillingStore(sql: postgres.Sql): AdminBillingStore {
   return {
     figures: (now) => readAdminBillingFigures(sql, now),
     list: (filter, pageSize) => listAdminBillingCustomers(sql, filter, pageSize),
+    neverPaid: (page, pageSize) => listNeverPaidGroups(sql, page, pageSize),
     record: (groupId) => readAdminBillingRecord(sql, groupId),
     isOwnerOrMember: (groupId, userId) => isOwnerOrMember(sql, groupId, userId),
     claim: (claim) => claimAdminBillingAction(sql, claim),
@@ -155,7 +158,7 @@ function providerKey(action: AdminBillingActionKind, groupId: string, key: strin
 }
 
 /**
- * The billing routes of the operator area (#196), mounted at `/api/admin` behind the gate in
+ * The billing routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them, and every write is same-site.
  *
  * - `GET /billing/figures` and `GET /billing/customers?q=&status=&page=` answer
@@ -304,6 +307,12 @@ export function createAdminBillingRoutes(
         graceDays: billing.graceDays,
         pricingUrl: billing.pricingUrl,
       })
+    })
+    .get(`/billing/never-paid`, limit, async (c) => {
+      if (billing === null) return c.json({ enabled: false })
+      const { page } = parseAdminBillingFilter(new URL(c.req.url).searchParams)
+      const { groups, total } = await store.neverPaid(page, ADMIN_BILLING_PAGE_SIZE)
+      return c.json({ enabled: true, groups, total, page, pageSize: ADMIN_BILLING_PAGE_SIZE })
     })
     .get(`/billing/:groupId`, limit, async (c) => {
       const groupId = c.req.param(`groupId`)

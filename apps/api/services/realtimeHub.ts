@@ -9,11 +9,8 @@ import { createOnboardingOperations } from "../features/onboarding/operations.ts
 import { createPreferencesOperations } from "../features/preferences/operations.ts"
 import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
-import { createTagOperations } from "../features/tags/operations.ts"
-import { createAttachmentOperations } from "../features/notes/attachments.ts"
 import { createPictureOperations } from "../features/profile/picture.ts"
-import { createNoteOperations } from "../features/notes/operations.ts"
-import { createNoteWidgetOperations } from "../features/notes/widgets.ts"
+import { createNotesOperations } from "../features/notes/switch.ts"
 import { signIn } from "./auth.ts"
 import { kv } from "./cache.ts"
 import { commandBus } from "./commandBus.ts"
@@ -25,7 +22,7 @@ import { noteListCursor } from "./note-list-cursor.ts"
 import { queryBus } from "./queryBus.ts"
 import { Realtime } from "./realtime.ts"
 
-/** The per-person budget both adapters spend from (#429); they `identify` each call's caller. */
+/** The per-person budget both adapters spend from; they `identify` each call's caller. */
 export const operationRateLimits = createOperationRateLimits({
   budget: config.operationBudget,
   store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
@@ -71,7 +68,7 @@ export const operations: Operations<Actor> = operationRateLimits.limit({
     device: (command) => commandBus.execute(command),
   }),
   ...createPushOperations({
-    // A guest needs a sign-in method first (#224), on the socket as over REST.
+    // A guest needs a sign-in method first, on the socket as over REST.
     register: async (command) => {
       if (await db.guests.isGuest(command.data.actor.userId)) {
         const { error } = guestRefusal("push")
@@ -82,48 +79,19 @@ export const operations: Operations<Actor> = operationRateLimits.limit({
     remove: (command) => commandBus.execute(command),
     list: (query) => queryBus.execute(query),
   }),
-  ...createNoteOperations({
-    create: async (command) => {
-      const created = await commandBus.execute(command)
-      // A guest's first note gets the reminder to keep it (#224); sent once, and only to guests.
-      await signIn.guests.remind(command.data.actor.userId, GuestReminderKind.FirstNote)
-      return created
-    },
-    update: (command) => commandBus.execute(command),
-    delete: (command) => commandBus.execute(command),
-    restore: (command) => commandBus.execute(command),
-    move: (command) => commandBus.execute(command),
-    list: (query) => queryBus.execute(query),
-    get: (query) => queryBus.execute(query),
-    locate: (query) => queryBus.execute(query),
-    search: (query) => queryBus.execute(query),
+  // Off with NOTES=false: none, so their names are refused as unknown operations.
+  ...createNotesOperations(config.notes, {
+    commandBus,
+    queryBus,
     cursor: noteListCursor,
-  }),
-  ...createNoteWidgetOperations({
-    total: (query) => queryBus.execute(query),
-    added: (query) => queryBus.execute(query),
-    series: (query) => queryBus.execute(query),
-  }),
-  ...createAttachmentOperations({
-    sign: (command) => commandBus.execute(command),
-    confirm: (command) => commandBus.execute(command),
-    cancel: (command) => commandBus.execute(command),
-    remove: (command) => commandBus.execute(command),
-    list: (query) => queryBus.execute(query),
-    download: (query) => queryBus.execute(query),
+    // A guest's first note gets the reminder to keep it; sent once, and only to guests.
+    noteCreated: (userId) => signIn.guests.remind(userId, GuestReminderKind.FirstNote),
   }),
   ...createPictureOperations({
     sign: (command) => commandBus.execute(command),
     confirm: (command) => commandBus.execute(command),
     cancel: (command) => commandBus.execute(command),
     remove: (command) => commandBus.execute(command),
-  }),
-  ...createTagOperations({
-    create: (command) => commandBus.execute(command),
-    update: (command) => commandBus.execute(command),
-    delete: (command) => commandBus.execute(command),
-    list: (query) => queryBus.execute(query),
-    get: (query) => queryBus.execute(query),
   }),
 })
 

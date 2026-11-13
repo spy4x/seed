@@ -10,6 +10,9 @@ tldr:
   - Authorization lives in the handlers, so the socket and the HTTP route answer the same.
   - Every write takes a version and an idempotency key, so nothing is overwritten or done twice.
 topic: Guides
+intro: "The quickest way to learn Seed is to add a feature to it. I copy the notes aggregate layer by layer, from the database to the admin screen, so you can do the same with yours."
+cover: covers/your-first-feature-copy-the-notes-aggregate.webp
+coverAlt: "A stack of translucent violet and grey layers beside a copy of it being built, one more layer hovering into place."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T18:00:00Z

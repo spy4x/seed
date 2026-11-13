@@ -10,9 +10,11 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import {
   BillingNoticeKind,
+  BillingPeriod,
   BillingStatus,
   FREE_PLAN_ID,
   type GroupBilling,
+  type Plan,
   PRO_PLAN_ID,
 } from "@domain/billing"
 import { FormatContext } from "@spy4x/preact-ui/format"
@@ -28,6 +30,12 @@ import {
   type GroupBillingPanelProps,
   SeatPriceConfirm,
 } from "./billing-screen.tsx"
+import {
+  TEST_FREE_PLAN,
+  TEST_PLANS,
+  TEST_PRO_PLAN,
+  testLimits,
+} from "../domain/billing/test-plans.ts"
 
 const NOW = new Date("2026-10-21T12:00:00Z")
 
@@ -43,6 +51,7 @@ const FREE_OWNER: GroupBilling = {
   subscribed: false,
   hasCustomer: false,
   seatPrice: null,
+  period: null,
 }
 
 const PRO_OWNER: GroupBilling = {
@@ -52,15 +61,18 @@ const PRO_OWNER: GroupBilling = {
   currentPeriodEnd: new Date("2026-11-04T00:00:00Z"),
   subscribed: true,
   hasCustomer: true,
-  seatPrice: { seats: 6, amount: 900, currency: "EUR" },
+  seatPrice: { seats: 6, amount: 900, currency: "EUR", period: BillingPeriod.Monthly },
+  period: BillingPeriod.Monthly,
 }
 
-const TRIAL_OWNER: GroupBilling = {
-  ...PRO_OWNER,
+/** What makes a subscription a trial ending on 31 October. */
+const TRIAL_STATE = {
   status: BillingStatus.Trialing,
   trialEnd: new Date("2026-10-31T12:00:00Z"),
   currentPeriodEnd: new Date("2026-10-31T12:00:00Z"),
 }
+
+const TRIAL_OWNER: GroupBilling = { ...PRO_OWNER, ...TRIAL_STATE }
 
 const ENDING_OWNER: GroupBilling = { ...PRO_OWNER, cancelAtPeriodEnd: true }
 
@@ -120,21 +132,62 @@ async function click(selector: string): Promise<void> {
   await act(() => find(selector).click())
 }
 
-/** What the panel handed the app: each checkout's plan, and each portal open. */
+/** What the panel handed the app: each checkout's plan and period, each period picked, each portal open. */
 function calls() {
   const checkouts: string[] = []
+  const periods: BillingPeriod[] = []
+  const picked: BillingPeriod[] = []
   let portals = 0
   return {
     checkouts,
+    periods,
+    picked,
     get portals() {
       return portals
     },
     props: {
-      onCheckout: (planId: string) => checkouts.push(planId),
+      onCheckout: (planId: string, period: BillingPeriod) => {
+        checkouts.push(planId)
+        periods.push(period)
+      },
+      onPeriod: (period: BillingPeriod) => picked.push(period),
       onPortal: () => portals++,
     },
   }
 }
+
+/** The test catalog's Pro with a yearly price: €4.00 a member a month or €40.00 a year, €8.00 less. */
+const YEARLY_PRO: Plan = { ...TEST_PRO_PLAN, amount: 400, yearlyAmount: 4000 }
+
+const YEARLY_OWNER: GroupBilling = {
+  ...PRO_OWNER,
+  seatPrice: { seats: 6, amount: 4000, currency: "EUR", period: BillingPeriod.Yearly },
+  period: BillingPeriod.Yearly,
+}
+
+/** A plan priced for the whole group, as a household product sells it: €4.00 a month for up to 6. */
+const FLAT_PRO: Plan = {
+  ...TEST_PRO_PLAN,
+  amount: 400,
+  perSeat: false,
+  trialDays: 0,
+  entitlements: {
+    ...TEST_PRO_PLAN.entitlements,
+    limits: { ...TEST_PRO_PLAN.entitlements.limits, maxMembers: 6 },
+  },
+}
+
+/** A catalog whose free plan allows nothing, so a new owner starts by paying for {@link FLAT_PRO}. */
+const PAID_FROM_SIGN_UP: Plan[] = [
+  {
+    ...TEST_FREE_PLAN,
+    entitlements: {
+      ...TEST_FREE_PLAN.entitlements,
+      limits: testLimits(0, { maxMembers: 1 }),
+    },
+  },
+  FLAT_PRO,
+]
 
 const GROUP_ID = "019a0000-0000-7000-8000-00000000000a"
 const OTHER_GROUP_ID = "019a0000-0000-7000-8000-00000000000b"
@@ -149,6 +202,8 @@ function panel(billing: GroupBilling | null, props: Partial<GroupBillingPanelPro
       ownerName="Maya Chen"
       trial={{ enabled: true, used: false, groupId: null, days: 14 }}
       now={NOW}
+      plan={TEST_PRO_PLAN}
+      plans={TEST_PLANS}
       {...props}
     />
   )
@@ -187,7 +242,7 @@ describe("GroupBillingPanel", () => {
   it("titles the tab and says Stripe handles the billing", async () => {
     await mount(panel(FREE_OWNER))
     expect(find("[data-e2e=group-section-billing] h2").textContent).toBe("Billing")
-    expect(text()).toContain("What Team pays each month. Stripe handles the billing.")
+    expect(text()).toContain("What Team pays. Stripe handles the billing.")
   })
 
   it("prices Pro for a free group's members and opens the 14-day trial's checkout for its owner", async () => {
@@ -206,6 +261,179 @@ describe("GroupBillingPanel", () => {
     expect(has("[data-e2e=billing-row-invoices]")).toBe(false)
     await click("[data-e2e=billing-checkout]")
     expect(app.checkouts).toEqual([PRO_PLAN_ID])
+    expect(app.periods).toEqual([BillingPeriod.Monthly])
+  })
+
+  it("greets a new owner under a free plan that allows nothing with the price first and Continue to payment", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, { ...app.props, plan: FLAT_PRO, plans: PAID_FROM_SIGN_UP }))
+    expect(find("h3").textContent?.trim()).toBe("Start with Pro")
+    expect(find("[data-e2e=billing-amount]").textContent).toBe("€4.00")
+    expect(find("[data-e2e=billing-price]").textContent).toBe(
+      "€4.00a monthFor the whole group, up to 6 members.",
+    )
+    expect(find("[data-e2e=billing-checkout]").textContent).toBe(
+      "Continue to payment (opens Stripe)",
+    )
+    expect(find("[data-e2e=billing-fine-print]").textContent).toBe(
+      "Billed monthly. Cancel anytime and keep Pro until the period ends.",
+    )
+    expect(text()).not.toContain("per member")
+    expect(text()).toContain(
+      "Joining someone else's group? Ask its owner for an invitation link instead of paying.",
+    )
+    await click("[data-e2e=billing-checkout]")
+    expect(app.checkouts).toEqual([PRO_PLAN_ID])
+    expect(app.periods).toEqual([BillingPeriod.Monthly])
+  })
+
+  it("keeps the start card after a checkout left unpaid, and the ordinary card once the group had a plan", async () => {
+    const props = { plan: FLAT_PRO, plans: PAID_FROM_SIGN_UP }
+    await mount(panel({ ...FREE_OWNER, hasCustomer: true }, props))
+    expect(find("h3").textContent?.trim()).toBe("Start with Pro")
+    // A group whose plan lapsed reads the ordinary free card, which asks for nothing new.
+    await rerender(panel({ ...FREE_OWNER, status: BillingStatus.Canceled }, props))
+    expect(find("h3").textContent?.trim()).toBe("Free plan")
+    expect(has("[data-e2e=billing-join-instead]")).toBe(false)
+    expect(find("[data-e2e=billing-checkout]").textContent).toBe("Upgrade to Pro (opens Stripe)")
+  })
+
+  it("draws the ordinary free card when the free plan allows something", async () => {
+    await mount(panel(FREE_OWNER, { plan: FLAT_PRO, plans: TEST_PLANS }))
+    expect(find("h3").textContent?.trim()).toBe("Free plan")
+    expect(has("[data-e2e=billing-amount]")).toBe(false)
+    expect(has("[data-e2e=billing-join-instead]")).toBe(false)
+  })
+
+  it("never says per member for a plan priced for the whole group", async () => {
+    await mount(panel(FREE_OWNER, { plan: FLAT_PRO }))
+    expect(find("[data-e2e=billing-price]").textContent).toBe(
+      "Pro costs €4.00 a month for the whole group.",
+    )
+    expect(find("[data-e2e=billing-fine-print]").textContent).toBe(
+      "Billed monthly. Cancel anytime and keep Pro until the period ends.",
+    )
+    expect(text()).not.toContain("per member")
+    expect(text()).not.toContain("With 6 members")
+  })
+
+  it("promises a refund only when the plan sets its days", async () => {
+    await mount(panel(FREE_OWNER, { plan: FLAT_PRO }))
+    expect(has("[data-e2e=billing-refund]")).toBe(false)
+    await rerender(panel(FREE_OWNER, { plan: { ...FLAT_PRO, refundDays: 30 } }))
+    expect(find("[data-e2e=billing-refund]").textContent).toBe(
+      "Changed your mind? Ask within 30 days for a full refund.",
+    )
+  })
+
+  it("asks for a plan, not a higher limit, when a refusal's cap is 0", async () => {
+    await mount(
+      <PlanRefusalNotice
+        groupId={GROUP_ID}
+        groupName="Home"
+        refusal={{
+          code: "PLAN_LIMIT_REACHED",
+          entitlement: "maxNotes",
+          limit: 0,
+          canUpgrade: true,
+        }}
+      />,
+    )
+    expect(text()).toContain("\u2068Home\u2069 has no paid plan")
+    expect(text()).toContain("Choose a plan to start adding.")
+    expect(text()).not.toContain("limit")
+  })
+
+  it("offers no billing period for a plan sold monthly only", async () => {
+    await mount(panel(FREE_OWNER))
+    expect(has("[role=radiogroup]")).toBe(false)
+    expect(find("[data-e2e=billing-price]").hasAttribute("aria-live")).toBe(false)
+  })
+
+  it("offers Monthly and Yearly for a plan with a yearly price, Monthly chosen first", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, { ...app.props, plan: YEARLY_PRO }))
+    const picker = find("[role=radiogroup]")
+    const options = [...picker.querySelectorAll("[role=radio]")]
+    expect(picker.getAttribute("aria-label")).toBe("Billing period")
+    expect(options.map((option) => option.textContent)).toEqual(["Monthly", "Yearly"])
+    expect(options.map((option) => option.getAttribute("aria-checked"))).toEqual(["true", "false"])
+    expect(find("[data-e2e=billing-price]").textContent).toBe(
+      "Pro costs €4.00 per member a month. With 6 members, Team would pay €24.00 a month.",
+    )
+    await act(() => (options[1] as HTMLElement).click())
+    expect(app.picked).toEqual([BillingPeriod.Yearly])
+    await click("[data-e2e=billing-checkout]")
+    expect(app.periods).toEqual([BillingPeriod.Monthly])
+  })
+
+  it("prices the year with its saving, says it renews yearly, and checks out yearly", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, { ...app.props, plan: YEARLY_PRO, period: BillingPeriod.Yearly }))
+    expect(find("[data-e2e=billing-price]").getAttribute("aria-live")).toBe("polite")
+    expect(find("[data-e2e=billing-price]").textContent).toBe(
+      "Pro costs €40.00 per member a year. With 6 members, Team would pay €240.00 a year. €8.00 less than paying monthly.",
+    )
+    expect(find("[data-e2e=billing-fine-print]").textContent).toBe(
+      "Billed yearly per member. Cancel anytime and keep Pro until the period ends.",
+    )
+    await click("[data-e2e=billing-checkout]")
+    expect(app.checkouts).toEqual([PRO_PLAN_ID])
+    expect(app.periods).toEqual([BillingPeriod.Yearly])
+  })
+
+  it("names no saving when the yearly price saves nothing", async () => {
+    const dear = { ...YEARLY_PRO, yearlyAmount: 4800 }
+    await mount(panel(FREE_OWNER, { plan: dear, period: BillingPeriod.Yearly }))
+    expect(has("[data-e2e=billing-saving]")).toBe(false)
+  })
+
+  it("checks a plan sold monthly only out monthly, whatever period the address asked for", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, { ...app.props, period: BillingPeriod.Yearly }))
+    expect(text()).toContain("Pro costs €9.00 per member a month.")
+    await click("[data-e2e=billing-checkout]")
+    expect(app.periods).toEqual([BillingPeriod.Monthly])
+  })
+
+  it("shows a yearly subscriber the yearly total, and monthly one portal visit away", async () => {
+    const app = calls()
+    await mount(panel(YEARLY_OWNER, { ...app.props, plan: YEARLY_PRO }))
+    expect(find("[data-e2e=billing-seats]").textContent).toBe(
+      "€240.00 a year, for 6 members at €40.00 each, the owner included.",
+    )
+    expect(find("[data-e2e=billing-row-period]").textContent).toContain(
+      "You pay yearly. Monthly costs €24.00 a month.Stripe shows what you pay today before you confirm.",
+    )
+    expect(find("[data-e2e=billing-portal-period]").textContent).toBe(
+      "Switch to monthly (opens Stripe)",
+    )
+    await click("[data-e2e=billing-portal-period]")
+    expect(app.portals).toBe(1)
+  })
+
+  it("offers a monthly subscriber of a plan sold yearly the year and its saving", async () => {
+    await mount(panel(PRO_OWNER, { plan: YEARLY_PRO }))
+    expect(find("[data-e2e=billing-period]").textContent).toBe(
+      "You pay monthly. Yearly costs €240.00 a year, €48.00 less.",
+    )
+    expect(find("[data-e2e=billing-portal-period]").textContent).toBe(
+      "Switch to yearly (opens Stripe)",
+    )
+  })
+
+  it("offers no period row for a plan sold monthly only, nor once the plan is cancelled", async () => {
+    await mount(panel(PRO_OWNER))
+    expect(has("[data-e2e=billing-row-period]")).toBe(false)
+    await rerender(panel({ ...YEARLY_OWNER, cancelAtPeriodEnd: true }, { plan: YEARLY_PRO }))
+    expect(has("[data-e2e=billing-row-period]")).toBe(false)
+  })
+
+  it("tells a yearly trial what the group pays a year once it ends", async () => {
+    await mount(panel({ ...YEARLY_OWNER, ...TRIAL_STATE }, { plan: YEARLY_PRO }))
+    expect(find("[data-e2e=billing-trial]").textContent).toContain(
+      "After that, Team pays €240.00 a year unless you cancel.",
+    )
   })
 
   it("offers Upgrade to Pro, saying the trial went to another group, once the owner used it", async () => {
@@ -282,6 +510,17 @@ describe("GroupBillingPanel", () => {
     }
     expect(app.portals).toBe(3)
     expect(has("[data-e2e=billing-checkout]")).toBe(false)
+  })
+
+  it("names the paid plan as the product's catalog names it, not Pro", async () => {
+    const household = { ...TEST_PRO_PLAN, name: "Household" }
+    await mount(panel(FREE_OWNER, { plan: household }))
+    expect(find("[data-e2e=billing-fine-print]").textContent).toBe(
+      "Billed monthly per member. Cancel anytime and keep Household until the period ends.",
+    )
+    await mount(panel(ENDING_OWNER, { plan: household }))
+    expect(find("[data-e2e=billing-plan-name]").textContent).toBe("Household")
+    expect(text()).not.toContain("Pro")
   })
 
   it("tells the owner of a cancelled plan when Pro ends and renews it in Stripe, with no Cancel plan", async () => {
@@ -391,13 +630,26 @@ describe("GroupBillingPanel", () => {
         {panel(FREE_OWNER, { confirming: true })}
         {panel(TRIAL_OWNER)}
         {panel(PRO_OWNER)}
+        {panel(FREE_OWNER, { plan: YEARLY_PRO, period: BillingPeriod.Yearly })}
+        {panel(YEARLY_OWNER, { plan: YEARLY_PRO })}
+        {panel({ ...YEARLY_OWNER, ...TRIAL_STATE }, { plan: YEARLY_PRO })}
+        {panel(PRO_OWNER, { plan: YEARLY_PRO })}
         {panel(ENDING_OWNER)}
         {panel(PAST_DUE_OWNER)}
         {panel(asMember(PRO_OWNER))}
         {panel(asMember(PRO_OWNER), { ownerName: null })}
         {panel(off)}
         {panel(null)}
-        <SeatPriceConfirm seatPrice={{ seats: 6, amount: 900, currency: "EUR" }} checked={false} />
+        {panel(FREE_OWNER, { plan: { ...FLAT_PRO, refundDays: 30 }, plans: PAID_FROM_SIGN_UP })}
+        {panel(FREE_OWNER, { plan: FLAT_PRO, period: BillingPeriod.Yearly })}
+        <SeatPriceConfirm
+          seatPrice={{ seats: 6, amount: 900, currency: "EUR", period: BillingPeriod.Monthly }}
+          checked={false}
+        />
+        <SeatPriceConfirm
+          seatPrice={{ seats: 6, amount: 4000, currency: "EUR", period: BillingPeriod.Yearly }}
+          checked={false}
+        />
         {(["maxNotes", "maxMembers", "maxAttachments", "storageBytes", "memberRoles"] as const).map(
           (entitlement) => (
             <PlanRefusalNotice
@@ -413,6 +665,15 @@ describe("GroupBillingPanel", () => {
           refusal={{
             code: "PLAN_LIMIT_REACHED",
             entitlement: "maxNotes",
+            limit: 0,
+            canUpgrade: true,
+          }}
+        />
+        <PlanRefusalNotice
+          groupId={GROUP_ID}
+          refusal={{
+            code: "PLAN_LIMIT_REACHED",
+            entitlement: "maxNotes",
             limit: 1,
             canUpgrade: true,
           }}
@@ -420,8 +681,9 @@ describe("GroupBillingPanel", () => {
       </I18nContext.Provider>,
     )
 
-    // Data: the group's and the owner's names, money and dates.
-    expect(englishLeft(document.body, ["Team", "Maya Chen", "October", "November"])).toEqual([])
+    // Data: the group's and the owner's names, the paid plan's brand name, money and dates.
+    expect(englishLeft(document.body, ["Team", "Maya Chen", "Pro", "October", "November"]))
+      .toEqual([])
     // The render reached every state: each one's pseudo-text is on the page.
     const page = document.body.textContent ?? ""
     for (
@@ -434,9 +696,17 @@ describe("GroupBillingPanel", () => {
         "GroupBillingPanel.ownerOnlyUnknown",
         "GroupBillingPanel.off",
         "SeatPriceConfirm.accept",
+        "GroupBillingPanel.yearly",
+        "GroupBillingPanel.periodHint",
+        "GroupBillingPanel.switchMonthly",
+        "GroupBillingPanel.switchYearly",
         "PlanRefusalNotice.rolesText",
         "PlanRefusalNotice.notesTitleUnnamed",
         "PlanRefusalNotice.askOwner",
+        "PlanRefusalNotice.noPlanTitleUnnamed",
+        "GroupBillingPanel.continueToPayment",
+        "GroupBillingPanel.unitMonth",
+        "GroupBillingPanel.joinInstead",
       ]
     ) {
       expect(page).toContain(PSEUDO.t(key))

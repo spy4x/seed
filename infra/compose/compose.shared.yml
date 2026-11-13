@@ -386,6 +386,7 @@ services:
   postgres-prometheus-exporter:
     container_name: ${PROJECT}-postgres-prometheus-exporter
     image: quay.io/prometheuscommunity/postgres-exporter:v0.20.1
+    restart: unless-stopped
     environment:
       DATA_SOURCE_NAME: 'postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}?sslmode=disable'
     deploy:
@@ -556,7 +557,7 @@ services:
       retries: 5
     ports:
       # The dashboard, on this machine only and never behind the proxy: from elsewhere, open it
-      # through an SSH tunnel (docs/deploy.md, "Admin consoles").
+      # through an SSH tunnel (docs/operator-access.md, "Admin consoles").
       - ${GRAFANA_HOST_PORT:-127.0.0.1:3000}:3000
 
   # nodeexporter and cadvisor watch the whole host (its CPU, disk and network, and every
@@ -711,7 +712,6 @@ services:
     user: "1000:1000"
     environment:
       - HOME=/home/deno
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       # Postgres itself, not PgBouncer: the runner's advisory lock is held by one session for the
       # whole run, which transaction pooling would not keep.
@@ -762,9 +762,12 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       # Guest accounts, "Try it now" (docs/guests.md): on unless `false`.
       - GUEST_MODE=${GUEST_MODE:-}
-      # The SPA (docs/deploy.md, "Without the SPA"): `false` closes sign-up and every other
+      - SIGN_UP=${SIGN_UP:-}
+      # The SPA (docs/apps.md, "Without the SPA"): `false` closes sign-up and every other
       # account route on every host but the admin host. On unless `false`.
       - SPA=${SPA:-}
+      # The notes example (docs/start-a-product.md): `false` turns its API off. On unless `false`.
+      - NOTES=${NOTES:-}
       # The hourly upload budget of note attachments (docs/files.md): empty for the defaults.
       - ATTACHMENT_UPLOAD_FILES_PER_HOUR=${ATTACHMENT_UPLOAD_FILES_PER_HOUR:-}
       - ATTACHMENT_UPLOAD_BYTES_PER_HOUR=${ATTACHMENT_UPLOAD_BYTES_PER_HOUR:-}
@@ -780,7 +783,6 @@ services:
       - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET:-}
       - TELEGRAM_POLLING=${TELEGRAM_POLLING:-}
       - TELEGRAM_API_URL=${TELEGRAM_API_URL:-}
-      - DENO_DIR=/tmp/deno-cache
       # The port apps/healthcheck.ts probes.
       - HEALTHCHECK_PORT=${API_PORT}
       - DENO_LOG=${DENO_LOG}
@@ -820,6 +822,7 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - STRIPE_PRICE_PRO=${STRIPE_PRICE_PRO:-}
+      - STRIPE_PRICE_PRO_YEARLY=${STRIPE_PRICE_PRO_YEARLY:-}
       - BILLING_GRACE_DAYS=${BILLING_GRACE_DAYS:-}
       - BILLING_TRIAL_REQUIRES_CARD=${BILLING_TRIAL_REQUIRES_CARD:-}
       # Catalog. Unset → off; see docs/catalog.md.
@@ -833,6 +836,9 @@ services:
       - UMAMI_API_TOKEN=${UMAMI_API_TOKEN:-}
       # The website's id in Umami: with the two above, the admin app's Stats page (docs/analytics.md).
       - MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}
+      # When the LinkedIn sign-in runs out (docs/blog.md): the admin warns 14 days before. Only the
+      # date: the API never gets the token.
+      - LINKEDIN_TOKEN_EXPIRES_AT=${LINKEDIN_TOKEN_EXPIRES_AT:-}
       # Mail subscriptions: the API checks the links the worker signs. Unset → off in production.
       - SUBSCRIBERS_SECRET=${SUBSCRIBERS_SECRET:-}
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
@@ -920,7 +926,6 @@ services:
       - HOME=/home/deno
       - ENV=${ENV}
       - DOMAIN=${DOMAIN}
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       # Through PgBouncer: the worker sends NOTIFY, which works in a transaction, and LISTENs to
       # nothing.
@@ -940,6 +945,7 @@ services:
       - BILLING_PROVIDER=${BILLING_PROVIDER:-}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_PRICE_PRO=${STRIPE_PRICE_PRO:-}
+      - STRIPE_PRICE_PRO_YEARLY=${STRIPE_PRICE_PRO_YEARLY:-}
       - BILLING_GRACE_DAYS=${BILLING_GRACE_DAYS:-}
       - BILLING_TRIAL_REQUIRES_CARD=${BILLING_TRIAL_REQUIRES_CARD:-}
       # Mail subscriptions: the API checks the links the worker signs. Unset → off in production.
@@ -947,11 +953,32 @@ services:
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
       # The website's host, when it is deployed: the mailed confirm and unsubscribe links open there.
       - MPA_DOMAIN=${MPA_DOMAIN:-}
-      # IndexNow (docs/blog.md): with MPA_DOMAIN, a blog post's change is announced. Unset → off.
+      # IndexNow (docs/blog.md, docs/catalog.md): with MPA_DOMAIN, a blog post's or catalog item's
+      # change is announced. Unset → off. An item is named by the API's item address and languages.
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
+      - CATALOG=${CATALOG:-}
+      - CATALOG_ITEM_PATH=${CATALOG_ITEM_PATH:-}
+      - CATALOG_LANGUAGES=${CATALOG_LANGUAGES:-}
+      # Dev.to (docs/blog.md): with MPA_DOMAIN, a live post is cross-posted once. Unset → off.
+      - DEVTO_API_KEY=${DEVTO_API_KEY:-}
+      # Automatic posts (docs/blog.md): with MPA_DOMAIN, a live post goes by itself to each channel
+      # with "Post automatically" on whose keys are set. Unset → that kind stays manual.
+      - MASTODON_ACCESS_TOKEN=${MASTODON_ACCESS_TOKEN:-}
+      - MASTODON_INSTANCE_URL=${MASTODON_INSTANCE_URL:-}
+      - BLUESKY_IDENTIFIER=${BLUESKY_IDENTIFIER:-}
+      - BLUESKY_APP_PASSWORD=${BLUESKY_APP_PASSWORD:-}
+      - BLUESKY_SERVICE=${BLUESKY_SERVICE:-}
+      - HASHNODE_TOKEN=${HASHNODE_TOKEN:-}
+      - HASHNODE_PUBLICATION_ID=${HASHNODE_PUBLICATION_ID:-}
+      - LINKEDIN_ACCESS_TOKEN=${LINKEDIN_ACCESS_TOKEN:-}
+      - LINKEDIN_MEMBER_ID=${LINKEDIN_MEMBER_ID:-}
+      - LINKEDIN_TOKEN_EXPIRES_AT=${LINKEDIN_TOKEN_EXPIRES_AT:-}
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}
+      # The notes example (docs/start-a-product.md): `false` leaves the notes kind out of the import
+      # jobs, as the API leaves it out of the import routes. On unless `false`.
+      - NOTES=${NOTES:-}
       # The demo's private administrator (docs/demo.md): the reset seeds admin@example.com with
       # this password, hashed with the API's pepper so the API accepts it. Unset → none.
       - DEMO_ADMIN_PASSWORD=${DEMO_ADMIN_PASSWORD:-}
@@ -999,7 +1026,6 @@ services:
         - DENO_VERSION=${DENO_VERSION}
         - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
     environment:
-      - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
       - VITE_ENV=prod
       # Read at container start into /config.json (apps/spa/public-env.allow lists them all).
@@ -1076,6 +1102,8 @@ services:
       # links to the admin app's host.
       - DEMO_MODE=${DEMO_MODE:-}
       - ADMIN_DOMAIN=${ADMIN_DOMAIN:-}
+      # A demo on its own host (docs/demo.md): the try links go to its /try. Empty: the app's.
+      - DEMO_ORIGIN=${DEMO_ORIGIN:-}
       # Not `http://api`: on the shared `proxy` network that name is any project's API.
       - API_URL=http://${PROJECT}-api:${API_PORT}
       - DENO_LOG=${DENO_LOG}

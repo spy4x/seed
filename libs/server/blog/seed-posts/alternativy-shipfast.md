@@ -11,6 +11,8 @@ tldr:
   - Продаёте командам — берите шаблон, где группы, роли и оплата за участника уже есть.
   - Stripe не работает с компаниями из России, и это касается почти всех шаблонов из списка.
 topic: Вопросы
+intro: "ShipFast — хороший набор, но не единственный и не бесплатный. Я сравнил семь шаблонов по цене, лицензии, стеку, командам и хостингу, с источником для каждого факта."
+coverAlt: "Семь парусников разной формы выстроились в ряд на спокойной воде, один из них фиолетовый."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
@@ -50,7 +52,7 @@ Resend, блог и заготовки для SEO.
 | Шаблон                                                                | Цена                           | Лицензия                     | Стек                                     | Команды и роли             | Хостинг                                |
 | --------------------------------------------------------------------- | ------------------------------ | ---------------------------- | ---------------------------------------- | -------------------------- | -------------------------------------- |
 | [ShipFast](https://shipfa.st/)                                        | $199 или $249 разово           | Платная, без распространения | Next.js; MongoDB или Supabase            | Не указаны                 | Vercel как бесплатный вариант          |
-| [Seed](https://github.com/spy4x/seed)                                 | Бесплатно                      | MIT                          | Deno, Hono, Fresh, Preact; Postgres      | Да, с оплатой за участника | Один свой Linux-сервер, Docker Compose |
+| [Seed](https://github.com/spy4x/seed)                                 | Бесплатно                      | MIT                          | Deno, Hono, Preact; Postgres             | Да, с оплатой за участника | Один свой Linux-сервер, Docker Compose |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)                   | Бесплатно                      | MIT                          | Wasp (React, Node.js, Prisma); Postgres  | Не указаны                 | Railway или Fly.io одной командой      |
 | [ShipFree](https://github.com/revokslab/shipfree)                     | Бесплатно                      | MIT                          | Next.js, Bun, Drizzle; Postgres          | Не указаны                 | Vercel или Docker                      |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)        | Бесплатно                      | MIT                          | Next.js, Drizzle; Postgres               | Owner и Member             | Vercel                                 |

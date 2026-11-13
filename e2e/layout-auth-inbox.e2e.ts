@@ -9,7 +9,7 @@ import { AxeBuilder } from "@axe-core/playwright"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -17,7 +17,7 @@ const password = "Passw0rd!"
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
 const VIEWER = 1
 
-/** The widths of the spec (#433) and of the design review, a phone's and a desktop's, in both palettes. */
+/** The widths of the spec and of the design review, a phone's and a desktop's, in both palettes. */
 const VIEWS = [375, 390, 1280, 1440].flatMap((width) =>
   (["light", "dark"] as const).map((scheme) => ({ width, scheme }))
 )
@@ -108,6 +108,7 @@ test.describe("layout of the signed-out cards and the inbox", () => {
         data: { id: groupId, name: "Team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(ownerApi, apiBase, groupId)
       await signUp(request, member)
       const added = await request.post(`${apiBase}/api/test/add-member`, {
         data: { login: member, groupId, role: 2 },

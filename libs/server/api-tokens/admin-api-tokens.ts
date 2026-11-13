@@ -1,5 +1,5 @@
 /**
- * The operator area's reads over `api_tokens` (#427): every token across people, one person's
+ * The operator area's reads over `api_tokens`: every token across people, one person's
  * tokens, and whose a token is. Who may call them is the API's business
  * (`apps/api/routes/admin/api-tokens.ts`); nothing here checks it. Revoking goes through
  * `ApiTokenRows.revoke` (`./api-tokens.ts`), the statement the owner's own revoke uses, so the token

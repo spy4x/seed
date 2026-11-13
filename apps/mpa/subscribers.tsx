@@ -1,23 +1,13 @@
 import type { ComponentChildren, JSX } from "preact"
-import type { FreshContext } from "fresh"
-import {
-  DEFAULT_SUBSCRIBER_LIST,
-  type SubscriptionConfirmState,
-  type UnsubscribeState,
-} from "@domain/subscribers"
+import type { Context } from "@spy4x/preact-server"
+import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { FORM_ACTIONS } from "@ui/progressive.tsx"
-import {
-  SUBSCRIBE_FAILURES,
-  SubscribeForm,
-  SubscriptionConfirmScreen,
-  UnsubscribeScreen,
-} from "@ui/subscribe-screen.tsx"
-import { isRecord } from "@spy4x/platform/universal/is-record"
+import { SUBSCRIBE_FAILURES, SubscribeForm } from "@ui/subscribe-screen.tsx"
 import { IconCheck, IconGitHub } from "@spy4x/preact-icons"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
-import { type ApiAnswer, errorMessage } from "./api.ts"
+import { errorMessage } from "./api.ts"
 import { readFormBody } from "@spy4x/server/http/bounded-body"
 import { API_BODIES, FORM_LIMITS } from "./forms.ts"
 import {
@@ -32,15 +22,15 @@ import {
 } from "./site.tsx"
 import { localePath, siteTranslator } from "./languages.ts"
 import { SiteLanguage } from "./use-site.tsx"
+import {
+  createSubscriptionConfirmHandlers,
+  createUnsubscribeHandlers,
+  NO_REFERRER,
+  type TokenPageFrame,
+} from "./token-pages.tsx"
 import { define, type State } from "./utils.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { siteEnglishText } from "@ui/site-text.ts"
-
-/**
- * The confirm and unsubscribe pages carry a signed token in their address: no `Referer` leaves
- * them. Every newsletter answer already carries `Cache-Control: no-store` (`pageMiddleware`).
- */
-const NO_REFERRER = { "referrer-policy": "no-referrer" }
 
 /** The pages a mailed link opens: no search engine lists them. */
 function tokenPageHead(t: Translator<string>): SitePageHead {
@@ -51,9 +41,6 @@ function tokenPageHead(t: Translator<string>): SitePageHead {
     og: `subscribe`,
   }
 }
-
-/** The query a finished step redirects to: the page again, with no token in it. */
-const DONE_QUERY = "?state=done"
 
 /** The query a taken subscribe request redirects to, so a reload does not send it again. */
 const SENT_QUERY = "?state=sent"
@@ -75,7 +62,7 @@ export const SUBSCRIBE_HEAD: SitePageHead = subscribeHead(siteEnglishText())
 export const SUBSCRIBE_UPDATED = `2026-10-30`
 
 /** The translator and the addresses of the request's language. */
-function speech(ctx: FreshContext<State>) {
+function speech(ctx: Context<State>) {
   const t = siteTranslator(ctx.state.language)
   return { t, href: (path: string) => localePath(ctx.state.language, path) }
 }
@@ -109,131 +96,13 @@ export const subscribeHandlers = define.handlers({
   },
 })
 
-/**
- * `GET` shows what the confirm link holds, asking for a click; `POST` confirms it, with the page's
- * language for the subscriber's mails, and 303s to this page without the token, so a reload or the
- * history holds no live link.
- */
-export const subscriptionConfirmHandlers = define.handlers({
-  async GET(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, tokenPageHead)
-    const { list, token } = linkOf(ctx.url)
-    if (ctx.url.searchParams.get("state") === "done") {
-      return renderConfirm(ctx, { state: "done", list: "", token: "", status: 200 })
-    }
-    if (!list || !token) {
-      return renderConfirm(ctx, { state: "invalid", list, token, status: 400 })
-    }
-    const answer = await ctx.state.api.call(
-      "GET",
-      `/api/subscribers/confirm?${new URLSearchParams({ list, token })}`,
-    )
-    return renderConfirm(ctx, {
-      ...stepOf(answer, CONFIRM_STATES),
-      list,
-      token,
-      status: answer.status,
-    })
-  },
-  async POST(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, tokenPageHead)
-    const body = API_BODIES.subscriptionConfirm(await readFormBody(ctx.req, FORM_LIMITS))
-    const answer = await ctx.state.api.call("POST", "/api/subscribers/confirm", body)
-    const step = stepOf(answer, CONFIRM_STATES)
-    if (step.state === "done") {
-      return ctx.redirect(`${speech(ctx).href(FORM_ACTIONS.subscribeConfirm)}${DONE_QUERY}`, 303)
-    }
-    return renderConfirm(ctx, {
-      ...step,
-      list: body.list,
-      token: body.token,
-      status: answer.status,
-      retryAfter: answer.retryAfter,
-    })
-  },
-})
-
-/**
- * `GET` shows the address an unsubscribe link removes, asking for a click; `POST` removes it and
- * 303s to this page without the token. A mail client's one-click unsubscribe posts to the API
- * directly and never reaches this page.
- */
-export const unsubscribeHandlers = define.handlers({
-  async GET(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.unsubscribe, tokenPageHead)
-    const { list, token } = linkOf(ctx.url)
-    if (ctx.url.searchParams.get("state") === "done") {
-      return renderUnsubscribe(ctx, { state: "done", list: "", token: "", status: 200 })
-    }
-    if (!list || !token) {
-      return renderUnsubscribe(ctx, { state: "not-recognised", list, token, status: 404 })
-    }
-    const answer = await ctx.state.api.call(
-      "GET",
-      `/api/subscribers/unsubscribe/preview?${new URLSearchParams({ list, token })}`,
-    )
-    return renderUnsubscribe(ctx, {
-      ...stepOf(answer, UNSUBSCRIBE_STATES),
-      list,
-      token,
-      status: answer.status,
-      retryAfter: answer.retryAfter,
-    })
-  },
-  async POST(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.unsubscribe, tokenPageHead)
-    const body = API_BODIES.subscriptionToken(await readFormBody(ctx.req, FORM_LIMITS))
-    // The API's unsubscribe reads the token from the query or a form body, never from JSON: it is
-    // the RFC 8058 one-click target too.
-    const answer = await ctx.state.api.call(
-      "POST",
-      `/api/subscribers/unsubscribe?${new URLSearchParams(body)}`,
-    )
-    const step = stepOf(answer, UNSUBSCRIBE_STATES)
-    if (step.state === "done") {
-      return ctx.redirect(`${speech(ctx).href(FORM_ACTIONS.unsubscribe)}${DONE_QUERY}`, 303)
-    }
-    return renderUnsubscribe(ctx, {
-      ...step,
-      ...body,
-      status: answer.status,
-      retryAfter: answer.retryAfter,
-    })
-  },
-})
-
-const CONFIRM_STATES = ["confirm", "done", "expired", "invalid"] as const
-const UNSUBSCRIBE_STATES = ["confirm", "done", "not-recognised"] as const
-
-function linkOf(url: URL): { list: string; token: string } {
-  return { list: url.searchParams.get("list") ?? "", token: url.searchParams.get("token") ?? "" }
-}
-
-/**
- * The state a token route answered with, and the address while it asks for the click. The API
- * answers a refused token with a 4xx status and its state in the body; anything else, an API that
- * cannot be reached included, reads as `error`.
- */
-function stepOf<S extends string>(
-  answer: ApiAnswer,
-  known: readonly S[],
-): { state: S | "error"; email?: string } {
-  const body = answer.body
-  if (!isRecord(body)) return { state: "error" }
-  // A refused link answers an error whose reason names the state (docs/api-errors.md).
-  const said = isRecord(body.error) ? body.error.reason : body.state
-  const state = known.find((candidate) => candidate === said)
-  if (!state) return { state: "error" }
-  return typeof body.email === "string" ? { state, email: body.email } : { state }
-}
-
 interface PageStatus {
   status: number
   retryAfter?: string
 }
 
-function headersOf(page: PageStatus, extra: Record<string, string> = {}) {
-  return page.retryAfter ? { ...extra, "retry-after": page.retryAfter } : extra
+function headersOf(page: PageStatus): Record<string, string> {
+  return page.retryAfter ? { "retry-after": page.retryAfter } : {}
 }
 
 /**
@@ -257,7 +126,7 @@ function NewsletterBand(
 }
 
 function renderSubscribe(
-  ctx: FreshContext<State>,
+  ctx: Context<State>,
   page: PageStatus & { email: string; sent: boolean; error: string | null },
 ): Response | Promise<Response> {
   const { t, href } = speech(ctx)
@@ -321,11 +190,12 @@ const NEWSLETTER_PROMISES = [
  * does not end the visit.
  */
 function renderOff(
-  ctx: FreshContext<State>,
+  ctx: Context<State>,
   path: string,
   head: (t: Translator<string>) => SitePageHead,
+  init: ResponseInit = { status: 503, headers: NO_REFERRER },
 ): Response | Promise<Response> {
-  const spa = spaLinks(ctx.state.spaOrigin)
+  const spa = spaLinks(ctx.state)
   const { t } = speech(ctx)
   return ctx.render(
     <SiteLanguage language={ctx.state.language}>
@@ -353,67 +223,41 @@ function renderOff(
         </NewsletterBand>
       </SiteFrame>
     </SiteLanguage>,
-    { status: 503, headers: NO_REFERRER },
+    init,
   )
 }
 
-function renderConfirm(
-  ctx: FreshContext<State>,
-  page: PageStatus & {
-    state: SubscriptionConfirmState
-    email?: string
-    list: string
-    token: string
+/** Seed's own site draws the token pages in its frame, in the request's language. */
+const SITE_TOKEN_FRAME: TokenPageFrame = {
+  screen: (ctx) => ({ localize: speech(ctx).href, language: ctx.state.language }),
+  render(ctx, page, init) {
+    const { t } = speech(ctx)
+    return ctx.render(
+      <SiteLanguage language={ctx.state.language}>
+        <SiteFrame state={ctx.state} path={page.path} head={tokenPageHead(t)}>
+          <NewsletterBand>
+            {page.screen}
+            {page.state === "done" && <AnalyticsView name={DONE_VIEWS[page.kind]} />}
+          </NewsletterBand>
+        </SiteFrame>
+      </SiteLanguage>,
+      init,
+    )
   },
-): Response | Promise<Response> {
-  const { t, href } = speech(ctx)
-  return ctx.render(
-    <SiteLanguage language={ctx.state.language}>
-      <SiteFrame state={ctx.state} path={FORM_ACTIONS.subscribeConfirm} head={tokenPageHead(t)}>
-        <NewsletterBand>
-          <SubscriptionConfirmScreen
-            state={page.state}
-            email={page.email}
-            list={page.list}
-            token={page.token}
-            error={null}
-            pending={false}
-            localize={href}
-            language={ctx.state.language}
-          />
-          {page.state === "done" && <AnalyticsView name="newsletter-confirmed" />}
-        </NewsletterBand>
-      </SiteFrame>
-    </SiteLanguage>,
-    { status: page.status, headers: headersOf(page, NO_REFERRER) },
-  )
+  off: (ctx, page, init) => renderOff(ctx, page.path, tokenPageHead, init),
 }
 
-function renderUnsubscribe(
-  ctx: FreshContext<State>,
-  page: PageStatus & { state: UnsubscribeState; email?: string; list: string; token: string },
-): Response | Promise<Response> {
-  const { t, href } = speech(ctx)
-  return ctx.render(
-    <SiteLanguage language={ctx.state.language}>
-      <SiteFrame state={ctx.state} path={FORM_ACTIONS.unsubscribe} head={tokenPageHead(t)}>
-        <NewsletterBand>
-          <UnsubscribeScreen
-            state={page.state}
-            email={page.email}
-            list={page.list}
-            token={page.token}
-            error={null}
-            pending={false}
-            localize={href}
-          />
-          {page.state === "done" && <AnalyticsView name="newsletter-unsubscribed" />}
-        </NewsletterBand>
-      </SiteFrame>
-    </SiteLanguage>,
-    { status: page.status, headers: headersOf(page, NO_REFERRER) },
-  )
-}
+/** The Umami event a finished token step sends by being shown. */
+const DONE_VIEWS = {
+  confirm: "newsletter-confirmed",
+  unsubscribe: "newsletter-unsubscribed",
+} as const
+
+/** The confirm page of Seed's own site: {@link createSubscriptionConfirmHandlers}. */
+export const subscriptionConfirmHandlers = createSubscriptionConfirmHandlers(SITE_TOKEN_FRAME)
+
+/** The unsubscribe page of Seed's own site: {@link createUnsubscribeHandlers}. */
+export const unsubscribeHandlers = createUnsubscribeHandlers(SITE_TOKEN_FRAME)
 
 /**
  * Marks a page that sends an Umami event by being shown (`/analytics.js`, `docs/analytics.md`):

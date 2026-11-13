@@ -14,6 +14,13 @@ export default {
   "Field.before": "Choisissez une date avant {rule}.",
   "Field.categorySlugTaken":
     "Une autre catégorie utilise déjà cette adresse. Choisissez-en une autre.",
+  "Field.channelAddress": "Ajoutez une adresse.",
+  "Field.channelHttps": "Commencez le lien par https://.",
+  "Field.channelLanguages": "Choisissez au moins une langue.",
+  "Field.channelName": "Ajoutez un nom.",
+  "Field.channelNameTaken": "Un autre canal utilise déjà ce nom.",
+  "Field.channelSource": "Ajoutez une étiquette de source.",
+  "Field.channelSourceTaken": "Un autre canal utilise déjà cette étiquette de source.",
   "Field.contactValue": "Cette valeur ne correspond pas à ce type de contact. Vérifiez le format.",
   "Field.divisor": "Saisissez un multiple de {rule}.",
   "Field.domain": "Ce type de valeur n’est pas attendu ici.",
@@ -116,6 +123,7 @@ export default {
   "Reason.CATEGORY_NOT_FOUND": "Cette catégorie n’existe plus. Choisissez-en une autre.",
   "Reason.CATEGORY_REQUIRED":
     "Un article publié doit avoir une catégorie. Choisissez-en une, ou masquez d’abord l’article.",
+  "Reason.CHANNEL_NOT_FOUND": "Ce canal n’existe plus.",
   "Reason.DEMO_ADMIN_ELSEWHERE":
     "C’est le compte administrateur de la démo. Connectez-vous plutôt avec lui dans le panneau d’administration.",
   "Reason.DEMO_REFUSED":
@@ -154,13 +162,17 @@ export default {
   "Reason.LINK_NOT_FOUND": "Ce lien n’existe plus.",
   "Reason.MEMBER_NOT_FOUND": "Cette personne n’est pas membre du groupe.",
   "Reason.MFA_REQUIRED": "Saisissez d’abord votre code à usage unique.",
+  "Reason.HAS_SHARES": "Ce canal a des partages, vous pouvez seulement l’archiver.",
   "Reason.NAME_MISMATCH": "Ce n’est pas le nom du groupe. Saisissez-le exactement comme affiché.",
+  "Reason.NAME_TAKEN": "Un autre canal utilise déjà ce nom.",
   "Reason.NEWSLETTER_OFF": "La newsletter est désactivée : impossible d’envoyer ceci par e-mail.",
   "Reason.NOTE_FULL": "Cette note a atteint le nombre maximal de fichiers. Retirez-en un d’abord.",
   "Reason.NOTE_NOT_FOUND": "Cette note n’existe plus.",
   "Reason.NOTHING_TO_MOVE": "Il n’y a rien à déplacer.",
   "Reason.NOTIFICATION_NOT_FOUND": "Cette notification n’existe plus.",
   "Reason.NOT_DRAFT_OR_SCHEDULED": "Cet article de blog est déjà publié.",
+  "Reason.NOT_AUTOMATIC":
+    "Ce canal ne publie pas tout seul. Activez d’abord « Publier automatiquement ».",
   "Reason.NOT_PUBLISHED": "Ce n’est pas publié.",
   "Reason.NOT_SCHEDULED": "Cet article de blog n’est pas programmé.",
   "Reason.NO_SUBSCRIPTION": "Ce groupe n’a pas d’abonnement.",
@@ -168,6 +180,8 @@ export default {
     "La liste a changé depuis le chargement de la page. Rechargez-la et réessayez.",
   "Reason.PASSWORD_INVALID": "Mot de passe incorrect. Réessayez.",
   "Reason.PASSWORD_LOCKED": "Trop de mots de passe incorrects. Patientez un moment et réessayez.",
+  "Reason.PERIOD_NOT_OFFERED":
+    "Ce forfait n’est pas proposé pour cette période de facturation. Choisissez l’autre.",
   "Reason.PHOTO_CONTENT": "Le contenu de ce fichier ne correspond pas à son type d’image.",
   "Reason.PHOTO_NOT_FOUND": "Cette photo n’existe plus.",
   "Reason.PHOTO_TOO_LARGE": "Cette photo est trop volumineuse.",
@@ -176,6 +190,7 @@ export default {
   "Reason.PLAN_FEATURE_MISSING": "Le forfait du groupe n’inclut pas cette fonctionnalité.",
   "Reason.PLAN_LIMIT_REACHED": "Le groupe a atteint la limite de son forfait.",
   "Reason.POST_NOT_FOUND": "Cet article de blog n’existe plus.",
+  "Reason.REVISION_NOT_FOUND": "Cette version précédente n’existe plus.",
   "Reason.PROVIDER_ERROR": "Le prestataire de paiement n’a pas répondu. Réessayez.",
   "Reason.REQUEST_ORIGIN_INVALID":
     "Impossible de vérifier l’origine de cette requête. Rechargez la page et réessayez.",
@@ -184,8 +199,9 @@ export default {
   "Reason.SEARCH_RATE_LIMITED": "Trop de recherches. Patientez une minute et réessayez.",
   "Reason.SEAT_PRICE_NOT_ACCEPTED":
     "Confirmez que chaque nouveau membre s’ajoute à la facture du groupe.",
-  "Reason.SIGN_IN_LINK_ASKED_ELSEWHERE":
-    "Ce lien a été demandé dans un autre navigateur. Ouvrez-le dans ce navigateur-là.",
+  "Reason.SHARE_NOT_FOUND": "Ce partage n’existe plus.",
+  "Reason.SIGN_UP_CLOSED":
+    "Sur ce serveur, on ne peut créer un compte que sur invitation. Demandez une invitation à un membre.",
   "Reason.SLUG_LOCKED":
     "L’adresse est verrouillée une fois l’article publié. Utilisez « Changer l’URL » pour la changer.",
   "Reason.SLUG_TAKEN": "Cette adresse est déjà prise. Choisissez-en une autre.",
@@ -200,6 +216,8 @@ export default {
   "Reason.TOKEN_NOT_FOUND": "Ce jeton n’existe plus.",
   "Reason.TOKEN_SCOPE": "Ce jeton n’a pas l’autorisation de faire cela.",
   "Reason.TOO_MANY": "La limite est atteinte. Supprimez-en un d’abord.",
+  "Reason.TOO_MANY_CHANNELS":
+    "Il n’y a plus de place pour d’autres canaux. Supprimez-en un d’abord.",
   "Reason.TOO_MANY_LINKS": "Il n’y a plus de place pour d’autres liens. Retirez-en un d’abord.",
   "Reason.TOO_MANY_TOKENS": "Il n’y a plus de place pour d’autres jetons. Révoquez-en un d’abord.",
   "Reason.TOO_SOON": "Vous l’avez demandé il y a moins d’un jour. Réessayez demain.",
@@ -208,6 +226,7 @@ export default {
   "Reason.UPLOADS_PENDING": "Attendez d’abord la fin des imports en cours.",
   "Reason.UPLOAD_BUDGET": "Vous avez atteint la limite d’imports par heure. Réessayez plus tard.",
   "Reason.UPLOAD_NOT_FOUND": "Cet import n’existe plus.",
+  "Reason.UTM_SOURCE_TAKEN": "Un autre canal utilise déjà cette étiquette de source.",
   "Reason.USER_NOT_ACTIVE": "Ce compte n’est pas actif.",
   "Reason.VERSION_CONFLICT":
     "Quelqu’un d’autre a modifié cet élément. Rechargez pour voir ses modifications.",

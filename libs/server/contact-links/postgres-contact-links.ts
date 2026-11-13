@@ -29,7 +29,7 @@ function toRecord(row: ContactLinkRow): ContactLinkRecord {
 }
 
 /**
- * The contact links' reads and writes for the admin app (#465). It checks no role: only the
+ * The contact links' reads and writes for the admin app. It checks no role: only the
  * operator area calls it, behind its gate. Every write runs in one transaction that locks the
  * table, checks what the operator saw, changes the links and writes the operator's audit row, so a
  * write and its record are kept or undone together, and two operators are served one after the

@@ -1,9 +1,9 @@
-import { HttpError } from "fresh"
+import { HttpError } from "@spy4x/preact-server"
 import { CATALOG_LINK_CODE_PATTERN } from "@domain/catalog"
 import { define } from "../../utils.ts"
 
 /**
- * A catalog item's tracking link (#483, docs/catalog.md): `/s/<code>` answers 302 to where the API
+ * A catalog item's tracking link (docs/catalog.md): `/s/<code>` answers 302 to where the API
  * says, which is Umami's counting address, or the item's page tagged with the link's source. The
  * address comes from the API, which builds it from the code's own row, never from the request, so
  * this route cannot send anyone to an address a visitor picked. An unknown code, or one whose item

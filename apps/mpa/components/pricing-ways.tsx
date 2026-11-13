@@ -3,7 +3,7 @@ import type { ComponentChildren, JSX } from "preact"
 import { IconExternalLink, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { REPOSITORY_URL } from "../brand.ts"
-import { HIRE_PAGE_URL, HIRE_PRICES } from "../hire.ts"
+import { HIRE_PAGE_URL, HIRE_PRICES, hirePrice } from "../hire.ts"
 import { useSite } from "../use-site.tsx"
 import { Band } from "./band.tsx"
 import { SectionIntro } from "./section-intro.tsx"
@@ -50,7 +50,7 @@ function WayCard(
  * antonshubin.com's MVP page.
  */
 export function PricingWays(): JSX.Element {
-  const { t } = useSite()
+  const { t, language } = useSite()
   return (
     <Band id="costs" labelledBy="costs-title">
       <div class="flex flex-col gap-12">
@@ -64,7 +64,7 @@ export function PricingWays(): JSX.Element {
           <WayCard
             id="way-use"
             title={t.t(`PricingWays.useTitle`)}
-            price="$0"
+            price={hirePrice(0, language)}
             unit={t.t(`PricingWays.useUnit`)}
             action={
               <Button
@@ -102,7 +102,9 @@ export function PricingWays(): JSX.Element {
           <WayCard
             id="way-hire"
             title={t.t(`PricingWays.hireTitle`)}
-            price={t.t(`PricingWays.hirePrice`, { price: HIRE_PRICES.mvpFrom })}
+            price={t.t(`PricingWays.hirePrice`, {
+              price: hirePrice(HIRE_PRICES.mvpFrom, language),
+            })}
             unit={t.t(`PricingWays.hireUnit`, {
               weeks: t.t(`Hire.weeks`, { count: HIRE_PRICES.mvpWeeks }),
             })}
@@ -127,9 +129,9 @@ export function PricingWays(): JSX.Element {
         </div>
         <p class="max-w-3xl text-sm text-muted text-pretty">
           {t.t(`PricingWays.other`, {
-            session: HIRE_PRICES.strategySession,
-            hourly: HIRE_PRICES.hourly,
-            retainer: HIRE_PRICES.retainerFrom,
+            session: hirePrice(HIRE_PRICES.strategySession, language),
+            hourly: hirePrice(HIRE_PRICES.hourly, language),
+            retainer: hirePrice(HIRE_PRICES.retainerFrom, language),
           })}
         </p>
       </div>

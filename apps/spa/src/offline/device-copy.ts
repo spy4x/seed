@@ -14,7 +14,7 @@ import type { TagsCache } from "./tags-cache.ts"
 
 /**
  * The device's copy of each group's notes and tags, kept by the changes pull of
- * `@spy4x/realtime/changes` (`docs/offline.md`, "Reads: the device first"). One database per user
+ * `@spy4x/realtime/changes` (`docs/offline-data.md`, "Notes and tags: the changes pull"). One database per user
  * holds every group's rows and the sequence they are complete through, written together, so a
  * read after a pull asks the server only for what changed since the last one.
  */

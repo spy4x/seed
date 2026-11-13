@@ -1,5 +1,5 @@
 /**
- * Guest accounts (#224) in Postgres: making one, keeping one (it gains a sign-in method and stays
+ * Guest accounts in Postgres: making one, keeping one (it gains a sign-in method and stays
  * the same user), moving a guest's groups into another account, deleting a guest, the clean-up of
  * empty and idle guests, the once-only inbox reminders and the counts the dashboard shows.
  *
@@ -69,7 +69,7 @@ export async function isGuestUser(sql: postgres.Sql, userId: number): Promise<bo
  * Turns guest `userId` into a kept account, in the transaction that added the account's first
  * sign-in method: every session of the guest ends, the guest key goes, a waiting switch and the
  * unread reminders go, and the dashboard counts one kept guest. The caller signs the browser that
- * kept the account in with a new session on the new method's key (#374): a guest's token was never
+ * kept the account in with a new session on the new method's key: a guest's token was never
  * protected by a password, so it must not become the key to the kept account. `false`, and nothing
  * written, when the user is no guest (any more): keeping twice keeps once.
  */

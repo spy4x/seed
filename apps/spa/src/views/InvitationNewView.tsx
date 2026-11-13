@@ -67,7 +67,7 @@ export function InvitationNewView({ groupId }: { groupId: string }) {
     draft.maxUses !== EMPTY_INVITATION_DRAFT.maxUses ||
     invites.acceptSeatPrice.value
 
-  // A guest cannot invite yet (#224): the refusal shows at once, before any form is filled in.
+  // A guest cannot invite yet: the refusal shows at once, before any form is filled in.
   if (isGuestSession()) {
     return (
       <GuestRefusalDialog

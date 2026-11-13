@@ -11,7 +11,7 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { renderToString } from "preact-render-to-string"
 import { act } from "preact/test-utils"
-import type { PlanRefusal } from "@domain/billing"
+import { BillingPeriod, type PlanRefusal } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import { SeatPriceConfirm } from "./billing-screen.tsx"
 import {
@@ -54,7 +54,7 @@ import appEn from "@i18n/app/en.ts"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 import type { MessageValues } from "@spy4x/platform/universal/i18n"
-import { englishLeft, PSEUDO } from "./i18n-testing.ts"
+import { englishLeft, PSEUDO, ZONE_LABEL } from "./i18n-testing.ts"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { type ActivityRow, GroupActivityPanel } from "./group-activity-panel.tsx"
 import { GroupImportScreen, type GroupImportState } from "./group-import-screen.tsx"
@@ -210,6 +210,8 @@ function spy<A extends unknown[]>(): { calls: A[]; fn: (...args: A) => void } {
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
 const team = { id: groupId, name: "Team", role: GroupRole.OWNER }
+/** A day in January, when Berlin is at GMT+1, so a zone's label does not move with the season. */
+const WINTER = new Date("2026-01-15T12:00:00Z")
 
 describe("GroupsScreen", () => {
   const defaults: GroupsScreenProps = {
@@ -372,7 +374,13 @@ const viewer: GroupMemberRow = {
   isYou: false,
 }
 
-const teamDraft: GroupDraft = { name: "Team", description: "", color: null, emoji: "" }
+const teamDraft: GroupDraft = {
+  name: "Team",
+  description: "",
+  color: null,
+  emoji: "",
+  timeZone: "UTC",
+}
 
 describe("GroupEditorScreen header", () => {
   const defaults: GroupEditorScreenProps = {
@@ -456,6 +464,24 @@ describe("GroupEditorScreen header", () => {
     await mount(<GroupEditorScreen {...defaults} group={{ ...team, role: GroupRole.ADMIN }} />)
     expect(has("[data-e2e=group-name]")).toBe(true)
     expect(has("[data-e2e=group-read-only]")).toBe(false)
+  })
+
+  it("shows a viewer or an editor the group's time zone as a fact, with what it decides", async () => {
+    for (const role of [GroupRole.VIEWER, GroupRole.EDITOR]) {
+      await mount(
+        <GroupEditorScreen
+          {...defaults}
+          group={{ ...team, role, timeZone: "Europe/Berlin" }}
+          now={WINTER}
+        />,
+      )
+      const fact = find("[data-e2e=group-general-time-zone]").textContent
+      expect(fact).toContain("Time zone")
+      expect(fact).toContain("Berlin, Europe · GMT+1")
+      expect(fact).toContain("Days and months start at midnight here, for everyone in the group.")
+      expect(has("#group-time-zone")).toBe(false)
+      await act(() => render(null, root!))
+    }
   })
 
   it("gives the owner Transfer ownership and Delete group in the menu, and no Leave", async () => {
@@ -919,6 +945,24 @@ describe("GroupEditorScreen tabs", () => {
       expect(selected()).toBe(label)
       expect(has(`[role=tabpanel] [data-e2e=${part}]`)).toBe(true)
       expect(has("[data-e2e=group-name]")).toBe(false)
+    }
+  })
+
+  it("draws a product's own settings under the General tab's details, for every role", async () => {
+    const settings = <p data-e2e="product-settings">Main currency</p>
+    for (const role of [GroupRole.OWNER, GroupRole.VIEWER]) {
+      await mount(<GroupEditorScreen {...defaults} group={{ ...team, role }} settings={settings} />)
+      expect(has("[role=tabpanel] [data-e2e=product-settings]")).toBe(true)
+      await rerender(
+        <GroupEditorScreen
+          {...defaults}
+          group={{ ...team, role }}
+          tab={GroupTab.MEMBERS}
+          settings={settings}
+        />,
+      )
+      expect(has("[data-e2e=product-settings]")).toBe(false)
+      await act(() => render(null, root!))
     }
   })
 
@@ -1421,13 +1465,25 @@ describe("PendingInvitations", () => {
 })
 
 describe("SeatPriceConfirm", () => {
-  const seatPrice = { seats: 2, amount: 900, currency: "EUR" }
+  const seatPrice = { seats: 2, amount: 900, currency: "EUR", period: BillingPeriod.Monthly }
 
   it("hands the price tick to the app", async () => {
     const ticks = spy<[boolean]>()
     await mount(<SeatPriceConfirm seatPrice={seatPrice} checked={false} onChange={ticks.fn} />)
     await click("[data-e2e=seat-price-accept]")
     expect(ticks.calls).toEqual([[true]])
+  })
+
+  it("says what one more member adds a month, or a year for a group billed yearly", async () => {
+    await mount(<SeatPriceConfirm seatPrice={seatPrice} checked={false} />)
+    expect(find("[data-e2e=seat-price]").textContent).toContain(
+      "Each new member adds €9.00 a month, so one more member takes the group from €18.00 to €27.00.",
+    )
+    const yearly = { ...seatPrice, amount: 4000, period: BillingPeriod.Yearly }
+    await rerender(<SeatPriceConfirm seatPrice={yearly} checked={false} />)
+    expect(find("[data-e2e=seat-price]").textContent).toContain(
+      "Each new member adds €40.00 a year, so one more member takes the group from €80.00 to €120.00.",
+    )
   })
 
   it("moves focus to the price box when a create is refused for the price", async () => {
@@ -1623,7 +1679,13 @@ describe("MyInvitationsSection", () => {
 
 describe("GroupEditorScreen form", () => {
   const owned = { ...team, description: "Our flat", color: "#15803d" as const, emoji: "🏠" }
-  const saved: GroupDraft = { name: "Team", description: "Our flat", color: "#15803d", emoji: "🏠" }
+  const saved: GroupDraft = {
+    name: "Team",
+    description: "Our flat",
+    color: "#15803d",
+    emoji: "🏠",
+    timeZone: "UTC",
+  }
   const settings: GroupEditorScreenProps = {
     group: owned,
     current: true,
@@ -1831,6 +1893,61 @@ describe("GroupEditorScreen form", () => {
     expect(find("[data-e2e=group-name]").getAttribute("aria-invalid")).not.toBe("true")
   })
 
+  it("puts the time zone after the colour, with its hint, and reports a picked zone", async () => {
+    const changes = spy<[GroupDraft]>()
+    await mount(
+      <GroupEditorScreen
+        {...settings}
+        value={{ ...saved, timeZone: "Europe/Berlin" }}
+        now={WINTER}
+        onChange={changes.fn}
+      />,
+    )
+    const zone = find<HTMLInputElement>("#group-time-zone")
+    expect(zone.value).toBe("Berlin, Europe · GMT+1")
+    expect(
+      find("[data-e2e=group-color]").compareDocumentPosition(zone) &
+        window.Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    const hint = zone.getAttribute("aria-describedby")!.split(" ")
+      .map((id) => document.getElementById(id)?.textContent)
+    expect(hint).toContain("Days and months start at midnight here, for everyone in the group.")
+    expect(zone.classList.contains("text-ellipsis")).toBe(true)
+
+    await type("#group-time-zone", "tokyo")
+    await click("[role=option]")
+
+    expect(changes.calls).toEqual([[{ ...saved, timeZone: "Asia/Tokyo" }]])
+  })
+
+  it("shows a zone refusal under the picker, marks it invalid and moves focus to it", async () => {
+    await mount(<GroupEditorScreen {...settings} dirty />)
+    await rerender(
+      <GroupEditorScreen
+        {...settings}
+        dirty
+        errors={{ timeZone: "We don't know this time zone. Pick another from the list." }}
+      />,
+    )
+    expect(document.activeElement?.id).toBe("group-time-zone")
+    expect(find("#group-time-zone").getAttribute("aria-invalid")).toBe("true")
+    expect(root!.textContent).toContain("We don't know this time zone.")
+  })
+
+  it("says so when someone else changed the zone while this person was editing", async () => {
+    await mount(<GroupEditorScreen {...settings} dirty now={WINTER} />)
+    expect(has("[data-e2e=group-time-zone-elsewhere]")).toBe(false)
+
+    await rerender(
+      <GroupEditorScreen {...settings} dirty now={WINTER} zoneChangedElsewhere="Asia/Bangkok" />,
+    )
+
+    expect(find("[data-e2e=group-time-zone-elsewhere]").textContent).toBe(
+      // The zone is isolated, so a right-to-left sentence keeps it whole.
+      "Someone else changed this to \u2068Bangkok, Asia · GMT+7\u2069 while you were editing. Save to use yours, or Discard.",
+    )
+  })
+
   it("moves focus to a refusal's message that names no field, under the form", async () => {
     await mount(<GroupEditorScreen {...settings} dirty />)
     await rerender(<GroupEditorScreen {...settings} dirty errors={{ form: "Not allowed." }} />)
@@ -1991,6 +2108,7 @@ describe("the group screens in the en-XA pseudo-language", () => {
     `OO`,
     `EE`,
     `VE`,
+    ZONE_LABEL,
   ]
 
   /** What a person reads that is English outside the pseudo-language's marks. */

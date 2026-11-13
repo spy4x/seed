@@ -357,7 +357,13 @@ describe("group file wording", () => {
 describe("group file menu items", () => {
   const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
   const team = { id: groupId, name: "Team", role: GroupRole.OWNER }
-  const draft: GroupDraft = { name: "Team", description: "", color: null, emoji: "" }
+  const draft: GroupDraft = {
+    name: "Team",
+    description: "",
+    color: null,
+    emoji: "",
+    timeZone: "UTC",
+  }
   const editor = (props: Partial<Parameters<typeof GroupEditorScreen>[0]> = {}) => (
     <GroupEditorScreen
       group={team}
@@ -394,7 +400,7 @@ describe("group file menu items", () => {
     const exported = spy<[]>()
     await mount(editor({ exportFailed: true, onExport: exported.fn }))
     expect(find("[data-e2e=group-export-failed]").textContent).toContain(
-      "We couldn't prepare the file. Nothing in your group changed.",
+      "We could not prepare the file. Nothing in your group changed.",
     )
     await click("[data-e2e=group-export-failed] button")
     expect(exported.calls).toHaveLength(1)

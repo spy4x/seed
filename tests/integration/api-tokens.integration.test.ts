@@ -24,6 +24,7 @@ import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards
 import { createSessionGate } from "../../apps/api/cqrs/session-gate.ts"
 import { createEntitlementGate } from "../../apps/api/cqrs/entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "../../apps/api/cqrs/entitlement-needs.ts"
+import { testUsage } from "../../libs/domain/billing/test-plans.ts"
 import {
   createNoteCreateHandler,
   createNoteGetHandler,
@@ -97,10 +98,11 @@ const openAuthLimits: AuthRateLimits = {
   otpByUser: passThrough,
   guestStart: notCalled,
   normal: passThrough,
+  thumbnail: passThrough,
   resetByAddress: notCalled,
   emailCodeByAddress: notCalled,
   signUpCode: notCalled,
-  signInLink: notCalled,
+  signInCode: notCalled,
   emailChangeByUser: notCalled,
   emailChangeByAddress: notCalled,
 }
@@ -180,10 +182,7 @@ async function buildApp(sql: postgres.Sql, { countPasswords = true } = {}) {
     billingEnabled: false,
     planOf: () => Promise.reject(new Error("billing is off")),
     roleOf,
-    usage: {
-      maxNotes: () => Promise.reject(new Error("billing is off")),
-      maxMembers: () => Promise.reject(new Error("billing is off")),
-    },
+    usage: testUsage(),
   }, ENTITLEMENT_NEEDS))
   commands.register(NoteCreateCommand, createNoteCreateHandler(dependencies))
   const queries = new QueryBus()
@@ -212,8 +211,6 @@ async function buildApp(sql: postgres.Sql, { countPasswords = true } = {}) {
       rateLimits: openAuthLimits,
       totpFailures: openLockout,
       passwordFailures: openLockout,
-      requestPasswordReset: () => Promise.resolve(),
-      requestSignInLink: () => Promise.resolve(),
       emailCodeFailures: openLockout,
       requestEmailCode: () => Promise.resolve(),
     }),

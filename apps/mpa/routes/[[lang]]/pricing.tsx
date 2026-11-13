@@ -9,7 +9,7 @@ import { CtaBand } from "../../components/cta-band.tsx"
 import { PricingDemoPlans } from "../../components/pricing-demo-plans.tsx"
 import { PricingWays } from "../../components/pricing-ways.tsx"
 import { SectionIntro } from "../../components/section-intro.tsx"
-import { HIRE_PAGE_URL, HIRE_PRICES } from "../../hire.ts"
+import { HIRE_PAGE_URL, HIRE_PRICES, hirePrice } from "../../hire.ts"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
@@ -54,7 +54,7 @@ const FAQ = [
 function faqItems(t: Translator<string>) {
   return FAQ.map(({ id, question, answer }) => ({
     id,
-    question: t.t(question, { price: HIRE_PRICES.mvpFrom }),
+    question: t.t(question, { price: hirePrice(HIRE_PRICES.mvpFrom, t.language) }),
     answerText: t.t(answer),
   }))
 }
@@ -72,11 +72,11 @@ function pricingJsonLd(t: Translator<string>, origin: string, language: Language
 /**
  * `GET` shows what Seed costs and, below, the demo app's plans. `POST` is where a plan's "Try in
  * the demo" form goes without JavaScript, in every language: plans are chosen inside the app, so it sends the visitor
- * to the app's `/try`, which opens the demo as a guest account (#224).
+ * to the app's `/try`, which opens the demo as a guest account.
  */
 export const handler = define.handlers({
   POST(ctx) {
-    return ctx.redirect(spaLinks(ctx.state.spaOrigin).try, 303)
+    return ctx.redirect(spaLinks(ctx.state).try, 303)
   },
 })
 
@@ -86,7 +86,7 @@ export const handler = define.handlers({
  */
 export default define.page(function Pricing({ state }) {
   const { t, language } = useSite()
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   const head: SitePageHead = {
     ...pricingHead(t),
     og: `pricing`,

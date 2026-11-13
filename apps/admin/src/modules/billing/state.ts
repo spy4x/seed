@@ -11,6 +11,7 @@ import {
   adminBillingFilterQuery,
   type AdminBillingListResponse,
   type AdminBillingPaymentResponse,
+  type AdminNeverPaidResponse,
 } from "@domain/billing"
 import type {
   AdminBillingAction,
@@ -54,6 +55,14 @@ export interface BillingListState {
   /** The filter of the page the list shows, or is loading. */
   filter: AdminBillingFilter | null
   list: AdminBillingListResponse | null
+  pending: boolean
+  error: string | null
+}
+
+export interface NeverPaidState {
+  /** The page the list shows, or is loading. */
+  page: number | null
+  list: AdminNeverPaidResponse | null
   pending: boolean
   error: string | null
 }
@@ -176,6 +185,7 @@ export function createBillingState(
 ) {
   const figures = signal<BillingFiguresState>({ figures: null, error: null })
   const list = signal<BillingListState>({ filter: null, list: null, pending: false, error: null })
+  const neverPaid = signal<NeverPaidState>({ page: null, list: null, pending: false, error: null })
   const customer = signal<BillingCustomerState>(NO_CUSTOMER)
   const dialog = signal<BillingDialogState>(NO_DIALOG)
   /** Bumped by every new wait, so an older poll stops. */
@@ -228,6 +238,7 @@ export function createBillingState(
   return {
     figures,
     list,
+    neverPaid,
     customer,
     dialog,
 
@@ -250,6 +261,20 @@ export function createBillingState(
       list.value = result.ok
         ? { filter, list: result.data, pending: false, error: null }
         : { ...list.value, list: null, pending: false, error: result.error.message }
+    },
+
+    /** Reads one page of the groups that have never paid. */
+    async loadNeverPaid(page: number): Promise<void> {
+      neverPaid.value = { ...neverPaid.value, page, pending: true, error: null }
+      const query = page > 1 ? `?page=${page}` : ``
+      const result = await request<AdminNeverPaidResponse>(
+        `/api/admin/billing/never-paid${query}`,
+      )
+      // An answer for a page the screen has left is dropped.
+      if (neverPaid.value.page !== page) return
+      neverPaid.value = result.ok
+        ? { page, list: result.data, pending: false, error: null }
+        : { ...neverPaid.value, list: null, pending: false, error: result.error.message }
     },
 
     async loadCustomer(groupId: string): Promise<void> {

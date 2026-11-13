@@ -104,7 +104,7 @@ function UserView(
   )
 }
 
-/** The person's "Data exports" tab (#229): read when it opens. */
+/** The person's "Data exports" tab: read when it opens. */
 function DataExportsTab(
   { context, userId }: { context: AdminContext; userId: number },
 ): JSX.Element {
@@ -122,7 +122,7 @@ function DataExportsTab(
   )
 }
 
-/** Everyone with an account, and one person's page with its actions (#146, #424). */
+/** Everyone with an account, and one person's page with its actions. */
 export const usersModule: AdminModule = {
   id: `users`,
   nav: { name: `AdminNav.users`, href: ADMIN_PATHS.users, Icon: IconUsers },

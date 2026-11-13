@@ -52,7 +52,7 @@ export function createPreferencesSaveHandler(
 }
 
 /**
- * A tab loaded before `language` existed (#216) saves a record without it. Its language is taken
+ * A tab loaded before `language` existed saves a record without it. Its language is taken
  * as unchanged, the stored one, so the save goes through instead of being refused as invalid. Any
  * other request is passed on as it is, for the schema to check.
  */

@@ -12,8 +12,9 @@ import { define } from "../utils.ts"
  * file, not inline, because the content security policy allows scripts from this origin only.
  *
  * The page's language (`State.language`, from its address) sets `lang` and `dir`. The words come
- * from `SiteLanguage` (`use-site.tsx`), which `routes/_layout.tsx` puts around every
- * page: a context provided here would not reach the page, which Fresh renders apart.
+ * from `SiteLanguage` (`use-site.tsx`), which `routes/_layout.tsx` puts around every page: a
+ * context provided here would not reach the page, which the renderer renders on its own, before
+ * this wrapper.
  */
 export default define.page(function App({ Component, state, url }) {
   const translator = siteTranslator(state.language ?? DEFAULT_LANGUAGE)
@@ -76,6 +77,7 @@ function AnalyticsScripts({ state, url }: { state: State; url: URL }): JSX.Eleme
         defer
         src="/analytics.js"
         data-spa-origin={state.spaOrigin}
+        data-demo-origin={state.demoOrigin}
         data-repository={REPOSITORY_URL}
       >
       </script>

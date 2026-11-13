@@ -1,5 +1,5 @@
 /**
- * When a person was last active (#152), on this app's `users` row. Everything about the sessions
+ * When a person was last active, on this app's `users` row. Everything about the sessions
  * themselves (the device a session remembers, when it was last used, the list of signed-in devices
  * and ending them) is the session store of `@spy4x/server/auth` behind `SessionManager` of
  * `@spy4x/server/sign-in`.

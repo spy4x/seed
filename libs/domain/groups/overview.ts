@@ -2,16 +2,23 @@ import { type DateRange, formatIsoDate, isValidDateRange, parseIsoDate } from "@
 import type { GroupRole } from "./+lib.ts"
 
 /**
- * The group overview (#219): a page of widgets, each a number or a chart about the group over a
+ * The group overview: a page of widgets, each a number or a chart about the group over a
  * range of days. Each aggregate lists its own widgets (`NOTE_WIDGETS` in `@domain/notes`); the
  * overview draws the ones the person's role may see, in the order the person chose.
- * `docs/aggregates.md`, "Adding a widget to the overview", walks through adding one.
+ * `docs/aggregate-extras.md`, "Add a widget to the overview", walks through adding one.
  *
  * @module
  */
 
 /** A widget's width: `stat` shares a row with other numbers, `full` takes the row. */
 export type WidgetSize = "stat" | "full"
+
+/**
+ * What the operator's group page may show of a widget: `counts` (how many of something, never what
+ * it says or who did it) or `never` (the group's own figures, such as its spending, which only its
+ * members see).
+ */
+export type WidgetOperatorView = "counts" | "never"
 
 /** One widget an aggregate offers. Its data comes from {@link WidgetDefinition.operation}. */
 export interface WidgetDefinition {
@@ -24,6 +31,18 @@ export interface WidgetDefinition {
   canView(role: GroupRole): boolean
   /** The query operation (`note.widget.total`) that answers with the widget's data. */
   operation: string
+  /**
+   * Whether the operator's group page draws and reads it. Required, so every new widget makes the
+   * choice: one that shows the group's own figures is `never`.
+   */
+  operatorView: WidgetOperatorView
+}
+
+/** The widgets the operator's group page draws and reads: the `counts` ones, in their order. */
+export function operatorWidgets<T extends { operatorView: WidgetOperatorView }>(
+  widgets: readonly T[],
+): T[] {
+  return widgets.filter((widget) => widget.operatorView === "counts")
 }
 
 /** The longest range a widget answers for, in days: a year, a leap day included. */

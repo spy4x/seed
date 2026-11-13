@@ -11,6 +11,8 @@ tldr:
   - Verkaufen Sie an Teams, nehmen Sie eine Vorlage mit Gruppen, Rollen und Abrechnung pro Mitglied.
   - Wer Daten in der EU halten will, fährt mit einem eigenen Server einfacher als mit fünf externen Diensten.
 topic: Fragen
+intro: "ShipFast ist ein gutes Kit, aber nicht das einzige, und es ist nicht kostenlos. Ich habe sieben Boilerplates nach Preis, Lizenz, Stack, Teams und Hosting verglichen, mit einer Quelle für jede Angabe."
+coverAlt: "Sieben Segelboote unterschiedlicher Form in einer Reihe auf ruhigem Wasser, eines davon violett."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
@@ -50,7 +52,7 @@ Für ein B2B-Produkt ist es der erste Monat Arbeit.
 | Vorlage                                                               | Preis                      | Lizenz                            | Stack                                     | Teams und Rollen                | Hosting                                  |
 | --------------------------------------------------------------------- | -------------------------- | --------------------------------- | ----------------------------------------- | ------------------------------- | ---------------------------------------- |
 | [ShipFast](https://shipfa.st/)                                        | 199 oder 249 USD einmalig  | Kostenpflichtig, keine Weitergabe | Next.js; MongoDB oder Supabase            | Nicht genannt                   | Vercel als kostenlose Option             |
-| [Seed](https://github.com/spy4x/seed)                                 | Kostenlos                  | MIT                               | Deno, Hono, Fresh, Preact; Postgres       | Ja, mit Abrechnung pro Mitglied | Ein eigener Linux-Server, Docker Compose |
+| [Seed](https://github.com/spy4x/seed)                                 | Kostenlos                  | MIT                               | Deno, Hono, Preact; Postgres              | Ja, mit Abrechnung pro Mitglied | Ein eigener Linux-Server, Docker Compose |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)                   | Kostenlos                  | MIT                               | Wasp (React, Node.js, Prisma); Postgres   | Nicht genannt                   | Railway oder Fly.io per Befehl           |
 | [ShipFree](https://github.com/revokslab/shipfree)                     | Kostenlos                  | MIT                               | Next.js, Bun, Drizzle; Postgres           | Nicht genannt                   | Vercel oder Docker                       |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)        | Kostenlos                  | MIT                               | Next.js, Drizzle; Postgres                | Owner und Member                | Vercel                                   |

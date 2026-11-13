@@ -1,10 +1,15 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { BillingStatus, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
+import { BillingPeriod, BillingStatus, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { createFormatters } from "@spy4x/time/format"
 import app from "@i18n/app/en.ts"
-import { checkoutDoneToast } from "./BillingViews.tsx"
+import { checkoutDoneToast, periodFromSearch } from "./BillingViews.tsx"
+import {
+  TEST_FREE_PLAN,
+  TEST_PLANS,
+  TEST_PRO_PLAN,
+} from "../../../../libs/domain/billing/test-plans.ts"
 
 const t = createTranslator({ language: "en", catalogs: [{ source: app }] })
 const format = createFormatters({ locale: "en-US", timeZone: "Asia/Tokyo" })
@@ -21,6 +26,7 @@ const PRO: GroupBilling = {
   subscribed: true,
   hasCustomer: true,
   seatPrice: null,
+  period: null,
 }
 
 describe("checkoutDoneToast", () => {
@@ -30,16 +36,30 @@ describe("checkoutDoneToast", () => {
       status: BillingStatus.Trialing,
       trialEnd: new Date("2026-11-04T00:00:00Z"),
     }
-    expect(checkoutDoneToast(t, format, trial, "Team")).toEqual({
+    expect(checkoutDoneToast(t, format, trial, "Team", TEST_PLANS)).toEqual({
       title: "Your 14-day Pro trial has started",
       body: `“\u2068Team\u2069” is on Pro until November 4, 2026.`,
     })
   })
 
   it("says You're on Pro after a paid start", () => {
-    expect(checkoutDoneToast(t, format, PRO, "Team")).toEqual({
+    expect(checkoutDoneToast(t, format, PRO, "Team", TEST_PLANS)).toEqual({
       title: "You’re on Pro",
       body: `Stripe confirmed the payment for “\u2068Team\u2069”.`,
     })
+  })
+
+  it("names the paid plan as the product's catalog names it, not Pro", () => {
+    const plans = [TEST_FREE_PLAN, { ...TEST_PRO_PLAN, name: "Household" }]
+    expect(checkoutDoneToast(t, format, PRO, "Team", plans).title).toBe("You’re on Household")
+  })
+})
+
+describe("periodFromSearch", () => {
+  it("reads the year from ?period=year and the month from anything else", () => {
+    expect(periodFromSearch("period=year")).toBe(BillingPeriod.Yearly)
+    expect(periodFromSearch("?checkout=done&period=year")).toBe(BillingPeriod.Yearly)
+    expect(periodFromSearch("")).toBe(BillingPeriod.Monthly)
+    expect(periodFromSearch("period=decade")).toBe(BillingPeriod.Monthly)
   })
 })

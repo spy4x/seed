@@ -1,14 +1,14 @@
-import type { ArkErrors } from "arktype"
+import { type ArkErrors, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
 import { canRead, type GroupColor, GroupError, GroupRole, type GroupSummary } from "./+lib.ts"
 import type { MoveAllAllowances } from "./move-all.ts"
 
 /**
- * Exporting a group to one JSON file, and importing such a file as a new group (#230). The owner
+ * Exporting a group to one JSON file, and importing such a file as a new group. The owner
  * downloads the file; anyone who may create a group imports it. An import never touches an
  * existing group: it creates a new one, with a new id for every entity in the file. Each aggregate
- * joins by registering itself (`docs/aggregates.md`, "Making an aggregate exportable").
+ * joins by registering itself (`docs/aggregate-lifecycle.md`, "Make it exportable").
  */
 
 /** What the `format` field of every export file says, so an import can tell it is one. */
@@ -21,7 +21,7 @@ export const GROUP_EXPORT_FORMAT = "seed.group-export"
 export const GROUP_EXPORT_VERSION = 1
 
 /**
- * The six colour names tags and groups had before any `#rrggbb` was allowed (#329), with the hex
+ * The six colour names tags and groups had before any `#rrggbb` was allowed, with the hex
  * the migration `2026_11_27_0001_hex_colours.sql` gave each. A version 1 file written before then
  * names its colours this way, so an import reads them through {@link legacyExportColor}.
  */
@@ -72,6 +72,11 @@ export interface GroupExportSettings {
   description: string
   color: GroupColor | null
   emoji: string | null
+  /**
+   * The group's zone. An export always writes it; a file written before groups had zones has none,
+   * and its import takes the importer's zone.
+   */
+  timeZone?: string
 }
 
 /** Why a file cannot be imported. The app words each one; see `libs/ui/group-import-screen.tsx`. */
@@ -85,7 +90,7 @@ export type GroupImportProblem =
   /**
    * One part of the file is wrong. `where` names it ("Note 3", "Group settings", "Tags") and
    * `problem` says what is wrong with it, both in English for API clients and logs. `place` and
-   * `issue` say the same by code, so a screen words them in the person's language (#275).
+   * `issue` say the same by code, so a screen words them in the person's language.
    */
   | {
     kind: "invalid"
@@ -172,16 +177,47 @@ export function assertCanExportGroup(role: GroupRole | null): void {
 
 /**
  * The file name of an export: the group's name in lower-case letters and digits joined by dashes,
- * then the UTC date, such as `family-2026-10-21.json`. A name with no such character gives
- * `group-…`.
+ * then the UTC date, such as `family-2026-10-21.json`, or `.zip` for the spreadsheets. A name with
+ * no such character gives `group-…`. Only those characters reach the name, so it is safe in a
+ * `content-disposition` header.
  */
-export function groupExportFileName(name: string, at: Date): string {
+export function groupExportFileName(
+  name: string,
+  at: Date,
+  format: GroupExportFormat = "json",
+): string {
   const slug = name.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(
     /[^a-z0-9]+/g,
     "-",
   )
     .replace(/^-+|-+$/g, "").slice(0, 60).replace(/-+$/, "")
-  return `${slug || "group"}-${at.toISOString().slice(0, 10)}.json`
+  return `${slug || "group"}-${at.toISOString().slice(0, 10)}.${format === "csv" ? "zip" : "json"}`
+}
+
+/**
+ * What an export may be asked for in the query: `format` (`json`, the default, is the file an
+ * import reads back; `csv` is a ZIP of one spreadsheet per aggregate) and `language`, the asking
+ * page's, which a spreadsheet's headings use when the person saved none. As for a mail, any short
+ * tag is accepted and only a known language is used.
+ */
+const groupExportQuerySchema = type({
+  "format?": "'json' | 'csv'",
+  "language?": "string <= 35",
+})
+
+/** The file an export writes: `json`, or `csv` for the spreadsheets. */
+export type GroupExportFormat = "json" | "csv"
+
+/** The export's query, checked: `INVALID_REQUEST` for a format it does not write. */
+export function parseGroupExportQuery(
+  query: { format?: string; language?: string },
+): { format: GroupExportFormat; language?: string } {
+  const given = Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined))
+  const parsed = groupExportQuerySchema(given)
+  if (parsed instanceof type.errors) {
+    throw new GroupError("INVALID_REQUEST", "format must be json or csv, and language a short tag")
+  }
+  return { format: parsed.format ?? "json", ...(parsed.language && { language: parsed.language }) }
 }
 
 /** The body of `POST /api/groups/import`: the new group's name and the file, as one JSON value. */
@@ -199,22 +235,34 @@ export function parseGroupImportBody(value: unknown): { name: string | null; fil
   return { name: name ?? null, file }
 }
 
-export interface GroupExportPayload {
+/** What an export writes, besides the group: the file's format and the asking page's language. */
+export interface GroupExportOptions {
+  /** `json` when left out. */
+  format?: GroupExportFormat
+  /** The asking page's language; the person's saved one wins. Unknown tags are English. */
+  language?: string
+}
+
+export interface GroupExportPayload extends GroupExportOptions {
   actor: Actor
   groupId: string
   requestId?: string
 }
 
-/** The file of an export: its name, and its JSON text in the pieces it is read in. */
+/**
+ * The file of an export: its name, its media type, and its content in the pieces it is read in:
+ * JSON text, or a ZIP's bytes.
+ */
 export interface GroupExportResult {
   fileName: string
-  chunks: AsyncIterable<string>
+  contentType: string
+  chunks: AsyncIterable<string | Uint8Array>
 }
 
 /**
- * Exports a group to one file. Only the owner may. It writes the `group.exported` audit event
- * before the file starts, so the log says who took the group's data even when the download stops
- * halfway.
+ * Exports a group to one file, JSON or a ZIP of spreadsheets. Only the owner may. It writes the
+ * `group.exported` audit event, with the format, before the file starts, so the log says who took
+ * the group's data even when the download stops halfway.
  */
 export class GroupExportCommand implements Command<GroupExportPayload, GroupExportResult> {
   __resultType?: GroupExportResult
@@ -271,7 +319,12 @@ export interface GroupImportInput {
  */
 export interface GroupFilePorter {
   /** Throws `GROUP_NOT_FOUND` for a group that is gone. Writes the `group.exported` event. */
-  exportGroup(groupId: string, actorId: number, requestId?: string): Promise<GroupExportResult>
+  exportGroup(
+    groupId: string,
+    actorId: number,
+    requestId?: string,
+    options?: GroupExportOptions,
+  ): Promise<GroupExportResult>
   /** Throws {@link GroupImportError}, or a `PlanError` when the file does not fit `allowances`. */
   check(file: unknown, allowances: MoveAllAllowances): GroupImportSummary
   /** Throws as {@link GroupFilePorter.check} does, or `INVALID_REQUEST` for a name it refuses. */

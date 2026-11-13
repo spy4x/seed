@@ -3,6 +3,7 @@ import type { MiddlewareHandler } from "hono"
 import { type } from "arktype"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
+  ADMIN_GROUP_FILE_REQUEST_PARAM,
   ADMIN_GROUP_FILES_PAGE_SIZE,
   ADMIN_GROUPS_PAGE_SIZE,
   type AdminGroupDetail,
@@ -11,8 +12,10 @@ import {
   type AdminGroupFiles,
   type AdminGroupListResponse,
   adminGroupTransferSchema,
+  operatorWidgets,
   parseAdminGroupFileFilter,
   parseAdminGroupFilter,
+  type WidgetDefinition,
 } from "@domain/groups"
 import {
   AdminGroupActOutcome,
@@ -24,7 +27,13 @@ import type { AppDbBase } from "@api/services/db-base.ts"
 import { readFeatureJson } from "@api/services/json-body.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
-import { NoteError, parseNoteWidgetRequest } from "@domain/notes"
+import {
+  NOTE_WIDGETS,
+  NoteError,
+  type NoteOverviewRepository,
+  parseNoteWidgetRequest,
+} from "@domain/notes"
+import { NOTES_ON, type NotesSetup } from "@server/notes/setup.ts"
 import { entitlementsOf } from "@domain/billing"
 import { createPlanOf } from "../../features/billing/config.ts"
 import { NOTE_WIDGET_READERS, type NoteWidgetRequest } from "../../features/notes/widgets.ts"
@@ -51,7 +60,7 @@ export interface AdminGroupsService {
   ): Promise<AdminGroupActOutcome>
   /**
    * One overview widget's data for the group, as a member reads it: counts only. `null` for a
-   * group or a widget that does not exist.
+   * group or a widget that does not exist, and for a widget whose `operatorView` is `never`.
    */
   widget(groupId: string, widgetId: string, request: NoteWidgetRequest): Promise<unknown | null>
   /**
@@ -63,12 +72,16 @@ export interface AdminGroupsService {
   file(groupId: string, fileId: string): Promise<AdminGroupStoredFile | null>
   /** The bytes of a stored file, or `null` when the store no longer has it. */
   readFile(objectKey: string): Promise<Uint8Array | null>
-  /** Writes the audit row of an operator opening or downloading the file. */
+  /**
+   * Writes the audit row of an operator opening or downloading the file, under `requestId`. A
+   * second write of the same access, file and operator under the same id writes nothing.
+   */
   recordFileAccess(
     operator: AdminGroupOperator,
     groupId: string,
     file: AdminGroupStoredFile,
     access: `open` | `download`,
+    requestId: string | null,
   ): Promise<void>
   removeFile(
     operator: AdminGroupOperator,
@@ -80,7 +93,11 @@ export interface AdminGroupsService {
 export interface AdminGroupsRouteDependencies {
   /** The normal per-user budget the session routes spend too. */
   limit: MiddlewareHandler<APIContext>
+  /** The image tiles' own, larger budget, so paging through pictures leaves `limit` alone. */
+  thumbnailLimit: MiddlewareHandler<APIContext>
   groups: AdminGroupsService
+  /** The notes' switch; off, the widget and file routes, which read notes, are not mounted. */
+  notes?: NotesSetup
 }
 
 export const ADMIN_GROUP_NOT_FOUND = `Group not found`
@@ -177,7 +194,7 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
 }
 
 /**
- * The group routes of the operator area (#426), mounted at `/api/admin` behind the gate in
+ * The group routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them.
  *
  * - `GET /groups?q=&status=&sort=&page=` lists groups: `{ groups, total, page, pageSize }`.
@@ -189,7 +206,7 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   operator. Like the people actions they ask for no password (owner's decision, 2026-10-15).
  * - `GET /groups/:id/files?q=&page=` is one page of the group's files whose name holds `q`, newest
  *   first, with the group's room: `AdminGroupFiles`. Each file's name, type, size, uploader, date
- *   and its note's title (#478). `POST /groups/:id/files/:fileId/remove?q=&page=` removes one,
+ *   and its note's title. `POST /groups/:id/files/:fileId/remove?q=&page=` removes one,
  *   from a note in the trash too, and answers that page of the files as it reads after it.
  * - `GET /groups/:id/files/:fileId/thumbnail` is the whole original image, shown as a 40 px tile, and
  *   writes no audit row;
@@ -200,12 +217,12 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   found only through its own group's path. Every answer carries the confirmed type and `nosniff`;
  *   its sandbox policy is replaced by the app's own for now (spy4x/ts-libs#772).
  * - `GET /groups/:id/widgets/:widgetId?from=&to=&timeZone=` is one overview widget's data in the
- *   default layout, the same counts a member's overview shows (#219). Never a member's layout.
+ *   default layout, the same counts a member's overview shows. Never a member's layout.
  */
 export function createAdminGroupsRoutes(
   dependencies: AdminGroupsRouteDependencies,
 ): Hono<APIContext> {
-  const { groups, limit } = dependencies
+  const { groups, limit, thumbnailLimit, notes = NOTES_ON } = dependencies
 
   /** The answer after an action: the group as it reads now, or the refusal. */
   async function answer(c: Context<APIContext>, groupId: string, outcome: AdminGroupActOutcome) {
@@ -241,22 +258,18 @@ export function createAdminGroupsRoutes(
       return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
     }
     if (access === `thumbnail`) return fileBody(file, bytes, `inline`, `private, max-age=86400`)
-    await groups.recordFileAccess(operatorOf(c), groupId, file, access)
+    // The admin app names each Download in the address, which a repeat of the request keeps; any
+    // value but a UUID is ignored and the row takes this request's own id.
+    const named = c.req.query(ADMIN_GROUP_FILE_REQUEST_PARAM)
+    const requestId = isUuid(named) ? named : c.get(`requestId`) ?? null
+    await groups.recordFileAccess(operatorOf(c), groupId, file, access, requestId)
     const disposition = access === `open` && shown ? `inline` : `attachment`
     return fileBody(file, bytes, disposition, `no-store`)
   }
 
-  return new Hono<APIContext>()
-    .get(`/groups`, limit, async (c) => {
-      return c.json(await groups.list(parseAdminGroupFilter(new URL(c.req.url).searchParams)))
-    })
-    .get(`/groups/:id`, limit, async (c) => {
-      const groupId = c.req.param(`id`)
-      const detail = isUuid(groupId) ? await groups.detail(groupId) : null
-      if (!detail) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
-      return c.json(detail)
-    })
-    .get(`/groups/:id/widgets/:widgetId`, limit, async (c) => {
+  /** The overview widget and file routes, which read notes: mounted only with the notes on. */
+  function mountNoteReads(app: Hono<APIContext>) {
+    app.get(`/groups/:id/widgets/:widgetId`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       if (!isUuid(groupId)) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       let request: NoteWidgetRequest
@@ -277,35 +290,50 @@ export function createAdminGroupsRoutes(
       if (data === null) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(data)
     })
-    .get(`/groups/:id/files`, limit, async (c) => {
-      const groupId = c.req.param(`id`)
-      const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
-      const files = isUuid(groupId) ? await groups.files(groupId, filter) : null
-      if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
-      return c.json(files)
+      .get(`/groups/:id/files`, limit, async (c) => {
+        const groupId = c.req.param(`id`)
+        const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
+        const files = isUuid(groupId) ? await groups.files(groupId, filter) : null
+        if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
+        return c.json(files)
+      })
+      .get(`/groups/:id/files/:fileId/thumbnail`, thumbnailLimit, (c) => serveFile(c, `thumbnail`))
+      .get(`/groups/:id/files/:fileId/open`, limit, (c) => serveFile(c, `open`))
+      .get(`/groups/:id/files/:fileId/download`, limit, (c) => serveFile(c, `download`))
+      .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
+        const groupId = c.req.param(`id`)
+        const fileId = c.req.param(`fileId`)
+        if (!isUuid(groupId) || !isUuid(fileId)) {
+          return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
+        }
+        const outcome = await groups.removeFile(operatorOf(c), groupId, fileId)
+        if (outcome === AdminGroupActOutcome.NotFound) {
+          return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
+        }
+        if (outcome !== AdminGroupActOutcome.Done) {
+          const { status, error } = REFUSALS[outcome]
+          return errorResponse(c, codeForStatus(status), { message: error, status })
+        }
+        const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
+        const files = await groups.files(groupId, filter)
+        if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
+        return c.json(files)
+      })
+  }
+
+  const routes = new Hono<APIContext>()
+    .get(`/groups`, limit, async (c) => {
+      return c.json(await groups.list(parseAdminGroupFilter(new URL(c.req.url).searchParams)))
     })
-    .get(`/groups/:id/files/:fileId/thumbnail`, limit, (c) => serveFile(c, `thumbnail`))
-    .get(`/groups/:id/files/:fileId/open`, limit, (c) => serveFile(c, `open`))
-    .get(`/groups/:id/files/:fileId/download`, limit, (c) => serveFile(c, `download`))
-    .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
+    .get(`/groups/:id`, limit, async (c) => {
       const groupId = c.req.param(`id`)
-      const fileId = c.req.param(`fileId`)
-      if (!isUuid(groupId) || !isUuid(fileId)) {
-        return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
-      }
-      const outcome = await groups.removeFile(operatorOf(c), groupId, fileId)
-      if (outcome === AdminGroupActOutcome.NotFound) {
-        return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
-      }
-      if (outcome !== AdminGroupActOutcome.Done) {
-        const { status, error } = REFUSALS[outcome]
-        return errorResponse(c, codeForStatus(status), { message: error, status })
-      }
-      const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
-      const files = await groups.files(groupId, filter)
-      if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
-      return c.json(files)
+      const detail = isUuid(groupId) ? await groups.detail(groupId) : null
+      if (!detail) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
+      return c.json(detail)
     })
+  // The overview's widgets count notes and every file sits on a note: off with the notes.
+  if (notes.on) mountNoteReads(routes)
+  return routes
     .post(`/groups/:id/invitations/:invitationId/revoke`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       const invitationId = c.req.param(`invitationId`)
@@ -350,12 +378,30 @@ export type AdminFileCaps = (
   groupId: string,
 ) => Promise<{ maxFiles: number | null; maxBytes: number | null }>
 
+/** Every overview widget, and the readers the operator's group page may call, by widget id. */
+export interface AdminWidgets {
+  definitions: readonly WidgetDefinition[]
+  readers: Readonly<
+    Record<
+      string,
+      (overview: NoteOverviewRepository, request: NoteWidgetRequest) => Promise<unknown>
+    >
+  >
+}
+
+/** Every aggregate's widgets and readers: the notes' are the only ones so far. */
+export const ADMIN_WIDGETS: AdminWidgets = {
+  definitions: NOTE_WIDGETS,
+  readers: NOTE_WIDGET_READERS,
+}
+
 /** The operator area's group service over the app's database. It reads nothing until called. */
 export function createAdminGroups(
   db: AppDbBase,
   pageSize: number,
   fileCaps: AdminFileCaps,
   readFile: AdminGroupsService[`readFile`],
+  widgets: AdminWidgets,
 ): AdminGroupsService {
   return {
     async list(filter) {
@@ -384,13 +430,15 @@ export function createAdminGroups(
     },
     file: (groupId, fileId) => db.adminGroups.file(groupId, fileId),
     readFile,
-    recordFileAccess: (operator, groupId, file, access) =>
-      db.adminGroups.recordFileAccess(operator, groupId, file, access),
+    recordFileAccess: (operator, groupId, file, access, requestId) =>
+      db.adminGroups.recordFileAccess(operator, groupId, file, access, requestId),
     removeFile: (operator, groupId, fileId) => db.adminGroups.removeFile(operator, groupId, fileId),
     async widget(groupId, widgetId, request) {
-      // Every aggregate's readers, by widget id: the notes' are the only ones so far.
-      const read = Object.hasOwn(NOTE_WIDGET_READERS, widgetId)
-        ? NOTE_WIDGET_READERS[widgetId]
+      // Only a `counts` widget is read: a `never` one, or one without a definition, reads nothing,
+      // whatever reader it has.
+      const shown = operatorWidgets(widgets.definitions).some((widget) => widget.id === widgetId)
+      const read = shown && Object.hasOwn(widgets.readers, widgetId)
+        ? widgets.readers[widgetId]
         : undefined
       const overview = db.noteOverview
       if (!read || await overview.startDay(groupId, request.timeZone) === null) return null
@@ -402,7 +450,7 @@ export function createAdminGroups(
 /** The groups module: the list, one group and the operator's actions on it. */
 export const groupsAdminModule: AdminApiModule = {
   id: `groups`,
-  routes: ({ db, limit, billing, readFile }) => {
+  routes: ({ db, limit, thumbnailLimit, billing, readFile, notes }) => {
     // Read on the first call: the routes are built before any database is reached.
     const fileCaps: AdminFileCaps = async (groupId) => {
       const plan = await createPlanOf(db.billing, billing)(groupId)
@@ -411,7 +459,9 @@ export const groupsAdminModule: AdminApiModule = {
     }
     return createAdminGroupsRoutes({
       limit,
-      groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE, fileCaps, readFile),
+      thumbnailLimit,
+      groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE, fileCaps, readFile, ADMIN_WIDGETS),
+      notes,
     })
   },
 }

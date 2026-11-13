@@ -1445,7 +1445,6 @@ function withDeletion(
   )
 }
 
-/** Opens the deletion dialog. */
 async function openDeletion(): Promise<void> {
   await click("[data-e2e=account-delete-open]")
 }
@@ -1490,7 +1489,7 @@ describe("the Your data row on the Account section", () => {
       />,
     )
     expect(find("[data-e2e=data-export-error]").textContent).toContain(
-      "Couldn't request your file.",
+      "Could not request your file.",
     )
   })
 })
@@ -1666,9 +1665,10 @@ function account(
     status?: EmailStatus | null
     providerProof?: ProviderProof | null
     openEmailCode?: boolean
+    openEmailAddress?: boolean
   } = {},
 ): VNode {
-  const { status = unproven, providerProof, openEmailCode, ...change } = props
+  const { status = unproven, providerProof, openEmailCode, openEmailAddress, ...change } = props
   return (
     <AccountSection
       name="Ann Lee"
@@ -1685,6 +1685,7 @@ function account(
       emailChange={{ ...emailDefaults, ...change }}
       providerProof={providerProof}
       openEmailCode={openEmailCode}
+      openEmailAddress={openEmailAddress}
     />
   )
 }
@@ -1792,6 +1793,31 @@ describe("the e-mail address on the Account section", () => {
     expect(Object.fromEntries(new FormData(form))).toEqual({ email: "new@example.com" })
     expect(await submit("[data-e2e=email-new]")).toBe(true)
     expect(changeAddress.calls).toHaveLength(1)
+  })
+
+  it("names the passkey as the way in of an account that signs in with a passkey only", async () => {
+    await mount(
+      account({
+        status: { email: null, proven: false, pending: null },
+        openEmailAddress: true,
+        providerProof: { providers: [], passkeys: true, fresh: true },
+      }),
+    )
+
+    expect(isOpen("email-change-dialog")).toBe(true)
+    expect(find("[data-e2e=email-change-dialog]").textContent)
+      .toContain("You'll keep signing in with a passkey.")
+  })
+
+  it("starts the address step in the New email field, opened by a link or by the row's button", async () => {
+    await mount(
+      account({ status: { email: null, proven: false, pending: null }, openEmailAddress: true }),
+    )
+    expect(focused()).toBe("email-new")
+    await clickInDialog("email-change-dialog", "Cancel")
+
+    await click("[data-e2e=email-change-open]")
+    expect(focused()).toBe("email-new")
   })
 
   it("sends an account with no password to Google before a change when the sign-in is not recent", async () => {

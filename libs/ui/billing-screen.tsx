@@ -8,6 +8,7 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
+import { SegmentedControl } from "@spy4x/preact-ui/segmented-control"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import type { Translator } from "@spy4x/platform/universal/i18n"
@@ -17,32 +18,40 @@ import type { Formatters } from "@spy4x/time/format"
 import {
   type BillingNotice,
   BillingNoticeKind,
+  BillingPeriod,
   BillingStatus,
   findPlan,
   FREE_PLAN_ID,
   type GroupBilling,
+  needsFirstPlan,
   PAID_PLANS,
+  periodsOf,
   type PersonTrial,
-  PRO_PLAN_ID,
+  type Plan,
+  PLANS,
+  priceOf,
   type SeatPrice,
+  yearlySavingOf,
 } from "@domain/billing"
 import { useAppText } from "./i18n.ts"
 
 /** The paid plan the tab offers. The catalog has one, Pro, billed per member. */
-const PRO = PAID_PLANS[0]
+const DEFAULT_PLAN = PAID_PLANS[0]
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-/** The plans' names, by plan id and key in the `app` catalog; another id shows the catalog's name. */
-const PLAN_NAME_KEYS: Record<string, string> = {
-  [FREE_PLAN_ID]: `GroupBillingPanel.planFree`,
-  [PRO_PLAN_ID]: `GroupBillingPanel.planPro`,
-}
-
-/** A plan's name in the person's language. */
-export function planName(t: Translator<string>, planId: string): string {
-  const key = PLAN_NAME_KEYS[planId]
-  return key ? t.t(key) : findPlan(planId)?.name ?? planId
+/**
+ * A plan's name: the free plan's in the person's language, a paid plan's as `plans` (`PLANS` unless
+ * a test passes its own) names it, since a product's plan name is a brand and is not translated.
+ */
+export function planName(
+  t: Translator<string>,
+  planId: string,
+  plans: readonly Plan[] = PLANS,
+): string {
+  return planId === FREE_PLAN_ID
+    ? t.t(`GroupBillingPanel.planFree`)
+    : findPlan(planId, plans)?.name ?? planId
 }
 
 /** A billing date as the person's format writes it: in UTC, the same on the server and here. */
@@ -121,8 +130,22 @@ export interface GroupBillingPanelProps {
   pending?: boolean
   /** Now, for the days a trial has left. Tests pass a fixed one. */
   now?: Date
-  /** Opens the provider's checkout for the paid plan. */
-  onCheckout?: (planId: string) => void
+  /**
+   * The paid plan the tab offers: the catalog's one, Pro, unless a test passes a plan Seed does not
+   * sell, such as one with a yearly price.
+   */
+  plan?: Plan
+  /**
+   * The plan catalog that decides whether the free plan allows nothing, which turns a new owner's
+   * free state into the start state: `PLANS` unless a test passes its own.
+   */
+  plans?: readonly Plan[]
+  /** The billing period a free group's owner has chosen for checkout; monthly when unset. */
+  period?: BillingPeriod
+  /** The owner picked another period: the view keeps it, in the address too. */
+  onPeriod?: (period: BillingPeriod) => void
+  /** Opens the provider's checkout for the paid plan, billed for the chosen period. */
+  onCheckout?: (planId: string, period: BillingPeriod) => void
   /** Opens the provider's portal: the card, the invoices, cancelling and renewing. */
   onPortal?: () => void
 }
@@ -196,16 +219,26 @@ export function GroupBillingPanel(props: GroupBillingPanelProps): JSX.Element {
 /** The card that says which plan the group is on, what it costs, and the one primary action. */
 function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }): JSX.Element {
   const { billing, groupId, groupName, memberCount, ownerName, trial, confirming = false } = props
-  const { pending = false, now = new Date(), onCheckout, onPortal } = props
+  const { pending = false, now = new Date(), onCheckout, onPortal, onPeriod } = props
+  const paid = props.plan ?? DEFAULT_PLAN
+  const sellsYearly = periodsOf(paid).includes(BillingPeriod.Yearly)
+  const chosen = sellsYearly && props.period === BillingPeriod.Yearly
+    ? BillingPeriod.Yearly
+    : BillingPeriod.Monthly
+  const yearly = chosen === BillingPeriod.Yearly
   const state = billingState(billing)
   const owner = billing.canManage
+  /** A new owner under a free plan that allows nothing: the card asks them to start the plan. */
+  const start = state === BillingState.FREE && needsFirstPlan(billing, props.plans)
   const t = useAppText()
   const format = useFormat()
-  const name = planName(t, billing.planId)
-  const pro = planName(t, PRO.id)
-  const money = (amount: number) => formatMoney(amount, PRO.currency, format.locale)
+  const pro = paid.name
+  const name = billing.planId === paid.id ? pro : planName(t, billing.planId, props.plans)
+  const money = (amount: number) => formatMoney(amount, paid.currency, format.locale)
   const seats = billing.seatPrice
   const total = seats && formatMoney(seats.amount * seats.seats, seats.currency, format.locale)
+  /** The subscription bills yearly: its sentences say "a year". */
+  const billedYearly = billing.period === BillingPeriod.Yearly
   const periodEnd = billing.currentPeriodEnd && day(format, billing.currentPeriodEnd)
   /** The group's name inside a sentence: the person's data, isolated and never translated. */
   const group = (key: string, values: Record<string, string | number>) => (
@@ -249,21 +282,85 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
     // A group that ever paid, or an owner whose one trial went to another group, gets no trial. The
     // group that holds the trial gets it again: its checkout claims the same trial.
     const trialUsed = (trial?.used ?? false) && trial?.groupId !== groupId
-    const withTrial = PRO.trialDays > 0 && !trialUsed && !billing.hasCustomer
-    body = (
-      <p>
-        {t.t(`GroupBillingPanel.price`, { plan: pro, price: money(PRO.amount) })}
-        {memberCount !== null && (
-          <>
-            {" "}
-            {group(`GroupBillingPanel.priceForGroup`, {
-              count: memberCount,
-              total: money(PRO.amount * memberCount),
-            })}
-          </>
-        )}
-      </p>
+    const withTrial = paid.trialDays > 0 && !trialUsed && !billing.hasCustomer
+    const price = priceOf(paid, chosen) ?? paid.amount
+    const saving = yearlySavingOf(paid)
+    const savingText = yearly && saving > 0 && (
+      <>
+        {" "}
+        <span data-e2e="billing-saving">
+          {t.t(`GroupBillingPanel.saving`, { amount: money(saving) })}
+        </span>
+      </>
     )
+    // A flat plan costs the same however many join, so its sentences never say "per member".
+    const cap = paid.entitlements.limits.maxMembers
+    const whole = cap === null
+      ? t.t(`GroupBillingPanel.wholeGroupNoCap`)
+      : t.t(`GroupBillingPanel.wholeGroup`, { count: cap })
+    const forGroup = memberCount !== null && group(
+      yearly ? `GroupBillingPanel.priceForGroupYear` : `GroupBillingPanel.priceForGroup`,
+      { count: memberCount, total: money(price * memberCount) },
+    )
+    const unit = paid.perSeat
+      ? (yearly ? `GroupBillingPanel.unitMemberYear` : `GroupBillingPanel.unitMemberMonth`)
+      : (yearly ? `GroupBillingPanel.unitYear` : `GroupBillingPanel.unitMonth`)
+    const prices = start
+      ? (
+        // The start state's first question is "how much": the price is the largest thing on it.
+        <div aria-live={sellsYearly ? "polite" : undefined} data-e2e="billing-price">
+          <p class="flex flex-wrap items-baseline gap-x-2">
+            <span
+              class="text-2xl font-semibold tabular-nums text-foreground"
+              data-e2e="billing-amount"
+            >
+              {money(price)}
+            </span>
+            <span>{t.t(unit)}</span>
+          </p>
+          <p>
+            {paid.perSeat ? forGroup : whole}
+            {savingText}
+          </p>
+        </div>
+      )
+      : (
+        <p aria-live={sellsYearly ? "polite" : undefined} data-e2e="billing-price">
+          {paid.perSeat
+            ? (
+              <>
+                {t.t(yearly ? `GroupBillingPanel.priceYear` : `GroupBillingPanel.price`, {
+                  plan: pro,
+                  price: money(price),
+                })}
+                {forGroup && <>{" "}{forGroup}</>}
+              </>
+            )
+            : t.t(yearly ? `GroupBillingPanel.priceFlatYear` : `GroupBillingPanel.priceFlat`, {
+              plan: pro,
+              price: money(price),
+            })}
+          {savingText}
+        </p>
+      )
+    body = sellsYearly
+      ? (
+        <div class="flex flex-col gap-3">
+          <SegmentedControl
+            class="w-full sm:w-auto [&>button]:flex-1 sm:[&>button]:flex-none"
+            ariaLabel={t.t(`GroupBillingPanel.periodTitle`)}
+            value={yearly ? `year` : `month`}
+            onChange={(value) =>
+              onPeriod?.(value === `year` ? BillingPeriod.Yearly : BillingPeriod.Monthly)}
+            options={[
+              { value: `month`, label: t.t(`GroupBillingPanel.monthly`) },
+              { value: `year`, label: t.t(`GroupBillingPanel.yearly`) },
+            ]}
+          />
+          {prices}
+        </div>
+      )
+      : prices
     // Back from the checkout, the payment is on its way: a second checkout could be paid twice.
     action = !billing.subscribed && !confirming && (
       <Button
@@ -272,12 +369,15 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
         busyLabel={t.t(`GroupBillingPanel.opening`)}
         data-e2e="billing-checkout"
         onClick={() => {
-          if (!pending) onCheckout?.(PRO.id)
+          if (!pending) onCheckout?.(paid.id, chosen)
         }}
       >
         {withTrial
-          ? t.t(`GroupBillingPanel.startTrial`, { count: PRO.trialDays })
+          ? t.t(`GroupBillingPanel.startTrial`, { count: paid.trialDays })
+          : start
+          ? t.t(`GroupBillingPanel.continueToPayment`)
           : t.t(`GroupBillingPanel.upgrade`, { plan: pro })} {opensStripe}
+        {start && <IconArrowUpRight class="size-4" aria-hidden="true" />}
       </Button>
     )
     fine = !billing.subscribed && !confirming && (
@@ -287,7 +387,20 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
             {t.t(`GroupBillingPanel.trialUsed`)}
           </span>
         )}
-        {t.t(`GroupBillingPanel.finePrint`, { plan: pro })}
+        {t.t(
+          paid.perSeat
+            ? (yearly ? `GroupBillingPanel.finePrintYear` : `GroupBillingPanel.finePrint`)
+            : (yearly ? `GroupBillingPanel.finePrintFlatYear` : `GroupBillingPanel.finePrintFlat`),
+          { plan: pro },
+        )}
+        {paid.refundDays !== undefined && paid.refundDays > 0 && (
+          <>
+            {" "}
+            <span data-e2e="billing-refund">
+              {t.t(`GroupBillingPanel.refund`, { count: paid.refundDays })}
+            </span>
+          </>
+        )}
       </>
     )
   } else if (state === BillingState.TRIAL) {
@@ -297,13 +410,20 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
       <p data-e2e="billing-trial">
         {end && left !== null &&
           `${t.t(`GroupBillingPanel.trialEnds`, { count: left, date: day(format, end) })} `}
-        {total ? group(`GroupBillingPanel.trialThen`, { total }) : null}
+        {total
+          ? group(
+            billedYearly ? `GroupBillingPanel.trialThenYear` : `GroupBillingPanel.trialThen`,
+            {
+              total,
+            },
+          )
+          : null}
       </p>
     )
   } else if (state === BillingState.PRO) {
     body = seats && (
       <p data-e2e="billing-seats">
-        {t.t(`GroupBillingPanel.seats`, {
+        {t.t(billedYearly ? `GroupBillingPanel.seatsYear` : `GroupBillingPanel.seats`, {
           total: total ?? ``,
           count: seats.seats,
           price: money(seats.amount),
@@ -341,12 +461,14 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
     )
   }
 
-  return (
+  const card = (
     <Card>
-      <div class="flex flex-col gap-3 px-4 py-4 sm:px-6">
+      <div class="flex flex-col gap-3 px-4 py-4 sm:px-6" data-start={start || undefined}>
         <h3 class="text-base font-medium text-foreground">
           <Rich
-            parts={t.parts(`GroupBillingPanel.planHeading`, { plan: name })}
+            parts={start
+              ? t.parts(`GroupBillingPanel.startHeading`, { plan: pro })
+              : t.parts(`GroupBillingPanel.planHeading`, { plan: name })}
             tags={{ plan: (text) => <span data-e2e="billing-plan-name">{text}</span> }}
           />{" "}
           {status && (
@@ -364,6 +486,16 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
       </div>
     </Card>
   )
+  if (!start) return card
+  // The likeliest wrong turn in a household: a partner who signed up instead of opening the link.
+  return (
+    <>
+      {card}
+      <p class="text-sm text-muted" data-e2e="billing-join-instead">
+        {t.t(`GroupBillingPanel.joinInstead`)}
+      </p>
+    </>
+  )
 }
 
 /**
@@ -377,8 +509,16 @@ function PortalRows(props: GroupBillingPanelProps & { billing: GroupBilling }): 
   const state = billingState(billing)
   const t = useAppText()
   const format = useFormat()
-  const pro = planName(t, PRO.id)
+  const paid = props.plan ?? DEFAULT_PLAN
+  const pro = paid.name
   const trialEnd = billing.trialEnd ?? billing.currentPeriodEnd
+  const renews = state === BillingState.TRIAL || state === BillingState.PRO
+  // The period row: the other period is one portal visit away, for a plan sold for both.
+  const other = renews && billing.period !== null && paid.yearlyAmount !== null
+    ? (billing.period === BillingPeriod.Yearly ? BillingPeriod.Monthly : BillingPeriod.Yearly)
+    : null
+  const seatCount = paid.perSeat ? billing.seatPrice?.seats ?? 1 : 1
+  const money = (amount: number) => formatMoney(amount * seatCount, paid.currency, format.locale)
   const portal = (label: string, dataE2E: string) => (
     <Button
       variant="outline"
@@ -404,13 +544,40 @@ function PortalRows(props: GroupBillingPanelProps & { billing: GroupBilling }): 
           dataE2E="billing-row-card"
         />
       )}
+      {other !== null && (
+        <SettingRow
+          label={t.t(`GroupBillingPanel.periodTitle`)}
+          value={
+            <>
+              <span class="block" data-e2e="billing-period" data-period={billing.period}>
+                {other === BillingPeriod.Yearly
+                  ? t.t(`GroupBillingPanel.periodMonthly`, {
+                    price: money(paid.yearlyAmount!),
+                    saving: money(yearlySavingOf(paid)),
+                  })
+                  : t.t(`GroupBillingPanel.periodYearly`, { price: money(paid.amount) })}
+              </span>
+              <span class="block">{t.t(`GroupBillingPanel.periodHint`)}</span>
+            </>
+          }
+          action={portal(
+            t.t(
+              other === BillingPeriod.Yearly
+                ? `GroupBillingPanel.switchYearly`
+                : `GroupBillingPanel.switchMonthly`,
+            ),
+            "billing-portal-period",
+          )}
+          dataE2E="billing-row-period"
+        />
+      )}
       <SettingRow
         label={t.t(`GroupBillingPanel.invoices`)}
         value={t.t(`GroupBillingPanel.invoicesText`)}
         action={portal(t.t(`GroupBillingPanel.viewInvoices`), "billing-portal-invoices")}
         dataE2E="billing-row-invoices"
       />
-      {(state === BillingState.TRIAL || state === BillingState.PRO) && (
+      {renews && (
         <SettingRow
           label={t.t(`GroupBillingPanel.cancelTitle`, { plan: pro })}
           value={state === BillingState.TRIAL && trialEnd
@@ -447,7 +614,7 @@ export function SeatPriceConfirm(
   useEffect(() => {
     if (error) box.current?.focus()
   }, [error])
-  const { seats, amount, currency } = seatPrice
+  const { seats, amount, currency, period } = seatPrice
   const t = useAppText()
   const format = useFormat()
   const money = (value: number) => formatMoney(value, currency, format.locale)
@@ -456,11 +623,14 @@ export function SeatPriceConfirm(
       <Field
         id="invitation-seat-price"
         error={error}
-        hint={t.t(`SeatPriceConfirm.hint`, {
-          price: money(amount),
-          next: money(amount * (seats + 1)),
-          now: money(amount * seats),
-        })}
+        hint={t.t(
+          period === BillingPeriod.Yearly ? `SeatPriceConfirm.hintYear` : `SeatPriceConfirm.hint`,
+          {
+            price: money(amount),
+            next: money(amount * (seats + 1)),
+            now: money(amount * seats),
+          },
+        )}
       >
         <Checkbox
           ref={box}

@@ -10,6 +10,9 @@ tldr:
   - Seed is free and MIT, with teams, Stripe billing and an admin panel, but in TypeScript.
   - Keep Pegasus if your team writes Python or you want its AI chat and agent features.
 topic: Questions
+intro: "SaaS Pegasus is a fine Django starter, and it costs $449 or more. If you would rather pay nothing, here are the free paths in Python and in TypeScript, and what each one leaves out."
+cover: covers/saas-pegasus-alternatives.webp
+coverAlt: "A balance scale holding a locked treasure chest with a blank price tag on one side and two open seed packets on the other."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

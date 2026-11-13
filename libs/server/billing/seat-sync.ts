@@ -1,7 +1,7 @@
 import type postgres from "postgres"
 import type { BillingProvider } from "@spy4x/billing"
 import type { OutboxEvent, OutboxPublisher } from "@spy4x/server/outbox"
-import { BillingStatus, PLANS } from "@domain/billing"
+import { BillingStatus, type Plan, PLANS } from "@domain/billing"
 import {
   INVITATION_EVENTS,
   PostgresInvitationRepository,
@@ -23,12 +23,14 @@ export const MEMBERSHIP_EVENTS: readonly string[] = [
   "group.member_left",
 ]
 
-/** The plans billed per member. */
-const SEAT_PLAN_IDS = PLANS.filter((plan) => plan.perSeat).map((plan) => plan.id)
+/** The ids of the plans billed per member in `plans`. */
+function seatPlanIds(plans: readonly Plan[]): string[] {
+  return plans.filter((plan) => plan.perSeat).map((plan) => plan.id)
+}
 
 /**
  * A condition on `subscriptions` rows: the subscription's own customer has not been handed over by
- * a transfer of ownership (#250). The previous owner's subscription only runs out its period, and
+ * a transfer of ownership. The previous owner's subscription only runs out its period, and
  * the app never changes what their card is billed for a group they no longer own.
  */
 function notHandedOver(sql: postgres.Sql): postgres.PendingQuery<postgres.Row[]> {
@@ -68,10 +70,14 @@ interface SeatRow extends postgres.Row {
  * is billed per member and the two differ. A failed call throws, so the outbox tries again with
  * backoff: the member stays added while the provider is down, and the quantity catches up when it
  * is back. The provider prorates; this app computes no money. A group not billed per member, or
- * already in step, is left alone.
+ * already in step, is left alone. `plans` is the catalog, `PLANS` unless a test passes its own.
  */
 export function seatSyncJob(
-  { sql, provider }: { sql: postgres.Sql; provider: BillingProvider },
+  { sql, provider, plans = PLANS }: {
+    sql: postgres.Sql
+    provider: BillingProvider
+    plans?: readonly Plan[]
+  },
 ): JobHandler {
   return async (event) => {
     const groupId = event.aggregateId
@@ -80,7 +86,7 @@ export function seatSyncJob(
         SELECT provider_subscription_id, quantity FROM subscriptions
         WHERE group_id = ${groupId}
           AND status <> ${BillingStatus.Canceled}
-          AND plan_id IN ${sql(SEAT_PLAN_IDS)}
+          AND plan_id IN ${sql(seatPlanIds(plans))}
           AND ${notHandedOver(sql)}
       `
     )[0]
@@ -128,12 +134,16 @@ export class SeatSyncPublisher implements OutboxPublisher {
  * Queues a seat sync for every group billed per member whose stored quantity differs from its
  * member count, and returns how many. The nightly job runs it: it catches a sync the outbox gave up
  * on after a long outage, and a count that moved without a group change, such as a member's account
- * being deleted.
+ * being deleted. `plans` is the catalog, `PLANS` unless a test passes its own.
  */
-export async function queueSeatDrift(sql: postgres.Sql, now = new Date()): Promise<number> {
+export async function queueSeatDrift(
+  sql: postgres.Sql,
+  now = new Date(),
+  plans: readonly Plan[] = PLANS,
+): Promise<number> {
   const billed = await sql<{ groupId: string; quantity: number | null }[]>`
     SELECT group_id, quantity FROM subscriptions
-    WHERE status <> ${BillingStatus.Canceled} AND plan_id IN ${sql(SEAT_PLAN_IDS)}
+    WHERE status <> ${BillingStatus.Canceled} AND plan_id IN ${sql(seatPlanIds(plans))}
       AND ${notHandedOver(sql)}
   `
   // Counted the way `maxMembers` is, one group at a time: few groups pay, and one count stays the

@@ -22,9 +22,9 @@ import { createGroupActivityRoute } from "./routes/group-activity.ts"
 import { createGroupsRoute } from "./routes/groups.ts"
 import { createGroupFilesRoute } from "./routes/group-files.ts"
 import { createGroupFileRateLimits } from "./features/groups/file-rate-limits.ts"
-import { createNotesRoute } from "./routes/notes.ts"
-import { createTagsRoute } from "./routes/tags.ts"
+import { createImportsRoute } from "./routes/imports.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
+import { mountNotesRoutes } from "./features/notes/switch.ts"
 import { createDataExportRoute } from "./routes/data-export.ts"
 import { createPictureRoute } from "./routes/pictures.ts"
 import {
@@ -38,7 +38,6 @@ import { PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 import { adminModuleRoutes } from "./routes/admin/registry.ts"
 import { createAdminOwnPreferencesRoute } from "./routes/admin/own-preferences.ts"
 import { preferencesDefinition } from "@domain/identity"
-import { createTokenApiRoute } from "./routes/token-api.ts"
 import { createApiTokens } from "./services/api-tokens.ts"
 import { createTokenRateLimits } from "./middlewares/token-rate-limits.ts"
 import { deriveSecret } from "@spy4x/platform/tokens"
@@ -51,6 +50,7 @@ import { invitationRateLimits } from "./cqrs/invitation-dependencies.ts"
 import { createBillingRoute, createBillingTrialRoute } from "./routes/billing.ts"
 import { createBillingWebhookRoute } from "./routes/billing-webhook.ts"
 import { billingSetup } from "./services/billing.ts"
+import { freePlanAllowsNothing } from "@domain/billing"
 import { createMutationGuards } from "./middlewares/mutation-guards.ts"
 import { createTotpFailures } from "./services/totp-failures.ts"
 import { createEmailCodeFailures } from "./services/email-code-failures.ts"
@@ -59,9 +59,9 @@ import {
   createAuthRateLimits,
   EMAIL_CODE_STORE,
   emailCodeBudgetKey,
-  SIGN_IN_LINK_STORE,
+  SIGN_IN_CODE_STORE,
   SIGN_UP_CODE_STORE,
-  signInLinkBudgetKeys,
+  signInCodeBudgetKeys,
   signUpCodeBudgetKeys,
 } from "./middlewares/auth-rate-limits.ts"
 import { commandBus } from "./services/commandBus.ts"
@@ -79,13 +79,12 @@ import { createHealthRoute } from "./routes/health.ts"
 import { isCacheConnected, kv } from "./services/cache.ts"
 import { files } from "./services/files.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
+import { readLinkedinExpiry } from "@server/blog/blog-post-linkedin-job.ts"
 import { readCatalogSetup } from "@server/catalog/setup.ts"
 import { createUmamiLinks, DEFAULT_ITEM_PATH, readTrackingSetup } from "@server/catalog/tracking.ts"
 import { readWebsiteStatsSetup } from "./services/website-stats.ts"
 import { createPublicCatalogReads, createPublicCatalogRoute } from "./routes/catalog.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
-import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
-import { enqueueSignInLinkMail } from "@server/jobs/sign-in-link-mail.ts"
 import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
 import { mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
 import { createSubscribersRoute } from "./routes/subscribers.ts"
@@ -148,7 +147,7 @@ const app = await createApiApp({
   }),
 })
 
-// Before every route: a guest (#224) needs a sign-in method before inviting, push, API tokens,
+// Before every route: a guest needs a sign-in method before inviting, push, API tokens,
 // uploads or checkout. The socket's `push.register` checks the same in `realtimeHub.ts`.
 for (const [action, paths] of Object.entries(GUEST_LIMITED_PATHS)) {
   const remind = action === "invite"
@@ -156,7 +155,7 @@ for (const [action, paths] of Object.entries(GUEST_LIMITED_PATHS)) {
     : undefined
   app.on("POST", [...paths], refuseGuests(action as GuestLimitedAction, remind))
 }
-// Before every route too: a REST write spends the same budget as an operation (#429).
+// Before every route too: a REST write spends the same budget as an operation.
 app.use("*", operationRateLimits.restWrites)
 
 app.route(
@@ -200,9 +199,6 @@ app.route(
     rateLimits,
     totpFailures: createTotpFailures({ sql }),
     passwordFailures: createPasswordFailures({ sql }),
-    requestPasswordReset: (email) => enqueuePasswordResetMail(sql, email),
-    requestSignInLink: (email, next, requestedBy, language) =>
-      enqueueSignInLinkMail(sql, email, next, requestedBy, language),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
     demo: config.demo ? { adminHost: config.adminDomain } : null,
@@ -222,7 +218,7 @@ const tokenRateLimits = createTokenRateLimits({
   store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
   onStoreError: (error) => log("error: API token rate limit store failed and was let pass", error),
 })
-// Personal API tokens (#167). The hash key comes from the pepper, so it needs no secret of its own;
+// Personal API tokens. The hash key comes from the pepper, so it needs no secret of its own;
 // changing the pepper makes every token stop working, as it ends every password.
 const apiTokens = createApiTokens({
   db,
@@ -245,7 +241,7 @@ app.route(
     tokens: apiTokens,
   }),
 )
-// A person's copy of their data (#229): asked for here, built by the worker, kept in the file store.
+// A person's copy of their data: asked for here, built by the worker, kept in the file store.
 app.route(
   "/account/data-export",
   createDataExportRoute({
@@ -271,20 +267,20 @@ app.route(
 const subscribersSetup = readSubscribersSetup(processEnv, config.isDev ? "dev" : "prod")
 const subscribersWarning = subscribersOffWarning(subscribersSetup)
 if (subscribersWarning) log(subscribersWarning)
-// The catalog (#466): off unless CATALOG=true. Its photos pass through the API to the file store.
-// Its tracking links (#483) need the website's address, and count visits in Umami when it is set.
+// The catalog: off unless CATALOG=true. Its photos pass through the API to the file store.
+// Its tracking links need the website's address, and count visits in Umami when it is set.
 const siteUrl = readSiteUrl(processEnv, config.isDev ? "dev" : "prod")
 const catalogSwitch = readCatalogSetup(processEnv)
 const trackingSetup = catalogSwitch.on ? readTrackingSetup(processEnv, siteUrl) : null
 const catalogSetup = { ...catalogSwitch, tracking: trackingSetup }
-// Stats (#485): the website's numbers from Umami, off until its three settings are set.
+// Stats: the website's numbers from Umami, off until its three settings are set.
 const websiteStats = {
   ...readWebsiteStatsSetup(processEnv),
   itemPath: trackingSetup?.itemPath ??
     (processEnv.get("CATALOG_ITEM_PATH")?.trim() || DEFAULT_ITEM_PATH),
 }
 const serverFiles = s3ServerFiles(config.files)
-// The operator area (#146) and its modules (#424). The gate answers 404 to anyone below operator.
+// The operator area and its modules. The gate answers 404 to anyone below operator.
 app.route(
   "/admin",
   createAdminRoute({
@@ -295,7 +291,9 @@ app.route(
       sql,
       subscribers: subscribersSetup,
       siteUrl,
+      linkedinExpiresAt: readLinkedinExpiry(processEnv),
       limit: rateLimits.normal,
+      thumbnailLimit: rateLimits.thumbnail,
       resetByAddress: rateLimits.resetByAddress,
       emit,
       now: () => new Date(),
@@ -306,6 +304,7 @@ app.route(
       build: config.build,
       billing: billingSetup,
       catalog: catalogSetup,
+      notes: config.notes,
       files: serverFiles,
       websiteStats,
     }).concat(
@@ -321,20 +320,6 @@ app.route(
       ? async (userId) =>
         (await db.authStore.findKey(PASSWORD_METHOD, PUBLIC_DEMO_ADMIN.email))?.userId === userId
       : undefined,
-  }),
-)
-// The only routes that accept a token, and they accept nothing else.
-app.route(
-  "/v1",
-  createTokenApiRoute({
-    authenticate: (c, presented) => apiTokens.authenticate(c, presented),
-    auditRefusal: (c, tokenId, reason) => apiTokens.auditRefusal(c, tokenId, reason),
-    list: (query) => queryBus.execute(query),
-    get: (query) => queryBus.execute(query),
-    create: (command) => commandBus.execute(command),
-    cursor: noteListCursor,
-    limitByIp: tokenRateLimits.failuresByIp,
-    limitByToken: tokenRateLimits.byToken,
   }),
 )
 // Awaited here so a missing VAPID keys file stops the API at start-up, not at the first push call.
@@ -363,27 +348,31 @@ app.route(
   }),
 )
 // Before "/groups": its authentication middleware would otherwise answer for these paths too.
+// Off with NOTES=false: no note, tag or token-API route is mounted, so their paths answer 404.
+mountNotesRoutes(app, config.notes, {
+  commandBus,
+  queryBus,
+  cursor: noteListCursor,
+  noteCreated: (userId) => signIn.guests.remind(userId, GuestReminderKind.FirstNote),
+  expectedOrigin,
+  tokenApi: {
+    authenticate: (c, presented) => apiTokens.authenticate(c, presented),
+    auditRefusal: (c, tokenId, reason) => apiTokens.auditRefusal(c, tokenId, reason),
+    limitByIp: tokenRateLimits.failuresByIp,
+    limitByToken: tokenRateLimits.byToken,
+  },
+})
 app.route(
-  "/groups/:groupId/notes",
-  createNotesRoute({
-    create: async (command) => {
-      const created = await commandBus.execute(command)
-      await signIn.guests.remind(command.data.actor.userId, GuestReminderKind.FirstNote)
-      return created
-    },
-    update: (command) => commandBus.execute(command),
-    delete: (command) => commandBus.execute(command),
-    restore: (command) => commandBus.execute(command),
-    move: (command) => commandBus.execute(command),
+  "/groups/:groupId/imports",
+  createImportsRoute({
+    create: (command) => commandBus.execute(command),
     list: (query) => queryBus.execute(query),
     get: (query) => queryBus.execute(query),
-    cursor: noteListCursor,
+    check: (query) => queryBus.execute(query),
+    commit: (command) => commandBus.execute(command),
+    undo: (command) => commandBus.execute(command),
     expectedOrigin,
   }),
-)
-app.route(
-  "/groups/:groupId/tags",
-  createTagsRoute({ list: (query) => queryBus.execute(query) }),
 )
 // Before "/groups" too, for the same reason.
 app.route(
@@ -436,7 +425,7 @@ app.route(
     log,
   }),
 )
-// The Telegram bot (#269, docs/telegram.md): off without TELEGRAM_BOT_TOKEN, and then nothing here
+// The Telegram bot (docs/telegram.md): off without TELEGRAM_BOT_TOKEN, and then nothing here
 // calls Telegram. A setting that cannot work stops the API now, not at the first message.
 const telegramSetup = readTelegramSetup(processEnv, config.isDev ? "dev" : "prod")
 const telegramNote = telegramOffNote(telegramSetup)
@@ -447,7 +436,7 @@ const telegram = telegramSetup
     db,
     store: kv,
     webAppUrl: config.webAppUrl,
-    product: createTelegramProduct({ queryBus }),
+    product: createTelegramProduct({ queryBus, notes: config.notes }),
     log,
   })
   : null
@@ -570,6 +559,7 @@ if (config.isDev) {
       isDev: config.isDev,
       db,
       sql,
+      freePlanAllowsNothing: billingSetup.provider !== null && freePlanAllowsNothing(),
       closeSockets: (userId) => realtime.closeUser(userId, "closed by a development script", 1012),
       forgetCodeBudget: async (email, client) => {
         await createRedisRateLimitStore(kv, { keyPrefix: EMAIL_CODE_STORE })
@@ -578,10 +568,10 @@ if (config.isDev) {
         const keys = await signUpCodeBudgetKeys(email, client)
         await signUp.delete(keys.address)
         await signUp.delete(keys.client)
-        const links = createRedisRateLimitStore(kv, { keyPrefix: SIGN_IN_LINK_STORE })
-        const linkKeys = await signInLinkBudgetKeys(email, client)
-        await links.delete(linkKeys.address)
-        await links.delete(linkKeys.client)
+        const signInCodes = createRedisRateLimitStore(kv, { keyPrefix: SIGN_IN_CODE_STORE })
+        const codeKeys = await signInCodeBudgetKeys(email, client)
+        await signInCodes.delete(codeKeys.address)
+        await signInCodes.delete(codeKeys.client)
       },
     }),
   )
@@ -591,7 +581,7 @@ if (config.isDev) {
 await listenForGroupNews(listenSql, realtime, log)
 // A change to a person's inbox becomes a hint on their sockets; the page reads the count.
 await listenForInboxNews(listenSql, realtime)
-// A picture the worker made ready or refused (#464) becomes a hint; the page reads the profile.
+// A picture the worker made ready or refused becomes a hint; the page reads the profile.
 await listenForPictureStates(listenSql, (userId) => realtime.notifyUserChange(userId))
 // Sockets whose session was signed out, expired or lost its second factor while open are closed
 // within this interval; the per-request check already refuses their frames.

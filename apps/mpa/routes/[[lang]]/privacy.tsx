@@ -1,7 +1,7 @@
 // Seed's own site: see docs/start-a-product.md
 // deno-lint-ignore-file ui-text/no-literal
 // This page is English at every language's address: a translated policy could say something the
-// English does not, so it is not translated (#276). The frame around it is.
+// English does not, so it is not translated. The frame around it is.
 import { AUTHOR_URL, LegalPage, REPOSITORY_URL } from "../../site.tsx"
 import { define } from "../../utils.ts"
 
@@ -142,8 +142,8 @@ export default define.page(function Privacy({ state }) {
         </li>
       </ul>
       <p>
-        Mail, such as sign-in codes, reset links, invitations and the newsletter, goes out through
-        an email provider. The servers keep request logs to run and fix the service. If an error
+        Mail, such as sign-in and reset codes, invitations and the newsletter, goes out through an
+        email provider. The servers keep request logs to run and fix the service. If an error
         tracker is set up, the app and the server send it a report when they crash; the app's report
         carries the page's address without anything after the <code>?</code>{" "}
         and without an invitation's token.

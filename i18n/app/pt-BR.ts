@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Anexar arquivos a esta nota",
+  "AppShell.copyNoteLink": "Copiar o link desta nota",
+  "AppShell.deleteNote": "Excluir esta nota",
+  "AppShell.duplicateNote": "Duplicar esta nota",
+  "AppShell.moveNote": "Mover esta nota para outro grupo",
   "AttachmentMessages.load": "Não foi possível carregar os arquivos",
   "AttachmentMessages.type":
     "Não dá para anexar {name}. Só são aceitas imagens JPEG, PNG, WebP e GIF e arquivos PDF.",
@@ -61,6 +65,9 @@ export default {
   "GroupActivity.renamedFromTo":
     "<who>{who}</who> renomeou o grupo de “<value>{from}</value>” para “<value>{to}</value>”",
   "GroupActivity.detailsUpdated": "<who>{who}</who> mudou a descrição, a cor ou o emoji do grupo",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> mudou o fuso horário de <value>{from}</value> para <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> mudou o fuso horário",
   "GroupActivity.deleted": "<who>{who}</who> excluiu o grupo",
   "GroupActivity.restored": "<who>{who}</who> restaurou o grupo",
   "GroupActivity.roleChanged": "<who>{who}</who> mudou a função de <target>{target}</target>",
@@ -258,6 +265,11 @@ export default {
       "Grupos novos começam no plano gratuito. Seu teste grátis de {count} dias vale para o primeiro grupo que você passar para um plano pago.",
   },
   "GroupEditor.readOnly": "Só os administradores e o dono podem alterar os dados deste grupo.",
+  "GroupEditor.timeZoneHint":
+    "Dias e meses começam à meia-noite neste fuso, para todo mundo do grupo.",
+  "GroupEditor.timeZoneInvalid": "Não conhecemos esse fuso horário. Escolha outro da lista.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Outra pessoa mudou para {zone} enquanto você editava. Salve para usar o seu ou clique em Descartar.",
   "GroupEditor.nameRequired": "Digite um nome.",
   "GroupEditor.nameInvalid":
     "Use no máximo 100 caracteres, sem quebras de linha nem caracteres invisíveis.",
@@ -395,7 +407,8 @@ export default {
   "GroupInvitations.verifyEmail": "Confirmar e-mail",
   "GroupInvitations.notForYou":
     "Este convite foi enviado para outro e-mail. Se ele for seu, confirme-o primeiro no seu <link>perfil</link> ou entre com a conta que usa esse e-mail.",
-  "GroupInvitations.somethingWrong": "Algo deu errado. Tente de novo.",
+  "GroupInvitations.somethingWrong":
+    "Não foi possível concluir a solicitação do convite. Tente de novo.",
   "GroupInvitations.unreachable": "Não foi possível falar com o servidor. Tente de novo.",
   "GroupMembers.unnamed": "Membro sem nome",
   "GroupMembers.title": "Membros",
@@ -466,7 +479,7 @@ export default {
   "GroupTransfer.failed": "Não foi possível transferir o grupo",
   "GroupTransfer.unreachable": "Não foi possível falar com o servidor. Tente de novo.",
   "GroupTransfer.tooManyAttempts": "Muitas tentativas. Espere alguns minutos e tente de novo.",
-  "GroupTransfer.somethingWrong": "Algo deu errado. Tente de novo.",
+  "GroupTransfer.somethingWrong": "Não foi possível transferir a propriedade. Tente de novo.",
   "Groups.title": "Grupos",
   "Groups.new": "Novo grupo",
   "Groups.import": "Importar um grupo…",
@@ -525,7 +538,6 @@ export default {
   "InvitationNew.discardLeave": "Descartar",
   "InvitationNew.discardStay": "Continuar editando",
   "GroupBillingPanel.planFree": "Gratuito",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "one":
       "Um pagamento não foi aprovado. Para continuar no {plan}, atualize o cartão em Trocar cartão até {date} (daqui a {count} dia).",
@@ -537,7 +549,7 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "Um pagamento não foi aprovado, e o grupo voltou para o plano gratuito. Atualize seu cartão em Trocar cartão para voltar ao {plan}.",
   "GroupBillingPanel.offline": "Não foi possível falar com o servidor. Tente de novo.",
-  "GroupBillingPanel.unreadable": "Não foi possível carregar o plano.",
+  "GroupBillingPanel.unreadable": "Não foi possível carregar o plano",
   "GroupBillingPanel.unsafePage":
     "O serviço de pagamento devolveu um endereço que este app não vai abrir.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -546,7 +558,7 @@ export default {
     "Não foi possível abrir a página de cobrança do Stripe. Confira sua conexão e tente de novo.",
   "GroupBillingPanel.title": "Cobrança",
   "GroupBillingPanel.description":
-    "Quanto <group>{group}</group> paga por mês. A cobrança é feita pelo Stripe.",
+    "Quanto <group>{group}</group> paga. A cobrança é feita pelo Stripe.",
   "GroupBillingPanel.loading": "Carregando o plano",
   "GroupBillingPanel.statusTrial": "Teste",
   "GroupBillingPanel.statusRenews": "Renova em {date}",
@@ -594,7 +606,7 @@ export default {
   "GroupBillingPanel.confirming":
     "O Stripe está confirmando seu plano. Esta página se atualiza sozinha.",
   "GroupBillingPanel.paymentMethod": "Forma de pagamento",
-  "GroupBillingPanel.paymentMethodText": "O cartão que o Stripe cobra todo mês.",
+  "GroupBillingPanel.paymentMethodText": "O cartão que o Stripe cobra por este plano.",
   "GroupBillingPanel.changeCard": "Trocar cartão",
   "GroupBillingPanel.invoices": "Faturas",
   "GroupBillingPanel.invoicesText": "Todas as faturas e recibos, para ver ou baixar.",
@@ -603,6 +615,57 @@ export default {
   "GroupBillingPanel.cancelFree": "Se você cancelar antes de {date}, não será cobrado.",
   "GroupBillingPanel.cancelKeep": "Você continua no {plan} até o fim do período.",
   "GroupBillingPanel.cancelPlan": "Cancelar plano",
+  "GroupBillingPanel.periodTitle": "Período de cobrança",
+  "GroupBillingPanel.monthly": "Mensal",
+  "GroupBillingPanel.yearly": "Anual",
+  "GroupBillingPanel.priceYear": "O {plan} custa {price} por membro ao ano.",
+  "GroupBillingPanel.priceForGroupYear": {
+    "one": "Com {count} membro, <group>{group}</group> pagaria {total} por ano.",
+    "many": "Com {count} de membros, <group>{group}</group> pagaria {total} por ano.",
+    "other": "Com {count} membros, <group>{group}</group> pagaria {total} por ano.",
+  },
+  "GroupBillingPanel.saving": "{amount} a menos do que pagando por mês.",
+  "GroupBillingPanel.finePrintYear":
+    "Cobrança anual por membro. Cancele quando quiser e continue no {plan} até o fim do período.",
+  "GroupBillingPanel.trialThenYear":
+    "Depois disso, <group>{group}</group> paga {total} por ano, a menos que você cancele.",
+  "GroupBillingPanel.seatsYear": {
+    "one": "{total} por ano, por {count} membro a {price} cada, incluindo o dono.",
+    "many": "{total} por ano, por {count} de membros a {price} cada, incluindo o dono.",
+    "other": "{total} por ano, por {count} membros a {price} cada, incluindo o dono.",
+  },
+  "GroupBillingPanel.periodMonthly":
+    "Você paga por mês. O plano anual custa {price} por ano, {saving} a menos.",
+  "GroupBillingPanel.periodYearly": "Você paga por ano. O plano mensal custa {price} por mês.",
+  "GroupBillingPanel.periodHint": "O Stripe mostra quanto você paga hoje antes de você confirmar.",
+  "GroupBillingPanel.switchYearly": "Mudar para anual",
+  "GroupBillingPanel.switchMonthly": "Mudar para mensal",
+  "GroupBillingPanel.startHeading": "Comece com o <plan>{plan}</plan>",
+  "GroupBillingPanel.unitMonth": "por mês",
+  "GroupBillingPanel.unitYear": "por ano",
+  "GroupBillingPanel.unitMemberMonth": "por membro por mês",
+  "GroupBillingPanel.unitMemberYear": "por membro por ano",
+  "GroupBillingPanel.wholeGroup": {
+    "one": "Para o grupo todo, até {count} membro.",
+    "many": "Para o grupo todo, até {count} de membros.",
+    "other": "Para o grupo todo, até {count} membros.",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "Para o grupo todo.",
+  "GroupBillingPanel.continueToPayment": "Ir para o pagamento",
+  "GroupBillingPanel.priceFlat": "O {plan} custa {price} por mês para o grupo todo.",
+  "GroupBillingPanel.priceFlatYear": "O {plan} custa {price} por ano para o grupo todo.",
+  "GroupBillingPanel.finePrintFlat":
+    "Cobrança mensal. Cancele quando quiser e continue no {plan} até o fim do período.",
+  "GroupBillingPanel.finePrintFlatYear":
+    "Cobrança anual. Cancele quando quiser e continue no {plan} até o fim do período.",
+  "GroupBillingPanel.refund": {
+    "one": "Mudou de ideia? Peça o reembolso total em até {count} dia.",
+    "many": "Mudou de ideia? Peça o reembolso total em até {count} de dias.",
+    "other": "Mudou de ideia? Peça o reembolso total em até {count} dias.",
+  },
+  "GroupBillingPanel.joinInstead":
+    "Quer entrar no grupo de outra pessoa? Peça ao dono dele um link de convite em vez de pagar.",
+  "HomeView.opening": "Abrindo o app…",
   "GroupBillingView.trialStarted": {
     "one": "Seu teste do {plan} de {count} dia começou",
     "many": "Seu teste do {plan} de {count} de dias começou",
@@ -611,10 +674,10 @@ export default {
   "GroupBillingView.trialUntil": "“{group}” está no {plan} até {date}.",
   "GroupBillingView.paid": "Você está no {plan}",
   "GroupBillingView.paidText": "O Stripe confirmou o pagamento de “{group}”.",
-  "NotificationsScreen.loadFailed": "Não foi possível carregar as notificações.",
-  "NotificationsScreen.loadMoreFailed": "Não foi possível carregar mais notificações.",
-  "NotificationsScreen.readFailed": "Não foi possível marcar como lida.",
-  "NotificationsScreen.readAllFailed": "Não foi possível marcar como lidas.",
+  "NotificationsScreen.loadFailed": "Não foi possível carregar as notificações",
+  "NotificationsScreen.loadMoreFailed": "Não foi possível carregar mais notificações",
+  "NotificationsScreen.readFailed": "Não foi possível marcar como lida",
+  "NotificationsScreen.readAllFailed": "Não foi possível marcar como lidas",
   "NotificationsScreen.invitedViewer":
     "Você foi convidado para o grupo “<group>{group}</group>” como leitor.",
   "NotificationsScreen.invitedEditor":
@@ -721,6 +784,8 @@ export default {
   "OverviewScreen.emptyGroupText":
     "A visão geral vai se preenchendo conforme as pessoas do grupo criam notas.",
   "OverviewScreen.newNote": "Nova nota",
+  "OverviewScreen.choosePlanText": "Escolha um plano para começar a adicionar.",
+  "OverviewScreen.choosePlan": "Escolher um plano",
   "OverviewScreen.allHidden": "Todos os widgets estão ocultos",
   "OverviewScreen.allHiddenText": "Escolha os que você quer ver.",
   "OverviewScreen.gridLabel": "Visão geral de {group}",
@@ -730,6 +795,7 @@ export default {
   "OverviewScreen.customRange": "Período personalizado",
   "OverviewScreen.rangeTooLong": "Escolha um período de até um ano.",
   "OverviewScreen.asOf": "Atualizado às {time}",
+  "OverviewScreen.zoneNote": "horário de {city}",
   "OverviewScreen.hide": "Ocultar widget",
   "OverviewView.opening": "Abrindo a visão geral…",
   "OverviewView.saveFailed":
@@ -774,6 +840,9 @@ export default {
     "No plano deste grupo, você pode rebaixar a função de um membro ou removê-lo, mas não promovê-lo.",
   "PlanRefusalNotice.openBilling": "Abrir a aba Cobrança",
   "PlanRefusalNotice.askOwner": "Peça ao dono do grupo para mudar de plano.",
+  "PlanRefusalNotice.noPlanTitle": "{group} não tem plano pago",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "Este grupo não tem plano pago",
+  "PlanRefusalNotice.noPlanText": "Escolha um plano para começar a adicionar.",
   "GuestProfile.accountType": "Tipo de conta",
   "GuestProfile.guestAccount": "Conta de visitante. Só este navegador consegue abri-la.",
   "GuestProfile.methods": "Formas de entrar",
@@ -912,7 +981,7 @@ export default {
   "GuestScreens.signOutAnyway": "Sair mesmo assim",
   "GuestScreens.signOutText":
     "Esta conta não tem forma de entrar, então você não vai conseguir voltar a ela. Tudo o que há nela será perdido.",
-  "GuestScreens.offline": "Você está offline. Conecte-se e tente de novo.",
+  "GuestScreens.offline": "Não foi possível falar com o servidor. Tente de novo.",
   "GuestScreens.providerFailed":
     "O {provider} não concluiu. Sua conta não mudou. Tente de novo ou escolha outra forma.",
   "GuestScreens.noPasskey":
@@ -925,37 +994,38 @@ export default {
   "OAuthNotice.busy": "Muitas tentativas. Espere um minuto e tente de novo.",
   "OAuthNotice.kept": "Forma de entrar adicionada. Agora você pode usá-la em qualquer dispositivo.",
   "OAuthNotice.guestTaken": "Essa forma de entrar pertence a outra conta.",
-  "PasswordResetScreen.forgotFailed": "Não foi possível enviar o link",
+  "PasswordResetScreen.forgotFailed": "Não foi possível enviar o código",
   "PasswordResetScreen.resetFailed": "Não foi possível trocar a senha",
+  "PasswordResetScreen.sentTitle": "Digite o código para redefinir a senha",
   "PasswordResetScreen.sent":
-    "Se houver uma conta com este e-mail, enviamos para ela um link para redefinir a senha.",
+    "Se houver uma conta com <email>{email}</email>, enviamos um código para ela.",
   "PasswordResetScreen.forgotDescription": {
     "one":
-      "Digite o e-mail que você usou no cadastro. Vamos enviar um link para você escolher uma nova senha. Ele funciona uma vez, por {count} minuto.",
+      "Digite o e-mail que você usou no cadastro. Vamos enviar um código para você escolher uma nova senha. Ele funciona por {count} minuto.",
     "many":
-      "Digite o e-mail que você usou no cadastro. Vamos enviar um link para você escolher uma nova senha. Ele funciona uma vez, por {count} de minutos.",
+      "Digite o e-mail que você usou no cadastro. Vamos enviar um código para você escolher uma nova senha. Ele funciona por {count} de minutos.",
     "other":
-      "Digite o e-mail que você usou no cadastro. Vamos enviar um link para você escolher uma nova senha. Ele funciona uma vez, por {count} minutos.",
+      "Digite o e-mail que você usou no cadastro. Vamos enviar um código para você escolher uma nova senha. Ele funciona por {count} minutos.",
   },
   "PasswordResetScreen.remembered": "Lembrou? <link>Voltar para o login</link>",
-  "PasswordResetScreen.send": "Enviar o link",
+  "PasswordResetScreen.send": "Enviar código",
   "PasswordResetScreen.doneTitle": "Senha alterada",
   "PasswordResetScreen.done":
     "Você saiu da conta em todos os dispositivos. Entre com sua nova senha.",
   "PasswordResetScreen.signIn": "Entrar",
-  "PasswordResetScreen.askNew": "Pedir um novo link",
   "PasswordResetScreen.chooseTitle": "Escolha uma nova senha",
   "PasswordResetScreen.choose":
     "Para <email>{email}</email>. Ao salvar, você sai da conta em todos os dispositivos.",
-  "PasswordResetScreen.expired": "O link expirou? <link>Peça um novo</link>",
+  "PasswordResetScreen.expired": "Demorou demais? <link>Peça um novo código</link>",
+  "PasswordResetScreen.tookTooLong": "Demorou demais. Peça um novo código.",
   "PasswordResetScreen.newPassword": "Nova senha",
   "PasswordResetScreen.newPasswordHint": "De {min} a {max} caracteres.",
   "PasswordResetScreen.saving": "Salvando…",
   "PasswordResetScreen.save": "Salvar nova senha",
   "MoveNote.title": "Mover para outro grupo",
   "MoveNote.cancel": "Cancelar",
-  "MoveNote.question":
-    "Escolha para onde mover “<title>{title}</title>”. Todos daquele grupo vão poder vê-la.",
+  "MoveNote.hint": "Todos do grupo escolhido vão poder vê-la.",
+  "MoveNote.move": "Mover",
   "NewNote.title": "Nova nota",
   "NewNote.close": "Fechar",
   "NewNote.titleLabel": "Título",
@@ -1039,6 +1109,8 @@ export default {
   "NoteEditor.tags": "Etiquetas",
   "NoteEditorView.createdTitle": "Nota criada",
   "NoteEditorView.created": "“{title}” foi criada.",
+  "NoteEditorView.copyTitle": "{title} (cópia)",
+  "NoteEditorView.duplicateFailed": "Não foi possível duplicar a nota",
   "NoteEditorView.savedTitle": "Nota salva",
   "NoteEditorView.saved": "“{title}” foi salva.",
   "NoteEditorView.unsaved": "Você tem alterações não salvas. Se sair agora, vai perdê-las.",
@@ -1113,7 +1185,7 @@ export default {
     "other": "{count} selecionadas",
   },
   "Notes.cancelSelect": "Cancelar",
-  "Notes.moveTo": "Mover para outro grupo",
+  "Notes.moveTo": "Para o grupo",
   "Notes.moving": "Movendo…",
   "Notes.move": "Mover",
   "Notes.updated": "Atualizada: <date>{date}</date>",
@@ -1131,7 +1203,6 @@ export default {
   "NotesFilter.allTags": "Todas estas etiquetas",
   "NotesFilter.author": "Autor",
   "NotesFilter.anyone": "Qualquer pessoa",
-  "NotesFilter.you": "Você",
   "NotesFilter.search": "Buscar notas",
   "NotesFilter.mine": "Criadas por mim",
   "NotesFilter.sortUpdated": "Última atualização",
@@ -1226,7 +1297,7 @@ export default {
       "Não foi possível salvar uma etiqueta que você criou offline, então nós a tiramos de {count} notas. As notas foram salvas sem ela.",
   },
   "OfflineStatus.theirs": "Versão do servidor",
-  "OfflineStatus.theirsUnknown": "A versão do servidor não está disponível.",
+  "OfflineStatus.theirsUnknown": "Indisponível no momento.",
   "OfflineStatus.untitledNote": "Nota sem título",
   "OfflineStatus.useServers": "Usar a do servidor",
   "OfflineStatus.youDeletedNote": "Você excluiu esta nota.",
@@ -1269,6 +1340,8 @@ export default {
   "Preferences.updatedElsewhere": "Preferências atualizadas em outro dispositivo.",
   "SeatPriceConfirm.hint":
     "Cada novo membro acrescenta {price} por mês, então mais um membro faz o grupo passar de {now} para {next}. A diferença do resto deste período vem na próxima fatura.",
+  "SeatPriceConfirm.hintYear":
+    "Cada novo membro acrescenta {price} por ano, então mais um membro faz o grupo passar de {now} para {next}. A diferença do resto deste período vem na próxima fatura.",
   "SeatPriceConfirm.accept": "Aceito o preço maior a cada pessoa que entrar",
   "ProfileAccount.name": "Nome",
   "ProfileAccount.notSet": "Não informado",
@@ -1498,7 +1571,7 @@ export default {
   "ProfileView.tokenRevoked": "Token revogado",
   "ProfileView.tokenRevokedBody": "Esse token não funciona mais.",
   "ProviderProof.passkey": "uma chave de acesso",
-  "ProviderProof.link": "um link de acesso",
+  "ProviderProof.link": "um código por e-mail",
   "ProviderProof.fresh": "Você entrou com {methods} agora há pouco, então não precisa de senha.",
   "ProviderProof.needed": {
     "one":
@@ -1510,59 +1583,29 @@ export default {
   },
   "ProviderProof.passkeyAgain": "Entrar de novo com uma chave de acesso",
   "ProviderProof.providerAgain": "Entrar de novo com {provider}",
-  "SignInLinkScreen.sendFailed": "Não foi possível enviar o link. Tente de novo daqui a pouco.",
-  "SignInLinkScreen.unreachable":
-    "Não foi possível falar com o servidor. Confira sua conexão e toque em Continuar de novo.",
-  "SignInLinkScreen.openFailed":
-    "Não conseguimos fazer você entrar. Toque em Continuar para tentar de novo ou peça um novo link.",
-  "SignInLinkScreen.title": "Entrar com um link",
-  "SignInLinkScreen.description":
-    "Vamos enviar por e-mail um link que faz você entrar. Ainda não tem conta com esse e-mail? O link cria uma.",
-  "SignInLinkScreen.ratherPassword": "Prefere usar senha? <link>Voltar para o login</link>",
-  "SignInLinkScreen.submit": "Receber link por e-mail",
-  "SignInLinkScreen.sent": {
+  "SignInCodeScreen.sendFailed": "Não foi possível enviar o código. Tente de novo em instantes.",
+  "SignInCodeScreen.title": "Entrar com um código por e-mail",
+  "SignInCodeScreen.description":
+    "Vamos enviar por e-mail um código para você digitar aqui. Ainda não tem conta com esse e-mail? O código cria uma.",
+  "SignInCodeScreen.ratherPassword": "Prefere usar senha? <link>Voltar para o login</link>",
+  "SignInCodeScreen.submit": "Receber código por e-mail",
+  "SignInCodeScreen.confirmTitle": "Confirme que é você",
+  "SignInCodeScreen.confirmDescription":
+    "Vamos enviar um código para <email>{email}</email>. Digite-o na próxima etapa para confirmar que é você.",
+  "CodeStep.sent": "Enviamos um código para <email>{email}</email>.",
+  "CodeStep.invalid": "O código tem 8 caracteres. Veja se está faltando algum.",
+  "SignInCodeScreen.guest":
+    "Você está usando o app como visitante. Ao entrar, o que você criou aqui fica salvo com este e-mail. Se ele já tiver uma conta, perguntamos antes.",
+  "CodeStep.deadTitle": "Este código não funciona mais",
+  "CodeStep.dead": {
     "one":
-      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minuto.",
+      "Cada código funciona uma vez, por {count} minuto, e só algumas tentativas erradas são permitidas. Peça um novo e use o e-mail mais recente.",
     "many":
-      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} de minutos.",
+      "Cada código funciona uma vez, por {count} de minutos, e só algumas tentativas erradas são permitidas. Peça um novo e use o e-mail mais recente.",
     "other":
-      "Enviamos um link de acesso para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
+      "Cada código funciona uma vez, por {count} minutos, e só algumas tentativas erradas são permitidas. Peça um novo e use o e-mail mais recente.",
   },
-  "SignInLinkScreen.openHere": "Abra o link neste dispositivo para entrar aqui.",
-  "SignInLinkScreen.newLink": "Enviar novo link",
-  "SignInLinkScreen.waiting": {
-    "one": "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundo.",
-    "many":
-      "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} de segundos.",
-    "other":
-      "Não chegou? Confira a pasta de spam. Você pode enviar um novo link em {count} segundos.",
-  },
-  "SignInLinkScreen.resent":
-    "Um novo link está a caminho. Os links anteriores continuam funcionando até que um deles seja usado.",
-  "SignInLinkScreen.refusedTitle": "Este link não funciona mais",
-  "SignInLinkScreen.refused": {
-    "one":
-      "Os links de acesso funcionam uma vez, por {count} minuto. Peça um novo e use o e-mail mais recente.",
-    "many":
-      "Os links de acesso funcionam uma vez, por {count} de minutos. Peça um novo e use o e-mail mais recente.",
-    "other":
-      "Os links de acesso funcionam uma vez, por {count} minutos. Peça um novo e use o e-mail mais recente.",
-  },
-  "SignInLinkScreen.elsewhereTitle": "Este link foi pedido em outro navegador",
-  "SignInLinkScreen.elsewhere":
-    "Você não entrou, e sua conta de visitante não mudou. Peça um novo link neste navegador para entrar aqui.",
-  "SignInLinkScreen.incompleteTitle": "Este link está incompleto",
-  "SignInLinkScreen.incomplete": "Abra de novo o link do e-mail ou peça um novo.",
-  "SignInLinkScreen.backToApp": "Voltar para o app",
-  "SignInLinkScreen.finishTitle": "Terminar de entrar",
-  "SignInLinkScreen.finish":
-    "Continue para entrar neste dispositivo. Se o e-mail for novo, sua conta será criada.",
-  "SignInLinkScreen.signedInAs":
-    "Você está conectado como <email>{email}</email>. Se continuar, vai entrar na conta do link no lugar dela.",
-  "SignInLinkScreen.guest":
-    "Você está usando o app como visitante. Se pediu este link neste navegador, ao continuar esta conta de visitante fica salva com o e-mail do link. Se esse e-mail já tiver uma conta, perguntamos antes.",
-  "SignInLinkScreen.signingIn": "Entrando…",
-  "SignInLinkScreen.stay": "Continuar na conta atual",
+  "CodeStep.differentEmail": "Usar outro e-mail",
   "SignInMethods.failed": "Não foi possível alterar suas formas de entrar",
   "SignInMethods.loadFailed":
     "Não foi possível carregar suas formas de entrar. Confira sua conexão e tente de novo.",
@@ -1612,19 +1655,12 @@ export default {
   "SignInMethods.passkeyNotSaved": "Não foi possível salvar a chave de acesso. Tente de novo.",
   "SignInMethods.passkeyOnDevice": "Este dispositivo já tem uma chave de acesso para sua conta.",
   "SignUpCodeScreen.checkFailed": "Não foi possível verificar o código",
-  "SignUpCodeScreen.offline": "Você está offline. Conecte-se e tente de novo.",
+  "SignUpCodeScreen.offline": "Não foi possível falar com o servidor. Tente de novo.",
   "SignUpCodeScreen.title": "Confira seu e-mail",
   "SignUpCodeScreen.loading": "Carregando…",
-  "SignUpCodeScreen.sent": {
-    "one": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minuto.",
-    "many": "Enviamos um código para <email>{email}</email>. Ele vale por {count} de minutos.",
-    "other": "Enviamos um código para <email>{email}</email>. Ele vale por {count} minutos.",
-  },
-  "SignUpCodeScreen.wrongAddress": "E-mail errado? <button>Use outro</button>",
   "SignUpCodeScreen.code": "Código",
   "SignUpCodeScreen.checking": "Verificando…",
   "SignUpCodeScreen.resend": "Enviar novo código",
-  "SignUpCodeScreen.resent": "Um novo código está a caminho.",
   "SignUpCodeScreen.resendFailed": "Não foi possível enviar um novo código",
   "SignUpCodeScreen.existsTitle": "Você já tem uma conta",
   "SignUpCodeScreen.exists":
@@ -1669,7 +1705,7 @@ export default {
   "SignedInDevices.lastActive": "Ativo pela última vez <when></when>",
   "SignedInDevices.ip": "<label>Endereço IP</label> <ip>{ip}</ip>",
   "Search.search": "Buscar",
-  "Search.placeholder": "Buscar notas e grupos",
+  "Search.placeholder": "Buscar ou executar um comando",
   "Search.close": "Fechar a busca",
   "Search.loading": "Buscando…",
   "Search.error": "Não foi possível buscar. Mude o texto da busca para tentar de novo.",
@@ -1678,13 +1714,18 @@ export default {
     "many": "Digite pelo menos {count} de caracteres para buscar notas.",
     "other": "Digite pelo menos {count} caracteres para buscar notas.",
   },
-  "Search.empty": "Nenhuma nota ou grupo encontrado para “{query}”.",
+  "Search.empty": "Nada encontrado para “{query}”.",
   "Search.emptyOnDevice":
     "Nada neste dispositivo corresponde a “{query}”. Busque de novo quando estiver online.",
   "Search.notes": "Notas",
   "Search.notesOnDevice": "Notas neste dispositivo",
   "Search.groups": "Grupos",
-  "Search.actions": "Ações",
+  "Search.create": "Criar",
+  "Search.settings": "Configurações",
+  "Search.account": "Conta",
+  "Search.switchTo": "Ir para {group}",
+  "Search.installApp": "Instalar o app",
+  "Search.needsConnection": "Requer conexão",
   "Search.untitled": "Nota sem título",
   "Search.current": "Atual",
   "Search.inGroup": "Em {group}",
@@ -1697,7 +1738,6 @@ export default {
   "Search.openOverview": "Abrir a visão geral",
   "Search.openNotifications": "Abrir notificações",
   "Search.openProfile": "Abrir perfil",
-  "Search.profileDetail": "Nome, e-mail, senha, verificação em duas etapas",
   "Search.downloadData": "Baixar meus dados",
   "Search.downloadDetail": "Um ZIP com seu perfil, grupos e notas",
   "Search.changePicture": "Trocar foto do perfil",
@@ -1710,7 +1750,7 @@ export default {
   "Shortcuts.switchLabel": "Atalhos de uma tecla",
   "Shortcuts.inFields": "Os atalhos não funcionam enquanto você digita em um campo.",
   "Shortcuts.off": "Os atalhos de uma tecla estão desativados neste dispositivo.",
-  "Shortcuts.search": "Buscar notas e grupos",
+  "Shortcuts.search": "Buscar ou executar um comando",
   "Shortcuts.newNoteRow": "Nova nota",
   "Shortcuts.undo": "Desfazer a exclusão de uma nota, enquanto o aviso estiver na tela",
   "Shortcuts.notifications": "Notificações",
@@ -1821,11 +1861,11 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "Este botão não funciona mais. Ele já foi usado, foi substituído por um mais novo ou tem mais de {count} minuto. Para vincular este chat, gere um novo código no app.",
+      "Este botão não funciona mais: ele já foi usado, foi substituído por um mais novo, tem mais de {count} minuto, a senha da conta foi redefinida ou alterada, ou a conta foi excluída ou bloqueada. Para vincular este chat, gere um novo código no app.",
     "many":
-      "Este botão não funciona mais. Ele já foi usado, foi substituído por um mais novo ou tem mais de {count} de minutos. Para vincular este chat, gere um novo código no app.",
+      "Este botão não funciona mais: ele já foi usado, foi substituído por um mais novo, tem mais de {count} de minutos, a senha da conta foi redefinida ou alterada, ou a conta foi excluída ou bloqueada. Para vincular este chat, gere um novo código no app.",
     "other":
-      "Este botão não funciona mais. Ele já foi usado, foi substituído por um mais novo ou tem mais de {count} minutos. Para vincular este chat, gere um novo código no app.",
+      "Este botão não funciona mais: ele já foi usado, foi substituído por um mais novo, tem mais de {count} minutos, a senha da conta foi redefinida ou alterada, ou a conta foi excluída ou bloqueada. Para vincular este chat, gere um novo código no app.",
   },
   "TelegramBot.privateOnly": "Me mande isso em um chat privado.",
   "TelegramBot.codeSpent":
@@ -1890,7 +1930,7 @@ export default {
   "ApiTokenNewView.discardMessage": "Você ainda não criou este token.",
   "ApiTokenNewView.discard": "Descartar",
   "ApiTokenNewView.keepEditing": "Continuar editando",
-  "ApiTokens.failed": "Algo deu errado com seus tokens de API.",
+  "ApiTokens.failed": "Não foi possível carregar ou revogar seus tokens de API. Tente de novo.",
   "ApiTokens.savedCopyTitle": "Cópia salva dos seus tokens de API",
   "ApiTokens.savedCopyBody":
     "Não foi possível falar com o servidor. Mostrando a lista salva neste dispositivo: {time}. Tokens criados ou revogados depois disso não aparecem.",
@@ -1969,7 +2009,9 @@ export default {
   "AuthScreen.lastPasskey":
     "Da última vez, você entrou com uma chave de acesso<email> ({email})</email>.",
   "AuthScreen.lastLink":
-    "Da última vez, você entrou com um link por e-mail<email> ({email})</email>.",
+    "Da última vez, você entrou com um código por e-mail<email> ({email})</email>.",
+  "AuthScreen.emailSignInCode": "Receber código de login por e-mail",
+  "AuthScreen.emailSignUpCode": "Receber código de cadastro por e-mail",
   "AuthScreen.lastProvider": "Da última vez, você entrou com {provider}<email> ({email})</email>.",
   "AuthScreen.forget": "Não é você? Use outra conta",
   "AuthScreen.openProfile": "Abrir seu perfil",
@@ -1981,8 +2023,6 @@ export default {
   "AuthScreen.haveAccount": "Já tem uma conta? <link>Entrar</link>",
   "AuthScreen.lostDevice": "Perdeu seu dispositivo? <link>Voltar para o login</link>",
   "AuthScreen.sending": "Enviando…",
-  "AuthScreen.emailSignInLink": "Receber link de acesso por e-mail",
-  "AuthScreen.emailSignUpLink": "Receber link de cadastro por e-mail",
   "AuthScreen.orCreate": "ou crie uma conta",
   "AuthScreen.createAccount": "Criar conta",
   "AuthScreen.continue": "Continuar",
@@ -2011,7 +2051,7 @@ export default {
   "EmailScreen.verifyFailed": "Não foi possível verificar o código",
   "EmailScreen.sendFailed": "Não foi possível enviar um novo código",
   "EmailScreen.changeFailed": "Não foi possível alterar seu e-mail",
-  "EmailScreen.loadFailed": "Não foi possível carregar seu e-mail.",
+  "EmailScreen.loadFailed": "Não foi possível carregar seu e-mail",
   "EmailScreen.enterCode": "Digitar o código",
   "EmailScreen.banner": "Confirme <email>{email}</email> com o código que vamos enviar para lá.",
   "EmailScreen.tryAgain": "Tentar de novo",
@@ -2113,7 +2153,8 @@ export default {
   "Benchmark.noLargeTitle": "Ainda não há um grupo grande",
   "Benchmark.noLargeBody": "Crie um com o gerador e recarregue esta página:",
   "Benchmark.copyCommand": "Copiar comando",
-  "Benchmark.noLargeFoot": "Os tamanhos e como remover o grupo depois estão em docs/capacity.md.",
+  "Benchmark.noLargeFoot":
+    "Os tamanhos e como remover o grupo depois estão em docs/large-group.md.",
   "Benchmark.lastStoppedTitle": "A última execução parou em “{measure}”",
   "Benchmark.lastStoppedBody":
     "A aba fechou antes do fim da execução, o que geralmente indica falta de memória ou de armazenamento. Grupo: {group}, iniciada {time}.",
@@ -2129,4 +2170,13 @@ export default {
   "Search.benchmarkDetail": "Medir como um grupo grande se comporta neste dispositivo",
   "Shortcuts.runBenchmark": "Executar o benchmark",
   "Shortcuts.copyResults": "Copiar os resultados",
+  "NoteSpreadsheet.id": "ID",
+  "NoteSpreadsheet.title": "Título",
+  "NoteSpreadsheet.text": "Texto",
+  "NoteSpreadsheet.tagIds": "IDs das etiquetas",
+  "NoteSpreadsheet.created": "Criada",
+  "NoteSpreadsheet.updated": "Última alteração",
+  "GroupSpreadsheets.readme":
+    "Os dados do grupo em planilhas: um arquivo CSV para cada tipo de item, em UTF-8 e com uma linha de cabeçalho. Datas e horários estão no formato ISO 8601, em UTC. Para levar o grupo para outro app, baixe o arquivo JSON: só ele pode ser importado.",
+  "GroupSpreadsheets.notSpreadsheets": "Não disponível como planilha (está no arquivo JSON):",
 } satisfies Catalog

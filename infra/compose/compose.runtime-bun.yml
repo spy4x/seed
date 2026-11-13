@@ -1,0 +1,31 @@
+# APP_RUNTIME=bun in the env file: `deno task compose` adds this file after compose.${ENV}.yml
+# (infra/scripts/compose-plan.ts), and the API, the worker, the migration and the website run on
+# Bun, from the bundles apps/api/dockerfile.bun and apps/mpa/dockerfile.bun build (docs/apps.md,
+# "Runtime"). Everything else, the ports, the environment and the dependencies, stays as
+# compose.shared.yml sets it. The bundles are made at build time, so a code change needs
+# `deno task compose up -d --build`, even in development.
+services:
+  migrate:
+    build:
+      dockerfile: apps/api/dockerfile.bun
+    command: [ 'bun', 'dist/server/migrate.js' ]
+
+  api:
+    build:
+      dockerfile: apps/api/dockerfile.bun
+    command: [ 'bun', 'dist/server/api.js' ]
+    healthcheck:
+      test: [ 'CMD', 'bun', 'dist/server/healthcheck.js', '/api/health' ]
+
+  worker:
+    build:
+      dockerfile: apps/api/dockerfile.bun
+    command: [ 'bun', 'dist/server/worker.js' ]
+
+  # The website, with COMPOSE_PROFILES=mpa: built by apps/mpa/dockerfile.bun.
+  mpa:
+    build:
+      dockerfile: apps/mpa/dockerfile.bun
+    command: [ 'bun', 'apps/mpa/dist/start.js' ]
+    healthcheck:
+      test: [ 'CMD', 'bun', 'apps/mpa/dist/healthcheck.js', '/health' ]

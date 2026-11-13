@@ -86,7 +86,7 @@ export function jobMatch(query: string, registry: readonly JobDefinition[]): Adm
 }
 
 /**
- * The Jobs routes of the operator area (#394), mounted at `/api/admin` behind the gate in
+ * The Jobs routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them, and a write passes its
  * cross-site checks first. Names, states, attempts, error classes and times only: a job row
  * holds no payload and no error message.

@@ -7,6 +7,7 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { OutboxEvent } from "@spy4x/server/outbox"
 import {
   BLOG_AUDIT_KINDS,
+  BLOG_CROSSPOST_JOB,
   BLOG_INDEXNOW_JOB,
   BLOG_PUBLISH_JOB,
   BlogError,
@@ -16,8 +17,13 @@ import {
   parseBlogPostFields,
 } from "@domain/blog"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
-import { blogPublishJob, queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
-import { blogIndexNowJob, type IndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
+import {
+  BlogPostNotLiveError,
+  blogPublishJob,
+  queueDueBlogJobs,
+} from "@server/blog/blog-publish-job.ts"
+import { blogIndexNowJob } from "@server/blog/blog-indexnow-job.ts"
+import type { IndexNowSetup } from "@server/jobs/indexnow.ts"
 import {
   createPublicFeed,
   listPublicFeed,
@@ -35,6 +41,12 @@ import {
 import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
 import { SUBSCRIBER_SEND_ISSUE_JOB } from "@server/jobs/subscriber-mail.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
+import {
+  blogCrosspostJob,
+  type BlogCrosspostSetup,
+  type DevtoArticle,
+  DevtoCrosspostError,
+} from "@server/blog/blog-crosspost-job.ts"
 import { cancelJob, runJobNow } from "@server/jobs/admin-jobs.ts"
 import { AdminJobActionOutcome, type Language } from "@domain/identity"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
@@ -106,6 +118,8 @@ function fields(slug: string, extra: Partial<BlogPostFields> = {}): BlogPostFiel
     coverUrl: null,
     coverAlt: null,
     authorUrl: null,
+    intro: null,
+    relatedFeature: null,
     bodyMd: `Hello <b>there</b>.`,
     language: `en`,
     translationOf: null,
@@ -118,15 +132,49 @@ function jobEvent(id: string): OutboxEvent {
   return { id: uuidV7(), aggregateId: id, eventKind: BLOG_PUBLISH_JOB } as OutboxEvent
 }
 
-/** Runs every due outbox row once, as the worker does, with the newsletter set up. */
-async function drain(sql: postgres.Sql): Promise<void> {
-  const processor = createOutboxProcessor(
+/**
+ * The public website as the publish job asks it: a live post's page answers 200 with its title,
+ * any other address 404, as the MPA does.
+ */
+function liveSite(sql: postgres.Sql): typeof fetch {
+  return async (input) => {
+    const slug = new URL(String(input)).pathname.split(`/`).pop()
+    const [post] = await sql<{ title: string }[]>`
+      SELECT title FROM blog_posts WHERE slug = ${slug ?? ``} AND status = 'published'
+    `
+    return post
+      ? new Response(`<h1>${post.title}</h1>`, { status: 200 })
+      : new Response(`Not found`, { status: 404 })
+  }
+}
+
+/** The worker's processor, with the newsletter set up, `sender` sending its mail. */
+function processorFor(
+  sql: postgres.Sql,
+  sender: EmailSender | null = null,
+  crosspost: BlogCrosspostSetup | null = null,
+) {
+  return createOutboxProcessor(
     sql,
-    { store: createPostgresAuthStore(sql), sender: null, brand: BRAND, log: () => {} },
+    { store: createPostgresAuthStore(sql), sender, brand: BRAND, log: () => {} },
     null,
     SETUP,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    crosspost,
+    liveSite(sql),
   )
-  await processor.drainOnce()
+}
+
+/** Runs every due outbox row once, as the worker does, with the newsletter set up. */
+async function drain(sql: postgres.Sql): Promise<void> {
+  await processorFor(sql).drainOnce()
 }
 
 /** The `blog.publish` rows of post `id` that still wait: their ids and due times. */
@@ -188,6 +236,8 @@ function seedPost(slug: string, extra: Partial<SeedPost> = {}): SeedPost {
     author: `Anton Shubin`,
     publishAt: new Date(Date.now() - DAY_MS),
     newsletter: false,
+    devto: false,
+    coverFile: null,
     ...extra,
   }
 }
@@ -306,6 +356,105 @@ Deno.test(`blog: writes, audit rows and the checks every write makes`, async (t)
         SELECT DISTINCT actor_user_id, request_id FROM audit_events WHERE entity_id = ${id}
       `
       expect(actors).toEqual([{ actorUserId: maya.userId, requestId: maya.requestId }])
+    })
+  })
+})
+
+Deno.test(`blog: every save keeps the post's fields as an earlier version, the newest 50 (#418)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const lee = await operator(sql, `Lee Park`)
+    const id = uuidV7()
+    const first = fields(`hello`, { bodyMd: `The good paragraph.`, tldr: [`One`] })
+    await blog.create(id, first, maya)
+
+    await t.step(`keeps the created fields, with who saved them`, async () => {
+      const list = await blog.revisions(id)
+      expect(list?.map((row) => [row.title, row.savedBy])).toEqual([[`Post hello`, `Maya Chen`]])
+      expect(await blog.revision(id, list![0].id)).toMatchObject({
+        ...first,
+        savedBy: `Maya Chen`,
+      })
+    })
+
+    await t.step(`keeps each save, newest first, and the earlier text stays readable`, async () => {
+      await blog.update(
+        id,
+        1,
+        fields(`hello`, { title: `Worse`, bodyMd: `Saved over.` }),
+        false,
+        lee,
+      )
+      const list = await blog.revisions(id)
+      expect(list?.map((row) => [row.title, row.savedBy])).toEqual([
+        [`Worse`, `Lee Park`],
+        [`Post hello`, `Maya Chen`],
+      ])
+      expect((await blog.revision(id, list![1].id))?.bodyMd).toBe(`The good paragraph.`)
+    })
+
+    await t.step(`keeps nothing for a save that changed no field`, async () => {
+      await blog.update(
+        id,
+        2,
+        fields(`hello`, { title: `Worse`, bodyMd: `Saved over.` }),
+        false,
+        maya,
+      )
+      expect((await blog.revisions(id))?.length).toBe(2)
+    })
+
+    await t.step(`keeps the newest 50 and deletes the older ones in the same save`, async () => {
+      for (let version = 3; version <= 52; version++) {
+        await blog.update(id, version, fields(`hello`, { bodyMd: `Save ${version}.` }), false, maya)
+      }
+      const list = await blog.revisions(id)
+      expect(list?.length).toBe(50)
+      // 52 versions were kept: the create's and Lee's are gone, the oldest left is the next save's.
+      expect((await blog.revision(id, list!.at(-1)!.id))?.bodyMd).toBe(`Save 3.`)
+      expect((await blog.revision(id, list![0].id))?.bodyMd).toBe(`Save 52.`)
+    })
+
+    await t.step(
+      `answers no version of another post, and no list for a post that is gone`,
+      async () => {
+        const other = uuidV7()
+        await blog.create(other, fields(`other`), maya)
+        const [mine] = (await blog.revisions(id))!
+        expect(await blog.revision(other, mine.id)).toBeNull()
+        expect(await blog.revisions(uuidV7())).toBeNull()
+      },
+    )
+
+    await t.step(`names an operator without a name by their address`, async () => {
+      const [{ id: nameless }] = await sql<{ id: number }[]>`
+        WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id)
+        INSERT INTO users (id, role) SELECT id, 3 FROM auth_user RETURNING id
+      `
+      await sql`INSERT INTO auth_email_owners (email, user_id) VALUES ('ops@example.com', ${nameless})`
+      const post = uuidV7()
+      await blog.create(post, fields(`nameless`), { userId: nameless, requestId: null })
+      expect((await blog.revisions(post))?.[0].savedBy).toBe(`ops@example.com`)
+    })
+
+    await t.step(`deletes a post's versions with it`, async () => {
+      const post = await blog.get(id)
+      await blog.delete(id, post!.version, maya)
+      const [{ rows }] = await sql<{ rows: number }[]>`
+        SELECT COUNT(*)::int AS rows FROM blog_post_revisions WHERE post_id = ${id}
+      `
+      expect(rows).toBe(0)
+    })
+
+    await t.step(`keeps no version of Seed's own posts from files`, async () => {
+      await upsertSeedPosts(sql, [seedPost(`from-a-file`)])
+      // The file changed: the next start writes the post again.
+      const edited = fields(`from-a-file`, { title: `Edited in the file` })
+      expect(await upsertSeedPosts(sql, [seedPost(`from-a-file`, { fields: edited })])).toBe(1)
+      const post = await bySlug(sql, `from-a-file`)
+      expect(post.title).toBe(`Edited in the file`)
+      expect(await blog.revisions(post.id)).toEqual([])
     })
   })
 })
@@ -716,7 +865,13 @@ Deno.test(`blog: a scheduled post goes live through its job, and is emailed once
     const blog = new PostgresBlogRepository(sql)
     const maya = await operator(sql)
     const id = uuidV7()
-    const job = blogPublishJob({ sql, brand: BRAND, setup: SETUP, log: () => {} })
+    const job = blogPublishJob({
+      sql,
+      fetch: liveSite(sql),
+      brand: BRAND,
+      setup: SETUP,
+      log: () => {},
+    })
     await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
       VALUES ('news', 'ada@example.com', 'k1', now()), ('news', 'bob@example.com', 'k2', now())`
     await blog.create(id, fields(`launch`), maya)
@@ -730,18 +885,7 @@ Deno.test(`blog: a scheduled post goes live through its job, and is emailed once
 
     await t.step(`publishes at the time, through the worker's processor`, async () => {
       await makeDue(sql, id)
-      const processor = createOutboxProcessor(
-        sql,
-        {
-          store: createPostgresAuthStore(sql),
-          sender: null,
-          brand: BRAND,
-          log: () => {},
-        },
-        null,
-        SETUP,
-      )
-      await processor.drainOnce()
+      await processorFor(sql).drainOnce()
 
       const post = (await blog.get(id))!
       expect(post).toMatchObject({ status: `published`, newsletterRecipients: 2, version: 3 })
@@ -801,12 +945,7 @@ Deno.test(`blog: a post's issue goes only to the subscribers of its language, wr
         return Promise.resolve({ ok: true as const, id: String(sent.length) })
       },
     } as unknown as EmailSender
-    const processor = createOutboxProcessor(
-      sql,
-      { store: createPostgresAuthStore(sql), sender, brand: BRAND, log: () => {} },
-      null,
-      SETUP,
-    )
+    const processor = processorFor(sql, sender)
     const german = uuidV7()
     const english = uuidV7()
     await blog.create(german, fields(`hallo`, { language: `de`, title: `Hallo` }), maya)
@@ -835,7 +974,13 @@ Deno.test(`blog: a job left over from an earlier time does not publish early`, a
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)
     const maya = await operator(sql)
-    const job = blogPublishJob({ sql, brand: BRAND, setup: SETUP, log: () => {} })
+    const job = blogPublishJob({
+      sql,
+      fetch: liveSite(sql),
+      brand: BRAND,
+      setup: SETUP,
+      log: () => {},
+    })
     const [moved, unscheduled] = [uuidV7(), uuidV7()]
     await blog.create(moved, fields(`moved`), maya)
     await blog.publish(moved, 1, LATER(), null, maya)
@@ -865,13 +1010,19 @@ Deno.test(`blog: with the newsletter off the post goes live and no issue is queu
     await blog.publish(id, 1, LATER(), `news`, maya)
     await makeDue(sql, id)
 
-    await blogPublishJob({ sql, brand: BRAND, setup: null, log: (line) => lines.push(line) })(
+    await blogPublishJob({
+      sql,
+      fetch: liveSite(sql),
+      brand: BRAND,
+      setup: null,
+      log: (line) => lines.push(line),
+    })(
       jobEvent(id),
     )
 
     expect(await blog.get(id)).toMatchObject({ status: `published`, newsletterList: null })
     expect(await issues(sql, id)).toEqual({ rows: 0, jobs: 0 })
-    expect(lines).toHaveLength(1)
+    expect(lines.filter((line) => line.includes(`newsletter`))).toHaveLength(1)
   })
 })
 
@@ -885,11 +1036,15 @@ Deno.test(`blog: a post that went live while the newsletter was off is not email
     await blog.create(id, fields(`old-news`), maya)
     await blog.publish(id, 1, LATER(), `news`, maya)
     await makeDue(sql, id)
-    await blogPublishJob({ sql, brand: BRAND, setup: null, log: () => {} })(jobEvent(id))
+    await blogPublishJob({ sql, fetch: liveSite(sql), brand: BRAND, setup: null, log: () => {} })(
+      jobEvent(id),
+    )
 
     // The worker starts again months later, with the newsletter on.
     await queueDueBlogJobs(sql)
-    await blogPublishJob({ sql, brand: BRAND, setup: SETUP, log: () => {} })(jobEvent(id))
+    await blogPublishJob({ sql, fetch: liveSite(sql), brand: BRAND, setup: SETUP, log: () => {} })(
+      jobEvent(id),
+    )
     await drain(sql)
 
     expect(await issues(sql, id)).toEqual({ rows: 0, jobs: 0 })
@@ -1104,7 +1259,13 @@ Deno.test(`blog: a post file is emailed once, and only when it asks for the news
       await sql`UPDATE blog_posts SET newsletter_list = 'news' WHERE id = ${quiet.id}`
       expect(await queueDueBlogJobs(sql)).toBe(0)
       await upsertSeedPosts(sql, [posts[0], seedPost(`quiet`, { newsletter: true })])
-      await blogPublishJob({ sql, brand: BRAND, setup: SETUP, log: () => {} })(jobEvent(quiet.id))
+      await blogPublishJob({
+        sql,
+        fetch: liveSite(sql),
+        brand: BRAND,
+        setup: SETUP,
+        log: () => {},
+      })(jobEvent(quiet.id))
       await drain(sql)
       expect((await issues(sql, quiet.id)).rows).toBe(0)
     })
@@ -1306,7 +1467,9 @@ Deno.test(`blog: a scheduled post that goes live through its job is sent to Inde
       .toBe(0)
 
     await makeDue(sql, post)
-    await blogPublishJob({ sql, brand: BRAND, setup: null, log: () => {} })(jobEvent(post))
+    await blogPublishJob({ sql, fetch: liveSite(sql), brand: BRAND, setup: null, log: () => {} })(
+      jobEvent(post),
+    )
     await runIndexNow(sql, post, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
 
     expect(indexNow.sent).toEqual([[`https://www.example.com/blog/later`]])
@@ -1367,5 +1530,351 @@ Deno.test(`blog: Seed's live post files are sent to IndexNow, a scheduled one on
     }
     expect(await queued(`live`)).toBe(1)
     expect(await queued(`later`)).toBe(0)
+  })
+})
+
+Deno.test(`blog: a post the website does not show yet is not emailed, and a retry emails it once (#733)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const id = uuidV7()
+    await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
+      VALUES ('news', 'ada@example.com', 'k1', now())`
+    await blog.create(id, fields(`slow-deploy`), maya)
+    await blog.publish(id, 1, null, `news`, maya)
+    const asked: string[] = []
+    const notYet: typeof fetch = (input) => {
+      asked.push(String(input))
+      return Promise.resolve(new Response(`Not found`, { status: 404 }))
+    }
+
+    await expect(
+      blogPublishJob({ sql, fetch: notYet, brand: BRAND, setup: SETUP, log: () => {} })(
+        jobEvent(id),
+      ),
+    ).rejects.toThrow(BlogPostNotLiveError)
+    expect(asked).toEqual([`https://www.example.com/blog/slow-deploy`])
+    expect(await issues(sql, id)).toEqual({ rows: 0, jobs: 0 })
+    expect((await blog.get(id))!.newsletterSentAt).toBeNull()
+
+    const job = blogPublishJob({
+      sql,
+      fetch: liveSite(sql),
+      brand: BRAND,
+      setup: SETUP,
+      log: () => {},
+    })
+    await job(jobEvent(id))
+    await job(jobEvent(id))
+    expect((await issues(sql, id)).rows).toBe(1)
+  })
+})
+
+Deno.test(`blog: a post's issue opens with its intro (#733)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const id = uuidV7()
+    await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
+      VALUES ('news', 'ada@example.com', 'k1', now())`
+    await blog.create(id, fields(`opened`, { intro: `I wrote this after a long night.` }), maya)
+    await blog.publish(id, 1, null, `news`, maya)
+    await drain(sql)
+
+    const [issue] = await sql<{ html: string }[]>`
+      SELECT html FROM subscriber_issue_content WHERE issue_id = ${id}
+    `
+    expect(issue.html).toContain(`<p style="margin:0 0 16px">I wrote this after a long night.</p>`)
+    expect(issue.html).not.toContain(`<p style="margin:0 0 16px">About opened.</p>`)
+  })
+})
+
+/** A Dev.to that keeps its articles in memory, answering as `@spy4x/integrations/devto` does. */
+function fakeDevto(articles: DevtoArticle[] = []) {
+  const made: DevtoArticle[] = []
+  const client: BlogCrosspostSetup[`client`] = {
+    find: (canonical) => {
+      const at = articles.findIndex((article) => article.canonical_url === canonical)
+      return Promise.resolve({
+        success: true as const,
+        output: at === -1 ? null : { id: at + 1, url: `https://dev.to/seed/article-${at}` },
+        error: `` as const,
+      })
+    },
+    create: (article) => {
+      made.push(article)
+      articles.push(article)
+      return Promise.resolve({
+        success: true as const,
+        output: { id: articles.length, url: `https://dev.to/seed/article-${articles.length - 1}` },
+        error: `` as const,
+      })
+    },
+  }
+  return { made, setup: { siteUrl: `https://www.example.com`, client } }
+}
+
+/** The post's cross-post record. */
+async function crosspostOf(sql: postgres.Sql, id: string) {
+  const [row] = await sql<{ crosspostedAt: Date | null; devtoUrl: string | null }[]>`
+    SELECT crossposted_at, devto_url FROM blog_posts WHERE id = ${id}
+  `
+  return row
+}
+
+/** A Dev.to channel with "Post automatically" on, which a cross-post needs (#839). */
+async function devtoChannel(sql: postgres.Sql, autoPost = true): Promise<void> {
+  await sql`
+    INSERT INTO blog_channels (id, name, kind, address, utm_source, languages, auto_post)
+    VALUES (${uuidV7()}, 'Dev.to', 'devto', 'https://dev.to/seed', 'devto', '{en}', ${autoPost})
+  `
+}
+
+/** The job's event for post `id`'s cross-post. */
+function crosspostEvent(id: string): OutboxEvent {
+  return { id: uuidV7(), aggregateId: id, eventKind: BLOG_CROSSPOST_JOB } as OutboxEvent
+}
+
+Deno.test(`blog: a live post is cross-posted to Dev.to once ever, with its canonical address (#733)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const devto = fakeDevto()
+    await devtoChannel(sql)
+    const id = uuidV7()
+    await blog.create(id, fields(`crossed`, { intro: `Why I built it.` }), maya)
+    await blog.publish(id, 1, null, null, maya)
+
+    await t.step(`the worker posts it and records the article`, async () => {
+      const processor = processorFor(sql, null, devto.setup)
+      for (let run = 0; run < 3; run++) await processor.drainOnce()
+      expect(devto.made).toHaveLength(1)
+      expect(devto.made[0]).toMatchObject({
+        title: `Post crossed`,
+        canonical_url: `https://www.example.com/blog/crossed`,
+        published: true,
+      })
+      expect(devto.made[0].body_markdown).toMatch(/^Why I built it\./)
+      const record = await crosspostOf(sql, id)
+      expect(record.crosspostedAt).not.toBeNull()
+      expect(record.devtoUrl).toBe(`https://dev.to/seed/article-0`)
+    })
+
+    await t.step(`a repeated job, and publishing again, post nothing more`, async () => {
+      // A Dev.to whose search misses the article: only the post's own record stops a second one.
+      const blind = fakeDevto()
+      await blogCrosspostJob({ sql, setup: blind.setup, log: () => {} })(crosspostEvent(id))
+      await blog.unpublish(id, 2, maya)
+      await blog.publish(id, 3, null, null, maya)
+      const processor = processorFor(sql, null, blind.setup)
+      for (let run = 0; run < 3; run++) await processor.drainOnce()
+      expect(devto.made).toHaveLength(1)
+      expect(blind.made).toHaveLength(0)
+    })
+  })
+})
+
+Deno.test(`blog: a cross-post that died before it was recorded finds its article, and posts none (#733)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    await devtoChannel(sql)
+    const id = uuidV7()
+    await blog.create(id, fields(`half-done`), maya)
+    await blog.publish(id, 1, null, null, maya)
+    // The run before posted the article, then the worker died before it wrote the record.
+    const devto = fakeDevto([{
+      title: `Post half-done`,
+      body_markdown: `Hello.`,
+      canonical_url: `https://www.example.com/blog/half-done`,
+      published: true,
+    }])
+
+    await blogCrosspostJob({ sql, setup: devto.setup, log: () => {} })(crosspostEvent(id))
+
+    expect(devto.made).toHaveLength(0)
+    expect((await crosspostOf(sql, id)).devtoUrl).toBe(`https://dev.to/seed/article-0`)
+  })
+})
+
+Deno.test(`blog: a Dev.to error fails the cross-post for a retry, and records nothing (#733)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    await devtoChannel(sql)
+    const id = uuidV7()
+    await blog.create(id, fields(`flaky`), maya)
+    await blog.publish(id, 1, null, null, maya)
+    const devto = fakeDevto()
+    const down = {
+      ...devto.setup,
+      client: {
+        ...devto.setup.client,
+        create: () =>
+          Promise.resolve({ success: false as const, output: null, error: `Dev.to answered 503` }),
+      },
+    }
+
+    await expect(
+      blogCrosspostJob({ sql, setup: down, log: () => {} })(crosspostEvent(id)),
+    ).rejects.toThrow(DevtoCrosspostError)
+    expect((await crosspostOf(sql, id)).crosspostedAt).toBeNull()
+
+    await blogCrosspostJob({ sql, setup: devto.setup, log: () => {} })(crosspostEvent(id))
+    expect(devto.made).toHaveLength(1)
+    expect((await crosspostOf(sql, id)).crosspostedAt).not.toBeNull()
+  })
+})
+
+Deno.test(`blog: with the cross-post off, or for a translation, a post is settled and never posted (#733)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [off, original, german] = [uuidV7(), uuidV7(), uuidV7()]
+    await devtoChannel(sql)
+
+    await t.step(
+      `off: settled with a log line, and turning it on later posts nothing`,
+      async () => {
+        await blog.create(off, fields(`before-devto`), maya)
+        await blog.publish(off, 1, null, null, maya)
+        await drain(sql)
+        expect((await crosspostOf(sql, off)).crosspostedAt).not.toBeNull()
+
+        const devto = fakeDevto()
+        await queueDueBlogJobs(sql)
+        const processor = processorFor(sql, null, devto.setup)
+        for (let run = 0; run < 3; run++) await processor.drainOnce()
+        expect(devto.made).toHaveLength(0)
+      },
+    )
+
+    await t.step(`a translation: settled, its original posted`, async () => {
+      const devto = fakeDevto()
+      await blog.create(original, fields(`hello-devto`), maya)
+      await blog.create(
+        german,
+        fields(`hallo-devto`, { language: `de`, translationOf: original }),
+        maya,
+      )
+      for (const id of [original, german]) await blog.publish(id, 1, null, null, maya)
+      const processor = processorFor(sql, null, devto.setup)
+      for (let run = 0; run < 3; run++) await processor.drainOnce()
+      expect(devto.made.map((article) => article.canonical_url)).toEqual([
+        `https://www.example.com/blog/hello-devto`,
+      ])
+      expect((await crosspostOf(sql, german)).crosspostedAt).not.toBeNull()
+      expect((await crosspostOf(sql, german)).devtoUrl).toBeNull()
+    })
+  })
+})
+
+Deno.test(`blog: a Dev.to channel with Post automatically off gets no cross-post (#839)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    await devtoChannel(sql, false)
+    const devto = fakeDevto()
+    const id = uuidV7()
+    await blog.create(id, fields(`manual-devto`), maya)
+    await blog.publish(id, 1, null, null, maya)
+
+    await blogCrosspostJob({ sql, setup: devto.setup, log: () => {} })(crosspostEvent(id))
+
+    expect(devto.made).toHaveLength(0)
+    expect((await crosspostOf(sql, id)).crosspostedAt).not.toBeNull()
+  })
+})
+
+Deno.test(`blog: a post going live queues each automatic channel's job once, with the newsletter off (#839)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const channel = uuidV7()
+    await sql`
+      INSERT INTO blog_channels (id, name, kind, address, utm_source, languages, auto_post)
+      VALUES (${channel}, 'News', 'telegram', 'https://t.me/seednews', 'telegram', '{en}', true)
+    `
+    const id = uuidV7()
+    await blog.create(id, fields(`told`), maya)
+    await blog.publish(id, 1, null, null, maya)
+    const job = blogPublishJob({
+      sql,
+      fetch: liveSite(sql),
+      brand: BRAND,
+      setup: null,
+      siteUrl: SETUP.siteUrl,
+      log: () => {},
+    })
+
+    await job(jobEvent(id))
+    await job(jobEvent(id))
+
+    const jobs = await sql`
+      SELECT job.event_kind FROM outbox_events job
+      JOIN blog_post_shares share ON share.id = job.aggregate_id
+      WHERE share.post_id = ${id} AND share.channel_id = ${channel} AND share.automatic
+        AND share.status = 'todo'
+    `
+    expect(jobs).toEqual([{ eventKind: `blog.post-telegram` }])
+  })
+})
+
+Deno.test(`blog: a post file's cover, intro and related feature are written with the file (#733)`, async () => {
+  await withSchema(async (sql) => {
+    const publishAt = new Date(Date.now() - DAY_MS)
+    const post = (relatedFeature: string | null) =>
+      seedPost(`covered`, {
+        publishAt,
+        fields: fields(`covered`, {
+          intro: `Two sentences.`,
+          relatedFeature,
+          coverAlt: `A seedling`,
+        }),
+        coverFile: `covered.webp`,
+      })
+    await upsertSeedPosts(sql, [post(`realtime`)])
+    const read = async () =>
+      (await sql<{ coverFile: string; intro: string; relatedFeature: string | null }[]>`
+        SELECT cover_file, intro, related_feature FROM blog_posts WHERE slug = 'covered'
+      `)[0]
+    expect(await read()).toEqual({
+      coverFile: `covered.webp`,
+      intro: `Two sentences.`,
+      relatedFeature: `realtime`,
+    })
+    expect(await upsertSeedPosts(sql, [post(`realtime`)])).toBe(0)
+    expect(await upsertSeedPosts(sql, [post(null)])).toBe(1)
+    expect((await read()).relatedFeature).toBeNull()
+  })
+})
+
+Deno.test(`blog: an admin save of a post file with a cover keeps the cover and its description (#733)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    await upsertSeedPosts(sql, [
+      seedPost(`covered`, {
+        fields: fields(`covered`, { coverAlt: `A seedling` }),
+        coverFile: `covered.webp`,
+      }),
+    ])
+    const { id, version } = await bySlug(sql, `covered`)
+    // What the editor sends for this post, parsed as `POST /admin/blog/posts/:id` parses it.
+    const edit = parseBlogPostEdit({
+      title: `Covered, edited`,
+      slug: `covered`,
+      description: `About covered.`,
+      bodyMd: `Hello.`,
+      coverUrl: null,
+      coverAlt: `A seedling`,
+    })
+    const saved = await blog.update(id, version, edit, false, maya)
+
+    expect([saved.title, saved.coverFile, saved.coverAlt]).toEqual([
+      `Covered, edited`,
+      `covered.webp`,
+      `A seedling`,
+    ])
   })
 })

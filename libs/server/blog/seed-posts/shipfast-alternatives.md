@@ -10,6 +10,9 @@ tldr:
   - If your customers are teams, pick a kit with groups, roles and per-member billing built in.
   - Stay with ShipFast if you want Next.js, its community and a launch this weekend.
 topic: Questions
+intro: "ShipFast is a good kit, but it isn't the only one, and it isn't free. I compared seven boilerplates on price, licence, stack, teams and hosting, with a source for every fact."
+cover: covers/shipfast-alternatives.webp
+coverAlt: "Seven sailboats of different shapes lined up on calm water, one of them violet."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
@@ -47,7 +50,7 @@ product, they are the first month of work.
 | Starter                                                               | Price               | Licence                 | Stack                                   | Teams and roles              | Hosting                          |
 | --------------------------------------------------------------------- | ------------------- | ----------------------- | --------------------------------------- | ---------------------------- | -------------------------------- |
 | [ShipFast](https://shipfa.st/)                                        | $199 or $249 once   | Paid, no redistribution | Next.js; MongoDB or Supabase            | Not listed                   | Vercel named as the free option  |
-| [Seed](https://github.com/spy4x/seed)                                 | Free                | MIT                     | Deno, Hono, Fresh, Preact; Postgres     | Yes, with per-member billing | One Linux server, Docker Compose |
+| [Seed](https://github.com/spy4x/seed)                                 | Free                | MIT                     | Deno, Hono, Preact; Postgres            | Yes, with per-member billing | One Linux server, Docker Compose |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)                   | Free                | MIT                     | Wasp (React, Node.js, Prisma); Postgres | Not listed                   | Railway or Fly.io in one command |
 | [ShipFree](https://github.com/revokslab/shipfree)                     | Free                | MIT                     | Next.js, Bun, Drizzle; Postgres         | Not listed                   | Vercel or Docker                 |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)        | Free                | MIT                     | Next.js, Drizzle; Postgres              | Owner and Member             | Vercel                           |

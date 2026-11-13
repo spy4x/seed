@@ -132,6 +132,8 @@ function buildApp(
           limit: passThrough,
           read:
             () => (calls.push(["website-stats"]), Promise.resolve({ state: `off`, missing: [] })),
+          readItem:
+            () => (calls.push(["website-item-stats"]), Promise.resolve({ state: `failed` })),
         })
       default:
         // The empty modules read nothing, so they never touch the database.
@@ -198,6 +200,7 @@ const ROUTES = [
       `/admin/groups/0199f0a0-0000-7000-8000-000000000001/files/0199f0a0-0000-7000-8000-000000000002/${access}`,
   })),
   { method: "GET", path: "/admin/website-stats?days=7" },
+  { method: "GET", path: "/admin/website-stats/items/0199f0a0-0000-7000-8000-000000000001" },
 ]
 
 function send(

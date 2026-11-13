@@ -28,6 +28,7 @@ import {
   CatalogVersionConflictError,
 } from "@domain/catalog"
 import { queueImage } from "../files/images.ts"
+import { itemPageChanged, queueCatalogIndexNow } from "./catalog-indexnow-job.ts"
 
 /** The operator behind a write, for its audit row. */
 export interface CatalogActor {
@@ -81,8 +82,8 @@ export const STOCK_COUNTS = `
 const SHOWN = `EXISTS (SELECT 1 FROM image_variants v WHERE v.image_id = im.id)`
 
 /**
- * A photo's state from its image's row: ready for the admin once its narrowest width is stored
- * (#514), while the worker still makes the wider ones the website waits for.
+ * A photo's state from its image's row: ready for the admin once its narrowest width is stored,
+ * while the worker still makes the wider ones the website waits for.
  */
 function photoState(
   image: { shown: boolean; refused: number | null },
@@ -220,7 +221,7 @@ function slugTaken(error: unknown): unknown {
 }
 
 /**
- * The catalog's reads and writes for the admin app (#466). It checks no role: only the operator
+ * The catalog's reads and writes for the admin app. It checks no role: only the operator
  * area calls it, behind its gate. Every write runs in one transaction that locks what it changes
  * (the item, or the categories), checks the version the operator saw, and writes the operator's
  * audit row, so a write and its record are kept or undone together and two operators are served
@@ -319,7 +320,11 @@ export class PostgresCatalog {
     })
   }
 
-  /** Saves every field of the item at `version`: its texts, price, colours, sizes and stock. */
+  /**
+   * Saves every field of the item at `version`: its texts, price, colours, sizes and stock. A
+   * published item whose price, sold-out combinations, slug or category changed gets its
+   * `catalog.indexnow` job.
+   */
   async updateItem(
     id: string,
     version: number,
@@ -328,6 +333,7 @@ export class PostgresCatalog {
   ): Promise<CatalogItem> {
     return await this.write(async (tx) => {
       const row = await currentItem(tx, id, version)
+      const before = row.status === `published` ? await readCatalogItem(tx, id) : null
       await checkCategory(tx, fields.categoryId)
       if (row.status === `published` && fields.categoryId === null) {
         throw new CatalogError(
@@ -348,13 +354,16 @@ export class PostgresCatalog {
       await audit(tx, actor, CATALOG_AUDIT_KINDS.itemUpdated, CATALOG_ITEM_ENTITY, id, {
         slug: fields.slug,
       })
-      return (await readCatalogItem(tx, id))!
+      const after = (await readCatalogItem(tx, id))!
+      if (before && itemPageChanged(before, after)) await queueCatalogIndexNow(tx, id)
+      return after
     })
   }
 
   /**
    * Publishes the item at `version`, or hides it. Publishing needs a category; the first publish
-   * sets `published_at`, which never moves again. Only a published item can be hidden.
+   * sets `published_at`, which never moves again. Only a published item can be hidden. A change
+   * of status gets the item's `catalog.indexnow` job.
    */
   async setStatus(
     id: string,
@@ -385,6 +394,7 @@ export class PostgresCatalog {
           ? CATALOG_AUDIT_KINDS.itemPublished
           : CATALOG_AUDIT_KINDS.itemHidden
         await audit(tx, actor, kind, CATALOG_ITEM_ENTITY, id, { slug: row.slug })
+        await queueCatalogIndexNow(tx, id)
       }
       return (await readCatalogItem(tx, id))!
     })
@@ -413,7 +423,7 @@ export class PostgresCatalog {
 
   /**
    * Keeps the photo already stored at `objectKey` as the item's last photo and queues its
-   * processing (#464), in one transaction. A photo retried with the same id answers the first one.
+   * processing, in one transaction. A photo retried with the same id answers the first one.
    * Answers `null` when the item is gone, so the caller deletes the stored bytes.
    */
   async addPhoto(
@@ -537,7 +547,7 @@ export class PostgresCatalog {
 
   /**
    * The narrowest width of a catalog photo, for the admin's thumbnails, or its widest, for its
-   * lightbox (#514); WebP first, or `null` until one is stored. `final` once every width is made,
+   * lightbox; WebP first, or `null` until one is stored. `final` once every width is made,
    * so the widest no longer changes.
    */
   async photoWidth(

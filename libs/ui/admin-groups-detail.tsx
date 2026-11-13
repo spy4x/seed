@@ -56,6 +56,7 @@ import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
 import { isolate, Isolated } from "@spy4x/preact-ui/bdi"
+import { zoneLabel } from "@spy4x/time/tz"
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminGroupOperatorView {
@@ -79,8 +80,6 @@ export type AdminGroupAction =
 
 /** The group page's tabs, in order. */
 export const ADMIN_GROUP_TABS = [`members`, `invitations`, `files`, `activity`] as const
-
-const NUMBER = new Intl.NumberFormat(`en`)
 
 /** Each subscription state's word, by catalog key. */
 const BILLING_STATUS: Record<number, string> = {
@@ -183,12 +182,12 @@ export interface AdminGroupScreenProps {
 }
 
 /**
- * One group in the admin app (#426): a header card with its owner, plan and counts, then tabs for
+ * One group in the admin app: a header card with its owner, plan and counts, then tabs for
  * its members, its invitations, its files and its activity. An operator removes a member, revokes
  * an invitation or removes a file from the row's menu; a supervisor hands the group to another member from the page's
  * menu. Each is confirmed in a dialog and recorded in the group's activity with the operator's
  * name. Nothing written inside the group shows here but its files' names and their notes' titles,
- * which an operator needs to find a file a report names (#478).
+ * which an operator needs to find a file a report names.
  */
 export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
   const { detail, error, operator, navigate } = props
@@ -293,21 +292,23 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         </div>
         {/* The counts are facts like the dates: no card inside the header card. */}
         <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4" data-e2e="admin-group-counts">
-          <Fact label={t.t(`AdminGroup.members`)}>{NUMBER.format(detail.members.length)}</Fact>
+          <Fact label={t.t(`AdminGroup.members`)}>{format.number(detail.members.length)}</Fact>
           <Fact label={t.t(`AdminGroup.notes`)}>
-            {NUMBER.format(counts.notes)}
+            {format.number(counts.notes)}
             <span class="font-normal text-muted">
               {` · `}
               {t.t(`AdminGroup.notesInTrash`, { count: counts.deletedNotes })}
             </span>
           </Fact>
-          <Fact label={t.t(`AdminGroup.tags`)}>{NUMBER.format(counts.tags)}</Fact>
+          <Fact label={t.t(`AdminGroup.tags`)}>{format.number(counts.tags)}</Fact>
           <Fact label={t.t(`AdminGroup.openInvitations`)}>
-            {NUMBER.format(counts.pendingInvitations)}
+            {format.number(counts.pendingInvitations)}
           </Fact>
           <Fact label={t.t(`AdminGroup.files`)}>
-            {NUMBER.format(counts.files)}
-            <span class="font-normal text-muted">{` · ${formatBytes(counts.fileBytes)}`}</span>
+            {format.number(counts.files)}
+            <span class="font-normal text-muted">
+              {` · ${formatBytes(counts.fileBytes, format.locale)}`}
+            </span>
           </Fact>
           <Fact label={t.t(`AdminGroup.owner`)}>
             <Link
@@ -322,6 +323,9 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
           </Fact>
           <Fact label={t.t(`AdminGroup.created`)}>
             <When at={group.createdAt} />
+          </Fact>
+          <Fact label={t.t(`AdminGroup.timeZone`)} wrap>
+            <bdi data-e2e="admin-group-time-zone">{zoneLabel(group.timeZone, new Date())}</bdi>
           </Fact>
           {detail.imported && (
             <Fact label={t.t(`AdminGroup.imported`)}>
@@ -421,12 +425,14 @@ function TabLabel({ text, count }: { text: string; count: number }): JSX.Element
   )
 }
 
-/** One fact of the header card. */
-function Fact({ label, children }: { label: string; children: ComponentChildren }): JSX.Element {
+/** One fact of the header card, cut to one line unless `wrap` lets a long value break. */
+function Fact(
+  { label, wrap, children }: { label: string; wrap?: boolean; children: ComponentChildren },
+): JSX.Element {
   return (
     <div class="flex min-w-0 flex-col gap-1">
       <dt class="text-xs font-medium uppercase tracking-wide text-muted">{label}</dt>
-      <dd class="truncate text-sm font-medium">{children}</dd>
+      <dd class={`${wrap ? `break-words` : `truncate`} text-sm font-medium`}>{children}</dd>
     </div>
   )
 }
@@ -624,15 +630,19 @@ function Invitations(
 }
 
 /** "37 of 100 files · 41 MB of 200 MB", or without "of" for a cap the plan does not set. */
-function filesUsage(t: Translator<string>, usage: AdminGroupFiles["usage"]): string {
+function filesUsage(
+  t: Translator<string>,
+  usage: AdminGroupFiles["usage"],
+  locale: string,
+): string {
   const files = usage.maxFiles === null
     ? t.t(`AdminGroup.usageFiles`, { count: usage.files })
     : t.t(`AdminGroup.usageFilesOf`, { files: usage.files, count: usage.maxFiles })
   const bytes = usage.maxBytes === null
-    ? formatBytes(usage.bytes)
+    ? formatBytes(usage.bytes, locale)
     : t.t(`AdminGroup.usageBytesOf`, {
-      used: formatBytes(usage.bytes),
-      max: formatBytes(usage.maxBytes),
+      used: formatBytes(usage.bytes, locale),
+      max: formatBytes(usage.maxBytes, locale),
     })
   return `${files} · ${bytes}`
 }
@@ -680,7 +690,7 @@ export function filesCount(
 const FILE_SEARCH_ID = `admin-group-files-q`
 
 /**
- * The group's files (#478): a search by name, how many match, one page of rows with a thumbnail
+ * The group's files: a search by name, how many match, one page of rows with a thumbnail
  * or a file icon, the name and where the file sits, then the pages and the group's room. An image
  * opens in the lightbox and any other file downloads; each row's menu downloads or removes it. An
  * operator sees the names and the notes' titles so they can find the file a report names.
@@ -755,7 +765,11 @@ function Files(
     }
     if (none) {
       return (
-        <div ref={empty} tabIndex={-1} class="rounded-xl">
+        <div
+          ref={empty}
+          tabIndex={-1}
+          class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+        >
           <Card data-e2e="admin-group-files">
             <EmptyState inset description={t.t(`AdminGroup.noFilesYet`)} />
           </Card>
@@ -859,7 +873,7 @@ function Files(
       )}
       {files && (
         <p class="text-sm text-muted" data-e2e="admin-group-files-usage">
-          {filesUsage(t, files.usage)}
+          {filesUsage(t, files.usage, format.locale)}
         </p>
       )}
     </Stack>

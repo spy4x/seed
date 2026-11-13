@@ -4,7 +4,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The admin app's Jobs module (#394): an operator reaches it from the System page, runs the
+ * The admin app's Jobs module: an operator reaches it from the System page, runs the
  * nightly cleanup now from the Repeating tab, finds its run by name and opens it. The page never
  * scrolls sideways on a phone.
  */

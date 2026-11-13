@@ -123,13 +123,7 @@ describe("ForgotPasswordScreen links", () => {
   const props = { email: "", onEmailChange: () => {}, error: null, pending: false }
 
   it("links back to sign in", () => {
-    const surface = noScriptSurface(<ForgotPasswordScreen {...props} sent={false} />)
-    expect(surface.links).toEqual([SCREEN_PATHS.signIn])
-  })
-
-  it("says the link is on its way and asks nothing more once it is sent", () => {
-    const surface = noScriptSurface(<ForgotPasswordScreen {...props} sent />)
-    expect(surface.forms).toEqual([])
+    const surface = noScriptSurface(<ForgotPasswordScreen {...props} />)
     expect(surface.links).toEqual([SCREEN_PATHS.signIn])
   })
 })
@@ -137,31 +131,18 @@ describe("ForgotPasswordScreen links", () => {
 describe("ResetPasswordScreen links", () => {
   const props = {
     email: "ada@example.com",
-    code: "code-from-the-link",
     newPassword: "",
     onNewPasswordChange: () => {},
     done: false,
     error: null,
     pending: false,
+    onStartOver: () => {},
   }
-
-  it("links an expired link to a new one", () => {
-    const surface = noScriptSurface(<ResetPasswordScreen {...props} />)
-    expect(surface.links).toEqual([SCREEN_PATHS.forgotPassword])
-  })
 
   it("points to sign-in once the password is changed", () => {
     const surface = noScriptSurface(<ResetPasswordScreen {...props} done />)
     expect(surface.forms).toEqual([])
     expect(surface.links).toEqual([SCREEN_PATHS.signIn])
-  })
-
-  it("offers a new link instead of a form when the link lacks its address or code", () => {
-    for (const broken of [{ email: "" }, { code: "" }]) {
-      const surface = noScriptSurface(<ResetPasswordScreen {...props} {...broken} />)
-      expect(surface.forms).toEqual([])
-      expect(surface.links).toEqual([SCREEN_PATHS.forgotPassword])
-    }
   })
 })
 
@@ -276,6 +257,32 @@ describe("UnsubscribeScreen without JavaScript", () => {
   })
 })
 
+describe("the newsletter's result pages", () => {
+  const link = { list: "news", token: "token-from-the-link", error: null, pending: false }
+
+  it("open with focus on their result sentence, so a screen reader reads it first", () => {
+    const results = [
+      <SubscribeForm
+        key="sent"
+        email=""
+        onEmailChange={() => {}}
+        list="news"
+        sent
+        error={null}
+        pending={false}
+      />,
+      <SubscriptionConfirmScreen key="confirmed" {...link} state="done" />,
+      <SubscriptionConfirmScreen key="expired" {...link} state="expired" />,
+      <UnsubscribeScreen key="unsubscribed" {...link} state="done" />,
+      <UnsubscribeScreen key="not-recognised" {...link} state="not-recognised" />,
+    ]
+    for (const result of results) {
+      const status = renderToString(result).match(/<p\b[^>]*role="status"[^>]*>/)?.[0]
+      expect(status).toMatch(/\sautofocus(\s|=|>)/)
+    }
+  })
+})
+
 describe("signed-out cards' layout", () => {
   const forms = {
     "sign-in": <AuthScreen {...authDefaults} />,
@@ -284,7 +291,6 @@ describe("signed-out cards' layout", () => {
       <ForgotPasswordScreen
         email=""
         onEmailChange={() => {}}
-        sent={false}
         error={null}
         pending={false}
       />
@@ -303,6 +309,7 @@ describe("signed-out cards' layout", () => {
     ),
     "subscribe": (
       <SubscribeForm
+        key="sent"
         email=""
         onEmailChange={() => {}}
         list="news"
@@ -333,6 +340,7 @@ describe("signed-out cards' layout", () => {
     }
     const sent = renderToString(
       <SubscribeForm
+        key="sent"
         email=""
         onEmailChange={() => {}}
         list="news"
@@ -347,13 +355,15 @@ describe("signed-out cards' layout", () => {
   it("spans the card with the one way onward when there is nothing to fill in", () => {
     const pages = {
       "signed-in": <AuthScreen {...authDefaults} isSignedIn />,
-      "link-sent": (
-        <ForgotPasswordScreen
-          email=""
-          onEmailChange={() => {}}
-          sent
+      "password-changed": (
+        <ResetPasswordScreen
+          email="ada@example.com"
+          newPassword=""
+          onNewPasswordChange={() => {}}
+          done
           error={null}
           pending={false}
+          onStartOver={() => {}}
         />
       ),
       "unsubscribed": (

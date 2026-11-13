@@ -33,13 +33,13 @@ import { sessionState } from "../state/session.ts"
 import type { TagItem } from "../state/tags.ts"
 
 /**
- * `/benchmark` (#440): runs the measures of `BenchmarkScreen` on this device with the SPA's own
+ * `/benchmark`: runs the measures of `BenchmarkScreen` on this device with the SPA's own
  * code: the changes pull and IndexedDB copy of the local-data module (`benchmarkLocalData`), the
  * real notes list and the list's own search and filter. Only in a development build or on the
  * public demo (`benchmarkOpen`).
  */
 
-/** The generator that makes a large group (docs/capacity.md); `M` is 10,000 notes. */
+/** The generator that makes a large group (docs/load-tests.md); `M` is 10,000 notes. */
 const GENERATOR = `deno task load:group M --member`
 
 /** A frame interval this much over 60 Hz counts the frames it skipped as dropped. */

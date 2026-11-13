@@ -5,7 +5,7 @@ const REPOSITORY = `https://github.com/spy4x/seed`
 /** The repository root, where each code link's path must exist. */
 const ROOT = new URL(`../../`, import.meta.url)
 /** The home page links to these sections of `/features`. */
-const HOME_ANCHORS = [`sign-in`, `billing`, `realtime`, `teams`, `website`] as const
+const HOME_ANCHORS = [`sign-in`, `billing`, `realtime`, `fast`, `teams`, `website`] as const
 
 /** Runs axe-core over the whole page and returns each violation's rule and the elements it hit. */
 async function violations(page: Page): Promise<string[]> {
@@ -84,7 +84,7 @@ test.describe(`without JavaScript`, () => {
 })
 
 // Through the built server's own routing: `routes/[[lang]]/admin.tsx` also fits this address, and
-// a unit test that calls the feature page's handler cannot see which route Fresh picks.
+// a unit test that calls the feature page's handler cannot see which route the server picks.
 test(`/features/admin answers a permanent redirect to the admin panel's page`, async ({ request }) => {
   const response = await request.get(`/features/admin`, { maxRedirects: 0 })
 
@@ -176,7 +176,7 @@ test.describe(`a screenshot's lightbox`, () => {
       const asked: string[] = []
       page.on(`request`, (request) => asked.push(request.url()))
       await page.goto(path, { waitUntil: `networkidle` })
-      expect(asked.some((url) => url.includes(`shot_lightbox`))).toBe(loads)
+      expect(asked.some((url) => url.includes(`/assets/shot-lightbox-`))).toBe(loads)
     })
   }
 })

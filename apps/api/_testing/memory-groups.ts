@@ -34,6 +34,7 @@ export class MemoryGroupRepository implements GroupRepository {
   description = ""
   color: GroupColor | null = null
   emoji: string | null = null
+  timeZone = "UTC"
   deleted = false
   lastGroup = false
   /** The group has a live subscription: a delete fails as the database refuses it. */
@@ -57,6 +58,7 @@ export class MemoryGroupRepository implements GroupRepository {
         description: this.description,
         color: this.color,
         emoji: this.emoji,
+        timeZone: this.timeZone,
         ownerUserId: 1,
         createdByUserId: 1,
         authorizationRevision: "1",
@@ -76,6 +78,7 @@ export class MemoryGroupRepository implements GroupRepository {
       description: this.description,
       color: this.color,
       emoji: this.emoji,
+      timeZone: this.timeZone,
       role,
       authorizationRevision: "1",
       changeSequence: "2",
@@ -116,6 +119,7 @@ export class MemoryGroupRepository implements GroupRepository {
     this.description = details.description
     this.color = details.color
     this.emoji = details.emoji
+    this.timeZone = details.timeZone ?? this.timeZone
     this.writes++
     this.requestIds.push(requestId)
     return Promise.resolve(this.#summary(access.role))

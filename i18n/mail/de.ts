@@ -5,31 +5,37 @@ export default {
   "Mail.signIn": "Anmelden",
   "Mail.openProfile": "Zum Profil",
   "Mail.openGroup": "Zur Gruppe",
-  "PasswordResetMail.subject": "Setze dein Passwort zurück",
-  "PasswordResetMail.asked": "Jemand möchte das Passwort deines Kontos bei {host} zurücksetzen.",
-  "PasswordResetMail.open": {
-    "one": "Öffne diesen Link innerhalb von {count} Minute, um ein neues Passwort festzulegen.",
-    "other": "Öffne diesen Link innerhalb von {count} Minuten, um ein neues Passwort festzulegen.",
+  "Mail.dontShare": "Gib diesen Code an niemanden weiter. {host} wird dich nie danach fragen.",
+  "PasswordResetMail.subject": "Dein Code zum Zurücksetzen deines Passworts",
+  "PasswordResetMail.asked":
+    "Jemand möchte das Passwort deines Kontos bei {host} zurücksetzen. Gib diesen Code in dem Tab ein, in dem du ihn angefordert hast:",
+  "PasswordResetMail.valid": {
+    "one":
+      "Der Code gilt nur einmal und {count} Minute lang. Sobald du ihn eingibst, wirst du auf allen Geräten abgemeldet.",
+    "other":
+      "Der Code gilt nur einmal und {count} Minuten lang. Sobald du ihn eingibst, wirst du auf allen Geräten abgemeldet.",
   },
-  "PasswordResetMail.button": "Neues Passwort festlegen",
-  "PasswordResetMail.once":
-    "Der Link funktioniert nur einmal. Sobald du ihn benutzt, wirst du auf allen Geräten abgemeldet.",
   "PasswordResetMail.ignore":
     "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Dein Passwort bleibt, wie es ist.",
-  "SignInLinkMail.subject": "Dein Anmeldelink für {host}",
-  "SignInLinkMail.asked":
-    "Jemand wollte sich am {when} mit dieser E-Mail-Adresse bei {host} anmelden.",
-  "SignInLinkMail.open": {
+  "PasswordResetNoticeMail.subject": "Setze dein Passwort zurück",
+  "PasswordResetNoticeMail.asked":
+    "Das Team hinter {host} schickt dir diese E-Mail, damit du ein neues Passwort für dein Konto festlegen kannst.",
+  "PasswordResetNoticeMail.how":
+    "Öffne die Seite unten und gib diese E-Mail-Adresse ein. Wir schicken dir dort einen Code, und du legst das neue Passwort fest.",
+  "PasswordResetNoticeMail.button": "Passwort zurücksetzen",
+  "PasswordResetNoticeMail.ignore":
+    "Brauchst du kein neues Passwort? Dann ignoriere diese E-Mail einfach. Dein Passwort bleibt, wie es ist.",
+  "SignInCodeMail.subject": "Dein Anmeldecode für {host}",
+  "SignInCodeMail.asked":
+    "Jemand wollte sich am {when} mit dieser E-Mail-Adresse bei {host} anmelden. Gib diesen Code in dem Tab ein, in dem du ihn angefordert hast:",
+  "SignInCodeMail.valid": {
     "one":
-      "Öffne diesen Link innerhalb von {count} Minute, um dich anzumelden. Gibt es mit dieser E-Mail-Adresse noch kein Konto, wird eins angelegt.",
+      "Der Code gilt nur einmal und {count} Minute lang. Gibt es mit dieser E-Mail-Adresse noch kein Konto, legt er eins an.",
     "other":
-      "Öffne diesen Link innerhalb von {count} Minuten, um dich anzumelden. Gibt es mit dieser E-Mail-Adresse noch kein Konto, wird eins angelegt.",
+      "Der Code gilt nur einmal und {count} Minuten lang. Gibt es mit dieser E-Mail-Adresse noch kein Konto, legt er eins an.",
   },
-  "SignInLinkMail.button": "Bei {host} anmelden",
-  "SignInLinkMail.once":
-    "Der Link funktioniert nur einmal. Er öffnet eine Seite mit einem Weiter-Button, und erst wenn du darauf klickst, passiert etwas.",
-  "SignInLinkMail.ignore":
-    "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Ohne den Link kann sich niemand anmelden.",
+  "SignInCodeMail.ignore":
+    "Warst du das nicht? Dann ignoriere diese E-Mail einfach. Ohne den Code kann sich niemand anmelden.",
   "EmailCodeMail.subject": "Dein Code zum Bestätigen deiner E-Mail-Adresse",
   "EmailCodeMail.asked": "Gib diesen Code bei {host} ein, um deine E-Mail-Adresse zu bestätigen.",
   "EmailCodeMail.valid": {

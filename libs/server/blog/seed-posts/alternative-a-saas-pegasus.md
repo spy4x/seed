@@ -11,6 +11,8 @@ tldr:
   - Gratuit et en Python, il reste Cookiecutter Django, sans équipes ni facturation.
   - Seed est gratuit sous MIT, avec équipes, facturation Stripe et back-office, mais en TypeScript.
 topic: Questions
+intro: "SaaS Pegasus est un bon starter Django, et il coûte 449 $ ou plus. Si vous préférez ne rien payer, voici les voies gratuites en Python et en TypeScript, et ce que chacune laisse de côté."
+coverAlt: "Une balance portant d'un côté un coffre au trésor verrouillé avec une étiquette de prix vierge, et de l'autre deux sachets de graines ouverts."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

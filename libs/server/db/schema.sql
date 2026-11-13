@@ -186,6 +186,7 @@ CREATE TABLE groups (
     emoji VARCHAR(32),
     imported_at TIMESTAMPTZ,
     changes_oldest_sequence BIGINT DEFAULT 0 NOT NULL,
+    time_zone VARCHAR(64) DEFAULT 'UTC' NOT NULL,
     CONSTRAINT groups_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 100),
     CONSTRAINT groups_description_check CHECK (char_length(description) <= 500),
     CONSTRAINT groups_color_check CHECK (color ~ '^#[0-9a-f]{6}$'),
@@ -282,6 +283,11 @@ CREATE INDEX idx_audit_events_actor_created
     ON audit_events (actor_user_id, created_at DESC, id DESC);
 CREATE INDEX idx_audit_events_group_id_desc ON audit_events (group_id, id DESC);
 CREATE INDEX idx_audit_events_created ON audit_events (created_at);
+-- An operator's read of one file under one request id is one row, however often it arrives.
+CREATE UNIQUE INDEX idx_audit_events_file_access_once
+    ON audit_events (event_kind, actor_user_id, group_id, entity_id, (details->>'name'), request_id)
+    WHERE event_kind IN ('operator.file_opened', 'operator.file_downloaded')
+        AND request_id IS NOT NULL;
 
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY,
@@ -379,7 +385,7 @@ CREATE INDEX idx_notes_group_updated_id_deleted
     ON notes (group_id, updated_at DESC, id)
     WHERE deleted_at IS NOT NULL;
 CREATE INDEX idx_notes_deleted_at ON notes (deleted_at) WHERE deleted_at IS NOT NULL;
--- Search over live notes (#299). See migration 2026_11_22_0001.
+-- Search over live notes. See migration 2026_11_22_0001.
 CREATE INDEX idx_notes_search_vector_active ON notes USING GIN (search_vector)
     WHERE deleted_at IS NULL;
 
@@ -403,11 +409,14 @@ CREATE INDEX idx_user_settings_selected_group
     ON user_settings (selected_group_id)
     WHERE selected_group_id IS NOT NULL;
 
--- Password reset by e-mail. See migration 2026_10_06_0001_password_reset.sql.
+-- Password reset by e-mail. See migrations 2026_10_06_0001_password_reset.sql and
+-- 2026_12_14_0002_email_codes.sql (a code, waited for in the browser that asked).
 CREATE TABLE password_reset_requests (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    by_operator BOOLEAN DEFAULT false NOT NULL,
     CONSTRAINT password_reset_requests_email_check CHECK (length(email) BETWEEN 3 AND 254)
 );
 
@@ -422,7 +431,7 @@ CREATE TABLE dev_mail (
 
 CREATE INDEX dev_mail_to_address_idx ON dev_mail (to_address, id);
 
--- A new address waiting for its code; the old one stays until it is proven (#140).
+-- A new address waiting for its code; the old one stays until it is proven.
 CREATE TABLE email_changes (
     user_id INT4 PRIMARY KEY REFERENCES auth_users (id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -450,7 +459,7 @@ CREATE TABLE email_code_failures (
     CONSTRAINT email_code_failures_failed_attempts_check CHECK (failed_attempts >= 0)
 );
 
--- Wrong passwords per sign-in name (the SHA-256 of what was typed), with a short lock (#387).
+-- Wrong passwords per sign-in name (the SHA-256 of what was typed), with a short lock.
 CREATE TABLE password_failures (
     subject CHAR(64) PRIMARY KEY,
     failed_attempts INT4 DEFAULT 0 NOT NULL,
@@ -459,7 +468,7 @@ CREATE TABLE password_failures (
     CONSTRAINT password_failures_failed_attempts_check CHECK (failed_attempts >= 0)
 );
 
--- Wrong passwords a signed-in account types at the steps that ask for it again (#406).
+-- Wrong passwords a signed-in account types at the steps that ask for it again.
 CREATE TABLE password_check_failures (
     user_id INT4 PRIMARY KEY REFERENCES auth_users (id) ON DELETE CASCADE,
     failed_attempts INT4 DEFAULT 0 NOT NULL,
@@ -468,7 +477,7 @@ CREATE TABLE password_check_failures (
     CONSTRAINT password_check_failures_failed_attempts_check CHECK (failed_attempts >= 0)
 );
 
--- One subscription per group, paid through a provider (#202). See the migration for the why.
+-- One subscription per group, paid through a provider. See the migration for the why.
 CREATE TABLE billing_customers (
     group_id UUID PRIMARY KEY REFERENCES groups(id) ON DELETE CASCADE,
     provider_customer_id VARCHAR(255) NOT NULL,
@@ -478,7 +487,7 @@ CREATE TABLE billing_customers (
 CREATE UNIQUE INDEX idx_billing_customers_provider_customer_id
     ON billing_customers (provider_customer_id);
 
--- Customers handed over by a transfer of ownership (#250), for good. See the migration for the why.
+-- Customers handed over by a transfer of ownership, for good. See the migration for the why.
 CREATE TABLE billing_handed_over_customers (
     provider_customer_id VARCHAR(255) PRIMARY KEY,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -500,28 +509,34 @@ CREATE TABLE subscriptions (
     provider_event_at TIMESTAMPTZ NOT NULL,
     provider_event_rank INT2 NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    -- When the provider first reported it past due (#204): the grace period counts from here. A
+    -- When the provider first reported it past due: the grace period counts from here. A
     -- later past-due event keeps it; any other status clears it.
     past_due_since TIMESTAMPTZ,
-    -- When the trial ends (#204), as the provider last reported it; `NULL` without a trial.
+    -- When the trial ends, as the provider last reported it; `NULL` without a trial.
     trial_end TIMESTAMPTZ,
-    -- The seats the provider last reported the subscription bills (#205). A per-member plan bills
+    -- The seats the provider last reported the subscription bills. A per-member plan bills
     -- one per member; the worker changes the subscription when the member count differs.
     quantity INTEGER,
-    -- Whether this subscription was ever active, so it has paid at least once (#247). Only then
+    -- Whether this subscription was ever active, so it has paid at least once. Only then
     -- does a failed payment get the grace period; a trial whose first charge fails gets none.
     ever_active BOOLEAN DEFAULT FALSE NOT NULL,
-    -- The customer this subscription bills (#250), so a handed-over customer's subscription is
+    -- The customer this subscription bills, so a handed-over customer's subscription is
     -- known by its own customer and not by the group's current one.
     provider_customer_id VARCHAR(255),
+    -- How often the price the provider last reported bills; `NULL` when that price is in no
+    -- plan.
+    billing_period INT2,
     CONSTRAINT subscriptions_status_check CHECK (status BETWEEN 1 AND 6),
     CONSTRAINT subscriptions_provider_event_rank_check CHECK (provider_event_rank BETWEEN 1 AND 3),
     CONSTRAINT subscriptions_past_due_since_check
-        CHECK ((status = 3) = (past_due_since IS NOT NULL))
+        CHECK ((status = 3) = (past_due_since IS NOT NULL)),
+    CONSTRAINT subscriptions_billing_period_check CHECK (billing_period IN (1, 2))
 );
 
 COMMENT ON COLUMN subscriptions.status IS
     '1=trialing, 2=active, 3=past_due, 4=canceled, 5=incomplete, 6=paused';
+
+COMMENT ON COLUMN subscriptions.billing_period IS '1=month, 2=year';
 
 CREATE INDEX idx_subscriptions_provider_subscription_id
     ON subscriptions (provider_subscription_id);
@@ -535,7 +550,7 @@ CREATE TABLE billing_events (
     CONSTRAINT billing_events_event_type_check CHECK (event_type BETWEEN 1 AND 5)
 );
 
--- Invitations to a group (#131). See the migration for the why.
+-- Invitations to a group. See the migration for the why.
 CREATE TABLE group_invitations (
     id UUID PRIMARY KEY,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -650,7 +665,7 @@ CREATE TABLE subscriber_issue_content (
   CONSTRAINT subscriber_issue_content_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
--- A person's request to delete their account (#144). See migration 2026_10_20_0001.
+-- A person's request to delete their account. See migration 2026_10_20_0001.
 CREATE TABLE account_deletions (
     id UUID PRIMARY KEY,
     user_id INT4 NOT NULL UNIQUE REFERENCES auth_users(id) ON DELETE CASCADE,
@@ -660,7 +675,7 @@ CREATE TABLE account_deletions (
 
 CREATE INDEX idx_account_deletions_delete_after ON account_deletions (delete_after);
 
--- A restore whose mail is not sent yet (#144). See migration 2026_10_20_0001.
+-- A restore whose mail is not sent yet. See migration 2026_10_20_0001.
 CREATE TABLE account_restorations (
     id UUID PRIMARY KEY,
     user_id INT4 NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
@@ -669,7 +684,7 @@ CREATE TABLE account_restorations (
 
 CREATE INDEX idx_account_restorations_user_id ON account_restorations (user_id);
 
--- A sign-in method linked or unlinked whose mail is not sent yet (#385). See migration
+-- A sign-in method linked or unlinked whose mail is not sent yet. See migration
 -- 2026_11_07_0001.
 CREATE TABLE sign_in_method_changes (
     id UUID PRIMARY KEY,
@@ -916,21 +931,24 @@ CREATE TABLE guest_reminders (
     CONSTRAINT guest_reminders_kind_check CHECK (kind BETWEEN 1 AND 3)
 );
 
--- #391: sign-in by e-mail link. See migration 2026_11_29_0001_sign_in_links.sql.
-CREATE TABLE sign_in_link_requests (
+-- #391: sign-in by e-mail (a link until #752, now a code). See migrations
+-- 2026_11_29_0001_sign_in_links.sql and 2026_12_14_0002_email_codes.sql.
+CREATE TABLE sign_in_code_requests (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL,
     next TEXT,
     requested_by_user_id INT4 REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    -- #277: the language of the page that asked, for the link mail.
+    -- #277: the language of the page that asked, for the code mail.
     language TEXT,
-    CONSTRAINT sign_in_link_requests_email_check CHECK (length(email) BETWEEN 3 AND 254),
-    CONSTRAINT sign_in_link_requests_next_check CHECK (length(next) BETWEEN 1 AND 2048),
-    CONSTRAINT sign_in_link_requests_language_check CHECK (length(language) BETWEEN 2 AND 35)
+    -- #752: the request, and its code, work until then; a new code moves it on.
+    expires_at TIMESTAMPTZ NOT NULL,
+    CONSTRAINT sign_in_code_requests_email_check CHECK (length(email) BETWEEN 3 AND 254),
+    CONSTRAINT sign_in_code_requests_next_check CHECK (length(next) BETWEEN 1 AND 2048),
+    CONSTRAINT sign_in_code_requests_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
-CREATE INDEX idx_sign_in_link_requests_email ON sign_in_link_requests (email);
+CREATE INDEX idx_sign_in_code_requests_email ON sign_in_code_requests (email);
 
 -- #395: the blog's posts. See migration 2026_11_30_0001_blog_posts.sql.
 CREATE TABLE blog_posts (
@@ -967,6 +985,13 @@ CREATE TABLE blog_posts (
     ) STORED,
     -- #730: the page the author's name links to. See 2026_12_13_0001_blog_author_url.sql.
     author_url VARCHAR(2000),
+    -- #733: intro, related feature, a cover file, the Dev.to cross-post. See
+    -- 2026_12_14_0004_blog_publishing.sql.
+    intro VARCHAR(600),
+    related_feature VARCHAR(100),
+    cover_file VARCHAR(120),
+    crossposted_at TIMESTAMPTZ,
+    devto_url VARCHAR(2000),
     CONSTRAINT blog_posts_slug_unique UNIQUE (slug),
     CONSTRAINT blog_posts_slug_check CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
     CONSTRAINT blog_posts_status_check CHECK (status IN ('draft', 'scheduled', 'published')),
@@ -981,7 +1006,14 @@ CREATE TABLE blog_posts (
     CONSTRAINT blog_posts_language_check CHECK (length(language) BETWEEN 2 AND 35),
     CONSTRAINT blog_posts_translation_check CHECK (translation_of <> id),
     CONSTRAINT blog_posts_author_url_check
-        CHECK (author_url IS NULL OR author_url LIKE 'https://%')
+        CHECK (author_url IS NULL OR author_url LIKE 'https://%'),
+    CONSTRAINT blog_posts_related_feature_check
+        CHECK (related_feature IS NULL OR related_feature ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+    CONSTRAINT blog_posts_cover_file_check
+        CHECK (cover_file IS NULL OR
+            (cover_file ~ '^[a-z0-9]+(-[a-z0-9]+)*\.webp$' AND cover_alt IS NOT NULL)),
+    CONSTRAINT blog_posts_devto_url_check
+        CHECK (devto_url IS NULL OR (devto_url LIKE 'https://%' AND crossposted_at IS NOT NULL))
 );
 
 CREATE UNIQUE INDEX blog_posts_translation_language_unique
@@ -1026,6 +1058,33 @@ CREATE TRIGGER blog_posts_slug_update
     FOR EACH ROW WHEN (OLD.slug IS DISTINCT FROM NEW.slug)
     EXECUTE FUNCTION keep_blog_slug_redirect();
 
+-- #418: a post's earlier versions. See migration 2026_12_14_0001_blog_post_revisions.sql.
+CREATE TABLE blog_post_revisions (
+    id UUID PRIMARY KEY,
+    post_id UUID NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+    slug VARCHAR(100) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    seo_title VARCHAR(70),
+    description VARCHAR(300) NOT NULL,
+    tldr TEXT[] DEFAULT '{}' NOT NULL,
+    topic VARCHAR(50),
+    cover_url VARCHAR(2000),
+    cover_alt VARCHAR(300),
+    author_url VARCHAR(2000),
+    body_md TEXT NOT NULL,
+    language TEXT NOT NULL,
+    translation_of UUID,
+    saved_by_id INT4,
+    saved_by_name VARCHAR(320),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- 2026_12_14_0004_blog_publishing.sql.
+    intro VARCHAR(600),
+    related_feature VARCHAR(100)
+);
+
+CREATE INDEX idx_blog_post_revisions_post
+    ON blog_post_revisions (post_id, created_at DESC, id DESC);
+
 -- #229: a person's data exports. See migration 2026_12_01_0001_data_exports.sql.
 CREATE TABLE data_exports (
     id UUID PRIMARY KEY,
@@ -1055,7 +1114,7 @@ CREATE TABLE telegram_messages (
 CREATE INDEX idx_telegram_messages_user_id ON telegram_messages (user_id);
 CREATE INDEX idx_telegram_messages_notification_id ON telegram_messages (notification_id);
 
--- Note attachments (#225, docs/files.md). A file is kept in the file store under `object_key`;
+-- Note attachments (docs/files.md). A file is kept in the file store under `object_key`;
 -- this table says which note it belongs to. A note's group is the file's group, so a file moves
 -- with its note and needs no group column of its own. Deleting the note (its purge, its group's,
 -- its owner's account) deletes the row through the foreign key, and the trigger below queues the
@@ -1078,7 +1137,7 @@ CREATE INDEX idx_note_attachments_note ON note_attachments (note_id, created_at,
 CREATE INDEX idx_note_attachments_created_by ON note_attachments (created_by_user_id);
 
 -- An upload that was signed, by any feature: a note attachment's names its note, a profile
--- picture's (#228) has none. The browser PUTs to `staging_key`; the confirm settles this row
+-- picture's has none. The browser PUTs to `staging_key`; the confirm settles this row
 -- first (`settled_at`), so one upload is confirmed at most once, and only by `user_id`. The id is
 -- the file's id once confirmed. The worker deletes rows older than a day.
 CREATE TABLE file_uploads (
@@ -1370,3 +1429,127 @@ CREATE TABLE group_change_tombstones (
 CREATE INDEX idx_group_change_tombstones_group_sequence
     ON group_change_tombstones (group_id, change_sequence);
 CREATE INDEX idx_group_change_tombstones_created_at ON group_change_tombstones (created_at);
+
+-- See migration 2026_12_15_0002_blog_sharing_channels.sql.
+-- The places posts are shared in: a subreddit, a Telegram channel, a newsletter. Every live post
+-- in one of `languages` that went live on or after `starts_at` (any, when NULL) lists the channel
+-- on its sharing checklist, until the channel is archived. `utm_source` tags the links to the post.
+CREATE TABLE blog_channels (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    kind VARCHAR(16) NOT NULL,
+    address VARCHAR(2000) NOT NULL,
+    utm_source VARCHAR(60) NOT NULL,
+    add_utm BOOLEAN DEFAULT true NOT NULL,
+    languages TEXT[] NOT NULL,
+    starts_at TIMESTAMPTZ,
+    archived_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version INT4 DEFAULT 1 NOT NULL,
+    auto_post BOOLEAN DEFAULT false NOT NULL,
+    CONSTRAINT blog_channels_utm_source_unique UNIQUE (utm_source),
+    CONSTRAINT blog_channels_kind_check CHECK (kind IN (
+        'devto', 'telegram', 'mastodon', 'bluesky', 'hashnode', 'linkedin', 'x', 'reddit',
+        'hackernews', 'newsletter', 'other'
+    )),
+    CONSTRAINT blog_channels_name_check CHECK (length(btrim(name)) >= 1),
+    CONSTRAINT blog_channels_address_check CHECK (length(btrim(address)) >= 1),
+    CONSTRAINT blog_channels_utm_source_check CHECK (utm_source ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+    CONSTRAINT blog_channels_languages_check CHECK (cardinality(languages) BETWEEN 1 AND 20),
+    CONSTRAINT blog_channels_version_check CHECK (version >= 1)
+);
+
+CREATE UNIQUE INDEX blog_channels_name_unique ON blog_channels (lower(name));
+
+-- What happened to one post on one channel. No row means "to do", the same as a `todo` row.
+CREATE TABLE blog_post_shares (
+    id UUID PRIMARY KEY,
+    post_id UUID NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+    channel_id UUID NOT NULL REFERENCES blog_channels(id) ON DELETE RESTRICT,
+    status VARCHAR(16) NOT NULL,
+    url VARCHAR(2000),
+    shared_at TIMESTAMPTZ,
+    skip_reason VARCHAR(200),
+    automatic BOOLEAN DEFAULT false NOT NULL,
+    error VARCHAR(500),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- Why the results job's last read failed, and when; both NULL after a good read.
+    read_error VARCHAR(500),
+    read_failed_at TIMESTAMPTZ,
+    post_attempted_at TIMESTAMPTZ,
+    CONSTRAINT blog_post_shares_post_channel_unique UNIQUE (post_id, channel_id),
+    CONSTRAINT blog_post_shares_status_check
+        CHECK (status IN ('todo', 'suggested', 'posted', 'skipped')),
+    CONSTRAINT blog_post_shares_url_check CHECK (url IS NULL OR url LIKE 'https://%'),
+    CONSTRAINT blog_post_shares_skip_reason_check CHECK (skip_reason IS NULL OR status = 'skipped'),
+    CONSTRAINT blog_post_shares_read_error_check
+        CHECK ((read_error IS NULL) = (read_failed_at IS NULL))
+);
+
+CREATE INDEX idx_blog_post_shares_channel ON blog_post_shares (channel_id);
+
+-- The numbers one shared copy got, as read at `read_at`: by the results job or typed by hand.
+-- Counts only; NULL is a number the channel does not show.
+CREATE TABLE blog_share_results (
+    id UUID PRIMARY KEY,
+    share_id UUID NOT NULL REFERENCES blog_post_shares(id) ON DELETE CASCADE,
+    read_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    source VARCHAR(8) NOT NULL,
+    views INT4,
+    reactions INT4,
+    comments INT4,
+    score INT4,
+    CONSTRAINT blog_share_results_source_check CHECK (source IN ('job', 'hand')),
+    CONSTRAINT blog_share_results_counts_check CHECK (
+        (views IS NULL OR views >= 0) AND (reactions IS NULL OR reactions >= 0) AND
+        (comments IS NULL OR comments >= 0) AND (score IS NULL OR score >= 0)
+    ),
+    CONSTRAINT blog_share_results_any_check CHECK (num_nonnulls(views, reactions, comments, score) >= 1)
+);
+
+CREATE INDEX idx_blog_share_results_share
+    ON blog_share_results (share_id, read_at DESC);
+
+-- #696: records brought in from a file (docs/imports.md); see the migration for the columns.
+CREATE TABLE imports (
+    id UUID PRIMARY KEY,
+    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind VARCHAR(64) NOT NULL,
+    status INT2 NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_size INT4 NOT NULL,
+    file BYTEA,
+    columns JSONB,
+    sample JSONB,
+    mapping JSONB,
+    row_count INT4,
+    saved_count INT4,
+    error_count INT4,
+    failure VARCHAR(500),
+    created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    read_at TIMESTAMPTZ(3),
+    failed_at TIMESTAMPTZ(3),
+    commit_requested_at TIMESTAMPTZ(3),
+    committed_at TIMESTAMPTZ(3),
+    undone_at TIMESTAMPTZ(3),
+    CONSTRAINT imports_status_check CHECK (status BETWEEN 1 AND 6),
+    CONSTRAINT imports_file_size_check CHECK (file_size >= 0),
+    CONSTRAINT imports_failure_check CHECK ((failure IS NULL) = (failed_at IS NULL))
+);
+
+-- A person's imports in a group, newest first; the cleanup's scan by age.
+CREATE INDEX idx_imports_group_user_created ON imports (group_id, user_id, created_at DESC);
+CREATE INDEX idx_imports_created ON imports (created_at) WHERE committed_at IS NULL;
+CREATE INDEX idx_imports_user ON imports (user_id);
+
+-- The records one saved import made, so undo removes that batch and nothing else. A join table
+-- rather than a column on each aggregate: a kind adds no column to its own table, and the
+-- records keep no trace of the import once its row is gone.
+CREATE TABLE import_records (
+    import_id UUID NOT NULL REFERENCES imports(id) ON DELETE CASCADE,
+    record_id UUID NOT NULL,
+    PRIMARY KEY (import_id, record_id)
+);

@@ -1,5 +1,5 @@
 /**
- * The admin Stats screen's numbers (#485): the website's visits, where they come from, which items
+ * The admin Stats screen's numbers: the website's visits, where they come from, which items
  * people look at and order, and through which channel, read from the self-hosted Umami on the
  * server. The token never leaves the server, and only totals are read: no visitor, session, place
  * or address. Every operator shares one copy of the numbers for {@link STATS_CACHE_MS}; when
@@ -18,7 +18,9 @@ import {
   type UmamiReadResult,
 } from "@spy4x/integrations/umami"
 import {
+  WEBSITE_ITEM_STATS_DAYS,
   WEBSITE_STATS_SETTINGS,
+  type WebsiteItemStatsResponse,
   type WebsiteStatsChannel,
   type WebsiteStatsDay,
   type WebsiteStatsItem,
@@ -122,6 +124,12 @@ export interface WebsiteStatsQuery {
   fresh: boolean
 }
 
+/** The visits to one page by `utm_source`, as {@link createWebsiteStats}' `pathVisits` reads them. */
+export type WebsitePathVisits =
+  | { state: `off`; missing: string[] }
+  | { state: `failed` }
+  | { state: `ready`; bySource: Record<string, number>; readAt: string; stale: boolean }
+
 /** Why a read of Umami failed, as the screen tells it. */
 type Problem = `token-refused` | `unknown-website` | `unreachable`
 
@@ -167,6 +175,11 @@ export function channelName(event: string): string {
 /** The UTC day of `at`, `YYYY-MM-DD`. */
 function utcDay(at: number): string {
   return new Date(at).toISOString().slice(0, 10)
+}
+
+/** The start of a period of `days` UTC days that ends at `end`, today included. */
+function periodStart(end: number, days: number): number {
+  return Date.parse(`${utcDay(end)}T00:00:00Z`) - (days - 1) * DAY_MS
 }
 
 /** Runs `run` over `items`, at most `limit` at once, keeping their order. */
@@ -237,24 +250,24 @@ export function createWebsiteStats(dependencies: WebsiteStatsDependencies) {
     }
   }
 
+  /** A read's output, or a {@link UmamiFailure} with Umami's status. */
+  async function ok<T>(result: Promise<UmamiReadResult<T>>): Promise<T> {
+    const answer = await result
+    if (answer.success) return answer.output
+    log(`Stats: Umami read failed: ${answer.error}`)
+    // A refused token or website shows up as 401, 403 or 404; anything else is an outage.
+    const refused = answer.status === 401 || answer.status === 403 || answer.status === 404
+    throw new UmamiFailure(refused ? answer.status : null, answer.error)
+  }
+
   return {
     async read(query: WebsiteStatsQuery): Promise<WebsiteStatsResponse> {
       if (setup === null) return { state: `off`, missing: [...missing] }
       const umamiUrl = `${setup.url.replace(/\/+$/, ``)}/websites/${setup.websiteId}`
       const connection = { baseUrl: setup.url, token: setup.token, websiteId: setup.websiteId }
 
-      /** A read's output, or a {@link UmamiFailure} with Umami's status. */
-      async function ok<T>(result: Promise<UmamiReadResult<T>>): Promise<T> {
-        const answer = await result
-        if (answer.success) return answer.output
-        log(`Stats: Umami read failed: ${answer.error}`)
-        // A refused token or website shows up as 401, 403 or 404; anything else is an outage.
-        const refused = answer.status === 401 || answer.status === 403 || answer.status === 404
-        throw new UmamiFailure(refused ? answer.status : null, answer.error)
-      }
-
       const end = now()
-      const start = Date.parse(`${utcDay(end)}T00:00:00Z`) - (query.days - 1) * DAY_MS
+      const start = periodStart(end, query.days)
       const previousStart = start - query.days * DAY_MS
       const span = { ...connection, startAt: start, endAt: end }
       const previousSpan = { ...connection, startAt: previousStart, endAt: start - 1 }
@@ -439,6 +452,84 @@ export function createWebsiteStats(dependencies: WebsiteStatsDependencies) {
         if (check.problem === `token`) return `token-refused`
         if (check.problem === `website`) return `unknown-website`
         return `unreachable`
+      }
+    },
+
+    /**
+     * One item's numbers over the last {@link WEBSITE_ITEM_STATS_DAYS} days, for its "Share
+     * links" card: its views and order clicks, and per defined source the visits and order clicks
+     * on its page through that source's links. Kept like the rest of Stats, one copy per item and
+     * sources for {@link STATS_CACHE_MS}; when Umami does not answer the last copy is shown, and
+     * without one the answer is `failed`, never zeros.
+     */
+    async item(item: { id: string; path: string }): Promise<WebsiteItemStatsResponse> {
+      if (setup === null) return { state: `off`, missing: [...missing] }
+      const connection = { baseUrl: setup.url, token: setup.token, websiteId: setup.websiteId }
+      const end = now()
+      const span = {
+        ...connection,
+        startAt: periodStart(end, WEBSITE_ITEM_STATS_DAYS),
+        endAt: end,
+      }
+      const page = { path: item.path }
+      try {
+        const sources = await dependencies.sources()
+        const key = `item:${item.id}:${item.path}:${sources.map(({ slug }) => slug).join(`,`)}`
+        const entry = await cached(key, false, async () => {
+          const [totals, events, perSource] = await Promise.all([
+            ok(umami.stats({ ...span, filters: page })),
+            ok(umami.metrics({ ...span, type: `event`, filters: page })),
+            mapLimit(sources, UMAMI_CONCURRENCY, async ({ slug }) => {
+              const filters = { ...page, utmSource: slug }
+              const [stats, sourceEvents] = await Promise.all([
+                ok(umami.stats({ ...span, filters })),
+                ok(umami.metrics({ ...span, type: `event`, filters })),
+              ])
+              return { slug, visits: stats.visits, orderClicks: orderClicksOf(sourceEvents) }
+            }),
+          ])
+          return {
+            state: `ready` as const,
+            views: totals.visitors,
+            orderClicks: orderClicksOf(events),
+            sources: perSource,
+          }
+        })
+        return entry.value
+      } catch (error) {
+        if (!(error instanceof UmamiFailure)) throw error
+        return { state: `failed` }
+      }
+    },
+
+    /**
+     * The visits to the website's `path` since `since`, by `utm_source`, read through the same
+     * five-minute copy as the rest of Stats: the blog's sharing checklist shows them per channel.
+     * `off` while Stats is off, `failed` when Umami refused or did not answer and no copy is left.
+     */
+    async pathVisits(path: string, since: number): Promise<WebsitePathVisits> {
+      if (setup === null) return { state: `off`, missing: [...missing] }
+      const connection = { baseUrl: setup.url, token: setup.token, websiteId: setup.websiteId }
+      const span = { ...connection, startAt: since, endAt: now() }
+      try {
+        const entry = await cached(`path:${path}:${since}`, false, async () => {
+          const rows = await ok(umami.metrics({
+            ...span,
+            type: `utmSource`,
+            limit: 500,
+            filters: { path },
+          }))
+          return Object.fromEntries(rows.map((row) => [row.x, row.y]))
+        })
+        return {
+          state: `ready`,
+          bySource: entry.value,
+          readAt: new Date(entry.at).toISOString(),
+          stale: entry.stale,
+        }
+      } catch (error) {
+        if (!(error instanceof UmamiFailure)) throw error
+        return { state: `failed` }
       }
     },
   }

@@ -11,6 +11,8 @@ tldr:
   - Se quem paga é uma equipe, escolha um template com grupos, papéis e cobrança por membro.
   - O Seed já vem em português do Brasil, e o servidor custa um valor fixo por mês.
 topic: Perguntas
+intro: "O ShipFast é um bom kit, mas não é o único, e não é gratuito. Comparei sete boilerplates por preço, licença, stack, equipes e hospedagem, com uma fonte para cada fato."
+coverAlt: "Sete veleiros de formas diferentes alinhados em águas calmas, um deles violeta."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
@@ -48,7 +50,7 @@ Num produto B2B, é o primeiro mês de trabalho.
 | Template                                                              | Preço                               | Licença                  | Stack                                   | Times e papéis               | Hospedagem                            |
 | --------------------------------------------------------------------- | ----------------------------------- | ------------------------ | --------------------------------------- | ---------------------------- | ------------------------------------- |
 | [ShipFast](https://shipfa.st/)                                        | US$ 199 ou 249, pagamento único     | Paga, sem redistribuição | Next.js; MongoDB ou Supabase            | Não citados                  | Vercel como opção gratuita            |
-| [Seed](https://github.com/spy4x/seed)                                 | Grátis                              | MIT                      | Deno, Hono, Fresh, Preact; Postgres     | Sim, com cobrança por membro | Um servidor Linux seu, Docker Compose |
+| [Seed](https://github.com/spy4x/seed)                                 | Grátis                              | MIT                      | Deno, Hono, Preact; Postgres            | Sim, com cobrança por membro | Um servidor Linux seu, Docker Compose |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)                   | Grátis                              | MIT                      | Wasp (React, Node.js, Prisma); Postgres | Não citados                  | Railway ou Fly.io com um comando      |
 | [ShipFree](https://github.com/revokslab/shipfree)                     | Grátis                              | MIT                      | Next.js, Bun, Drizzle; Postgres         | Não citados                  | Vercel ou Docker                      |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)        | Grátis                              | MIT                      | Next.js, Drizzle; Postgres              | Owner e Member               | Vercel                                |

@@ -10,6 +10,10 @@ tldr:
   - On 3 November 2026 the cheapest x86 Hetzner server plus backup storage cost €12.48 a month.
   - Vercel Pro and Supabase Pro start at $45 a month for one developer, before usage.
 topic: Guides
+intro: "I took Seed from git clone to production on one Hetzner server, and it costs about €12 a month. Here are the steps, and the bill next to Vercel Pro and Supabase Pro."
+relatedFeature: deploy
+cover: covers/deploy-saas-to-one-hetzner-server.webp
+coverAlt: "A single server tower on a small grassy island with a young plant growing from its top, and a path leading to it from a seed packet."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T12:00:00Z

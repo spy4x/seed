@@ -7,11 +7,13 @@ import {
 } from "@spy4x/platform/universal/text"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import { isHexColor } from "@spy4x/platform/universal/color"
+import { canonicalValidTimeZoneOrNull } from "@spy4x/time/tz"
 import type { Actor } from "@domain/identity"
 import type { FieldErrors } from "@spy4x/validation"
 import type { ChangesAnswer } from "@spy4x/realtime/changes"
 
 export * from "./activity.ts"
+export * from "./product-activity.ts"
 export * from "./invitations.ts"
 export * from "./move-all.ts"
 export * from "./admin-groups.ts"
@@ -42,6 +44,9 @@ export const GROUP_EMOJI_MAX = 16
  * screens pick black or white for anything written on it (`readableTextColor`).
  */
 export type GroupColor = string
+
+/** The zone a group falls back to when nothing better is known: its owner had none. */
+export const GROUP_DEFAULT_TIME_ZONE = "UTC"
 
 export enum GroupRole {
   VIEWER = 1,
@@ -88,6 +93,11 @@ export interface Group {
   color: GroupColor | null
   /** One emoji, or `null` when the group has none. */
   emoji: string | null
+  /**
+   * The IANA zone the group's days and months are cut in, such as `Europe/Berlin`, the same for
+   * every member and for jobs that run for the group. Read it with {@link groupTimeZone}.
+   */
+  timeZone: string
   ownerUserId: number
   /** `null` once the creator deleted their account. */
   createdByUserId: number | null
@@ -117,6 +127,8 @@ export interface GroupSummary {
   color: GroupColor | null
   /** See {@link Group.emoji}. */
   emoji: string | null
+  /** See {@link Group.timeZone}. */
+  timeZone: string
   role: GroupRole
   /**
    * How many members the group has, which the groups list shows on each row, and the first few of
@@ -148,7 +160,7 @@ export interface GroupMemberSummary {
   userId: number
   /** Their first and last name; empty when they set none. */
   name: string
-  /** Their profile picture (#228, `pictureUrl`); `null` or absent for none. */
+  /** Their profile picture (`pictureUrl`); `null` or absent for none. */
   pictureId?: string | null
   /**
    * The address they sign in with, or `null` for an account that has none. Present only for a
@@ -177,13 +189,19 @@ export interface GroupAccess {
   role: GroupRole
 }
 
-/** A new group from a request: its id and name, and the details the editor filled in. */
+/**
+ * A new group from a request: its id and name, and the details the editor filled in. A zone left
+ * out is the creator's.
+ */
 export interface CreateGroupRequest extends GroupDetails {
   id: string
   name: string
 }
 
-/** A group to create. Details left out start empty: no description, colour or emoji. */
+/**
+ * A group to create. Details left out start empty: no description, colour or emoji, and the
+ * creator's zone (their preferences, else their first device's, else `UTC`).
+ */
 export interface CreateGroupInput extends Partial<GroupDetails> {
   id: string
   name: string
@@ -250,11 +268,16 @@ export class GroupRenameCommand implements Command<GroupRenamePayload, { group: 
   constructor(public data: GroupRenamePayload) {}
 }
 
-/** The three optional details of a group, as an edit sets them all at once. */
+/**
+ * The details of a group, as an edit sets them all at once. The zone is optional on the wire: a
+ * client that does not send it keeps the group's zone as it is.
+ */
 export interface GroupDetails {
   description: string
   color: GroupColor | null
   emoji: string | null
+  /** See {@link Group.timeZone}; left out, the zone does not change. */
+  timeZone?: string
 }
 
 export interface GroupUpdateDetailsPayload extends GroupDetails {
@@ -266,7 +289,7 @@ export interface GroupUpdateDetailsPayload extends GroupDetails {
 }
 
 /**
- * Sets a group's description, colour and emoji. Whoever may rename the group may ({@link
+ * Sets a group's description, colour, emoji and time zone. Whoever may rename the group may ({@link
  * canRename}); a viewer or editor is refused with `ROLE_INSUFFICIENT`, and a non-member is told
  * `GROUP_NOT_FOUND`. It announces the change like a rename, so every member's page reads again.
  */
@@ -346,7 +369,7 @@ export interface GroupChangesPayload {
 
 /**
  * One page of what changed in a group after `after`: its notes and tags written since, and the
- * ones gone (`docs/offline.md`, "Reads: the device first"). Any member may read it; a non-member
+ * ones gone (`docs/offline-data.md`, "Notes and tags: the changes pull"). Any member may read it; a non-member
  * is told `GROUP_NOT_FOUND`.
  */
 export class GroupChangesQuery implements Query<GroupChangesPayload, ChangesAnswer> {
@@ -560,8 +583,8 @@ export interface GroupRepository {
     requestId?: string,
   ): Promise<GroupSummary | null>
   /**
-   * Sets the group's description, colour and emoji and announces the change. `null` when the actor
-   * may not edit them or the group is missing or deleted.
+   * Sets the group's description, colour, emoji and zone, and announces the change. `null` when
+   * the actor may not edit them or the group is missing or deleted.
    */
   updateDetails(
     groupId: string,
@@ -629,14 +652,21 @@ export interface GroupRepository {
 
 const GROUP_ID_KEYS = ["groupId"]
 const CREATE_KEYS = ["id", "name"]
-const CREATE_OPTIONAL_KEYS = ["color", "description", "emoji"]
+const CREATE_OPTIONAL_KEYS = ["color", "description", "emoji", "timeZone"]
 const RENAME_BODY_KEYS = ["name"]
 const RENAME_KEYS = ["groupId", "name"]
 const DETAILS_BODY_KEYS = ["color", "description", "emoji"]
 const DETAILS_KEYS = ["color", "description", "emoji", "groupId"]
+const DETAILS_OPTIONAL_KEYS = ["timeZone"]
 
-function hasExactKeys(value: unknown, keys: string[]): value is Record<string, unknown> {
-  return isRecord(value) && Object.keys(value).sort().join(",") === keys.join(",")
+function hasExactKeys(
+  value: unknown,
+  keys: string[],
+  optional: string[] = [],
+): value is Record<string, unknown> {
+  if (!isRecord(value)) return false
+  const present = Object.keys(value).filter((key) => !optional.includes(key))
+  return present.sort().join(",") === keys.join(",")
 }
 
 /**
@@ -667,9 +697,10 @@ export function parseGroupName(value: unknown): string {
 }
 
 /**
- * A create over REST or the socket: `id` and `name`, and any of `description`, `color` and `emoji`,
- * so one request carries everything the editor filled in. A detail left out starts empty, which
- * keeps a client that sends only `{ id, name }` working. Any other key is refused.
+ * A create over REST or the socket: `id` and `name`, and any of `description`, `color`, `emoji`
+ * and `timeZone`, so one request carries everything the editor filled in. A detail left out
+ * starts empty, which keeps a client that sends only `{ id, name }` working. Any other key is
+ * refused.
  */
 export function parseCreateGroupRequest(value: unknown): CreateGroupRequest {
   if (
@@ -680,7 +711,7 @@ export function parseCreateGroupRequest(value: unknown): CreateGroupRequest {
   ) {
     throw new GroupError(
       "INVALID_REQUEST",
-      "Expected id and name, and at most description, color and emoji",
+      "Expected id and name, and at most description, color, emoji and timeZone",
     )
   }
   return {
@@ -689,6 +720,7 @@ export function parseCreateGroupRequest(value: unknown): CreateGroupRequest {
     description: parseGroupDescription("description" in value ? value.description : ""),
     color: parseGroupColor("color" in value ? value.color : null),
     emoji: parseGroupEmoji("emoji" in value ? value.emoji : null),
+    ...("timeZone" in value ? { timeZone: parseGroupTimeZone(value.timeZone) } : {}),
   }
 }
 
@@ -747,6 +779,43 @@ export function parseGroupColor(value: unknown): GroupColor | null {
   )
 }
 
+/** An offset such as `+02:00` or `-0530`: `Intl` takes it, but it is no place and has no rules. */
+const OFFSET_ZONE = /^[+-]/
+
+/**
+ * A group's time zone: an IANA name such as `Europe/Berlin`, in its canonical spelling
+ * (`europe/berlin` becomes `Europe/Berlin`). An unknown name, an offset like `+02:00` and anything
+ * but a string are refused with `INVALID_REQUEST`.
+ */
+export function parseGroupTimeZone(value: unknown): string {
+  const zone = typeof value === "string" && !OFFSET_ZONE.test(value.trim())
+    ? canonicalValidTimeZoneOrNull(value.trim())
+    : null
+  if (zone === null) {
+    throw new GroupError(
+      "INVALID_REQUEST",
+      "Group time zone must be an IANA name like Europe/Berlin",
+      {
+        timeZone: { code: "timeZone" },
+      },
+    )
+  }
+  return zone
+}
+
+/**
+ * The zone to cut a group's days and months in: its own, else `fallback`. A group read from a
+ * server always has one; a copy a device stored before groups had zones may not, and neither may
+ * one whose zone this runtime does not know. Every reader goes through here, so none repeats the
+ * fallback.
+ */
+export function groupTimeZone(
+  group: { timeZone?: string | null },
+  fallback: string = GROUP_DEFAULT_TIME_ZONE,
+): string {
+  return canonicalValidTimeZoneOrNull(group.timeZone) ?? fallback
+}
+
 const EMOJI_PATTERN = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u
 const GRAPHEMES = new Intl.Segmenter(undefined, { granularity: "grapheme" })
 
@@ -783,23 +852,30 @@ function parseGroupDetails(value: Record<string, unknown>): GroupDetails {
     description: parseGroupDescription(value.description),
     color: parseGroupColor(value.color),
     emoji: parseGroupEmoji(value.emoji),
+    ...("timeZone" in value ? { timeZone: parseGroupTimeZone(value.timeZone) } : {}),
   }
 }
 
-/** The body of a details update over REST, where the path names the group: the three fields. */
+/**
+ * The body of a details update over REST, where the path names the group: the three fields, and
+ * `timeZone` when the zone changes too.
+ */
 export function parseGroupDetailsBody(value: unknown): GroupDetails {
-  if (!hasExactKeys(value, DETAILS_BODY_KEYS)) {
-    throw new GroupError("INVALID_REQUEST", "Expected exactly description, color and emoji")
+  if (!hasExactKeys(value, DETAILS_BODY_KEYS, DETAILS_OPTIONAL_KEYS)) {
+    throw new GroupError(
+      "INVALID_REQUEST",
+      "Expected exactly description, color and emoji, and at most timeZone",
+    )
   }
   return parseGroupDetails(value)
 }
 
-/** The payload of a details update over the socket: `{ groupId }` and the three fields. */
+/** The payload of a details update over the socket: `{ groupId }`, the three fields, any zone. */
 export function parseGroupDetailsRequest(value: unknown): GroupDetails & { groupId: string } {
-  if (!hasExactKeys(value, DETAILS_KEYS)) {
+  if (!hasExactKeys(value, DETAILS_KEYS, DETAILS_OPTIONAL_KEYS)) {
     throw new GroupError(
       "INVALID_REQUEST",
-      "Expected exactly groupId, description, color and emoji",
+      "Expected exactly groupId, description, color and emoji, and at most timeZone",
     )
   }
   return { groupId: parseGroupId(value.groupId), ...parseGroupDetails(value) }

@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { type Git, readChangelog } from "./changelog-write.ts"
-import { DOC_SLUGS } from "./docs-site.ts"
+import { PUBLISHED_GUIDES } from "./docs-site.ts"
 
 const SEP = `\x1f`
 
@@ -63,7 +63,7 @@ describe(`readChangelog`, () => {
       ],
       docs: { "docs/deploy.md": `2026-10-30T07:00:00.000Z` },
     })
-    expect(DOC_SLUGS).toContain(`deploy`)
+    expect(PUBLISHED_GUIDES.map(({ file }) => file)).toContain(`docs/deploy.md`)
   })
 
   it(`refuses an empty changelog in CI, so a release never ships one by accident`, async () => {

@@ -45,8 +45,7 @@ export function createUsersRoute(dependencies: UsersRouteDependencies): Hono<API
           actor: actorFromAuth(authData),
           firstName: validationResult.data.firstName,
           lastName: validationResult.data.lastName,
-          // trustedProxy: true keeps the old behaviour of trusting X-Forwarded-For / X-Real-IP —
-          // the template's production compose runs behind Traefik, which overwrites these headers.
+          // trustedProxy: true trusts X-Forwarded-For / X-Real-IP: Traefik overwrites them.
           request: requestInfoFromContext(c, { trustedProxy: true }),
         }),
       )

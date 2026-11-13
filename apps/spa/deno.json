@@ -12,7 +12,7 @@
     "fake-indexeddb": "npm:fake-indexeddb@6.2.5",
     // 2.x resolves imports inside the Vite process. 1.x started one `deno info` process per
     // import, about 80 at once: under a cap on processes and threads some could not start, the
-    // build failed with "Rollup failed to resolve import" and the rest never exited (#328).
+    // build failed with "Rollup failed to resolve import" and the rest never exited.
     "@deno/vite-plugin": "npm:@deno/vite-plugin@2.0.4",
     "@preact/preset-vite": "npm:@preact/preset-vite@2.10.2",
     // Server-renders a view in its test: the version libs/ui already uses.

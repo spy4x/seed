@@ -1,5 +1,5 @@
 /**
- * The Jobs module's reads and actions over Postgres (#394): the runs of every job, the repeating
+ * The Jobs module's reads and actions over Postgres: the runs of every job, the repeating
  * jobs, and an operator's run again, run now and cancel. Who may call them is the API's business
  * (`apps/api/routes/admin/jobs.ts`); nothing here checks it. Only job rows (`aggregate_type =
  * 'job'`) are read or changed: a group change replayed or dropped out of order could undo a later
@@ -202,7 +202,7 @@ export async function readJobUser(
 
 /**
  * The catalog photos among the images `imageIds`, by image id, each with its item and the item's
- * name in the first of `languages` that has one (#514). An image that is no catalog photo, such as a
+ * name in the first of `languages` that has one. An image that is no catalog photo, such as a
  * profile picture, or one removed since, is left out.
  */
 export async function readJobPhotos(

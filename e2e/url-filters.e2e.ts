@@ -3,7 +3,7 @@ import { gotoApp } from "./fixtures/app.ts"
 
 /**
  * `useUrlFilters` in a real browser: browser back and forward bring the filters back in step with
- * the address (https://github.com/spy4x/template/issues/41).
+ * the address.
  *
  * Unlike the rest of this suite it needs no running stack. `beforeAll` bundles
  * `fixtures/url-filters.tsx` with `deno bundle` and serves it from a local server on a free port,

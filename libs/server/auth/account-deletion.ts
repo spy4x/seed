@@ -1,5 +1,5 @@
 /**
- * Deleting one's own account (#144): what stops it, the request that starts the wait, the restore
+ * Deleting one's own account: what stops it, the request that starts the wait, the restore
  * that a sign-in during the wait performs, and the delete for good once the wait is over.
  *
  * - **The wait.** A request soft-deletes the `users` row (the caller does that through its cached
@@ -250,7 +250,7 @@ export async function hardDeleteAccount(
 
 /**
  * Hands every group of `userId` that sits in the bin to another admin of it, so the delete for good
- * that follows leaves it to its members (#357, decision 7). The heir is the group's longest-standing
+ * that follows leaves it to its members (decision 7). The heir is the group's longest-standing
  * admin: the earliest `group_members.created_at`, then the lowest user id, among live accounts
  * only, since one waiting to be deleted may never come back. A group with no such admin is left
  * to go with the account. Inside the delete's transaction, after the owner's groups are locked;

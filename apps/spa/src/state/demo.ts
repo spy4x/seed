@@ -11,7 +11,7 @@ export const demoMode = signal(false)
 export const devBuild = signal(false)
 
 /**
- * Whether the benchmark page (#440) exists: in a development build and on the public demo only,
+ * Whether the benchmark page exists: in a development build and on the public demo only,
  * and never without the local-data module it measures. Elsewhere `/benchmark` sends the visitor to
  * the notes, the palette leaves it out, and its code is never loaded.
  */
@@ -23,7 +23,7 @@ export function benchmarkOpen(): boolean {
 export const benchmarkPageActions = signal<{ run(): void; copy(): void } | null>(null)
 
 /**
- * Whether "Try it now" is offered (#224, docs/guests.md), from `/config.json`: on unless the
+ * Whether "Try it now" is offered (docs/guests.md), from `/config.json`: on unless the
  * container sets `GUEST_MODE=false`. The API refuses a guest too when it is off.
  */
 export const guestMode = signal(true)
@@ -31,7 +31,7 @@ export const guestMode = signal(true)
 /**
  * The public website's origin, such as `https://www.example.com`, from `/config.json`'s `site`
  * (`MPA_DOMAIN`), or `null` without a website. The line under "Try it now" links to its terms and
- * privacy notice (#224).
+ * privacy notice.
  */
 export const siteOrigin = signal<string | null>(null)
 

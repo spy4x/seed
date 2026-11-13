@@ -14,7 +14,7 @@ import { Link } from "@spy4x/preact-ui/link"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
-import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { RadioChips } from "@spy4x/preact-ui/radio-chips"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { Tabs } from "@spy4x/preact-ui/tabs"
@@ -24,10 +24,13 @@ import {
   ADMIN_PICTURE_PATH,
   adminGrantableRoles,
   type AdminUserDetail,
+  type AdminUserRow,
   AuthAuditEventType,
   canChangeRoles,
   PICTURE_AUDIT,
+  PictureState,
   pictureUrl,
+  shownPictureId,
   SIGN_IN_LINK_METHOD,
   TELEGRAM_METHOD,
   type UserRole,
@@ -113,7 +116,7 @@ export function auditTone(eventType: AuthAuditEventType): TimelineTone {
 }
 
 /**
- * What each audit row says happened, as a catalog key per event code: the audit log (#429) uses the
+ * What each audit row says happened, as a catalog key per event code: the audit log uses the
  * same words. Each title is one whole message, never built from parts.
  */
 export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
@@ -217,7 +220,7 @@ const ACTIONS: Record<AdminAction, { title: string; text: string; submit: string
 const CALM_ACTIONS: readonly AdminAction[] = ["unblock", "change-role", "password-reset"]
 
 /**
- * The address a password-reset link would go to, or `null` when the person has no password with
+ * The address a password-reset email would go to, or `null` when the person has no password with
  * an address. The API answers the same on its own; this only says so before the operator asks.
  */
 export function resetAddress(detail: Pick<AdminUserDetail, "methods">): string | null {
@@ -279,10 +282,10 @@ export interface AdminUserScreenProps {
 }
 
 /**
- * One person in the admin app (#424): a header card with their avatar, name, badges and the one
+ * One person in the admin app: a header card with their avatar, name, badges and the one
  * "More actions" menu, then tabs for their account, how they sign in, their sessions, their groups
  * and their activity, plus any tab a module adds. The menu blocks, unblocks, ends every session,
- * sends a password-reset link and, for an administrator, changes the role (#425); the Sessions tab
+ * sends a password-reset email and, for an administrator, changes the role; the Sessions tab
  * ends one session or all. Each is confirmed in a dialog. No password is asked: the audit trail
  * records who acted.
  */
@@ -409,7 +412,13 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
       <PageHeader
         title={name}
         subtitle={adminUserSubtitle(user) ?? undefined}
-        mark={<Avatar name={name} src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)} size="md" />}
+        mark={
+          <Avatar
+            name={name}
+            src={pictureUrl(shownPictureId(user), ADMIN_PICTURE_PATH)}
+            size="md"
+          />
+        }
         back={back}
         navigate={navigate}
         menu={menu || undefined}
@@ -528,6 +537,36 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
   )
 }
 
+/**
+ * The "Profile picture" row's value: the picture once it is ready, else the initials, with a line
+ * saying it is still being prepared or could not be used. No picture is asked for until it is ready.
+ */
+function PictureValue({ user }: { user: AdminUserRow }): JSX.Element {
+  const t = useAdminText()
+  const state = user.pictureState
+  return (
+    <span class="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
+      <Avatar
+        name={adminUserName(user, t)}
+        src={pictureUrl(shownPictureId(user), ADMIN_PICTURE_PATH)}
+        size="lg"
+        alt=""
+        class="shrink-0"
+      />
+      {state === PictureState.Preparing && (
+        <span class="text-sm font-medium" data-e2e="admin-user-picture-state">
+          {t.t(`AdminUser.picturePreparing`)}
+        </span>
+      )}
+      {state === PictureState.Refused && (
+        <span class="text-sm font-medium text-danger" data-e2e="admin-user-picture-state">
+          {t.t(`AdminUser.pictureRefused`)}
+        </span>
+      )}
+    </span>
+  )
+}
+
 function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.Element {
   const { user } = detail
   const t = useAdminText()
@@ -539,16 +578,7 @@ function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.
           <SettingRow
             label={t.t(`AdminUser.picture`)}
             dataE2E="admin-user-picture"
-            value={user.pictureId
-              ? (
-                <Avatar
-                  name={adminUserName(user, t)}
-                  src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
-                  size="lg"
-                  alt=""
-                />
-              )
-              : t.t(`AdminUser.none`)}
+            value={user.pictureId ? <PictureValue user={user} /> : t.t(`AdminUser.none`)}
           />
           <SettingRow
             label={t.t(`AdminUser.address`)}
@@ -595,7 +625,7 @@ function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.
 }
 
 /**
- * The person's linked Telegram account (#269), or `undefined`. It is no way in, so the Sign-in
+ * The person's linked Telegram account, or `undefined`. It is no way in, so the Sign-in
  * methods tab leaves it out and the Overview shows it.
  */
 export function telegramOf(
@@ -620,14 +650,14 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
           )}
           {method.method === SIGN_IN_LINK_METHOD
             ? (
-              // A sign-in link is no stored method: when one was last used, read-only (#391).
+              // A sign-in code is no stored method: when one was last used, read-only.
               <span class="text-sm text-muted" data-e2e="admin-user-email-link">
                 {lastUsed(method.lastUsedAt)}
               </span>
             )
             : method.passkey
             ? (
-              // A passkey proves no address: its name and dates, read-only (#222).
+              // A passkey proves no address: its name and dates, read-only.
               <span class="text-sm text-muted wrap-anywhere" data-e2e="admin-user-passkey">
                 <Rich
                   parts={t.parts(`AdminUser.passkeyAdded`, { name: method.passkey.name })}
@@ -718,7 +748,7 @@ function sessionName(t: Translator<string>, deviceName: string): string {
   return deviceName || t.t(`AdminUser.unknownDevice`)
 }
 
-/** The person's groups; each name opens the group's page in the groups module (#426). */
+/** The person's groups; each name opens the group's page in the groups module. */
 function Groups(
   { detail, navigate }: { detail: AdminUserDetail; navigate?: Navigate },
 ): JSX.Element {
@@ -769,8 +799,8 @@ export function auditDetail(
 
 /**
  * The title key of a row whose `identifier` says what happened, so the title names it and the
- * identifier is not repeated under it: a sign-in or sign-up by e-mail link (#391), "Signed in with
- * an e-mail link", and the person's own change of profile picture (#453), "Profile picture
+ * identifier is not repeated under it: a sign-in or sign-up by e-mail link, "Signed in with
+ * an e-mail link", and the person's own change of profile picture, "Profile picture
  * changed". `null` for every other row.
  */
 export function identifiedAuditTitle(
@@ -790,7 +820,7 @@ export function identifiedAuditTitle(
 
 /**
  * What an audit row says happened, in the operator's language: one whole message per event code
- * (an account event, a billing event, or a sign-in link's own title), or `null` for a code this
+ * (an account event, a billing event, or a sign-in code's own title), or `null` for a code this
  * page does not know.
  */
 export function auditEventTitle(
@@ -876,7 +906,7 @@ function ActionDialog(
   { action, detail, address, operator, sessionId, actionError, pending, onAction, onCloseDialog }: {
     action: AdminAction
     detail: AdminUserDetail
-    /** Where a password-reset link goes, or `null` when it cannot. */
+    /** Where a password-reset email goes, or `null` when it cannot. */
     address: string | null
     operator: AdminOperator
     /** The session an "end-session" dialog ends. */
@@ -956,19 +986,21 @@ function ActionDialog(
       <ScreenForm pending={pending} onSubmit={() => onAction(action, { role })}>
         <Stack>
           <p class="text-sm text-muted">{t.t(copy.text)}</p>
-          <RadioGroup
-            legend={t.t(`AdminUser.role`)}
-            name="role"
-            data-e2e="admin-role-picker"
-            options={roles.map((one) => ({
-              value: String(one),
-              label: one === detail.user.role
-                ? t.t(`AdminUser.roleNow`, { role: roleLabel(t, one) })
-                : roleLabel(t, one),
-            }))}
-            value={String(role)}
-            onChange={(value) => setRole(Number(value) as UserRole)}
-          />
+          {/* `RadioChips` takes no attributes of its own, so the hook sits on a wrapper. */}
+          <div data-e2e="admin-role-picker">
+            <RadioChips
+              legend={t.t(`AdminUser.role`)}
+              name="role"
+              options={roles.map((one) => ({
+                value: String(one),
+                label: one === detail.user.role
+                  ? t.t(`AdminUser.roleNow`, { role: roleLabel(t, one) })
+                  : roleLabel(t, one),
+              }))}
+              value={String(role)}
+              onChange={(value) => setRole(Number(value) as UserRole)}
+            />
+          </div>
           <ErrorState message={actionError} />
           <DialogActions>
             <Button type="button" variant="ghost" onClick={onCloseDialog}>

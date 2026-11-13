@@ -11,7 +11,12 @@
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { appAddress } from "./brand.ts"
 import type { FeatureSectionProps, FeatureTierProps } from "./components/features-section.tsx"
-import { AggregateFiles, DeployVisual, OutboxDiagram } from "./components/features-visuals.tsx"
+import {
+  AggregateFiles,
+  CatalogEnv,
+  DeployVisual,
+  OutboxDiagram,
+} from "./components/features-visuals.tsx"
 import { FeatureLoop } from "./components/feature-loop.tsx"
 import { AdminVideoStill } from "./components/admin-video.tsx"
 import { ADMIN_TOUR_MODULES } from "./admin-modules.ts"
@@ -232,6 +237,19 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           visual: <FeatureLoop loop="realtime" />,
         },
         {
+          id: `fast`,
+          nav: t.t(`FeatureFast.nav`),
+          title: t.t(`FeatureFast.title`),
+          lead: t.t(`FeatureFast.lead`),
+          facts: [
+            t.t(`FeatureFast.fact1`),
+            t.t(`FeatureFast.fact2`),
+            t.t(`FeatureFast.fact3`),
+            t.t(`FeatureFast.fact4`),
+          ],
+          code: { label: t.t(`FeatureFast.code`), href: source(`docs/offline-data.md`) },
+        },
+        {
           id: `offline`,
           nav: t.t(`FeatureOffline.nav`),
           title: t.t(`FeatureOffline.title`),
@@ -297,6 +315,26 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
           ],
           code: { label: t.t(`FeatureWorker.code`), href: source(`docs/jobs.md`) },
           visual: <OutboxDiagram />,
+        },
+        {
+          id: `catalog`,
+          nav: t.t(`FeatureCatalog.nav`),
+          title: t.t(`FeatureCatalog.title`),
+          lead: t.t(`FeatureCatalog.lead`),
+          facts: [
+            t.t(`FeatureCatalog.fact1`),
+            t.t(`FeatureCatalog.fact2`),
+            t.t(`FeatureCatalog.fact3`),
+            <span key="guide">
+              {rich(`FeatureCatalog.fact4`, {
+                guide: (text) => (
+                  <a href={href(`/docs/catalog`)} class="text-primary underline">{text}</a>
+                ),
+              })}
+            </span>,
+          ],
+          code: { label: t.t(`FeatureCatalog.code`), href: source(`libs/server/catalog/`) },
+          visual: <CatalogEnv />,
         },
         {
           id: `your-feature`,
@@ -433,7 +471,7 @@ export interface FeaturePage {
   summary: string
   /** "How it works", one or two short paragraphs. Empty, the section is not drawn. */
   how: readonly string[]
-  /** The written guide on GitHub, until the site has the docs (#268). */
+  /** The written guide on GitHub, until the site has the docs. */
   guide?: string
   /** The code "Read the code" opens, when the feature's own code link is a guide. */
   code?: string

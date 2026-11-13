@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "build": "deno run -A --node-modules-dir=auto npm:vite@7.3.6 build",
+    "build": "deno run -A --node-modules-dir=auto npm:vite@7.3.6 build && deno bundle --platform deno -o dist/start.js start.ts",
     "check": "deno fmt --check . && deno lint . && deno check",
     "dev": "deno run -A --node-modules-dir=auto npm:vite@7.3.6",
     // Needs the MPA and the API at MPA_BASE_URL (default http://app.localhost), /api going to the API.
@@ -9,20 +9,25 @@
     "screenshots": "deno run -A screenshots/capture.ts",
     // Needs the dev stack, ffmpeg (with libsvtav1 and libx264) and cwebp: screenshots/README.md.
     "loops": "deno run -A screenshots/loops.ts",
-    "start": "deno serve -A _fresh/server.js"
+    // The link-preview card of each of Seed's own posts. Needs magick: screenshots/blog-og.ts.
+    "og:blog": "deno run -A screenshots/blog-og.ts",
+    "start": "deno serve -A dist/server.js",
+    // The built website on Node or Bun (start.ts).
+    "start:node": "node dist/start.js",
+    "start:bun": "bun dist/start.js"
   },
   "imports": {
     "@/": "./",
-    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@1.1.2",
-    "@spy4x/platform/universal/contact": "jsr:@spy4x/platform@1.110.0/universal/contact",
-    "@spy4x/platform/universal/is-record": "jsr:@spy4x/platform@1.110.0/universal/is-record",
-    "@spy4x/platform/universal/seo": "jsr:@spy4x/platform@1.110.0/universal/seo",
-    "@spy4x/server/http/bounded-body": "jsr:@spy4x/server@1.110.0/http/bounded-body",
-    "@spy4x/server/http/same-origin": "jsr:@spy4x/server@1.110.0/http/same-origin",
-    "@spy4x/server/http/security-headers": "jsr:@spy4x/server@1.110.0/http/security-headers",
+    "@deno/vite-plugin": "npm:@deno/vite-plugin@2.0.4",
+    "@spy4x/platform/universal/contact": "jsr:@spy4x/platform@1.126.0/universal/contact",
+    "@spy4x/platform/universal/is-record": "jsr:@spy4x/platform@1.126.0/universal/is-record",
+    "@spy4x/platform/universal/seo": "jsr:@spy4x/platform@1.126.0/universal/seo",
+    "@spy4x/server/http/bounded-body": "jsr:@spy4x/server@1.126.0/http/bounded-body",
+    "@spy4x/server/http/same-origin": "jsr:@spy4x/server@1.126.0/http/same-origin",
+    "@spy4x/server/http/security-headers": "jsr:@spy4x/server@1.126.0/http/security-headers",
+    "@std/media-types": "jsr:@std/media-types@1.1.0",
     "@tailwindcss/vite": "npm:@tailwindcss/vite@4.1.12",
     "@types/babel__core": "npm:@types/babel__core@7.20.5",
-    "fresh": "jsr:@fresh/core@2.3.3",
     "preact": "npm:preact@10.29.8",
     "tailwindcss": "npm:tailwindcss@4.1.12",
     "vite": "npm:vite@7.3.6"
@@ -49,14 +54,14 @@
     ],
     "types": ["vite/client"]
   },
-  // `ui-text/no-literal` (#216) flags English text written in markup: the website's words live in
-  // the `site` catalog (`i18n/site`, #276). A page that is English at every address, such as a
+  // `ui-text/no-literal` flags English text written in markup: the website's words live in
+  // the `site` catalog (`i18n/site`). A page that is English at every address, such as a
   // legal page, opts out with `// deno-lint-ignore-file ui-text/no-literal` and the reason.
   "lint": {
-    "plugins": ["jsr:@spy4x/preact-theme@13.7.0/lint"],
+    "plugins": ["jsr:@spy4x/preact-theme@14.4.0/lint"],
     "rules": {
-      "tags": ["fresh", "recommended"]
+      "tags": ["recommended"]
     }
   },
-  "exclude": ["**/_fresh/*"]
+  "exclude": ["**/dist/*"]
 }

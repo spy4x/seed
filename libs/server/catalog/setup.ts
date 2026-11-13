@@ -12,7 +12,7 @@ export interface CatalogSetup {
   on: boolean
   settings: CatalogSettings
   /**
-   * How tracking links are made (#483, `readTrackingSetup`), or `null` while the website's address
+   * How tracking links are made (`readTrackingSetup`), or `null` while the website's address
    * is unset. The API reads it beside the catalog's switch.
    */
   tracking?: TrackingSetup | null
@@ -22,7 +22,7 @@ export interface CatalogSetup {
 export const CATALOG_OFF: CatalogSetup = { on: false, settings: CATALOG_DEFAULT_SETTINGS }
 
 /**
- * Reads the catalog's switch and settings (#466, docs/catalog.md): `CATALOG=true` turns it on,
+ * Reads the catalog's switch and settings (docs/catalog.md): `CATALOG=true` turns it on,
  * `CATALOG_CURRENCY` (default `USD`) is the currency of every price, and `CATALOG_LANGUAGES`
  * (default `en`) the languages its texts are kept in, the default first. Off, the two settings are
  * not read. On, a bad one stops the process, naming it.

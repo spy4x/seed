@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { openNotes } from "./fixtures/groups.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -29,6 +29,15 @@ async function signUp(request: APIRequestContext, email: string): Promise<void> 
 async function signInOnline(page: Page, email: string): Promise<void> {
   await signIn(page, email, password)
   await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
+}
+
+/** In the open "Move to group" dialog, selects `group` and presses Move. */
+async function moveInDialog(page: Page, group: string): Promise<void> {
+  const dialog = page.locator("[data-e2e=note-move-dialog]")
+  // One label for both move selects, and group names a translator leaves alone.
+  await expect(dialog.getByLabel("To group", { exact: true })).toHaveAttribute("translate", "no")
+  await dialog.locator("[data-e2e=note-move-to]").selectOption({ label: group })
+  await dialog.locator("[data-e2e=note-move-submit]").click()
 }
 
 test.describe("moving notes to another group", () => {
@@ -58,6 +67,7 @@ test.describe("moving notes to another group", () => {
           data: { id, name },
         })
         expect(created.status(), await created.text()).toBe(201)
+        await payForGroup(ownerPage.request, apiBase, id)
       }
       for (const [member, groupId] of [[inSource, groups.Source], [inTarget, groups.Target]]) {
         const added = await request.post(`${apiBase}/api/test/add-member`, {
@@ -89,16 +99,15 @@ test.describe("moving notes to another group", () => {
       await ownerPage.getByRole("link", { name: "One", exact: true }).click()
       await ownerPage.locator("[data-e2e=note-menu]").click()
       await ownerPage.getByRole("menuitem", { name: "Move to group…" }).click()
-      await ownerPage.locator("[data-e2e=note-move-dialog]").getByRole("button", { name: "Target" })
-        .click()
+      await moveInDialog(ownerPage, "Target")
       await expect(ownerPage).toHaveURL("/notes")
       await expect(ownerPage.locator("[data-e2e=note-moved]")).toContainText(
         "moved to \u2068Target\u2069",
       )
       await expect(ownerTitles).toHaveCount(3)
       await expect(ownerPage.getByRole("link", { name: "One", exact: true })).toHaveCount(0)
-      await expect(sourceTitles).toHaveCount(3, { timeout: 5_000 })
-      await expect(targetTitles).toHaveText(["One"], { timeout: 5_000 })
+      await expect(sourceTitles).toHaveCount(3)
+      await expect(targetTitles).toHaveText(["One"])
 
       // The move went over the socket, as one command with an idempotency key.
       const single = framesSent.map((payload) => JSON.parse(payload)).find(
@@ -107,13 +116,22 @@ test.describe("moving notes to another group", () => {
       expect(single?.idempotencyKey).toBeTruthy()
       expect(single?.payload.noteIds).toHaveLength(1)
 
-      // One note, from its row's menu on the list.
-      await ownerPage.getByRole("button", { name: "Actions for Two" }).click()
+      // One note, from its row's menu on the list. The dialog names the note on a line of its
+      // own, opens on the group select, and Escape gives focus back to the row's menu.
+      const twoMenu = ownerPage.getByRole("button", { name: "Actions for Two" })
+      await twoMenu.click()
       await ownerPage.getByRole("menuitem", { name: "Move to group…" }).click()
-      await ownerPage.locator("[data-e2e=note-move-dialog]").getByRole("button", { name: "Target" })
-        .click()
+      await expect(ownerPage.locator("[data-e2e=note-move-note]")).toHaveText("Two")
+      await expect(ownerPage.getByRole("combobox", { name: "To group", exact: true })).toBeFocused()
+      await ownerPage.keyboard.press("Escape")
+      await expect(ownerPage.locator("[data-e2e=note-move-dialog]")).toBeHidden()
+      await expect(twoMenu).toBeFocused()
+      await expect(targetTitles).toHaveCount(1)
+      await twoMenu.click()
+      await ownerPage.getByRole("menuitem", { name: "Move to group…" }).click()
+      await moveInDialog(ownerPage, "Target")
       await expect(ownerTitles).toHaveCount(2)
-      await expect(targetTitles).toHaveCount(2, { timeout: 5_000 })
+      await expect(targetTitles).toHaveCount(2)
 
       // Ticked notes, from the list: check boxes appear only once the person asks to select.
       await expect(ownerPage.locator("[data-e2e=note-select]")).toHaveCount(0)
@@ -125,11 +143,15 @@ test.describe("moving notes to another group", () => {
       await ownerPage.getByLabel("Select Three").check()
       await ownerPage.getByLabel("Select Four").check()
       await expect(ownerPage.getByText("2 selected")).toBeVisible()
+      await expect(ownerPage.getByLabel("To group", { exact: true })).toHaveAttribute(
+        "translate",
+        "no",
+      )
       await ownerPage.locator("[data-e2e=notes-move-to]").selectOption({ label: "Target" })
       await ownerPage.locator("[data-e2e=notes-move-submit]").click()
       await expect(ownerPage.getByText("No notes yet")).toBeVisible()
-      await expect(targetTitles).toHaveCount(4, { timeout: 5_000 })
-      await expect(sourcePage.getByText("No notes yet")).toBeVisible({ timeout: 5_000 })
+      await expect(targetTitles).toHaveCount(4)
+      await expect(sourcePage.getByText("No notes yet")).toBeVisible()
 
       // Delete from a row's menu goes at once, with Undo in a toast; the members see it go.
       await openNotes(ownerPage, "Target")
@@ -139,7 +161,7 @@ test.describe("moving notes to another group", () => {
       await expect(ownerPage.locator("[data-e2e=note-undo-toast]")).toBeVisible()
       await expect(ownerTitles).toHaveCount(3)
       await expect(ownerPage.getByRole("link", { name: "One", exact: true })).toHaveCount(0)
-      await expect(targetTitles).toHaveCount(3, { timeout: 5_000 })
+      await expect(targetTitles).toHaveCount(3)
     } finally {
       for (const context of contexts) await context.close()
       for (const email of emails) await cleanup(request, email)

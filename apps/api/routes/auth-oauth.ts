@@ -10,6 +10,7 @@ import {
   type OAuthProvidersResponse,
   type PendingSignUpResponse,
   signInMethodProofSchema,
+  signUpInvitationSchema,
 } from "@domain/identity"
 import { validate } from "@spy4x/validation"
 import { readApiJson } from "@api/services/json-body.ts"
@@ -17,7 +18,8 @@ import type { AppAuthState, SignIn } from "@api/services/sign-in.ts"
 import { UnlinkOutcome } from "@api/services/oauth-sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
 import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
-import { PROVIDER_PROOF_REQUIRED } from "./auth.ts"
+import { PROVIDER_PROOF_REQUIRED, signUpClosed } from "./auth-answers.ts"
+import { SignUpClosedError } from "@api/services/sign-up-gate.ts"
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { AuthRateLimits } from "../middlewares/auth-rate-limits.ts"
@@ -63,7 +65,7 @@ function withNext(path: string, next: string | null): string {
 }
 
 /**
- * What a link and an unlink ask for (#384, #385), and adding a passkey (#222): the account's
+ * What a link and an unlink ask for, and adding a passkey: the account's
  * password, or for an account without one a sign-in with a provider or a passkey a moment ago.
  * `null` when the body gives it; otherwise the refusal to answer.
  */
@@ -76,7 +78,7 @@ export async function refusalWithoutProof(
   if (body.error) return validationResponse(c, body.error.details)
   const { password } = body.data
   // A guest has no sign-in method to prove: the session is the account's only way in, and adding
-  // the first method is what keeping the account means (#224). A kept account is proven as before.
+  // the first method is what keeping the account means. A kept account is proven as before.
   if (state.user.guestSince) return null
   if (await signIn.hasPassword(state.user.id)) {
     if (password === undefined) {
@@ -87,7 +89,7 @@ export async function refusalWithoutProof(
         return errorResponse(c, `bad_request`, { message: "Invalid password" })
       }
     } catch (error) {
-      // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
+      // Too many wrong passwords at the signed-in steps: the lock they all share runs.
       if (!(error instanceof PasswordLockedError)) throw error
       c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
       return errorResponse(c, `rate_limited`, {
@@ -188,7 +190,7 @@ export function createOAuthRoute(
         if (result.kind === "notice") {
           if (result.notice === "guest-taken") return c.redirect(page(OAUTH_PAGES.keepTaken), 302)
           if (result.notice === "kept") {
-            // Every guest session ended with the keep (#374): their sockets close.
+            // Every guest session ended with the keep: their sockets close.
             emit(
               new UserSignedOutEvent({
                 userId: c.get("auth")!.user.id,
@@ -223,7 +225,25 @@ export function createOAuthRoute(
       mutationGuards.anonymous,
       rateLimits.strictByIp,
       async (c) => {
-        const signedIn = await oauth.confirmSignUp(c, c.get("auth"))
+        // The body is optional: `{ invitation }`, which matters where sign-up is by invitation.
+        // A browser's POST without a body still sends `Content-Length: 0`.
+        const empty = c.req.raw.body === null || c.req.header(`content-length`) === `0`
+        const body = empty ? {} : await readApiJson(c)
+        const validationResult = validate(signUpInvitationSchema, body)
+        if (validationResult.error) {
+          return validationResponse(c, validationResult.error.details)
+        }
+        let signedIn
+        try {
+          signedIn = await oauth.confirmSignUp(
+            c,
+            c.get("auth"),
+            validationResult.data.invitation ?? null,
+          )
+        } catch (error) {
+          if (error instanceof SignUpClosedError) return signUpClosed(c)
+          throw error
+        }
         if (!signedIn) return errorResponse(c, `bad_request`, { message: SIGN_UP_EXPIRED })
         // As a password sign-in answers: 202 while the authenticator code is owed.
         if (signedIn.session.secondFactor === SecondFactorStatus.Pending) {
@@ -241,7 +261,7 @@ export function createOAuthRoute(
       return c.json(await oauth.methods(c.get("auth")!))
     })
     // A POST, not a link: another site must not be able to start a link for a signed-in person.
-    // It asks for what the deletion asks (#384): the password, or for an account without one a
+    // It asks for what the deletion asks: the password, or for an account without one a
     // sign-in with a provider a moment ago. A new provider account is a new way in, and a
     // sign-in with it would count as that proof; so a session left open cannot add one.
     .post(
@@ -260,7 +280,7 @@ export function createOAuthRoute(
         return c.json({ url })
       },
     )
-    // Asks for what a link asks (#385): a session left open must not take away the way in the
+    // Asks for what a link asks: a session left open must not take away the way in the
     // owner uses. The strict per-user limit, since a password is checked.
     .delete(
       `/methods/:id`,

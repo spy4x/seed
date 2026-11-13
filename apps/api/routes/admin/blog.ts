@@ -20,6 +20,9 @@ import {
   type BlogPreviewBody,
   blogPreviewSchema,
   blogPublishSchema,
+  type BlogRevision,
+  type BlogRevisionListResponse,
+  type BlogRevisionSummary,
   blogSlugProblem,
   type BlogTopic,
   BlogVersionConflictError,
@@ -33,6 +36,12 @@ import { isSubscriberList, SUBSCRIBER_LISTS } from "@domain/subscribers"
 import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
 import { renderBlogPreview } from "@server/blog/render.ts"
+import {
+  PostgresSharingRepository,
+  type SharingGaps,
+} from "@server/blog/postgres-sharing-repository.ts"
+import { createWebsiteStats } from "../../services/website-stats.ts"
+import { createAdminSharingRoutes } from "./blog-sharing.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
@@ -48,6 +57,10 @@ export const BLOG_BODY_MAX_BYTES = 1024 * 1024
 export interface AdminBlogService {
   list(filter: { status: BlogPostStatus | null; query: string }): Promise<AdminBlogListResponse>
   get(id: string): Promise<BlogPost | null>
+  /** The post's earlier versions, newest first; `null` when there is no such post. */
+  revisions(id: string): Promise<BlogRevisionSummary[] | null>
+  /** One earlier version of the post, or `null` when it has none with `revisionId`. */
+  revision(id: string, revisionId: string): Promise<BlogRevision | null>
   topics(): Promise<BlogTopic[]>
   create(id: string, fields: BlogPostFields, actor: BlogActor): Promise<BlogPost>
   update(
@@ -86,6 +99,8 @@ export interface AdminBlogRouteDependencies {
   /** The public website's address (`MPA_DOMAIN`), for the editor's "View on website"; `null` unset. */
   siteUrl: string | null
   now(): Date
+  /** Each live post's sharing to-dos, for the list's Sharing column and its filter. */
+  sharingGaps?: () => Promise<SharingGaps>
 }
 
 /** The refusal of a body that is not JSON, or not the route's shape. */
@@ -123,7 +138,7 @@ async function readBody<T>(
 
 /** The status a refusal answers with. */
 function statusOf(error: BlogError): 400 | 404 | 409 {
-  if (error.code === `POST_NOT_FOUND`) return 404
+  if (error.code === `POST_NOT_FOUND` || error.code === `REVISION_NOT_FOUND`) return 404
   if (error.code === `INVALID_REQUEST`) return 400
   return 409
 }
@@ -134,13 +149,17 @@ function actorOf(c: Context<APIContext>): BlogActor {
 }
 
 /**
- * The blog routes of the operator area (#395), mounted at `/api/admin` behind the gate in
+ * The blog routes of the operator area, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them, and every `POST` passed the
  * same-origin guard. Every change names the version the operator saw, and is refused with 409 and
  * the current version when the post moved on; each one writes an audit row on the operator.
  *
- * - `GET /blog/posts?status=&q=` lists posts, most recently changed first, with each status's count.
+ * - `GET /blog/posts?status=&q=&sharing=` lists posts, most recently changed first, with each
+ *   status's count and each post's sharing to-dos; `sharing=todo` keeps the posts that have some.
  * - `GET /blog/posts/:id` answers one post with everything the editor shows.
+ * - `GET /blog/posts/:id/revisions` lists the post's earlier versions, newest first, without their
+ *   bodies, and `GET /blog/posts/:id/revisions/:revisionId` answers one with every field.
+ *   Restoring one needs no route: the editor takes its fields and saves as usual.
  * - `POST /blog/posts` creates a draft: `{ id, title, slug, description, seoTitle?, tldr?, topic?,
  *   coverUrl?, coverAlt?, bodyMd }` with a client-made UUID v7 id. 201.
  * - `POST /blog/posts/:id` saves every field: the same body without `id`, plus `version` and
@@ -159,7 +178,7 @@ function actorOf(c: Context<APIContext>): BlogActor {
  * `currentVersion` on a version conflict.
  */
 export function createAdminBlogRoutes(
-  { limit, blog, newsletterEnabled, siteUrl, now }: AdminBlogRouteDependencies,
+  { limit, blog, newsletterEnabled, siteUrl, now, sharingGaps }: AdminBlogRouteDependencies,
 ): Hono<APIContext> {
   /** The post id in the path, or a refusal: an id that is no UUID is no post. */
   const idOf = (c: Context<APIContext>): string => {
@@ -194,12 +213,40 @@ export function createAdminBlogRoutes(
     .get(`/blog/posts`, limit, async (c) => {
       const query = (c.req.query(`q`) ?? ``).trim().slice(0, BLOG_SEARCH_MAX_LENGTH)
       const status = parseBlogStatusFilter(c.req.query(`status`) ?? null)
-      return c.json(await blog.list({ status, query }))
+      const list = await blog.list({ status, query })
+      const gaps = sharingGaps ? await sharingGaps() : { activeChannels: 0, toDo: {} }
+      const answer: AdminBlogListResponse = {
+        ...list,
+        posts: c.req.query(`sharing`) === `todo`
+          ? list.posts.filter((post) => (gaps.toDo[post.id] ?? 0) > 0)
+          : list.posts,
+        sharing: {
+          activeChannels: gaps.activeChannels,
+          needsSharing: Object.keys(gaps.toDo).length,
+          toDo: gaps.toDo,
+        },
+      }
+      return c.json(answer)
     })
     .get(`/blog/posts/:id`, limit, async (c) => {
       const post = await blog.get(idOf(c))
       if (!post) throw new BlogError(`POST_NOT_FOUND`, `This post does not exist.`)
       return c.json({ post })
+    })
+    .get(`/blog/posts/:id/revisions`, limit, async (c) => {
+      const revisions = await blog.revisions(idOf(c))
+      if (!revisions) throw new BlogError(`POST_NOT_FOUND`, `This post does not exist.`)
+      const answer: BlogRevisionListResponse = { revisions }
+      return c.json(answer)
+    })
+    .get(`/blog/posts/:id/revisions/:revisionId`, limit, async (c) => {
+      const id = idOf(c)
+      const revisionId = c.req.param(`revisionId`) ?? ``
+      const revision = isUuid(revisionId) ? await blog.revision(id, revisionId.toLowerCase()) : null
+      if (!revision) {
+        throw new BlogError(`REVISION_NOT_FOUND`, `This earlier version does not exist.`)
+      }
+      return c.json({ revision })
     })
     .post(`/blog/posts`, limit, async (c) => {
       const { id, ...input } = await readBody(c, blogPostCreateSchema)
@@ -273,6 +320,8 @@ export function createAdminBlog(sql: postgres.Sql): AdminBlogService {
   return {
     list: (filter) => repository.list(filter),
     get: (id) => repository.get(id),
+    revisions: (id) => repository.revisions(id),
+    revision: (id, revisionId) => repository.revision(id, revisionId),
     topics: () => repository.topics(),
     create: (id, fields, actor) => repository.create(id, fields, actor),
     update: (id, version, fields, significant, actor) =>
@@ -306,15 +355,36 @@ export function blogNewsletterEnabled(setup: SubscribersSetup | null): boolean {
   return typeof setup?.siteUrl === `string`
 }
 
-/** The blog module: posts, publishing and the newsletter send (#395). */
+/**
+ * The blog module: posts, publishing, the newsletter send and the sharing channels. The checklist
+ * reads Umami through a Stats reader of its own, with its own five-minute copy.
+ */
 export const blogAdminModule: AdminApiModule = {
   id: `blog`,
-  routes: ({ sql, subscribers, limit, now, siteUrl }) =>
-    createAdminBlogRoutes({
+  routes: ({ sql, subscribers, limit, now, siteUrl, websiteStats, linkedinExpiresAt }) => {
+    const sharing = new PostgresSharingRepository(sql)
+    const stats = createWebsiteStats({
+      setup: websiteStats.setup,
+      missing: websiteStats.missing,
+      sources: () => Promise.resolve([]),
+      items: null,
+    })
+    return createAdminBlogRoutes({
       limit,
       now,
       blog: createAdminBlog(sql),
       newsletterEnabled: blogNewsletterEnabled(subscribers),
       siteUrl,
-    }),
+      sharingGaps: () => sharing.gaps(),
+    }).route(
+      `/`,
+      createAdminSharingRoutes({
+        limit,
+        sharing,
+        siteUrl,
+        pathVisits: (path, since) => stats.pathVisits(path, since),
+        linkedinExpiresAt: linkedinExpiresAt ?? null,
+      }),
+    )
+  },
 }

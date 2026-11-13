@@ -80,6 +80,7 @@ describe("isMembersOnlyPath", () => {
       "/sign-up/confirm",
       "/sign-up/code",
       "/sign-in",
+      "/sign-in/code",
       "/sign-in/link",
       "/sign-in/link/open",
       "/try",
@@ -96,7 +97,7 @@ describe("isMembersOnlyPath", () => {
 
 describe("the pages a provider's callback redirects to", () => {
   it("are all routed, and open to a person who is not signed in yet, but a guest's keep pages", () => {
-    // A provider sends a guest back to `/keep` or `/keep/taken` with the guest's session (#224).
+    // A provider sends a guest back to `/keep` or `/keep/taken` with the guest's session.
     const guestOnly: string[] = [OAUTH_PAGES.keep, OAUTH_PAGES.keepTaken]
     const { signInMethods: _linking, ...pages } = OAUTH_PAGES
     for (const path of Object.values(pages)) {

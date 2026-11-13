@@ -6,8 +6,8 @@ import { feedHtml, postFigures, resolveBody } from "../post-figures.tsx"
 
 /**
  * The blog's RSS 2.0 feed: its newest live posts in every language, each with its full HTML and a
- * link to its own language's address. A figure becomes its text fallback or a link to it (#620),
- * and every link and image address is absolute (#416). A blog with no live post answers a valid
+ * link to its own language's address. A figure becomes its text fallback or a link to it,
+ * and every link and image address is absolute. A blog with no live post answers a valid
  * feed with no items. When the API cannot answer, the error page answers 502, so a reader keeps
  * the items it has instead of reading an empty feed.
  */

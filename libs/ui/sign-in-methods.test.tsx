@@ -1040,6 +1040,23 @@ describe("ProfileScreen for an account without a password", () => {
     })
   }
 
+  it("sets the waiting address apart, left to right, in the Set a password notice", async () => {
+    await mount(
+      <ProfileScreen
+        {...profile}
+        methods={methodsProps([], { methods: [onlyGoogle] })}
+        providerProofFresh
+        passwordNeedsEmail={{ pending: "ada-lee@example.com" }}
+      />,
+    )
+
+    await click("[data-e2e=password-open]")
+
+    const address = find("#password-needs-email bdi")
+    expect(address.getAttribute("dir")).toBe("ltr")
+    expect(address.textContent).toBe("ada-lee@example.com")
+  })
+
   it("asks a stale provider sign-in for no new one while the address is missing (#463)", async () => {
     await mount(
       <ProfileScreen

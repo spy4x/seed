@@ -39,7 +39,7 @@ export const ADMIN_TOKEN_NOT_FOUND = "API token not found"
 export const ADMIN_TOKEN_ALREADY_REVOKED = "This API token is already revoked"
 export const ADMIN_DEVICE_NOT_FOUND = "Device not found"
 
-/** The operator area's reads and actions over tokens, devices and notifications (#427). */
+/** The operator area's reads and actions over tokens, devices and notifications. */
 export interface AdminApiTokensService {
   list(filter: AdminApiTokenFilter): Promise<AdminApiTokenListResponse>
   /** The person's tokens, or `null` when there is no live person `userId`. */
@@ -156,7 +156,7 @@ function intIdOf(raw: string): number | null {
 }
 
 /**
- * The routes of the `api-tokens` module (#427), mounted at `/api/admin` behind the gate in
+ * The routes of the `api-tokens` module, mounted at `/api/admin` behind the gate in
  * `+routes.ts`: only an operator with a full session reaches them. No answer carries a token's
  * secret or hash, a device's endpoint or keys, or a notification's payload.
  *

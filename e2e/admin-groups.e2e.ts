@@ -1,14 +1,14 @@
 import type { APIRequestContext, BrowserContext } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The admin app's groups module (#426): an operator finds a group by its name, sees its members,
+ * The admin app's groups module: an operator finds a group by its name, sees its members,
  * its invitations and its activity, removes a member and revokes an invitation, and the group's
- * activity says an operator did both. The person page links to the group. In the Files tab (#478)
+ * activity says an operator did both. The person page links to the group. In the Files tab
  * the operator finds a file by its name among many, sees its thumbnail, opens and downloads it,
- * both written to the audit log, and removes it.
+ * each written to the audit log once, and removes it.
  */
 
 // In double quotes: `deno task e2e:local` adds its ports to these two strings only in that form.
@@ -93,9 +93,17 @@ test.describe(`the admin app's groups`, () => {
         data: { id: groupId, name: groupName },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(request, appBase, groupId)
       const invited = await request.post(`${appBase}/api/groups/${groupId}/invitations`, {
         headers,
-        data: { role: 1, expiresInDays: 7, maxUses: 1, email: null, sendEmail: false },
+        data: {
+          role: 1,
+          expiresInDays: 7,
+          maxUses: 1,
+          email: null,
+          sendEmail: false,
+          acceptSeatPrice: true,
+        },
       })
       expect(invited.status(), await invited.text()).toBe(201)
       await signOut(request)
@@ -211,7 +219,7 @@ test.describe(`the admin app's groups`, () => {
     }
   })
 
-  test(`an operator finds a file by its name among many, opens and downloads it, both audited, and removes it`, async ({ browser, request }) => {
+  test(`an operator finds a file by its name among many, opens and downloads it, each audited once, and removes it`, async ({ browser, request }) => {
     // 27 uploads over the API take longer than the default 30 seconds.
     test.setTimeout(120_000)
     const id = uuidV7().slice(-8)
@@ -229,6 +237,7 @@ test.describe(`the admin app's groups`, () => {
         data: { id: groupId, name: groupName },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(request, appBase, groupId)
       for (let note = 0; note < 3; note++) {
         const noteId = uuidV7()
         const title = note === 0 ? `Trip receipts` : `Album ${note}`
@@ -306,6 +315,17 @@ test.describe(`the admin app's groups`, () => {
       await expect(log).toContainText(`File opened by an operator`)
       await expect(log).toContainText(`File downloaded by an operator`)
       await expect(log).toContainText(`abusive-${id}.png`)
+      // One Download is one row: Chromium fetches the download's address a second time, and the
+      // request id in that address keeps the repeat out of the log. The request goes from the
+      // admin page: the browser resolves `admin.localhost`, but the CI container's Node resolver
+      // does not.
+      const downloads = await ops.evaluate(async () => {
+        const response = await fetch(`/api/admin/audit?event=activity%3Aoperator.file_downloaded`)
+        return { status: response.status, body: await response.json() }
+      })
+      expect(downloads.status).toBe(200)
+      const { entries } = downloads.body as { entries: { fileName: string | null }[] }
+      expect(entries.filter((entry) => entry.fileName === `abusive-${id}.png`)).toHaveLength(1)
     } finally {
       await admin?.close()
       for (const email of [operatorEmail, ownerEmail]) await cleanup(request, email)

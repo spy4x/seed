@@ -90,12 +90,24 @@ describe("GroupEditorView", () => {
 
   it("shows what was typed for this group, and the saved group when the draft is another's", () => {
     groupsStore.groups.value = [known]
-    groupsStore.edit(known.id, { name: "Crew", description: "", color: null, emoji: "" })
+    groupsStore.edit(known.id, {
+      name: "Crew",
+      description: "",
+      color: null,
+      emoji: "",
+      timeZone: "UTC",
+    })
 
     expect(render(known.id)).toMatch(/<input [^>]*data-e2e="group-name"[^>]*value="Crew"/)
     expect(render(known.id)).toContain(`data-e2e="group-save"`)
 
-    groupsStore.edit(strangerId, { name: "Crew", description: "", color: null, emoji: "" })
+    groupsStore.edit(strangerId, {
+      name: "Crew",
+      description: "",
+      color: null,
+      emoji: "",
+      timeZone: "UTC",
+    })
     expect(render(known.id)).toMatch(/<input [^>]*data-e2e="group-name"[^>]*value="Secret Team"/)
     expect(render(known.id)).not.toContain(`data-e2e="group-save"`)
   })
@@ -198,6 +210,7 @@ describe("GroupEditorView", () => {
       trialEnd: null,
       notice: null,
       seatPrice: null,
+      period: null,
     }
     const blocked = "group-transfer-why"
 

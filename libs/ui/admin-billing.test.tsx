@@ -1,5 +1,5 @@
 /**
- * The admin app's billing screens (#196), driven in a browser DOM (happy-dom): what the list's
+ * The admin app's billing screens, driven in a browser DOM (happy-dom): what the list's
  * figures, chips and rows show, what a customer's page offers to whom, what each confirmed action
  * sends, and what a dialog says when the result is unknown.
  */
@@ -15,7 +15,9 @@ import {
   type AdminBillingDetail,
   type AdminBillingFigures,
   type AdminBillingListResponse,
+  type AdminNeverPaidGroup,
   BILLING_AUDIT_EVENTS,
+  BillingPeriod,
   BillingStatus,
   PRO_PLAN_ID,
 } from "@domain/billing"
@@ -29,12 +31,14 @@ import {
   AdminBillingCustomerScreen,
   type AdminBillingCustomerScreenProps,
 } from "./admin-billing-detail.tsx"
+import { AdminNeverPaidScreen, type AdminNeverPaidScreenProps } from "./admin-never-paid.tsx"
 import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 
 /** A day as the screens write it on this device: the default formatter, with no person's settings. */
 const day = (at: string) => createFormatters().date(at)
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { TEST_PLANS } from "../domain/billing/test-plans.ts"
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
   document: globalThis.document,
@@ -131,10 +135,16 @@ function customer(overrides: Partial<AdminBillingCustomer> = {}): AdminBillingCu
     trialEnd: null,
     pastDueSince: null,
     everActive: true,
+    period: BillingPeriod.Monthly,
     updatedAt: `2026-10-12T12:00:00.000Z`,
     ...overrides,
   }
 }
+
+/** The test catalog with Pro sold yearly too, at €90.00 a member a year against €9.00 a month. */
+const YEARLY_PLANS = TEST_PLANS.map((plan) =>
+  plan.id === PRO_PLAN_ID ? { ...plan, yearlyAmount: 9000 } : plan
+)
 
 const figures: AdminBillingFigures = {
   monthlyRevenue: [{ amount: 122400, currency: `EUR` }, { amount: 1800, currency: `USD` }],
@@ -175,6 +185,7 @@ function listProps(calls: unknown[][], props: Partial<AdminBillingListScreenProp
     onSearch: (filter) => void calls.push([`search`, filter]),
     onPage: (page) => void calls.push([`page`, page]),
     onRetry: () => void calls.push([`retry`]),
+    plans: TEST_PLANS,
     ...props,
   } satisfies AdminBillingListScreenProps
 }
@@ -235,9 +246,36 @@ describe(`the admin billing list`, () => {
     expect(rows[1].querySelector(`[data-e2e=admin-billing-deleted]`) !== null).toBe(true)
   })
 
+  it(`shows a yearly row at a twelfth of its price, with what the year bills under it`, async () => {
+    const yearly = customer({ period: BillingPeriod.Yearly })
+    await mount(
+      <AdminBillingListScreen
+        {...listProps([], { list: page([yearly]), plans: YEARLY_PLANS })}
+      />,
+    )
+
+    expect(find(`[data-e2e=admin-billing-row-amount]`).textContent).toBe(
+      `€30.004 × €7.50€360.00 billed yearly`,
+    )
+    expect(find(`[data-e2e=admin-billing-row-yearly]`).textContent).toBe(`€360.00 billed yearly`)
+  })
+
+  it(`says a monthly row bills monthly, with no yearly line`, async () => {
+    await mount(<AdminBillingListScreen {...listProps([], { plans: YEARLY_PLANS })} />)
+
+    expect(find(`[data-e2e=admin-billing-row-amount]`).textContent).toBe(`€36.004 × €9.00`)
+    expect(has(`[data-e2e=admin-billing-row-yearly]`)).toBe(false)
+  })
+
   it(`says billing is off instead of showing an empty table`, async () => {
     await mount(<AdminBillingListScreen {...listProps([], { list: { enabled: false } })} />)
     expect(find(`[data-e2e=admin-billing-off]`).textContent).toContain(`Billing is off`)
+    // The page's h1 is the only heading above it, so the empty state is an h2.
+    expect([...document.querySelectorAll(`h1, h2, h3, h4`)].map((h) => h.tagName)).toEqual([
+      `H1`,
+      `H2`,
+    ])
+    expect(has(`[data-e2e=admin-billing-off] h2`)).toBe(true)
     const setup = find(`[data-e2e=admin-billing-setup]`)
     expect(setup.getAttribute(`href`)).toBe(ADMIN_BILLING_SETUP_URL)
     expect(setup.getAttribute(`target`)).toBe(`_blank`)
@@ -249,6 +287,11 @@ describe(`the admin billing list`, () => {
     const none = { ...page([]), counts: { ...counts, paying: 0, all: 0 } }
     await mount(<AdminBillingListScreen {...listProps([], { list: none })} />)
     expect(find(`[data-e2e=admin-billing-none]`).textContent).toContain(`No paid groups yet`)
+    expect([...document.querySelectorAll(`h1, h2, h3, h4`)].map((h) => h.tagName)).toEqual([
+      `H1`,
+      `H2`,
+    ])
+    expect(has(`[data-e2e=admin-billing-none] h2`)).toBe(true)
     expect(has(`[data-e2e=admin-billing-search]`)).toBe(false)
     const pricing = find(`[data-e2e=admin-billing-pricing]`)
     expect(pricing.getAttribute(`href`)).toBe(`https://www.example.com/pricing`)
@@ -367,6 +410,7 @@ function customerProps(
     actionError: null,
     pending: false,
     onAction: (action) => void calls.push([`action`, action]),
+    plans: TEST_PLANS,
     waiting: null,
     navigate: undefined,
     ...props,
@@ -393,6 +437,55 @@ describe(`one customer in the admin app`, () => {
     expect(history).toContain(`€36.00 refunded`)
     expect(history).toContain(`By \u2068Grace Hopper\u2069. Note: Charged twice`)
     expect(find(`[data-e2e=admin-billing-stripe]`).getAttribute(`target`)).toBe(`_blank`)
+  })
+
+  it(`names a yearly subscription's period, its twelfth and what the year bills`, async () => {
+    const yearly = detail({ customer: customer({ period: BillingPeriod.Yearly }) })
+    await mount(
+      <AdminBillingCustomerScreen
+        {...customerProps([], { detail: yearly, plans: YEARLY_PLANS })}
+      />,
+    )
+
+    expect(find(`[data-e2e=admin-billing-period]`).textContent).toBe(`Yearly`)
+    expect(find(`[data-e2e=admin-billing-per-month]`).textContent).toBe(`4 × €7.50 = €30.00`)
+    expect(find(`[data-e2e=admin-billing-billed-yearly]`).textContent).toBe(
+      `€360.00 billed yearly`,
+    )
+  })
+
+  it(`names a monthly subscription's period, with no yearly line`, async () => {
+    await mount(<AdminBillingCustomerScreen {...customerProps([], { plans: YEARLY_PLANS })} />)
+
+    expect(find(`[data-e2e=admin-billing-period]`).textContent).toBe(`Monthly`)
+    expect(has(`[data-e2e=admin-billing-billed-yearly]`)).toBe(false)
+  })
+
+  it(`renews a yearly subscription at its yearly price, never the monthly one`, async () => {
+    const yearly = customer({ period: BillingPeriod.Yearly })
+    await mount(
+      <AdminBillingCustomerScreen
+        {...customerProps([], {
+          dialog: `time`,
+          detail: detail({ customer: yearly }),
+          plans: YEARLY_PLANS,
+        })}
+      />,
+    )
+    expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(
+      `the usual €360.00 a year starts again`,
+    )
+
+    await mount(
+      <AdminBillingCustomerScreen
+        {...customerProps([], {
+          dialog: `undo`,
+          detail: detail({ customer: { ...yearly, cancelAtPeriodEnd: true } }),
+          plans: YEARLY_PLANS,
+        })}
+      />,
+    )
+    expect(find(`[data-e2e=admin-billing-dialog]`).textContent).toContain(`at the usual €360.00.`)
   })
 
   it(`offers an operator the reversible actions and shows the supervisor's ones disabled`, async () => {
@@ -492,13 +585,24 @@ describe(`one customer in the admin app`, () => {
     expect(dialog).not.toContain(`keeps Pro`)
   })
 
-  it(`shows the new end as the length changes, and sends the picked length`, async () => {
+  it(`offers the lengths as choice chips, shows the new end as one changes, and sends it`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminBillingCustomerScreen {...customerProps(calls, { dialog: `time` })} />)
     // Active until Nov 12: the time at no charge starts after the paid period.
     expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(
       `until ${day(`2026-12-12T12:00:00.000Z`)}`,
     )
+    // Drawn as choice chips that share one name: each radio hides inside a chip a thumb can hit.
+    const lengths = [
+      ...find(`[data-e2e=admin-billing-length]`).querySelectorAll<HTMLInputElement>(`input`),
+    ]
+    expect(lengths.length).toBeGreaterThan(1)
+    expect(lengths.every((radio) => radio.className === `sr-only` && radio.name === `length`))
+      .toBe(true)
+    expect(
+      [...find(`[data-e2e=admin-billing-length]`).querySelectorAll(`label`)]
+        .every((label) => label.className.includes(`min-h-11`)),
+    ).toBe(true)
     const week = find<HTMLInputElement>(`[data-e2e=admin-billing-dialog] input[value='7d']`)
     await act(() => {
       week.checked = true
@@ -574,6 +678,75 @@ describe(`one customer in the admin app`, () => {
   })
 })
 
+function neverPaidGroup(overrides: Partial<AdminNeverPaidGroup> = {}): AdminNeverPaidGroup {
+  return {
+    groupId: GROUP_ID,
+    groupName: `Acme Studio`,
+    owner: { id: 7, name: `Ada Lovelace`, email: `ada@acme.test` },
+    createdAt: `2026-10-16T09:00:00.000Z`,
+    ...overrides,
+  }
+}
+
+function neverPaidProps(calls: unknown[][], props: Partial<AdminNeverPaidScreenProps> = {}) {
+  return {
+    list: { enabled: true, groups: [neverPaidGroup()], total: 26, page: 1, pageSize: 25 },
+    pending: false,
+    error: null,
+    onPage: (page) => void calls.push([`page`, page]),
+    onRetry: () => void calls.push([`retry`]),
+    ...props,
+  } satisfies AdminNeverPaidScreenProps
+}
+
+describe(`the groups that never paid`, () => {
+  it(`is linked from the billing list while billing is on`, async () => {
+    await mount(<AdminBillingListScreen {...listProps([])} />)
+    const link = find(`[data-e2e=admin-billing-never-paid]`)
+    expect(link.getAttribute(`href`)).toBe(`/billing/never-paid`)
+    expect(link.textContent).toBe(`Never paid`)
+    await mount(<AdminBillingListScreen {...listProps([], { list: { enabled: false } })} />)
+    expect(has(`[data-e2e=admin-billing-never-paid]`)).toBe(false)
+  })
+
+  it(`lists each group with its owner and the day it was made, linked to the group's page`, async () => {
+    await mount(<AdminNeverPaidScreen {...neverPaidProps([])} />)
+    expect(find(`[data-e2e=admin-never-paid-count]`).textContent).toBe(`26 groups`)
+    const row = find(`[data-e2e=admin-never-paid-list] tbody tr`)
+    expect(row.querySelector(`a`)?.getAttribute(`href`)).toBe(`/groups/${GROUP_ID}`)
+    expect(row.textContent).toContain(`Acme Studio`)
+    expect(row.textContent).toContain(`Ada Lovelace`)
+    expect(row.textContent).toContain(`ada@acme.test`)
+    expect(row.textContent).toContain(day(`2026-10-16T09:00:00.000Z`))
+  })
+
+  it(`says every group has paid when none is left, and that billing is off while it is`, async () => {
+    await mount(
+      <AdminNeverPaidScreen
+        {...neverPaidProps([], {
+          list: { enabled: true, groups: [], total: 0, page: 1, pageSize: 25 },
+        })}
+      />,
+    )
+    expect(find(`[data-e2e=admin-never-paid-list]`).textContent).toContain(
+      `Every group has paid at least once.`,
+    )
+    await mount(<AdminNeverPaidScreen {...neverPaidProps([], { list: { enabled: false } })} />)
+    expect(find(`[data-e2e=admin-never-paid-off]`).textContent).toContain(`Billing is off`)
+    expect(has(`[data-e2e=admin-never-paid-list]`)).toBe(false)
+  })
+
+  it(`says the list could not be read, in plain words, and reads it again on Try again`, async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminNeverPaidScreen {...neverPaidProps(calls, { list: null, error: `boom` })} />)
+    const error = find(`[data-e2e=admin-never-paid-error]`).textContent
+    expect(error).toContain(ADMIN_ENGLISH.t(`AdminNeverPaid.listError`))
+    expect(error).not.toContain(`boom`)
+    await press(`[data-e2e=admin-never-paid-error]`, `Try again`)
+    expect(calls).toEqual([[`retry`]])
+  })
+})
+
 describe("the billing screens in en-XA", () => {
   it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
     await mount(
@@ -584,8 +757,30 @@ describe("the billing screens in en-XA", () => {
         <AdminBillingCustomerScreen
           {...customerProps([], { operator: supervisor, dialog: `refund` })}
         />
+        <AdminBillingListScreen
+          {...listProps([], {
+            list: page([customer({ period: BillingPeriod.Yearly })]),
+            plans: YEARLY_PLANS,
+          })}
+        />
+        <AdminBillingCustomerScreen
+          {...customerProps([], {
+            dialog: `time`,
+            detail: detail({ customer: customer({ period: BillingPeriod.Yearly }) }),
+            plans: YEARLY_PLANS,
+          })}
+        />
+        <AdminNeverPaidScreen {...neverPaidProps([])} />
+        <AdminNeverPaidScreen
+          {...neverPaidProps([], {
+            list: { enabled: true, groups: [], total: 0, page: 1, pageSize: 25 },
+          })}
+        />
+        <AdminNeverPaidScreen {...neverPaidProps([], { list: null, error: `boom` })} />
       </I18nContext.Provider>,
     )
-    expect(englishLeft(document.body, [`Acme Studio`, `Ada Lovelace`, `ada@acme.test`])).toEqual([])
+    expect(
+      englishLeft(document.body, [`Acme Studio`, `Ada Lovelace`, `ada@acme.test`, `October`]),
+    ).toEqual([])
   })
 })

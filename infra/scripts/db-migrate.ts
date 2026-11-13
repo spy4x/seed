@@ -1,19 +1,25 @@
-/// <reference lib="deno.ns" />
 /**
  * Applies every pending migration under `libs/server/db/migrations` to Postgres.
  *
  * A thin entry point over `@spy4x/server/db`'s migration runner: connection settings
  * and the migrations folder are the only things this script decides, the mechanics
- * (locking, checksums, history table) live in the package.
+ * (locking, checksums, history table) live in the package. It runs on Deno, Node and Bun: the
+ * Node and Bun images run it from a bundle (`apps/api/dockerfile.node`, `apps/api/dockerfile.bun`).
  */
-import { createSqlFromEnv, PostgresMigrationDriver, runMigrations } from "@spy4x/server/db"
+import {
+  createSqlFromEnv,
+  PostgresMigrationDriver,
+  runMigrations,
+} from "@spy4x/server/db"
+import { exitProcess } from "@spy4x/platform/server/process"
+import { postgresEnv } from "../../apps/api/services/db-direct.ts"
 
 const migrationsFolder = "./libs/server/db/migrations"
 
-const sql = createSqlFromEnv(Deno.env.toObject())
+const sql = createSqlFromEnv(postgresEnv())
 if (!sql) {
   console.error("❌ Missing environment variable: DB_HOST")
-  Deno.exit(1)
+  exitProcess(1)
 }
 
 try {
@@ -39,7 +45,7 @@ try {
   console.log("\n✅ Migrations successfully applied.")
 } catch (err) {
   console.error("\n❌ Failed to apply migrations\n", err)
-  Deno.exit(1)
+  exitProcess(1)
 } finally {
   await sql.end({ timeout: 5 })
 }

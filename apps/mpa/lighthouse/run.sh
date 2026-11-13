@@ -2,7 +2,9 @@
 # The Lighthouse check of the public website (`deno task lighthouse`): every page in
 # lighthouserc.json must score, in Lighthouse mobile, at least 95 for performance and 100 for
 # accessibility, best practices and SEO, the median of three runs ("Design gate" in the global
-# agent rules). Starts the blog API stand-in (blog-api.ts) on 48412, the built MPA (`deno task
+# agent rules). `LIGHTHOUSE_PAGES=quick`, which pull requests set (.woodpecker/ci.yml), measures
+# only the pages in quick.ts, one run each, against the same scores; `all`, the default, measures
+# every page. Starts the blog API stand-in (blog-api.ts) on 48412, the built MPA (`deno task
 # mpa:build` first) on port 48410, nginx with gzip in
 # front of it on 48411 (nginx.conf), and Lighthouse CI. Reports land in .lighthouseci/.
 # CI runs this script (.woodpecker/ci.yml); run it the same way on a machine, from the repository
@@ -10,7 +12,12 @@
 set -euo pipefail
 
 HERE=apps/mpa/lighthouse
-[ -f apps/mpa/_fresh/server.js ] || { echo "no MPA build: run deno task mpa:build first"; exit 1; }
+PAGES=${LIGHTHOUSE_PAGES:-all}
+case "$PAGES" in
+  all | quick) ;;
+  *) echo "LIGHTHOUSE_PAGES must be all or quick, not $PAGES"; exit 1 ;;
+esac
+[ -f apps/mpa/dist/server.js ] || { echo "no MPA build: run deno task mpa:build first"; exit 1; }
 
 if [ -z "${CHROME_PATH:-}" ]; then
   CHROME_PATH=$(find "${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}" \
@@ -23,10 +30,12 @@ SCRATCH=$(mktemp -d)
 PIDS=()
 cleanup() {
   set +e
+  # Each PID is a `timeout`, which passes TERM on to its server and, with `-k 5`, sends KILL five
+  # seconds later: `deno serve` does not exit on TERM while it has open connections. Killing
+  # `timeout` itself would leave the server running, so that is only the last resort.
   for pid in "${PIDS[@]}"; do
-    # `deno serve` does not exit on SIGTERM when it has open connections: stop it for good.
     kill -TERM "$pid" 2>/dev/null
-    for _ in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.2; done
+    for _ in $(seq 1 50); do kill -0 "$pid" 2>/dev/null || break; sleep 0.2; done
     kill -KILL "$pid" 2>/dev/null
   done
   find "$SCRATCH" -delete
@@ -44,27 +53,34 @@ wait_for() { # <name> <pid> <url>
   return 1
 }
 
-# The blog's pages read the API: blog-api.ts answers its public routes with Seed's own published
-# posts, read from their files, so /blog and a post are measured with content. Every other API address
-# answers 404, and the pages render without it.
+# The blog's pages read the API: blog-api.ts answers its public routes with the run's own fixture
+# posts ($HERE/posts/), so /blog and a post are measured with content, and a product that deletes
+# Seed's posts changes nothing here. Every other API address answers 404, and the pages render
+# without it.
 # The servers outlive every Lighthouse run: 54 runs took over 20 minutes on a loaded CI host.
-timeout 2400 deno run --allow-net=127.0.0.1 --allow-read=libs/server/blog/seed-posts "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
+timeout -k 5 2400 deno run --allow-net=127.0.0.1 --allow-read="$HERE/posts" "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
 PIDS+=($!)
 wait_for api "${PIDS[-1]}" http://127.0.0.1:48412/api/blog/posts
 
 # Production mode, with example hosts.
 ENV=prod DOMAIN=app.example.com MPA_DOMAIN=www.example.com API_URL=http://127.0.0.1:48412 \
-  timeout 2400 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/_fresh/server.js \
+  timeout -k 5 2400 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/dist/server.js \
   >"$SCRATCH/mpa.log" 2>&1 &
 PIDS+=($!)
 wait_for mpa "${PIDS[-1]}" http://127.0.0.1:48410/health
 
-timeout 2400 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'daemon off;' \
+timeout -k 5 2400 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'daemon off;' \
   >"$SCRATCH/nginx.log" 2>&1 &
 PIDS+=($!)
 wait_for nginx "${PIDS[-1]}" http://127.0.0.1:48411/health
 
+CONFIG="$HERE/lighthouserc.json"
+if [ "$PAGES" = quick ]; then
+  CONFIG="$SCRATCH/lighthouserc.json"
+  deno run --allow-read="$HERE" --allow-write="$CONFIG" "$HERE/quick.ts" "$HERE/lighthouserc.json" "$CONFIG"
+fi
+
 # Outside deno.lock: Lighthouse CI's own dependencies include the npm `uuid` package, which
 # tests/no-uuid-v4.test.ts refuses in any tracked file. The version is pinned here, and the
 # repository's minimum dependency age still holds for everything it pulls in.
-deno run -A --no-lock npm:@lhci/cli@0.15.1 autorun --config="$HERE/lighthouserc.json"
+deno run -A --no-lock npm:@lhci/cli@0.15.1 autorun --config="$CONFIG"

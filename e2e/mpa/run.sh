@@ -120,7 +120,7 @@ else
   deno task vapid-key:create >/dev/null && mv infra/configs/vapid.json vapid.json
 fi
 
-deno serve --allow-all --port "$API_PORT" --host 127.0.0.1 apps/api/index.ts \
+API_HOST=127.0.0.1 API_PORT="$API_PORT" deno run --allow-all apps/api/+main.ts \
   >"$SCRATCH/api.log" 2>&1 &
 PIDS+=($!)
 wait_for api "${PIDS[-1]}" "http://127.0.0.1:$API_PORT/api/health"
@@ -146,7 +146,7 @@ wait_for proxy "${PIDS[-1]}" "$SPA_BASE_URL/api/health"
 
 deno task mpa:build
 # Flags go before the file: after it, `deno serve` passes them to the script and ignores them.
-deno serve --allow-all --port "$MPA_PORT" --host 127.0.0.1 apps/mpa/_fresh/server.js \
+deno serve --allow-all --port "$MPA_PORT" --host 127.0.0.1 apps/mpa/dist/server.js \
   >"$SCRATCH/mpa.log" 2>&1 &
 PIDS+=($!)
 wait_for mpa "${PIDS[-1]}" "$MPA_BASE_URL/health"

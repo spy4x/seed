@@ -1,6 +1,7 @@
 import type postgres from "postgres"
 import { type JobStep, PostgresOutboxRepository } from "@spy4x/server/outbox"
 import type { BillingProvider } from "@spy4x/billing"
+import type { Plan } from "@domain/billing"
 import { cleanUpAttachments } from "../notes/attachment-cleanup.ts"
 import { queueSeatDrift } from "../billing/seat-sync.ts"
 import { purgeDeadInvitations } from "../groups/purge-dead-invitations.ts"
@@ -15,13 +16,14 @@ import { cleanUpGuests } from "../auth/guests.ts"
 import { removeStaleEmailCodeRequests } from "./email-code-mail.ts"
 import { removeExpiredAuthChallenges } from "./auth-challenges.ts"
 import { removeExpiredSignUps } from "./sign-up-code-mail.ts"
-import { removeStaleSignInLinkRequests } from "./sign-in-link-mail.ts"
+import { removeStaleSignInCodeRequests } from "./sign-in-code-mail.ts"
 import { removeStalePasswordResetRequests } from "./password-reset-mail.ts"
 import { removeStaleSubscriptionRequests } from "./subscriber-mail.ts"
 import { removeStaleTelegramMessages } from "./telegram-notification.ts"
 import { OUTBOX_RETENTION_DAYS } from "./jobs.ts"
 import type { ServerFiles } from "../files/files.ts"
 import { removeExpiredDataExports } from "./data-export.ts"
+import { deleteStaleImports } from "../imports/import-jobs.ts"
 
 /**
  * The parts of the nightly cleanup, in the order they run. Each removes only what is due, so one
@@ -32,33 +34,38 @@ export function cleanupSteps(
   provider: BillingProvider | null,
   log: (line: string) => void,
   files: ServerFiles | null = null,
+  plans?: readonly Plan[],
 ): JobStep[] {
   return [
     ["remove old processed outbox rows", async () => {
       const removed = await new PostgresOutboxRepository(sql).removeProcessed(OUTBOX_RETENTION_DAYS)
       if (removed > 0) console.log(`Removed ${removed} old processed outbox row(s)`)
     }],
-    ["remove unsent password reset requests", async () => {
+    ["remove old password reset requests", async () => {
       const stale = await removeStalePasswordResetRequests(sql)
-      if (stale > 0) console.log(`Removed ${stale} unsent password reset request(s)`)
+      if (stale > 0) console.log(`Removed ${stale} old password reset request(s)`)
     }],
     ["remove unsent e-mail code requests", async () => {
       const staleCodes = await removeStaleEmailCodeRequests(sql)
       if (staleCodes > 0) console.log(`Removed ${staleCodes} unsent e-mail code request(s)`)
     }],
-    ["remove unused sign-in links", async () => {
-      const links = await removeStaleSignInLinkRequests(sql)
-      if (links > 0) console.log(`Removed ${links} unused sign-in link request(s)`)
+    ["remove unused sign-in code requests", async () => {
+      const requests = await removeStaleSignInCodeRequests(sql)
+      if (requests > 0) console.log(`Removed ${requests} unused sign-in code request(s)`)
     }],
     ["remove unsent Telegram messages", async () => {
       const messages = await removeStaleTelegramMessages(sql)
       if (messages > 0) console.log(`Removed ${messages} unsent Telegram message(s)`)
     }],
+    ["remove imports left unsaved", async () => {
+      const imports = await deleteStaleImports(sql)
+      if (imports > 0) console.log(`Removed ${imports} import(s) left unsaved for a day`)
+    }],
     ["remove expired sign-ups", async () => {
       const signUps = await removeExpiredSignUps(sql)
       if (signUps > 0) console.log(`Removed ${signUps} expired sign-up(s)`)
     }],
-    // Guest accounts (#224): empty ones a week on, and any unused for a year.
+    // Guest accounts: empty ones a week on, and any unused for a year.
     ["remove empty and idle guest accounts", async () => {
       const guests = await cleanUpGuests(sql)
       if (guests > 0) console.log(`Removed ${guests} empty or idle guest account(s)`)
@@ -135,7 +142,7 @@ export function cleanupSteps(
     }],
     ["queue seat syncs for drifted groups", async () => {
       if (!provider) return
-      const drifted = await queueSeatDrift(sql)
+      const drifted = await queueSeatDrift(sql, undefined, plans)
       if (drifted > 0) console.log(`Queued a seat sync for ${drifted} group(s)`)
     }],
   ]

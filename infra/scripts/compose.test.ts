@@ -15,6 +15,8 @@ interface Answers {
   dryRun?: string;
   /** The TCP ports something listens on. */
   listening?: number[];
+  /** Whether infra/configs/vapid.json exists; true when left out. */
+  vapid?: boolean;
   /** The exit code of a command, by what follows the env file; 0 when it gives none. */
   exit?: (line: string) => number | undefined;
 }
@@ -59,6 +61,8 @@ function host(
         oldDataChangedSinceUpgrade: false,
         ...facts,
       }),
+    exists: (path) =>
+      Promise.resolve(path === "./infra/configs/vapid.json" ? answers.vapid ?? true : false),
     ensureProxyNetwork: () => {
       ran.push("proxy network");
       return Promise.resolve(false);
@@ -212,4 +216,21 @@ Deno.test("with SPA=false a deploy starts the product without the SPA and keeps 
     "up --scale spa=0 -d --build db migrate api spa",
     "up --scale spa=0 -d --build",
   ]);
+});
+
+Deno.test("a start of the whole project without vapid.json exits 1 at once and names the task that makes it", async () => {
+  const h = host({}, { config: CONFIG, ps: "", vapid: false });
+  expect(await runCompose(["up", "-d"], h)).toBe(1);
+  expect(h.asked).toEqual([]);
+  expect(h.ran).toEqual([]);
+  expect(h.errors.join("\n")).toContain("deno task vapid-key:create");
+});
+
+Deno.test("commands that start no whole project run without vapid.json", async () => {
+  for (const args of [["down"], ["ps"], ["logs", "api"], ["up", "-d", "grafana"]]) {
+    const h = host({}, { config: CONFIG, vapid: false });
+    expect(await runCompose(args, h)).toBe(0);
+    expect(h.errors).toEqual([]);
+    expect(h.ran.at(-1)).toBe(args.join(" "));
+  }
 });

@@ -1,10 +1,10 @@
 import type { APIRequestContext, BrowserContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
- * The operator area's API tokens (#427) on the admin host: an operator finds a person's token on
+ * The operator area's API tokens on the admin host: an operator finds a person's token on
  * the API tokens page and revokes it, then removes the person's push device from their page. The
  * token stops working, and the person's activity names both changes.
  */
@@ -62,6 +62,7 @@ test.describe("the admin app's API tokens", () => {
         data: { id: groupId, name: "Family" },
       })
       expect(group.status(), await group.text()).toBe(201)
+      await payForGroup(person, appBase, groupId)
       const created = await person.post(`${appBase}/api/tokens`, {
         headers,
         data: { name: tokenName, groupId, access: 2, expiresInDays: null, password },

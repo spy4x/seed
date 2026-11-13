@@ -6,6 +6,7 @@ import { DEV_ADMIN_EMAIL, PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.t
 import { startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
+import type { NotesSetup } from "@server/notes/setup.ts"
 import { AppDbBase } from "../../api/services/db-base.ts"
 import type { DemoAdmins } from "./options.ts"
 import { demoDataSeed } from "./reset.ts"
@@ -67,11 +68,12 @@ export async function isDemoSeeded(
  * panel shows the demo as it is. The wipe empties the outbox too, so
  * the nightly cleanup is scheduled again. A failure part-way is tried again on the next check. A
  * worker that restarts in between finds the population and keeps the half-seeded demo until the
- * next midnight, unless an administrator is missing.
+ * next midnight, unless an administrator is missing. With `notes` off (`NOTES=false`), the seed
+ * writes no notes, tags or attachments; on by default.
  */
 export async function resetDemo(
   sql: postgres.Sql,
-  options: { subscribers: SubscribersSetup | null; admins: DemoAdmins | null },
+  options: { subscribers: SubscribersSetup | null; admins: DemoAdmins | null; notes?: NotesSetup },
   now = new Date(),
 ): Promise<void> {
   await wipeDatabase(sql)
@@ -91,6 +93,7 @@ export async function resetDemo(
     dataSeed: demoDataSeed(now),
     subscribers: options.subscribers,
     now,
+    notes: options.notes,
   })
   await startRepeatingJobs(sql, now)
   // The wipe keeps the blog but empties the job table: scheduled posts get their jobs back.

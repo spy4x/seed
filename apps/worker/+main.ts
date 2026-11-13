@@ -7,14 +7,29 @@ import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.t
 import { TelegramClient } from "@spy4x/integrations/telegram"
 import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
-import { readIndexNowSetup } from "@server/blog/blog-indexnow-job.ts"
+import { readIndexNowSetup } from "@server/jobs/indexnow.ts"
+import { readCatalogSetup } from "@server/catalog/setup.ts"
+import { readCatalogItemPath } from "@server/catalog/tracking.ts"
+import { readCrosspostSetup } from "@server/blog/blog-crosspost-job.ts"
+import { readShareResultsSetup } from "@server/blog/blog-share-results-job.ts"
+import { readNotesSetup } from "@server/notes/setup.ts"
+import type { AutoPostSetup } from "@server/blog/auto-post.ts"
+import { telegramPoster } from "@server/blog/blog-post-telegram-job.ts"
+import { readMastodonPoster } from "@server/blog/blog-post-mastodon-job.ts"
+import { readBlueskyPoster } from "@server/blog/blog-post-bluesky-job.ts"
+import { readHashnodePoster } from "@server/blog/blog-post-hashnode-job.ts"
+import { readLinkedinPoster } from "@server/blog/blog-post-linkedin-job.ts"
 import { loadDemoBlogPosts } from "@server/blog/seed-posts.ts"
 import { PostgresIdempotencyStore } from "@spy4x/server/idempotency"
 import { startIdempotencySweep } from "./idempotency-sweep.ts"
 import { shutdownSignal, ShutdownSignalError } from "@spy4x/platform/server/shutdown-signal"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { createMailSender, mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
-import { readSubscribersSetup, subscribersOffWarning } from "@server/subscribers/subscribers.ts"
+import {
+  readSiteUrl,
+  readSubscribersSetup,
+  subscribersOffWarning,
+} from "@server/subscribers/subscribers.ts"
 // The API's own reading of the billing variables, so both processes run one provider.
 import { readBillingSetup } from "@server/billing/setup.ts"
 import { isDemoMode } from "@server/auth/demo-accounts.ts"
@@ -45,7 +60,7 @@ const signal = shutdownSignal()
 
 console.log("Worker started")
 
-// Mail goes out from here, never from the API: a reset link is made and sent in one step.
+// Mail goes out from here, never from the API: a reset code is made and sent in one step.
 const domain = processEnv.get("DOMAIN")
 if (!domain) {
   console.error("❌ Missing environment variable: DOMAIN")
@@ -80,8 +95,10 @@ const billingSetup = readBillingSetup(
 const filesSetup = readServerFilesSetup(processEnv)
 if (!filesSetup.success) console.warn(filesSetup.error)
 const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
+// With `NOTES=false` the demo's seed and sample data write no notes, tags or attachments.
+const notes = readNotesSetup(processEnv)
 
-// Image processing (#464) runs `vips` on files: each run gets a folder of its own under the one
+// Image processing runs `vips` on files: each run gets a folder of its own under the one
 // directory the worker may read and write (`--allow-read`/`--allow-write` in compose), and removes
 // it when done.
 const IMAGE_SCRATCH_ROOT = `/tmp/images`
@@ -101,7 +118,7 @@ const imageScratch: ImageScratch = {
   close: (dir) => runtimeFileSystem.removeTree!(dir),
 }
 
-// Notifications also go to a linked Telegram chat (#269, docs/telegram.md) while the bot is on. The
+// Notifications also go to a linked Telegram chat (docs/telegram.md) while the bot is on. The
 // worker only sends, so it needs no webhook secret.
 const telegramSetup = readTelegramSetup(
   processEnv,
@@ -114,11 +131,48 @@ const telegram = telegramSetup
   ? new TelegramClient({ token: telegramSetup.token, apiBaseUrl: telegramSetup.apiBaseUrl })
   : null
 
-// IndexNow (#418, docs/blog.md): with `INDEXNOW_KEY` and `MPA_DOMAIN`, a blog post that goes live,
+// IndexNow (docs/blog.md): with `INDEXNOW_KEY` and `MPA_DOMAIN`, a blog post that goes live,
 // changes, moves or leaves is announced to the search engines. A malformed key stops the worker.
 const indexNow = readIndexNowSetup(processEnv, processEnv.get("ENV") === "dev" ? "dev" : "prod")
 if (!indexNow && processEnv.get("INDEXNOW_KEY")?.trim()) {
   console.warn("IndexNow is off: INDEXNOW_KEY is set, but MPA_DOMAIN is not")
+}
+// A catalog item is announced at the addresses the website and the tracking links use
+// (docs/catalog.md#indexnow): `CATALOG_ITEM_PATH` in each of `CATALOG_LANGUAGES`. A bad one stops
+// the worker, as it stops the API.
+const catalogPages = {
+  itemPath: readCatalogItemPath(processEnv),
+  languages: readCatalogSetup(processEnv).settings.languages,
+}
+
+// The Dev.to cross-post (docs/blog.md): with `DEVTO_API_KEY` and `MPA_DOMAIN`, a live post
+// is posted to Dev.to once ever, with its canonical address on the website. The key stays in the
+// client and is never logged.
+const crosspost = readCrosspostSetup(processEnv, processEnv.get("ENV") === "dev" ? "dev" : "prod")
+if (!crosspost && processEnv.get("DEVTO_API_KEY")?.trim()) {
+  console.warn("The Dev.to cross-post is off: DEVTO_API_KEY is set, but MPA_DOMAIN is not")
+}
+
+// Sharing results (docs/blog.md): every hour, the numbers of each copy posted to Dev.to, Reddit,
+// Hacker News, Mastodon, Bluesky or Hashnode in the last 90 days are read when due. Dev.to reads
+// with `DEVTO_API_KEY`; Dev.to and Reddit need `MPA_DOMAIN`; the others read public numbers.
+const shareResults = readShareResultsSetup(
+  processEnv,
+  processEnv.get("ENV") === "dev" ? "dev" : "prod",
+)
+
+// Automatic posts (docs/blog.md): each sharing channel with "Post automatically" on gets every
+// post that goes live, while its kind's keys are set. Without them its rows stay manual, and each
+// post logs one line. The keys stay in the clients and are never logged.
+const autoPost: AutoPostSetup = {
+  siteUrl: readSiteUrl(processEnv, processEnv.get("ENV") === "dev" ? "dev" : "prod"),
+  posters: {
+    telegram: telegram && telegramSetup ? telegramPoster(telegram, telegramSetup.token) : null,
+    mastodon: readMastodonPoster(processEnv),
+    bluesky: readBlueskyPoster(processEnv),
+    hashnode: readHashnodePoster(processEnv),
+    linkedin: readLinkedinPoster(processEnv),
+  },
 }
 
 // The public demo (docs/demo.md) gives every new account its own sample groups.
@@ -159,6 +213,7 @@ const processor = createOutboxProcessor(
         demoDataSeed(new Date()),
         new Date(),
         files,
+        notes,
       )
     : null,
   undefined,
@@ -166,6 +221,13 @@ const processor = createOutboxProcessor(
   telegram,
   imageScratch,
   indexNow,
+  crosspost,
+  undefined,
+  shareResults,
+  autoPost,
+  catalogPages,
+  // The API reads the same switch: with the notes off, no import job creates a note.
+  readNotesSetup(processEnv),
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run
@@ -208,7 +270,7 @@ if (demo) {
         publicAdmin: demoAdmins !== null,
       }),
     reset: async () => {
-      await resetDemo(sql, { subscribers: subscribersSetup, admins: demoAdmins })
+      await resetDemo(sql, { subscribers: subscribersSetup, admins: demoAdmins, notes })
       console.log("Demo wiped and seeded again")
     },
     now: () => new Date(),

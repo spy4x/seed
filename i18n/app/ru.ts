@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Прикрепить файлы к заметке",
+  "AppShell.copyNoteLink": "Скопировать ссылку на заметку",
+  "AppShell.deleteNote": "Удалить заметку",
+  "AppShell.duplicateNote": "Дублировать заметку",
+  "AppShell.moveNote": "Перенести заметку в другую группу",
   "AttachmentMessages.load": "Не удалось загрузить файлы",
   "AttachmentMessages.type":
     "Файл {name} нельзя прикрепить: подходят только изображения JPEG, PNG, WebP, GIF и файлы PDF.",
@@ -59,6 +63,9 @@ export default {
   "GroupActivity.renamedFromTo":
     "<who>{who}</who> переименовал(а) группу «<value>{from}</value>» в «<value>{to}</value>»",
   "GroupActivity.detailsUpdated": "<who>{who}</who> изменил(а) описание, цвет или эмодзи группы",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> изменил(а) часовой пояс с <value>{from}</value> на <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> изменил(а) часовой пояс",
   "GroupActivity.deleted": "<who>{who}</who> удалил(а) группу",
   "GroupActivity.restored": "<who>{who}</who> восстановил(а) группу",
   "GroupActivity.roleChanged":
@@ -278,6 +285,11 @@ export default {
       "Новые группы начинают с бесплатного тарифа. Бесплатный пробный период на {count} дня достанется первой группе, которую вы переведёте на платный тариф.",
   },
   "GroupEditor.readOnly": "Менять данные группы могут только администраторы и владелец.",
+  "GroupEditor.timeZoneHint":
+    "Дни и месяцы начинаются в полночь по этому поясу — для всех в группе.",
+  "GroupEditor.timeZoneInvalid": "Такого часового пояса мы не знаем. Выберите другой из списка.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Пока вы редактировали, кто-то другой выбрал {zone}. Сохраните, чтобы оставить свой вариант, или нажмите «Отменить».",
   "GroupEditor.nameRequired": "Введите название.",
   "GroupEditor.nameInvalid": "Не больше 100 символов, без переносов строк и скрытых символов.",
   "GroupEditor.descriptionTooLong": {
@@ -424,7 +436,7 @@ export default {
   "GroupInvitations.verifyEmail": "Подтвердить почту",
   "GroupInvitations.notForYou":
     "Это приглашение отправлено на другую почту. Если это ваш адрес, сначала подтвердите его в <link>профиле</link> или войдите в аккаунт с этой почтой.",
-  "GroupInvitations.somethingWrong": "Что-то пошло не так. Попробуйте ещё раз.",
+  "GroupInvitations.somethingWrong": "Не удалось обработать приглашение. Попробуйте ещё раз.",
   "GroupInvitations.unreachable": "Сервер недоступен. Попробуйте ещё раз.",
   "GroupMembers.unnamed": "Участник без имени",
   "GroupMembers.title": "Участники",
@@ -499,7 +511,7 @@ export default {
   "GroupTransfer.unreachable": "Сервер недоступен. Попробуйте ещё раз.",
   "GroupTransfer.tooManyAttempts":
     "Слишком много попыток. Подождите несколько минут и попробуйте снова.",
-  "GroupTransfer.somethingWrong": "Что-то пошло не так. Попробуйте ещё раз.",
+  "GroupTransfer.somethingWrong": "Не удалось передать группу. Попробуйте ещё раз.",
   "Groups.title": "Группы",
   "Groups.new": "Новая группа",
   "Groups.import": "Импортировать группу…",
@@ -560,21 +572,20 @@ export default {
   "InvitationNew.discardLeave": "Не сохранять",
   "InvitationNew.discardStay": "Продолжить редактирование",
   "GroupBillingPanel.planFree": "Бесплатный",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "one":
-      "Платёж не прошёл. Чтобы сохранить тариф {plan}, обновите карту кнопкой «Сменить карту» в течение {count} дня — до {date}.",
+      "Платёж не прошёл. Чтобы сохранить тариф {plan}, обновите карту кнопкой «Сменить карту» до {date} (остался {count} день).",
     "few":
-      "Платёж не прошёл. Чтобы сохранить тариф {plan}, обновите карту кнопкой «Сменить карту» в течение {count} дней — до {date}.",
+      "Платёж не прошёл. Чтобы сохранить тариф {plan}, обновите карту кнопкой «Сменить карту» до {date} (осталось {count} дня).",
     "many":
-      "Платёж не прошёл. Чтобы сохранить тариф {plan}, обновите карту кнопкой «Сменить карту» в течение {count} дней — до {date}.",
+      "Платёж не прошёл. Чтобы сохранить тариф {plan}, обновите карту кнопкой «Сменить карту» до {date} (осталось {count} дней).",
     "other":
-      "Платёж не прошёл. Чтобы сохранить тариф {plan}, обновите карту кнопкой «Сменить карту» в течение {count} дня — до {date}.",
+      "Платёж не прошёл. Чтобы сохранить тариф {plan}, обновите карту кнопкой «Сменить карту» до {date} (осталось {count} дня).",
   },
   "GroupBillingPanel.paymentFailedFree":
     "Платёж не прошёл, и группа перешла на бесплатный тариф. Чтобы вернуть {plan}, обновите карту кнопкой «Сменить карту».",
   "GroupBillingPanel.offline": "Сервер недоступен. Попробуйте ещё раз.",
-  "GroupBillingPanel.unreadable": "Не удалось загрузить тариф.",
+  "GroupBillingPanel.unreadable": "Не удалось загрузить тариф",
   "GroupBillingPanel.unsafePage":
     "Платёжный сервис вернул адрес, который приложение не станет открывать.",
   "GroupBillingPanel.checkoutUnreachable":
@@ -583,7 +594,7 @@ export default {
     "Не удалось открыть платёжный кабинет Stripe. Проверьте подключение к интернету и попробуйте ещё раз.",
   "GroupBillingPanel.title": "Оплата",
   "GroupBillingPanel.description":
-    "Сколько группа <group>{group}</group> платит в месяц. Оплатой занимается Stripe.",
+    "Сколько платит группа <group>{group}</group>. Оплатой занимается Stripe.",
   "GroupBillingPanel.loading": "Загружаем тариф",
   "GroupBillingPanel.statusTrial": "Пробный период",
   "GroupBillingPanel.statusRenews": "Продлится {date}",
@@ -614,10 +625,10 @@ export default {
   "GroupBillingPanel.finePrint":
     "Оплата ежемесячно за каждого участника. Отменить можно в любой момент — {plan} останется до конца оплаченного периода.",
   "GroupBillingPanel.trialEnds": {
-    "one": "Пробный период закончится через {count} день — {date}.",
-    "few": "Пробный период закончится через {count} дня — {date}.",
-    "many": "Пробный период закончится через {count} дней — {date}.",
-    "other": "Пробный период закончится через {count} дня — {date}.",
+    "one": "Пробный период закончится {date}, через {count} день.",
+    "few": "Пробный период закончится {date}, через {count} дня.",
+    "many": "Пробный период закончится {date}, через {count} дней.",
+    "other": "Пробный период закончится {date}, через {count} дня.",
   },
   "GroupBillingPanel.trialThen":
     "Затем группа <group>{group}</group> будет платить {total} в месяц, если вы не отмените подписку.",
@@ -634,7 +645,7 @@ export default {
   "GroupBillingPanel.planHeading": "Тариф <plan>{plan}</plan>",
   "GroupBillingPanel.confirming": "Stripe подтверждает оплату. Страница обновится сама.",
   "GroupBillingPanel.paymentMethod": "Способ оплаты",
-  "GroupBillingPanel.paymentMethodText": "Карта, с которой Stripe списывает оплату каждый месяц.",
+  "GroupBillingPanel.paymentMethodText": "Карта, с которой Stripe списывает оплату за тариф.",
   "GroupBillingPanel.changeCard": "Сменить карту",
   "GroupBillingPanel.invoices": "Счета",
   "GroupBillingPanel.invoicesText": "Все счета и чеки — посмотреть или скачать.",
@@ -643,19 +654,75 @@ export default {
   "GroupBillingPanel.cancelFree": "Если отмените до {date}, деньги не спишутся.",
   "GroupBillingPanel.cancelKeep": "Тариф {plan} останется до конца оплаченного периода.",
   "GroupBillingPanel.cancelPlan": "Отменить тариф",
+  "GroupBillingPanel.periodTitle": "Период оплаты",
+  "GroupBillingPanel.monthly": "Помесячно",
+  "GroupBillingPanel.yearly": "На год",
+  "GroupBillingPanel.priceYear": "Тариф {plan} — {price} в год за участника.",
+  "GroupBillingPanel.priceForGroupYear": {
+    "one": "С {count} участником группа <group>{group}</group> будет платить {total} в год.",
+    "few": "С {count} участниками группа <group>{group}</group> будет платить {total} в год.",
+    "many": "С {count} участниками группа <group>{group}</group> будет платить {total} в год.",
+    "other": "С {count} участниками группа <group>{group}</group> будет платить {total} в год.",
+  },
+  "GroupBillingPanel.saving": "Это на {amount} меньше, чем при помесячной оплате.",
+  "GroupBillingPanel.finePrintYear":
+    "Оплата раз в год за каждого участника. Отменить можно в любой момент — {plan} останется до конца оплаченного периода.",
+  "GroupBillingPanel.trialThenYear":
+    "Затем группа <group>{group}</group> будет платить {total} в год, если вы не отмените подписку.",
+  "GroupBillingPanel.seatsYear": {
+    "one": "{total} в год: {count} участник по {price}, включая владельца.",
+    "few": "{total} в год: {count} участника по {price}, включая владельца.",
+    "many": "{total} в год: {count} участников по {price}, включая владельца.",
+    "other": "{total} в год: {count} участника по {price}, включая владельца.",
+  },
+  "GroupBillingPanel.periodMonthly":
+    "Вы платите помесячно. Оплата за год — {price}, на {saving} меньше.",
+  "GroupBillingPanel.periodYearly": "Вы платите раз в год. Помесячно — {price} в месяц.",
+  "GroupBillingPanel.periodHint":
+    "Перед подтверждением Stripe покажет, сколько нужно заплатить сегодня.",
+  "GroupBillingPanel.switchYearly": "Перейти на оплату за год",
+  "GroupBillingPanel.switchMonthly": "Перейти на помесячную оплату",
+  "GroupBillingPanel.startHeading": "Подключите тариф <plan>{plan}</plan>",
+  "GroupBillingPanel.unitMonth": "в месяц",
+  "GroupBillingPanel.unitYear": "в год",
+  "GroupBillingPanel.unitMemberMonth": "в месяц за участника",
+  "GroupBillingPanel.unitMemberYear": "в год за участника",
+  "GroupBillingPanel.wholeGroup": {
+    "one": "За всю группу, до {count} участника.",
+    "few": "За всю группу, до {count} участников.",
+    "many": "За всю группу, до {count} участников.",
+    "other": "За всю группу, до {count} участника.",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "За всю группу.",
+  "GroupBillingPanel.continueToPayment": "Перейти к оплате",
+  "GroupBillingPanel.priceFlat": "Тариф {plan} — {price} в месяц за всю группу.",
+  "GroupBillingPanel.priceFlatYear": "Тариф {plan} — {price} в год за всю группу.",
+  "GroupBillingPanel.finePrintFlat":
+    "Оплата ежемесячно. Отменить можно в любой момент — {plan} останется до конца оплаченного периода.",
+  "GroupBillingPanel.finePrintFlatYear":
+    "Оплата раз в год. Отменить можно в любой момент — {plan} останется до конца оплаченного периода.",
+  "GroupBillingPanel.refund": {
+    "one": "Передумали? Попросите о возврате в течение {count} дня — вернём всю сумму.",
+    "few": "Передумали? Попросите о возврате в течение {count} дней — вернём всю сумму.",
+    "many": "Передумали? Попросите о возврате в течение {count} дней — вернём всю сумму.",
+    "other": "Передумали? Попросите о возврате в течение {count} дня — вернём всю сумму.",
+  },
+  "GroupBillingPanel.joinInstead":
+    "Хотите присоединиться к чужой группе? Попросите её владельца прислать ссылку-приглашение — платить не нужно.",
+  "HomeView.opening": "Открываем приложение…",
   "GroupBillingView.trialStarted": {
     "one": "Начался пробный период {plan} на {count} день",
     "few": "Начался пробный период {plan} на {count} дня",
     "many": "Начался пробный период {plan} на {count} дней",
     "other": "Начался пробный период {plan} на {count} дня",
   },
-  "GroupBillingView.trialUntil": "Группа «{group}» на тарифе {plan} до {date}.",
+  "GroupBillingView.trialUntil": "До {date} у группы «{group}» тариф {plan}.",
   "GroupBillingView.paid": "Тариф {plan} подключён",
   "GroupBillingView.paidText": "Stripe подтвердил оплату для группы «{group}».",
-  "NotificationsScreen.loadFailed": "Не удалось загрузить уведомления.",
-  "NotificationsScreen.loadMoreFailed": "Не удалось загрузить ещё.",
-  "NotificationsScreen.readFailed": "Не удалось отметить как прочитанное.",
-  "NotificationsScreen.readAllFailed": "Не удалось отметить все как прочитанные.",
+  "NotificationsScreen.loadFailed": "Не удалось загрузить уведомления",
+  "NotificationsScreen.loadMoreFailed": "Не удалось загрузить остальные уведомления",
+  "NotificationsScreen.readFailed": "Не удалось отметить как прочитанное",
+  "NotificationsScreen.readAllFailed": "Не удалось отметить все как прочитанные",
   "NotificationsScreen.invitedViewer":
     "Вас пригласили в группу «<group>{group}</group>» в роли читателя.",
   "NotificationsScreen.invitedEditor":
@@ -685,7 +752,7 @@ export default {
   "NotificationsScreen.reminderKeep": "Добавьте способ входа, чтобы не потерять аккаунт.",
   "NotificationsScreen.exportReady": "Ваши данные готовы. Скачать их можно в профиле.",
   "NotificationsScreen.exportReadyUntil":
-    "Ваши данные готовы. Скачать их можно в профиле до {date}.",
+    "Ваши данные готовы. До {date} их можно скачать в профиле.",
   "NotificationsScreen.unknown": "У вас новое уведомление.",
   "NotificationsScreen.title": "Уведомления",
   "NotificationsScreen.unread": {
@@ -764,6 +831,8 @@ export default {
   "OverviewScreen.emptyGroupText":
     "Обзор наполнится, когда участники группы начнут добавлять заметки.",
   "OverviewScreen.newNote": "Новая заметка",
+  "OverviewScreen.choosePlanText": "Чтобы что-то добавить, выберите тариф.",
+  "OverviewScreen.choosePlan": "Выбрать тариф",
   "OverviewScreen.allHidden": "Все виджеты скрыты",
   "OverviewScreen.allHiddenText": "Выберите, какие показывать.",
   "OverviewScreen.gridLabel": "Обзор группы {group}",
@@ -773,6 +842,7 @@ export default {
   "OverviewScreen.customRange": "Свой период",
   "OverviewScreen.rangeTooLong": "Выберите период не длиннее года.",
   "OverviewScreen.asOf": "Данные на {time}",
+  "OverviewScreen.zoneNote": "время: {city}",
   "OverviewScreen.hide": "Скрыть виджет",
   "OverviewView.opening": "Открываем обзор…",
   "OverviewView.saveFailed":
@@ -822,6 +892,9 @@ export default {
     "На тарифе этой группы можно понизить роль участника или исключить его, но не повысить.",
   "PlanRefusalNotice.openBilling": "Открыть вкладку «Оплата»",
   "PlanRefusalNotice.askOwner": "Попросите владельца группы перейти на платный тариф.",
+  "PlanRefusalNotice.noPlanTitle": "У группы {group} нет платного тарифа",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "У этой группы нет платного тарифа",
+  "PlanRefusalNotice.noPlanText": "Чтобы что-то добавить, выберите тариф.",
   "GuestProfile.accountType": "Тип аккаунта",
   "GuestProfile.guestAccount": "Гостевой аккаунт. Открывается только в этом браузере.",
   "GuestProfile.methods": "Способы входа",
@@ -963,7 +1036,7 @@ export default {
   "GuestScreens.signOutAnyway": "Всё равно выйти",
   "GuestScreens.signOutText":
     "У этого аккаунта нет способа входа, поэтому вернуться в него не получится. Всё, что в нём есть, пропадёт.",
-  "GuestScreens.offline": "Нет сети. Подключитесь к интернету и попробуйте ещё раз.",
+  "GuestScreens.offline": "Сервер недоступен. Попробуйте ещё раз.",
   "GuestScreens.providerFailed":
     "Вход через {provider} не завершился. Аккаунт не изменился. Попробуйте ещё раз или выберите другой способ.",
   "GuestScreens.noPasskey": "Ключ доступа не добавлен. Аккаунт по-прежнему гостевой.",
@@ -975,38 +1048,39 @@ export default {
   "OAuthNotice.busy": "Слишком много попыток. Подождите минуту и попробуйте снова.",
   "OAuthNotice.kept": "Способ входа добавлен. Теперь с ним можно входить на любом устройстве.",
   "OAuthNotice.guestTaken": "Этот способ входа уже привязан к другому аккаунту.",
-  "PasswordResetScreen.forgotFailed": "Не удалось отправить ссылку",
+  "PasswordResetScreen.forgotFailed": "Не удалось отправить код",
   "PasswordResetScreen.resetFailed": "Не удалось сменить пароль",
+  "PasswordResetScreen.sentTitle": "Введите код для сброса пароля",
   "PasswordResetScreen.sent":
-    "Если к этой почте привязан аккаунт, мы отправили на неё ссылку для сброса пароля.",
+    "Если к <email>{email}</email> привязан аккаунт, мы отправили туда код.",
   "PasswordResetScreen.forgotDescription": {
     "one":
-      "Введите почту, с которой регистрировались, и мы пришлём ссылку, чтобы задать новый пароль. Она сработает один раз и действует {count} минуту.",
+      "Введите почту, с которой регистрировались, и мы пришлём код, чтобы задать новый пароль. Код действует {count} минуту.",
     "few":
-      "Введите почту, с которой регистрировались, и мы пришлём ссылку, чтобы задать новый пароль. Она сработает один раз и действует {count} минуты.",
+      "Введите почту, с которой регистрировались, и мы пришлём код, чтобы задать новый пароль. Код действует {count} минуты.",
     "many":
-      "Введите почту, с которой регистрировались, и мы пришлём ссылку, чтобы задать новый пароль. Она сработает один раз и действует {count} минут.",
+      "Введите почту, с которой регистрировались, и мы пришлём код, чтобы задать новый пароль. Код действует {count} минут.",
     "other":
-      "Введите почту, с которой регистрировались, и мы пришлём ссылку, чтобы задать новый пароль. Она сработает один раз и действует {count} минуты.",
+      "Введите почту, с которой регистрировались, и мы пришлём код, чтобы задать новый пароль. Код действует {count} минуты.",
   },
   "PasswordResetScreen.remembered": "Вспомнили пароль? <link>Вернуться ко входу</link>",
-  "PasswordResetScreen.send": "Отправить ссылку",
+  "PasswordResetScreen.send": "Прислать код",
   "PasswordResetScreen.doneTitle": "Пароль изменён",
   "PasswordResetScreen.done": "Мы вышли из аккаунта на всех устройствах. Войдите с новым паролем.",
   "PasswordResetScreen.signIn": "Войти",
-  "PasswordResetScreen.askNew": "Запросить новую ссылку",
   "PasswordResetScreen.chooseTitle": "Придумайте новый пароль",
   "PasswordResetScreen.choose":
     "Для <email>{email}</email>. После сохранения вы выйдете из аккаунта на всех устройствах.",
-  "PasswordResetScreen.expired": "Ссылка устарела? <link>Запросите новую</link>",
+  "PasswordResetScreen.expired": "Не успели? <link>Запросить новый код</link>",
+  "PasswordResetScreen.tookTooLong": "Прошло слишком много времени. Запросите новый код.",
   "PasswordResetScreen.newPassword": "Новый пароль",
   "PasswordResetScreen.newPasswordHint": "От {min} до {max} символов.",
   "PasswordResetScreen.saving": "Сохраняем…",
   "PasswordResetScreen.save": "Сохранить пароль",
   "MoveNote.title": "Перенести в группу",
   "MoveNote.cancel": "Отмена",
-  "MoveNote.question":
-    "Выберите, куда перенести «<title>{title}</title>». Заметку увидят все участники той группы.",
+  "MoveNote.hint": "Заметку увидят все участники выбранной группы.",
+  "MoveNote.move": "Перенести",
   "NewNote.title": "Новая заметка",
   "NewNote.close": "Закрыть",
   "NewNote.titleLabel": "Заголовок",
@@ -1097,6 +1171,8 @@ export default {
   "NoteEditor.tags": "Метки",
   "NoteEditorView.createdTitle": "Заметка добавлена",
   "NoteEditorView.created": "«{title}» теперь в списке заметок.",
+  "NoteEditorView.copyTitle": "{title} (копия)",
+  "NoteEditorView.duplicateFailed": "Не удалось дублировать заметку",
   "NoteEditorView.savedTitle": "Заметка сохранена",
   "NoteEditorView.saved": "Изменения в «{title}» сохранены.",
   "NoteEditorView.unsaved": "Есть несохранённые изменения. Если уйти сейчас, они пропадут.",
@@ -1173,7 +1249,7 @@ export default {
     "other": "Выбрано: {count}",
   },
   "Notes.cancelSelect": "Отмена",
-  "Notes.moveTo": "Перенести в группу",
+  "Notes.moveTo": "В группу",
   "Notes.moving": "Переносим…",
   "Notes.move": "Перенести",
   "Notes.updated": "Изменена <date>{date}</date>",
@@ -1191,7 +1267,6 @@ export default {
   "NotesFilter.allTags": "Со всеми этими метками",
   "NotesFilter.author": "Автор",
   "NotesFilter.anyone": "Любой",
-  "NotesFilter.you": "Вы",
   "NotesFilter.search": "Поиск по заметкам",
   "NotesFilter.mine": "Созданные мной",
   "NotesFilter.sortUpdated": "По изменению",
@@ -1291,12 +1366,12 @@ export default {
       "Метку, созданную без сети, не удалось сохранить, поэтому мы сняли её с {count} заметки. Заметки сохранены без неё.",
   },
   "OfflineStatus.theirs": "Версия на сервере",
-  "OfflineStatus.theirsUnknown": "Версия на сервере недоступна.",
+  "OfflineStatus.theirsUnknown": "Сейчас недоступна.",
   "OfflineStatus.untitledNote": "Заметка без заголовка",
   "OfflineStatus.useServers": "Взять с сервера",
   "OfflineStatus.youDeletedNote": "Вы удалили эту заметку.",
   "OfflineStatus.youDeletedTag": "Вы удалили эту метку.",
-  "Preferences.example": "Даты и время будут выглядеть так: <value>{date}</value>.",
+  "Preferences.example": "Даты и время будут выглядеть так: <value>{date}</value>",
   "Preferences.conflict":
     "Эти настройки только что изменили на другом устройстве. Сейчас вы видите сохранённые там значения.",
   "Preferences.language": "Язык",
@@ -1334,6 +1409,8 @@ export default {
   "Preferences.updatedElsewhere": "Настройки обновлены с другого устройства.",
   "SeatPriceConfirm.hint":
     "Каждый новый участник добавляет {price} в месяц: с ещё одним участником стоимость группы вырастет с {now} до {next}. Разница за остаток текущего периода войдёт в следующий счёт.",
+  "SeatPriceConfirm.hintYear":
+    "Каждый новый участник добавляет {price} в год: с ещё одним участником стоимость группы вырастет с {now} до {next}. Разница за остаток текущего периода войдёт в следующий счёт.",
   "SeatPriceConfirm.accept": "Принимаю повышение цены за каждого нового участника",
   "ProfileAccount.name": "Имя",
   "ProfileAccount.notSet": "Не указано",
@@ -1557,7 +1634,7 @@ export default {
   "ProfileView.passwordSetBody": "Теперь можно входить ещё и по почте с этим паролем.",
   "ProfileView.accountDeleted": "Аккаунт удалён",
   "ProfileView.accountDeletedBody":
-    "Он удалится навсегда {day}. Чтобы его сохранить, войдите до этого дня.",
+    "{day} он удалится навсегда. Чтобы его сохранить, войдите до этого дня.",
   "ProfileView.guestDeleted": "Гостевой аккаунт удалён",
   "ProfileView.guestDeletedBody": "Всё, что в нём было, удалено.",
   "ProfileView.emailVerified": "Почта подтверждена",
@@ -1565,7 +1642,7 @@ export default {
   "ProfileView.tokenRevoked": "Токен отозван",
   "ProfileView.tokenRevokedBody": "Этот токен больше не работает.",
   "ProviderProof.passkey": "ключ доступа",
-  "ProviderProof.link": "ссылку из письма",
+  "ProviderProof.link": "код из письма",
   "ProviderProof.fresh": "Вы только что вошли через {methods}, поэтому пароль не нужен.",
   "ProviderProof.needed": {
     "one":
@@ -1579,66 +1656,31 @@ export default {
   },
   "ProviderProof.passkeyAgain": "Снова войти по ключу доступа",
   "ProviderProof.providerAgain": "Снова войти через {provider}",
-  "SignInLinkScreen.sendFailed": "Не удалось отправить ссылку. Попробуйте чуть позже.",
-  "SignInLinkScreen.unreachable":
-    "Сервер недоступен. Проверьте подключение к интернету и снова нажмите «Продолжить».",
-  "SignInLinkScreen.openFailed":
-    "Не удалось войти. Нажмите «Продолжить», чтобы попробовать ещё раз, или запросите новую ссылку.",
-  "SignInLinkScreen.title": "Вход по ссылке",
-  "SignInLinkScreen.description":
-    "Мы пришлём на почту ссылку для входа. Если аккаунта с этой почтой ещё нет, ссылка его создаст.",
-  "SignInLinkScreen.ratherPassword": "Удобнее с паролем? <link>Вернуться ко входу</link>",
-  "SignInLinkScreen.submit": "Прислать ссылку",
-  "SignInLinkScreen.sent": {
+  "SignInCodeScreen.sendFailed": "Не удалось отправить код. Попробуйте чуть позже.",
+  "SignInCodeScreen.title": "Вход по коду из письма",
+  "SignInCodeScreen.description":
+    "Мы пришлём на почту код — введите его здесь. Если аккаунта с этой почтой ещё нет, код его создаст.",
+  "SignInCodeScreen.ratherPassword": "Удобнее с паролем? <link>Вернуться ко входу</link>",
+  "SignInCodeScreen.submit": "Прислать код",
+  "SignInCodeScreen.confirmTitle": "Подтвердите, что это вы",
+  "SignInCodeScreen.confirmDescription":
+    "Мы пришлём код на <email>{email}</email>. Введите его на следующем шаге, чтобы подтвердить, что это вы.",
+  "CodeStep.sent": "Мы отправили код на <email>{email}</email>.",
+  "CodeStep.invalid": "Код состоит из 8 символов. Проверьте, не пропущен ли какой-нибудь.",
+  "SignInCodeScreen.guest":
+    "Вы пользуетесь приложением как гость. После входа всё, что вы здесь создали, сохранится под этой почтой. Если на неё уже есть аккаунт, мы сначала спросим вас.",
+  "CodeStep.deadTitle": "Этот код больше не работает",
+  "CodeStep.dead": {
     "one":
-      "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минуты.",
+      "Код действует {count} минуту и только один раз, а ошибиться можно лишь несколько раз. Запросите новый и введите код из последнего письма.",
     "few":
-      "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минут.",
+      "Код действует {count} минуты и только один раз, а ошибиться можно лишь несколько раз. Запросите новый и введите код из последнего письма.",
     "many":
-      "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минут.",
+      "Код действует {count} минут и только один раз, а ошибиться можно лишь несколько раз. Запросите новый и введите код из последнего письма.",
     "other":
-      "Мы отправили ссылку для входа на <email>{email}</email>. Она сработает один раз в течение {count} минуты.",
+      "Код действует {count} минуты и только один раз, а ошибиться можно лишь несколько раз. Запросите новый и введите код из последнего письма.",
   },
-  "SignInLinkScreen.openHere": "Откройте её на этом устройстве, чтобы войти здесь.",
-  "SignInLinkScreen.newLink": "Отправить новую ссылку",
-  "SignInLinkScreen.waiting": {
-    "one":
-      "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунду.",
-    "few":
-      "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунды.",
-    "many":
-      "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунд.",
-    "other":
-      "Письма нет? Проверьте папку «Спам». Новую ссылку можно отправить через {count} секунды.",
-  },
-  "SignInLinkScreen.resent":
-    "Новая ссылка уже в пути. Прежние ссылки тоже работают, пока не использована одна из них.",
-  "SignInLinkScreen.refusedTitle": "Эта ссылка больше не работает",
-  "SignInLinkScreen.refused": {
-    "one":
-      "Ссылка для входа срабатывает один раз в течение {count} минуты. Запросите новую и откройте её из последнего письма.",
-    "few":
-      "Ссылка для входа срабатывает один раз в течение {count} минут. Запросите новую и откройте её из последнего письма.",
-    "many":
-      "Ссылка для входа срабатывает один раз в течение {count} минут. Запросите новую и откройте её из последнего письма.",
-    "other":
-      "Ссылка для входа срабатывает один раз в течение {count} минуты. Запросите новую и откройте её из последнего письма.",
-  },
-  "SignInLinkScreen.elsewhereTitle": "Эту ссылку запросили в другом браузере",
-  "SignInLinkScreen.elsewhere":
-    "Вход не выполнен, гостевой аккаунт не изменился. Чтобы войти здесь, запросите новую ссылку в этом браузере.",
-  "SignInLinkScreen.incompleteTitle": "Ссылка неполная",
-  "SignInLinkScreen.incomplete": "Откройте ссылку из письма ещё раз или запросите новую.",
-  "SignInLinkScreen.backToApp": "Вернуться в приложение",
-  "SignInLinkScreen.finishTitle": "Завершите вход",
-  "SignInLinkScreen.finish":
-    "Нажмите «Продолжить», чтобы войти на этом устройстве. Если почта новая, мы создадим для неё аккаунт.",
-  "SignInLinkScreen.signedInAs":
-    "Вы вошли как <email>{email}</email>. Если продолжить, вы войдёте в аккаунт из ссылки.",
-  "SignInLinkScreen.guest":
-    "Вы пользуетесь приложением как гость. Если ссылку вы запросили в этом браузере, то гостевой аккаунт сохранится под почтой из ссылки. Если на эту почту уже есть аккаунт, мы сначала спросим вас.",
-  "SignInLinkScreen.signingIn": "Входим…",
-  "SignInLinkScreen.stay": "Не выходить из аккаунта",
+  "CodeStep.differentEmail": "Указать другую почту",
   "SignInMethods.failed": "Не удалось изменить способы входа",
   "SignInMethods.loadFailed":
     "Не удалось загрузить способы входа. Проверьте подключение к интернету и попробуйте ещё раз.",
@@ -1687,20 +1729,12 @@ export default {
   "SignInMethods.passkeyNotSaved": "Не удалось сохранить ключ доступа. Попробуйте ещё раз.",
   "SignInMethods.passkeyOnDevice": "На этом устройстве уже есть ключ доступа к вашему аккаунту.",
   "SignUpCodeScreen.checkFailed": "Не удалось проверить код",
-  "SignUpCodeScreen.offline": "Нет сети. Подключитесь к интернету и попробуйте ещё раз.",
+  "SignUpCodeScreen.offline": "Сервер недоступен. Попробуйте ещё раз.",
   "SignUpCodeScreen.title": "Проверьте почту",
   "SignUpCodeScreen.loading": "Загрузка…",
-  "SignUpCodeScreen.sent": {
-    "one": "Мы отправили код на <email>{email}</email>. Он действует {count} минуту.",
-    "few": "Мы отправили код на <email>{email}</email>. Он действует {count} минуты.",
-    "many": "Мы отправили код на <email>{email}</email>. Он действует {count} минут.",
-    "other": "Мы отправили код на <email>{email}</email>. Он действует {count} минуты.",
-  },
-  "SignUpCodeScreen.wrongAddress": "Не та почта? <button>Указать другую</button>",
   "SignUpCodeScreen.code": "Код",
   "SignUpCodeScreen.checking": "Проверяем…",
   "SignUpCodeScreen.resend": "Отправить новый код",
-  "SignUpCodeScreen.resent": "Новый код уже в пути.",
   "SignUpCodeScreen.resendFailed": "Не удалось отправить новый код",
   "SignUpCodeScreen.existsTitle": "У вас уже есть аккаунт",
   "SignUpCodeScreen.exists":
@@ -1749,7 +1783,7 @@ export default {
   "SignedInDevices.lastActive": "Последняя активность: <when></when>",
   "SignedInDevices.ip": "<label>IP-адрес</label> <ip>{ip}</ip>",
   "Search.search": "Поиск",
-  "Search.placeholder": "Поиск по заметкам и группам",
+  "Search.placeholder": "Поиск или команда",
   "Search.close": "Закрыть поиск",
   "Search.loading": "Ищем…",
   "Search.error": "Не удалось выполнить поиск. Измените запрос, чтобы попробовать снова.",
@@ -1765,7 +1799,12 @@ export default {
   "Search.notes": "Заметки",
   "Search.notesOnDevice": "Заметки на этом устройстве",
   "Search.groups": "Группы",
-  "Search.actions": "Действия",
+  "Search.create": "Создать",
+  "Search.settings": "Настройки",
+  "Search.account": "Аккаунт",
+  "Search.switchTo": "Перейти в {group}",
+  "Search.installApp": "Установить приложение",
+  "Search.needsConnection": "Нужно подключение к интернету",
   "Search.untitled": "Заметка без заголовка",
   "Search.current": "Текущая",
   "Search.inGroup": "В группе {group}",
@@ -1777,7 +1816,6 @@ export default {
   "Search.openOverview": "Открыть обзор",
   "Search.openNotifications": "Открыть уведомления",
   "Search.openProfile": "Открыть профиль",
-  "Search.profileDetail": "Имя, почта, пароль, двухфакторная защита",
   "Search.downloadData": "Скачать мои данные",
   "Search.downloadDetail": "ZIP-архив с профилем, группами и заметками",
   "Search.changePicture": "Сменить фото профиля",
@@ -1790,7 +1828,7 @@ export default {
   "Shortcuts.switchLabel": "Горячие клавиши из одной буквы",
   "Shortcuts.inFields": "Пока вы печатаете в поле, горячие клавиши не работают.",
   "Shortcuts.off": "Горячие клавиши из одной буквы на этом устройстве выключены.",
-  "Shortcuts.search": "Поиск по заметкам и группам",
+  "Shortcuts.search": "Поиск или команда",
   "Shortcuts.newNoteRow": "Новая заметка",
   "Shortcuts.undo": "Отменить удаление заметки, пока видно сообщение",
   "Shortcuts.notifications": "Уведомления",
@@ -1908,13 +1946,13 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "Эта кнопка больше не работает: её уже нажимали, её сменила более новая или ей больше {count} минуты. Чтобы привязать этот чат, создайте новый код в приложении.",
+      "Эта кнопка больше не работает: её уже нажимали, её сменила более новая, ей больше {count} минуты, у аккаунта сбросили или сменили пароль, или аккаунт удалили либо заблокировали. Чтобы привязать этот чат, создайте новый код в приложении.",
     "few":
-      "Эта кнопка больше не работает: её уже нажимали, её сменила более новая или ей больше {count} минут. Чтобы привязать этот чат, создайте новый код в приложении.",
+      "Эта кнопка больше не работает: её уже нажимали, её сменила более новая, ей больше {count} минут, у аккаунта сбросили или сменили пароль, или аккаунт удалили либо заблокировали. Чтобы привязать этот чат, создайте новый код в приложении.",
     "many":
-      "Эта кнопка больше не работает: её уже нажимали, её сменила более новая или ей больше {count} минут. Чтобы привязать этот чат, создайте новый код в приложении.",
+      "Эта кнопка больше не работает: её уже нажимали, её сменила более новая, ей больше {count} минут, у аккаунта сбросили или сменили пароль, или аккаунт удалили либо заблокировали. Чтобы привязать этот чат, создайте новый код в приложении.",
     "other":
-      "Эта кнопка больше не работает: её уже нажимали, её сменила более новая или ей больше {count} минуты. Чтобы привязать этот чат, создайте новый код в приложении.",
+      "Эта кнопка больше не работает: её уже нажимали, её сменила более новая, ей больше {count} минуты, у аккаунта сбросили или сменили пароль, или аккаунт удалили либо заблокировали. Чтобы привязать этот чат, создайте новый код в приложении.",
   },
   "TelegramBot.privateOnly": "Отправьте мне это в личном чате.",
   "TelegramBot.codeSpent":
@@ -1982,7 +2020,7 @@ export default {
   "ApiTokenNewView.discardMessage": "Токен ещё не создан.",
   "ApiTokenNewView.discard": "Не сохранять",
   "ApiTokenNewView.keepEditing": "Продолжить редактирование",
-  "ApiTokens.failed": "С API-токенами что-то пошло не так.",
+  "ApiTokens.failed": "Не удалось загрузить или отозвать API-токены. Попробуйте ещё раз.",
   "ApiTokens.savedCopyTitle": "Сохранённый список API-токенов",
   "ApiTokens.savedCopyBody":
     "Сервер недоступен. Показываем список, сохранённый на этом устройстве: {time}. Токенов, созданных или отозванных после этого, в нём нет.",
@@ -2007,7 +2045,7 @@ export default {
   "ApiTokens.neverUsed": "Ещё не использовался",
   "AccountDelete.members": "Ею пользуются другие люди. Передайте её или исключите их.",
   "AccountDelete.subscription": "У неё ещё действует платный тариф. Сначала отмените его.",
-  "AccountDelete.planEnding": "Тариф отменён, но действует до {day}. Дождитесь его окончания.",
+  "AccountDelete.planEnding": "Тариф отменён, но действует до {day} — дождитесь его окончания.",
   "AccountDelete.planEndingPeriod":
     "Тариф отменён, но действует до конца периода. Дождитесь его окончания.",
   "AccountDelete.title": "Удалить аккаунт",
@@ -2061,7 +2099,9 @@ export default {
   "AuthScreen.forgotten": "Готово. Этот браузер больше не помнит, как вы входили.",
   "AuthScreen.lastPassword": "В прошлый раз вы входили по паролю<email> ({email})</email>.",
   "AuthScreen.lastPasskey": "В прошлый раз вы входили по ключу доступа<email> ({email})</email>.",
-  "AuthScreen.lastLink": "В прошлый раз вы входили по ссылке из письма<email> ({email})</email>.",
+  "AuthScreen.lastLink": "В прошлый раз вы входили по коду из письма<email> ({email})</email>.",
+  "AuthScreen.emailSignInCode": "Прислать код для входа",
+  "AuthScreen.emailSignUpCode": "Прислать код для регистрации",
   "AuthScreen.lastProvider": "В прошлый раз вы входили через {provider}<email> ({email})</email>.",
   "AuthScreen.forget": "Не вы? Войти в другой аккаунт",
   "AuthScreen.openProfile": "Открыть профиль",
@@ -2073,8 +2113,6 @@ export default {
   "AuthScreen.haveAccount": "Уже есть аккаунт? <link>Войти</link>",
   "AuthScreen.lostDevice": "Потеряли устройство? <link>Вернуться ко входу</link>",
   "AuthScreen.sending": "Отправляем…",
-  "AuthScreen.emailSignInLink": "Прислать ссылку для входа",
-  "AuthScreen.emailSignUpLink": "Прислать ссылку для регистрации",
   "AuthScreen.orCreate": "или создайте аккаунт",
   "AuthScreen.createAccount": "Создать аккаунт",
   "AuthScreen.continue": "Продолжить",
@@ -2103,7 +2141,7 @@ export default {
   "EmailScreen.verifyFailed": "Не удалось проверить код",
   "EmailScreen.sendFailed": "Не удалось отправить новый код",
   "EmailScreen.changeFailed": "Не удалось сменить почту",
-  "EmailScreen.loadFailed": "Не удалось загрузить почту.",
+  "EmailScreen.loadFailed": "Не удалось загрузить почту",
   "EmailScreen.enterCode": "Ввести код",
   "EmailScreen.banner": "Подтвердите <email>{email}</email> кодом из письма.",
   "EmailScreen.tryAgain": "Повторить",
@@ -2207,7 +2245,7 @@ export default {
   "Benchmark.noLargeTitle": "Большой группы пока нет",
   "Benchmark.noLargeBody": "Создайте её генератором и перезагрузите эту страницу:",
   "Benchmark.copyCommand": "Скопировать команду",
-  "Benchmark.noLargeFoot": "Размеры и то, как снова удалить группу, описаны в docs/capacity.md.",
+  "Benchmark.noLargeFoot": "Размеры и то, как снова удалить группу, описаны в docs/large-group.md.",
   "Benchmark.lastStoppedTitle": "Прошлый запуск остановился на шаге «{measure}»",
   "Benchmark.lastStoppedBody":
     "Вкладка закрылась до конца запуска. Обычно это значит, что не хватило памяти или места. Группа: {group}, начало: {time}.",
@@ -2222,4 +2260,13 @@ export default {
   "Search.benchmarkDetail": "Измерить, как большая группа работает на этом устройстве",
   "Shortcuts.runBenchmark": "Запустить бенчмарк",
   "Shortcuts.copyResults": "Скопировать результаты",
+  "NoteSpreadsheet.id": "ID",
+  "NoteSpreadsheet.title": "Заголовок",
+  "NoteSpreadsheet.text": "Текст",
+  "NoteSpreadsheet.tagIds": "ID меток",
+  "NoteSpreadsheet.created": "Создана",
+  "NoteSpreadsheet.updated": "Изменена",
+  "GroupSpreadsheets.readme":
+    "Данные группы в виде таблиц: по одному CSV-файлу на каждый вид записей, в кодировке UTF-8, с заголовками в первой строке. Даты и время указаны в формате ISO 8601, по UTC. Чтобы перенести группу в другое приложение, скачайте JSON-файл: импортировать можно только его.",
+  "GroupSpreadsheets.notSpreadsheets": "Нет в таблицах, но есть в JSON-файле:",
 } satisfies Catalog

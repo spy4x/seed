@@ -68,7 +68,7 @@ export function billingNoticeMailJob(
     const subscription = await billing.get(groupId)
     const judgedAt = new Date(Math.max(now().getTime(), runAt))
     if (!inForce(kind, subscription, judgedAt, runAt)) return
-    // The owner who pays: after a transfer of ownership (#250) the old owner's subscription stays
+    // The owner who pays: after a transfer of ownership the old owner's subscription stays
     // theirs until it ends, so its notices go to them and never to the new owner.
     const [owner] = await sql<OwnerRow[]>`
       WITH payer AS (

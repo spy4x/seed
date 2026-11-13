@@ -3,14 +3,17 @@ import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constant
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
   accessEndsAt,
+  BillingPeriod,
   BillingStatus,
-  findPlan,
   graceEndsAt,
+  type Plan,
+  PLANS,
+  priceOf,
   type StoredSubscription,
 } from "./+lib.ts"
 
 /**
- * The operator area's billing module (#196): who pays, what they pay, and the five things support
+ * The operator area's billing module: who pays, what they pay, and the five things support
  * may do about it. The shapes the API answers and the page reads, and the rules both sides share,
  * so the page shows the same status, amount and dates the server decided on.
  *
@@ -135,6 +138,8 @@ export interface AdminBillingCustomer {
   planId: string | null
   status: BillingStatus
   quantity: number | null
+  /** How often the subscription bills, or `null` for a price no plan maps to. */
+  period: BillingPeriod | null
   currentPeriodEnd: string | null
   cancelAtPeriodEnd: boolean
   trialEnd: string | null
@@ -143,6 +148,26 @@ export interface AdminBillingCustomer {
   /** When the last webhook changed the stored row. */
   updatedAt: string
 }
+
+/** A group that has never paid: one row of the "Never paid" list. Dates are ISO strings. */
+export interface AdminNeverPaidGroup {
+  groupId: string
+  groupName: string
+  owner: AdminBillingOwner
+  /** When the group was made: for a person's first group, the day they signed up. */
+  createdAt: string
+}
+
+/** `GET /api/admin/billing/never-paid?page=`. */
+export type AdminNeverPaidResponse =
+  | { enabled: false }
+  | {
+    enabled: true
+    groups: AdminNeverPaidGroup[]
+    total: number
+    page: number
+    pageSize: number
+  }
 
 /** How many customers each status chip holds, with every filter but the status applied. */
 export type AdminBillingCounts = Record<AdminBillingStatusFilter, number>
@@ -163,7 +188,7 @@ export type AdminBillingListResponse =
     pricingUrl: string | null
   }
 
-/** The figures above the list (decision 2 of #196). */
+/** The figures above the list. */
 export interface AdminBillingFigures {
   /** List price × seats of every active and past-due subscription, one entry per currency. */
   monthlyRevenue: Money[]
@@ -231,7 +256,7 @@ export interface AdminBillingPaymentResponse {
   payment: AdminBillingPayment | null
 }
 
-/** The lengths of time at no charge an operator may give (decision 5 of #196). */
+/** The lengths of time at no charge an operator may give. */
 export const ADMIN_BILLING_TIME_LENGTHS = ["7d", "14d", "30d", "1m", "3m", "6m", "12m"] as const
 export type AdminBillingTimeLength = typeof ADMIN_BILLING_TIME_LENGTHS[number]
 
@@ -281,18 +306,40 @@ export function seatsOf(customer: Pick<AdminBillingCustomer, "quantity">): numbe
   return customer.quantity !== null && customer.quantity > 0 ? customer.quantity : 1
 }
 
+/** The fields of a customer its price is read from. */
+type PricedCustomer = Pick<AdminBillingCustomer, "planId" | "quantity" | "period">
+
 /**
- * What the subscription's plan costs a month at its list price: the plan's amount per seat times
- * the seats for a per-member plan, else the amount. `null` when it bills a price no plan maps to.
- * Discounts and tax live in the provider and are not counted.
+ * What the subscription's plan costs for one of its periods at its list price, a month or a year:
+ * the plan's price per seat times the seats for a per-member plan, else the price. `null` when it
+ * bills a price no plan maps to, or a period its plan is not sold for. Discounts and tax live in the
+ * provider and are not counted. `catalog` is the plan catalog, {@link PLANS} unless a test passes its
+ * own.
+ */
+export function billedPriceOf(
+  customer: PricedCustomer,
+  catalog: readonly Plan[] = PLANS,
+): Money | null {
+  const plan = catalog.find((candidate) => candidate.id === customer.planId) ?? null
+  if (plan === null || plan.amount === 0) return null
+  const price = priceOf(plan, customer.period ?? BillingPeriod.Monthly)
+  if (price === null) return null
+  const seats = plan.perSeat ? seatsOf(customer) : 1
+  return { amount: price * seats, currency: plan.currency }
+}
+
+/**
+ * What the subscription costs a month at its list price: {@link billedPriceOf}, and for a yearly
+ * one its twelfth, rounded to the currency's smallest unit, so every row and the monthly revenue
+ * keep one scale. `null` like {@link billedPriceOf}.
  */
 export function listPriceOf(
-  customer: Pick<AdminBillingCustomer, "planId" | "quantity">,
+  customer: PricedCustomer,
+  catalog: readonly Plan[] = PLANS,
 ): Money | null {
-  const plan = customer.planId === null ? null : findPlan(customer.planId)
-  if (plan === null || plan.amount === 0) return null
-  const seats = plan.perSeat ? seatsOf(customer) : 1
-  return { amount: plan.amount * seats, currency: plan.currency }
+  const billed = billedPriceOf(customer, catalog)
+  if (billed === null || customer.period !== BillingPeriod.Yearly) return billed
+  return { amount: Math.round(billed.amount / 12), currency: billed.currency }
 }
 
 /**
@@ -301,9 +348,10 @@ export function listPriceOf(
  * plan maps to.
  */
 export function monthlyRevenueOf(
-  customer: Pick<AdminBillingCustomer, "planId" | "quantity" | "status">,
+  customer: PricedCustomer & Pick<AdminBillingCustomer, "status">,
+  catalog: readonly Plan[] = PLANS,
 ): Money | null {
-  const price = listPriceOf(customer)
+  const price = listPriceOf(customer, catalog)
   if (price === null) return null
   const counts = customer.status === BillingStatus.Active ||
     customer.status === BillingStatus.PastDue
@@ -312,11 +360,12 @@ export function monthlyRevenueOf(
 
 /** Monthly recurring revenue over `customers`, one sum per currency, never mixed, by currency. */
 export function monthlyRevenue(
-  customers: readonly Pick<AdminBillingCustomer, "planId" | "quantity" | "status">[],
+  customers: readonly (PricedCustomer & Pick<AdminBillingCustomer, "status">)[],
+  catalog: readonly Plan[] = PLANS,
 ): Money[] {
   const sums = new Map<string, number>()
   for (const customer of customers) {
-    const revenue = monthlyRevenueOf(customer)
+    const revenue = monthlyRevenueOf(customer, catalog)
     if (revenue === null) continue
     sums.set(revenue.currency, (sums.get(revenue.currency) ?? 0) + revenue.amount)
   }
@@ -324,7 +373,7 @@ export function monthlyRevenue(
     .sort((a, b) => a.currency.localeCompare(b.currency))
 }
 
-/** The one status word a customer shows (decision 3 of #196). */
+/** The one status word a customer shows. */
 export enum AdminBillingState {
   Active = 1,
   Trial = 2,
@@ -363,6 +412,7 @@ function storedOf(customer: AdminBillingCustomer): StoredSubscription {
     pastDueSince: customer.pastDueSince === null ? null : new Date(customer.pastDueSince),
     trialEnd: customer.trialEnd === null ? null : new Date(customer.trialEnd),
     quantity: customer.quantity,
+    period: customer.period,
     everActive: customer.everActive,
   }
 }

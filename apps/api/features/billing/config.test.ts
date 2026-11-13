@@ -2,10 +2,16 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createEnvReader } from "@spy4x/server/config"
 import { GroupRole } from "@domain/groups"
-import { BillingGetQuery, BillingStatus, type StoredSubscription } from "@domain/billing"
+import {
+  BillingGetQuery,
+  BillingPeriod,
+  BillingStatus,
+  type StoredSubscription,
+} from "@domain/billing"
 import { readBillingSetup } from "@server/billing/setup.ts"
 import { billingSettingsOf, createPlanOf, createSeatPriced } from "./config.ts"
 import { createBillingGetHandler } from "./handlers.ts"
+import { TEST_PLANS } from "../../../../libs/domain/billing/test-plans.ts"
 
 describe("billing configuration", () => {
   it("hands the billing handlers the trial card setting the setup read", () => {
@@ -37,6 +43,7 @@ describe("billing configuration", () => {
           trialEnd: null,
           quantity: 1,
           everActive: true,
+          period: BillingPeriod.Monthly,
         }),
     })
     const setup = (graceDays?: string) =>
@@ -96,6 +103,7 @@ describe("billing configuration", () => {
       trialEnd: null,
       quantity: 2,
       everActive: true,
+      period: BillingPeriod.Monthly,
     })
     const seatPriced = (
       stored: StoredSubscription | null,
@@ -106,6 +114,7 @@ describe("billing configuration", () => {
         { get: () => Promise.resolve(stored) },
         () => Promise.resolve(role),
         enabled,
+        TEST_PLANS,
       )(groupId, 1)
 
     it("asks the owner and an admin of a group on a live per-member plan", async () => {

@@ -1,0 +1,5 @@
+# ripgrep and fd skip these, so a search for a key or a name finds the English catalog and the code.
+# Translations, their stamps and lock files: search them too with `rg --no-ignore-dot`.
+i18n/*/*.ts
+!i18n/*/en.ts
+*.lock

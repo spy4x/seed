@@ -11,6 +11,8 @@ tldr:
   - Seed бесплатный (MIT), с командами, ролями, оплатой и админкой, но на TypeScript.
   - Pegasus и Seed принимают оплату только через Stripe, а Stripe не работает с компаниями из России.
 topic: Вопросы
+intro: "SaaS Pegasus — хороший стартер на Django, и стоит он от 449 $. Если не хочется платить, вот бесплатные пути на Python и на TypeScript и то, чего не хватает каждому."
+coverAlt: "Весы: на одной чаше запертый сундук с пустым ценником, на другой два открытых пакетика семян."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-03T09:00:00Z

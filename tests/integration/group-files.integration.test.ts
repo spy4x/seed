@@ -14,7 +14,9 @@ import { notePortable } from "@server/notes/note-portable.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { UserMFAStatus } from "@domain/identity"
-import { GroupExportCommand } from "@domain/groups"
+import { GroupExportCommand, type GroupExportOptions } from "@domain/groups"
+import { unzipSync } from "fflate"
+import { parseCsv } from "@spy4x/platform/universal/csv"
 import { createGroupExportHandler } from "../../apps/api/features/groups/files.ts"
 import { PORTABLE_AGGREGATES } from "../../apps/api/services/db-base.ts"
 import { insertUser, withSchema } from "./group-team.ts"
@@ -59,15 +61,20 @@ async function seed(sql: postgres.Sql) {
   return { owner, groupId, tagIds: [home, work], noteIds }
 }
 
-/** The export file the owner downloads, through the handler, as the parsed JSON. */
-async function exportAs(sql: postgres.Sql, groupId: string, userId: number): Promise<unknown> {
+/** What the owner downloads, through the handler: the file's name, media type and pieces. */
+async function download(
+  sql: postgres.Sql,
+  groupId: string,
+  userId: number,
+  options: GroupExportOptions = {},
+) {
   const groups = new PostgresGroupRepository(sql)
   const handler = createGroupExportHandler({
     roleOf: async (id, user) => (await groups.getForMember(id, user))?.role ?? null,
     porter: new PostgresGroupPorter(sql, PORTABLE_AGGREGATES),
     newGroupAllowances: () => NO_CAP,
   })
-  const file = await handler(
+  return await handler(
     new GroupExportCommand({
       actor: {
         userId,
@@ -76,11 +83,36 @@ async function exportAs(sql: postgres.Sql, groupId: string, userId: number): Pro
       },
       groupId,
       requestId: "req-export",
+      ...options,
     }),
   )
+}
+
+/** The export file the owner downloads, through the handler, as the parsed JSON. */
+async function exportAs(sql: postgres.Sql, groupId: string, userId: number): Promise<unknown> {
+  const file = await download(sql, groupId, userId)
   let text = ""
   for await (const piece of file.chunks) text += piece
   return JSON.parse(text)
+}
+
+/** The spreadsheets the owner downloads, through the handler: each file's text by name. */
+async function spreadsheetsAs(
+  sql: postgres.Sql,
+  groupId: string,
+  userId: number,
+  language?: string,
+): Promise<Record<string, string>> {
+  const file = await download(sql, groupId, userId, { format: "csv", language })
+  expect(file.contentType).toBe("application/zip")
+  expect(file.fileName).toMatch(/^family-\d{4}-\d{2}-\d{2}\.zip$/)
+  const pieces: BlobPart[] = []
+  for await (const piece of file.chunks) pieces.push(piece as BlobPart)
+  const zip = new Uint8Array(await new Blob(pieces).arrayBuffer())
+  const decoder = new TextDecoder("utf-8", { ignoreBOM: true })
+  return Object.fromEntries(
+    Object.entries(unzipSync(zip)).map(([name, bytes]) => [name, decoder.decode(bytes)]),
+  )
 }
 
 /** What a group holds, in a shape two groups can be compared by: notes with their tags' names. */
@@ -165,10 +197,12 @@ Deno.test("an export imported by another person gives the same notes and tags un
     // The source is untouched and its log says who exported it; the copy's log says who imported.
     expect((await contents(sql, source.groupId)).notes).toHaveLength(3)
     const exported = await sql`
-      SELECT actor_user_id, request_id FROM audit_events
+      SELECT actor_user_id, request_id, details FROM audit_events
       WHERE group_id = ${source.groupId} AND event_kind = 'group.exported'
     `
-    expect([...exported]).toEqual([{ actorUserId: source.owner, requestId: "req-export" }])
+    expect([...exported]).toEqual([
+      { actorUserId: source.owner, requestId: "req-export", details: { format: "json" } },
+    ])
     const imported = await sql`
       SELECT actor_user_id, details FROM audit_events
       WHERE group_id = ${copy} AND event_kind = 'group.imported'
@@ -182,6 +216,33 @@ Deno.test("an export imported by another person gives the same notes and tags un
     // The admin panel says the copy was imported, and by whom; the source was created empty.
     expect((await readAdminGroup(sql, copy))?.imported?.by?.id).toBe(importer)
     expect((await readAdminGroup(sql, source.groupId))?.imported).toBe(null)
+  })
+})
+
+Deno.test("an export carries the group's time zone, and the import keeps it", async () => {
+  await withSchema(async (sql) => {
+    const source = await seed(sql)
+    await new PostgresGroupRepository(sql).updateDetails(
+      source.groupId,
+      { description: "Our home", color: "#15803d", emoji: "🏡", timeZone: "Asia/Tokyo" },
+      source.owner,
+    )
+    const file = await exportAs(sql, source.groupId, source.owner) as {
+      group: { timeZone?: string }
+    }
+    expect(file.group.timeZone).toBe("Asia/Tokyo")
+
+    const importer = await insertUser(sql)
+    await sql`
+      INSERT INTO user_preferences (user_id, value)
+      VALUES (${importer}, ${sql.json({ timeZone: "Europe/Berlin" })})
+    `
+    const result = await new PostgresGroupPorter(sql, PORTABLE_AGGREGATES).importGroup(
+      { file, name: null },
+      importer,
+      NO_CAP,
+    )
+    expect(result.group.timeZone).toBe("Asia/Tokyo")
   })
 })
 
@@ -219,8 +280,43 @@ Deno.test("only the owner exports, and another tenant's group cannot be exported
     }
     expect(await refused(admin)).toBe("ROLE_INSUFFICIENT")
     expect(await refused(stranger)).toBe("GROUP_NOT_FOUND")
+    const refusedSpreadsheets = async (userId: number) => {
+      try {
+        await spreadsheetsAs(sql, source.groupId, userId)
+      } catch (error) {
+        return error instanceof GroupError ? error.code : String(error)
+      }
+      return "exported"
+    }
+    expect(await refusedSpreadsheets(admin)).toBe("ROLE_INSUFFICIENT")
+    expect(await refusedSpreadsheets(stranger)).toBe("GROUP_NOT_FOUND")
     const audits = await sql`SELECT 1 FROM audit_events WHERE event_kind = 'group.exported'`
     expect(audits.length).toBe(0)
+  })
+})
+
+Deno.test("the owner's spreadsheets hold the live notes under headings in the asked language", async () => {
+  await withSchema(async (sql) => {
+    const source = await seed(sql)
+    const files = await spreadsheetsAs(sql, source.groupId, source.owner, "ru")
+    expect(Object.keys(files).sort()).toEqual(["README.txt", "notes.csv"])
+    expect(files["README.txt"]).toContain("\n- tags\n")
+    expect(files["notes.csv"].startsWith("\uFEFF")).toBe(true)
+    const parsed = parseCsv(files["notes.csv"])
+    if (!parsed.ok) throw new Error("notes.csv is not a CSV file")
+    const [headings, ...rows] = parsed.value
+    expect(headings).toEqual(["ID", "Заголовок", "Текст", "ID меток", "Создана", "Изменена"])
+    // The deleted note stays out, as it does in the JSON file.
+    expect(rows.map((row) => row[1]).sort()).toEqual(["Groceries", "Plain", "Plan"])
+    const plan = rows.find((row) => row[1] === "Plan")!
+    expect(plan[3].split(" ").sort()).toEqual([...source.tagIds].sort())
+    expect(new Date(plan[4]).toISOString()).toBe(plan[4])
+
+    const exported = await sql`
+      SELECT actor_user_id, details FROM audit_events
+      WHERE group_id = ${source.groupId} AND event_kind = 'group.exported'
+    `
+    expect([...exported]).toEqual([{ actorUserId: source.owner, details: { format: "csv" } }])
   })
 })
 

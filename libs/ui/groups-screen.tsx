@@ -29,6 +29,8 @@ export interface GroupRow {
   color?: GroupColor | null
   /** The group's emoji, or absent for none. */
   emoji?: string | null
+  /** The zone the group's days are cut in; absent reads as UTC. */
+  timeZone?: string
   role: GroupRole
   /** How many members the group has, when it is known. */
   memberCount?: number

@@ -16,7 +16,7 @@ import { REALTIME_ERROR_CODES, type RealtimeErrorCode } from "@spy4x/realtime"
 import { fieldErrorsSchema } from "@spy4x/validation"
 import type { ApiTokenErrorCode } from "@domain/api-tokens"
 import type { BillingErrorCode, PlanErrorCode } from "@domain/billing"
-import type { BlogErrorCode } from "@domain/blog"
+import type { BlogErrorCode, BlogSharingErrorCode } from "@domain/blog"
 import type { CatalogErrorCode } from "@domain/catalog"
 import type { ContactLinkErrorCode } from "@domain/contact-links"
 import type { GroupErrorCode, InvitationErrorCode } from "@domain/groups"
@@ -24,8 +24,9 @@ import type {
   AccessErrorCode,
   GUEST_REFUSAL_CODE,
   PictureErrorCode,
-  SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
+  SIGN_UP_CLOSED,
 } from "@domain/identity"
+import type { ImportErrorCode } from "@domain/imports"
 import type { AttachmentErrorCode, NoteErrorCode } from "@domain/notes"
 import type { NotificationErrorCode } from "@domain/notifications"
 import type { SubscriberTokenRefusal } from "@domain/subscribers"
@@ -75,14 +76,16 @@ export type ErrorReason =
   | (typeof API_ERROR_REASONS)[number]
   | AccessErrorCode
   | typeof GUEST_REFUSAL_CODE
-  | typeof SIGN_IN_LINK_ASKED_ELSEWHERE_CODE
+  | typeof SIGN_UP_CLOSED
   | ApiTokenErrorCode
   | BillingErrorCode
   | BlogErrorCode
+  | BlogSharingErrorCode
   | CatalogErrorCode
   | ContactLinkErrorCode
   | GroupErrorCode
   | InvitationErrorCode
+  | ImportErrorCode
   | AttachmentErrorCode
   | NoteErrorCode
   | NotificationErrorCode

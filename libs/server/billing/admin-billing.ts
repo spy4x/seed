@@ -1,5 +1,5 @@
 /**
- * The operator area's billing module (#196) over Postgres: the figures, the customer list, one
+ * The operator area's billing module over Postgres: the figures, the customer list, one
  * customer's stored facts and operator history, and the bookkeeping that makes each action audited
  * once per idempotency key. It reads what the webhooks stored; it never calls the provider.
  *
@@ -16,12 +16,15 @@ import {
   type AdminBillingFilter,
   type AdminBillingHistoryEntry,
   type AdminBillingStatusFilter,
+  type AdminNeverPaidGroup,
   BILLING_AUDIT_EVENT_TYPES,
   type BillingAuditEvent,
   billingAuditPrefix,
+  type BillingPeriod,
   BillingStatus,
   type Money,
   monthlyRevenueOf,
+  type Plan,
   readBillingAuditIdentifier,
 } from "@domain/billing"
 import { likeContains } from "@spy4x/server/db"
@@ -32,10 +35,14 @@ const LIVE = [BillingStatus.Trialing, BillingStatus.Active, BillingStatus.PastDu
 /** A subscription that pays: its list price counts toward monthly revenue. */
 const PAYING = [BillingStatus.Active, BillingStatus.PastDue]
 
-/** The figures above the list, over every stored subscription, a group in the trash included. */
+/**
+ * The figures above the list, over every stored subscription, a group in the trash included.
+ * Revenue is priced from `plans`, `PLANS` unless a test passes its own.
+ */
 export async function readAdminBillingFigures(
   sql: postgres.Sql,
   now: Date,
+  plans?: readonly Plan[],
 ): Promise<AdminBillingFigures> {
   const soon = new Date(now.getTime() + 7 * ONE_DAY_IN_MILLISECONDS)
   const rows = await sql<
@@ -43,17 +50,18 @@ export async function readAdminBillingFigures(
       planId: string | null
       status: BillingStatus
       quantity: number | null
+      period: BillingPeriod | null
       cancelAtPeriodEnd: boolean
       endsSoon: boolean
       count: number
     }[]
   >`
-    SELECT plan_id, status, quantity, cancel_at_period_end,
+    SELECT plan_id, status, quantity, billing_period AS period, cancel_at_period_end,
       (status = ${BillingStatus.Trialing} AND trial_end > ${now} AND trial_end <= ${soon})
         AS ends_soon,
       COUNT(*)::int AS count
     FROM subscriptions
-    GROUP BY 1, 2, 3, 4, 5
+    GROUP BY 1, 2, 3, 4, 5, 6
   `
   const revenue = new Map<string, number>()
   const figures: AdminBillingFigures = {
@@ -66,7 +74,7 @@ export async function readAdminBillingFigures(
     lastEventAt: null,
   }
   for (const row of rows) {
-    const money = monthlyRevenueOf(row)
+    const money = monthlyRevenueOf(row, plans)
     if (money !== null) {
       revenue.set(money.currency, (revenue.get(money.currency) ?? 0) + money.amount * row.count)
     }
@@ -143,6 +151,7 @@ interface CustomerRowRaw {
   planId: string | null
   status: BillingStatus
   quantity: number | null
+  period: BillingPeriod | null
   currentPeriodEnd: Date | null
   cancelAtPeriodEnd: boolean
   trialEnd: Date | null
@@ -166,7 +175,7 @@ function customerColumns(sql: postgres.Sql) {
       ORDER BY (k.method = ${PASSWORD_METHOD}) DESC, k.email IS NULL, k.id
       LIMIT 1
     ) AS owner_email,
-    s.plan_id, s.status, s.quantity, s.current_period_end, s.cancel_at_period_end, s.trial_end,
+    s.plan_id, s.status, s.quantity, s.billing_period AS period, s.current_period_end, s.cancel_at_period_end, s.trial_end,
     s.past_due_since, s.ever_active, s.updated_at, s.provider_subscription_id,
     COALESCE(s.provider_customer_id, c.provider_customer_id) AS provider_customer_id,
     c.created_at AS customer_since
@@ -190,6 +199,7 @@ function toCustomer(row: CustomerRowRaw): AdminBillingCustomer {
     planId: row.planId,
     status: row.status,
     quantity: row.quantity,
+    period: row.period,
     currentPeriodEnd: row.currentPeriodEnd?.toISOString() ?? null,
     cancelAtPeriodEnd: row.cancelAtPeriodEnd,
     trialEnd: row.trialEnd?.toISOString() ?? null,
@@ -246,6 +256,58 @@ export async function listAdminBillingCustomers(
     customers: rows.map(toCustomer),
     total: chipCounts[filter.status],
     counts: chipCounts,
+  }
+}
+
+/**
+ * One page of the groups that have never paid, newest first: not in the trash, and no subscription
+ * of theirs ever went active. A trial that has not paid yet counts as never paid. With how many there
+ * are in all.
+ */
+export async function listNeverPaidGroups(
+  sql: postgres.Sql,
+  page: number,
+  pageSize: number,
+): Promise<{ groups: AdminNeverPaidGroup[]; total: number }> {
+  const neverPaid = sql`
+    g.deleted_at IS NULL
+    AND NOT EXISTS (SELECT 1 FROM subscriptions s WHERE s.group_id = g.id AND s.ever_active)
+  `
+  const [{ total }] = await sql<{ total: number }[]>`
+    SELECT COUNT(*)::int AS total FROM groups g WHERE ${neverPaid}
+  `
+  const rows = await sql<{
+    groupId: string
+    groupName: string
+    ownerId: number
+    ownerName: string | null
+    ownerEmail: string | null
+    createdAt: Date
+  }[]>`
+    SELECT
+      g.id AS group_id, g.name AS group_name, g.created_at,
+      o.id AS owner_id, btrim(concat_ws(' ', o.first_name, o.last_name)) AS owner_name,
+      (
+        SELECT COALESCE(k.email, CASE WHEN k.method = ${PASSWORD_METHOD} THEN k.subject END)
+        FROM auth_keys k
+        WHERE k.user_id = o.id
+        ORDER BY (k.method = ${PASSWORD_METHOD}) DESC, k.email IS NULL, k.id
+        LIMIT 1
+      ) AS owner_email
+    FROM groups g
+    JOIN users o ON o.id = g.owner_user_id
+    WHERE ${neverPaid}
+    ORDER BY g.created_at DESC, g.id DESC
+    LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+  `
+  return {
+    groups: rows.map((row) => ({
+      groupId: row.groupId,
+      groupName: row.groupName,
+      owner: { id: row.ownerId, name: row.ownerName ?? ``, email: row.ownerEmail },
+      createdAt: row.createdAt.toISOString(),
+    })),
+    total,
   }
 }
 

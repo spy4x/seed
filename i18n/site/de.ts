@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Ohne Registrierung. Du bekommst ein Gastkonto mit Beispieldaten, das jede Nacht zurückgesetzt wird.",
   "SiteNav.features": "Funktionen",
+  "SiteNav.docs": "Doku",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Vergleich",
   "SiteNav.pricing": "Preise",
@@ -133,13 +134,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "Mail, Push",
   "Architecture.webAppNote": "Preact, im Browser",
-  "Architecture.websiteNote": "Fresh, wie diese Seite",
-  "Architecture.apiNote": "Hono auf Deno",
+  "Architecture.websiteNote": "Preact, auf dem Server",
+  "Architecture.apiNote": "Deno · Node · Bun",
   "Architecture.postgresNote": "jede Änderung",
   "Architecture.workerNote": "die langsame Arbeit",
   "Architecture.mailNote": "und Aufräumen",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "Events, gleiche Transaktion",
   "Architecture.caption": "Alles auf einem Server, hinter Traefik, mit Valkey und Grafana",
   "Architecture.captionTop": "Alles auf einem Server, hinter Traefik,",
@@ -148,11 +149,11 @@ export default {
     "So hängt Seed zusammen: Die Web-App und die Website rufen die API auf, die API schreibt jede Änderung samt ihren Events in Postgres, und der Worker verschickt daraus Mails und Push-Nachrichten. Alles läuft auf einem Server.",
   "Home.title": "Seed: der kostenlose SaaS-Starter auf Webstandards",
   "Home.description":
-    "Kostenloser SaaS-Starter unter MIT-Lizenz, gebaut auf Webstandards: 2FA-Anmeldung, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied. Läuft auf Deno.",
+    "Kostenloser SaaS-Starter unter MIT-Lizenz auf Webstandards: 2FA, Gruppen, Stripe, Echtzeit, offline, Ansichten direkt vom Gerät. Deno, Node und Bun.",
   "HomeProof.tests": "Testdateien in den Apps und Bibliotheken, alle laufen in der CI",
   "HomeProof.licence": "Lizenz: kein Konto, keine Paywall",
   "HomeStatus.signIn":
-    "Registrierung, Anmeldung, Bestätigung der E-Mail-Adresse, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Magic Links, 2FA mit einer Authenticator-App",
+    "Registrierung, Anmeldung, Bestätigung der E-Mail-Adresse, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Anmeldecodes per E-Mail, 2FA mit einer Authenticator-App",
   "HomeStatus.guests":
     "Gastkonten: die App mit einem Klick ausprobieren und das Konto behalten, indem man eine Anmeldemethode hinzufügt",
   "HomeStatus.groups":
@@ -175,10 +176,13 @@ export default {
   "HomeFaq.tryQuestion": "Kann ich es ohne Konto ausprobieren?",
   "HomeFaq.tryAnswer":
     "Ja. „Live-Demo ausprobieren“ öffnet die App in einem Gastkonto mit Beispieldaten, ganz ohne E-Mail-Adresse oder Passwort. Du kannst eine Anmeldemethode hinzufügen, die Demo wird aber trotzdem jede Nacht zurückgesetzt. Seed selbst braucht überhaupt kein Konto: Klone es einfach von GitHub.",
+  "HomeFaq.fastQuestion": "Warum fühlt sich eine Seed-App so schnell an?",
+  "HomeFaq.fastAnswer":
+    "Ist sie einmal offen, wartet sie nicht auf den Server, um dir zu zeigen, was du schon gesehen hast. Die App behält eine Kopie jeder Liste auf dem Gerät, zeigt eine Ansicht sofort daraus und tauscht die Kopie gegen die Antwort des Servers, sobald sie da ist. Suche und Filter der Notizliste laufen auf dem Gerät. Beim Öffnen prüft die App zuerst deine Anmeldung beim Server, beim ersten Besuch werden die Daten geladen, und Speichern wartet auf den Server.",
   "HomeFaq.freeQuestion": "Ist Seed wirklich kostenlos?",
   "HomeFaq.freeAnswer":
     "Ja. Seed steht unter der MIT-Lizenz: Nutze es für beliebig viele Produkte, kommerziell oder nicht, veröffentliche deinen Fork, ganz ohne Konto. Du zahlst nur für einen gemieteten Server und für Dienste, die du einschaltest, etwa Stripe oder einen E-Mail-Anbieter.",
-  "HomeFaq.stackQuestion": "Warum Deno und Preact statt Next.js?",
+  "HomeFaq.stackQuestion": "Warum Hono und Preact statt Next.js?",
   "HomeFaq.stackAnswer":
     "Sie bauen auf Webstandards auf (<code>fetch</code>, <code>Request</code>, Web Crypto, ES-Module), starten schnell und kommen mit wenigen Abhängigkeiten aus. Es gibt also weniger zu aktualisieren und weniger, das kaputtgehen kann. Wenn du im Next.js-Ökosystem arbeitest, passt ein Next.js-Starter besser zu dir; <compare>der Vergleich</compare> nennt gute.",
   "HomeFaq.clientQuestion": "Darf ich es für Kundenprojekte nutzen?",
@@ -187,10 +191,10 @@ export default {
   "HomeFaq.productionQuestion": "Ist es bereit für den Produktivbetrieb?",
   "HomeFaq.productionAnswer":
     "Die Teile unter „Funktioniert heute“ haben Tests in der CI: Jeder Pull Request führt die Tests für Anmeldung, Profil, Notizen und Gruppen aus, und nach jedem Merge läuft die ganze Suite. Seed ist heute schon nutzbar und wächst weiter. Lies die Statusliste, bevor du dich auf einen Teil verlässt.",
-  "HomeHero.badge": "Läuft auf Deno 2",
+  "HomeHero.badge": "Läuft auf Deno, Node und Bun",
   "HomeHero.title": "Das Fundament für dein SaaS, schon fertig gebaut.",
   "HomeHero.lead":
-    "Seed ist der kostenlose SaaS-Starter auf Webstandards: Anmeldung mit 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, Offline-App und Adminbereich. MIT-lizenziert, läuft heute auf Deno und kommt per Docker Compose auf einen gemieteten Linux-Server.",
+    "Seed ist der kostenlose SaaS-Starter auf Webstandards: Anmeldung mit 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, Offline-App und Adminbereich. MIT-lizenziert, läuft auf Deno, Node und Bun und kommt per Docker Compose auf einen gemieteten Linux-Server.",
   "HomeHero.github": "Auf GitHub ansehen",
   "HomeHero.status":
     "Seed ist heute schon nutzbar und wird öffentlich entwickelt: <status>Sieh dir an, was funktioniert</status>.",
@@ -211,7 +215,7 @@ export default {
   "HomeFeatures.signInAlt":
     "Die Sicherheitsseite eines Profils: das Passwort, ein Button „Passkey hinzufügen“, der eingeschaltete Zwei-Faktor-Schutz und der Anfang der Liste der angemeldeten Geräte.",
   "HomeFeatures.signInText":
-    "E-Mail und Passwort mit Bestätigungscodes, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Anmeldelinks per E-Mail, Gastkonten und 2FA mit einer Authenticator-App. Sitzungen, die du sehen und beenden kannst.",
+    "E-Mail und Passwort mit Bestätigungscodes, Passwort zurücksetzen, Anmeldung mit Google und GitHub, Passkeys, Anmeldecodes per E-Mail, Gastkonten und 2FA mit einer Authenticator-App. Sitzungen, die du sehen und beenden kannst.",
   "HomeFeatures.billingTitle": "Abrechnung pro Mitglied",
   "HomeFeatures.billingLink": "So funktioniert die Abrechnung",
   "HomeFeatures.billingText":
@@ -235,6 +239,12 @@ export default {
   "HomeFeatures.websiteText":
     "Diese Website: auf dem Server gerendert, funktioniert auch ohne JavaScript, in neun Sprachen, mit Preisen direkt aus deinem Tarifkatalog, Rechtsseiten und einem Newsletter mit Double-Opt-in.",
   "HomeFeatures.all": "Alle Funktionen, mit Screenshots und Status",
+  "HomeSpeed.eyebrow": "Schnell ab Werk",
+  "HomeSpeed.title": "Kein Ladekreisel zwischen den Klicks",
+  "HomeSpeed.text":
+    "Die meisten Web-Apps fragen nach jedem Klick erneut beim Server nach, und du wartest. Ist eine Seed-App einmal offen, öffnet eine Ansicht, die du schon besucht hast, sofort aus der Kopie auf deinem Gerät, und Suche und Filter der Notizliste antworten, während du tippst. Die neueste Fassung vom Server ersetzt die Kopie auf dem Gerät einen Moment später im Hintergrund.",
+  "HomeSpeed.demo": "Probier es aus: klick dich durch die Demo",
+  "HomeSpeed.how": "So funktioniert es",
   "HomeServer.eyebrow": "Läuft auf einem gemieteten Server",
   "HomeServer.title":
     "Ein Server, ein <code>docker compose</code>, keine bösen Überraschungen auf der Rechnung.",
@@ -243,11 +253,13 @@ export default {
   "HomeServer.skip":
     "Seed ist nichts für dich, wenn du Serverless-Funktionen oder Vercel willst: Es ist für einen Server gebaut, den du selbst kontrollierst.",
   "HomeQuickStart.title": "Lokal am Laufen in vier Befehlen",
-  "HomeQuickStart.needs": "Du brauchst Deno 2 und Docker; die GitHub CLI ist optional.",
+  "HomeQuickStart.needs":
+    "Du brauchst Docker und Deno 2; die GitHub CLI ist optional. Mit Node oder Bun installiert dir <readme>das README</readme> Deno gleich mit und zeigt dieselben Befehle für npm oder bun.",
   "HomeQuickStart.text":
     "<init>init</init> kopiert die Env-Datei und erzeugt alle Secrets und die Web-Push-Schlüssel; <dev>dev</dev> startet Traefik und alles andere. Dann öffne <url>http://app.localhost</url>. Im <readme>README</readme> stehen alle Einstellungen und wie du deployst.",
   "HomeQuickStart.agent": "Oder frag deinen KI-Agenten: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Lies die Schritt-für-Schritt-Anleitung",
   "HomeStatus.eyebrow": "Ehrlicher Stand",
   "HomeStatus.title": "Wo es heute steht",
   "HomeStatus.lead":
@@ -273,6 +285,8 @@ export default {
   "Pricing.description":
     "Seed ist kostenlos unter MIT, ohne Bezahlversion. Für den Betrieb brauchst du einen Linux-Server zum Preis deines Hosters, plus die Dienste, die du einschaltest.",
   "Pricing.crumb": "Preise",
+  "Pricing.saving":
+    "{plan} kostet {monthly} im Monat oder {yearly} im Jahr: {saving} weniger als bei monatlicher Zahlung.",
   "PricingFaq.paidQuestion": "Gibt es eine Bezahlversion von Seed?",
   "PricingFaq.paidAnswer":
     "Nein. Es gibt keine Pro-Version, keinen Lizenzschlüssel und keine zurückgehaltene Funktion. Wenn du Hilfe willst, buch mich: Meine Zeit ist das Einzige, was ich verkaufe.",
@@ -351,7 +365,7 @@ export default {
   "FeatureSignIn.nav": "Konten und Anmeldung",
   "FeatureSignIn.title": "Anmeldung, erledigt",
   "FeatureSignIn.lead":
-    "Leute registrieren sich mit E-Mail-Adresse und Passwort und bestätigen die Adresse mit einem Code. Sie können ein vergessenes Passwort zurücksetzen, mit Google oder GitHub weitermachen, sich mit einem Passkey anmelden oder sich einen Anmeldelink per E-Mail schicken lassen, der sie auch gleich registriert. Oder sie probieren die App erst in einem Gastkonto aus und fügen später eine Anmeldemethode hinzu. Mit einer Authenticator-App kommt Zwei-Faktor-Schutz (2FA) dazu. Jeder sieht alle Geräte, auf denen er angemeldet ist, und kann die anderen abmelden. Wer eine Anmeldemethode ändert, muss sich ausweisen und bekommt eine E-Mail.",
+    "Leute registrieren sich mit E-Mail-Adresse und Passwort und bestätigen die Adresse mit einem Code. Sie können ein vergessenes Passwort zurücksetzen, mit Google oder GitHub weitermachen, sich mit einem Passkey anmelden oder sich einen Anmeldecode per E-Mail schicken lassen, der sie auch gleich registriert. Oder sie probieren die App erst in einem Gastkonto aus und fügen später eine Anmeldemethode hinzu. Mit einer Authenticator-App kommt Zwei-Faktor-Authentifizierung (2FA) dazu. Jeder sieht alle Geräte, auf denen er angemeldet ist, und kann die anderen abmelden. Wer eine Anmeldemethode ändert, muss sich ausweisen und bekommt eine E-Mail.",
   "FeatureSignIn.fact1":
     "Passwörter mit PBKDF2-SHA-256 über Web Crypto gehasht, standardmäßig mit 600.000 Runden",
   "FeatureSignIn.fact2": "Signierte Sitzungscookies und ein Audit-Trail für jedes Anmeldeereignis",
@@ -359,7 +373,7 @@ export default {
   "FeatureSignIn.fact4":
     "Passkeys: Gespeichert wird nur der öffentliche Schlüssel, und jede Anmelde-Challenge gilt nur einmal",
   "FeatureSignIn.fact5":
-    "Magic Links: Ein Link meldet an oder registriert, gilt einmal und 15 Minuten lang und wird nur als Hash gespeichert",
+    "Anmeldecodes per E-Mail: Ein 8-stelliger Code meldet an oder registriert, gilt nur einmal, 10 Minuten lang und nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert",
   "FeatureSignIn.fact6":
     "Gastkonten (anonyme Anmeldung): Besucher starten mit einem Klick ohne Anmeldemethode und fügen demselben Konto später E-Mail und Passwort, Google, GitHub oder einen Passkey hinzu",
   "FeatureSignIn.fact7":
@@ -449,6 +463,19 @@ export default {
   "FeatureRealtime.fact3":
     "Echtzeit lässt sich abschalten: Die App fragt dann in festen Abständen nach und funktioniert genauso",
   "FeatureRealtime.code": "Echtzeit-Design lesen",
+  "FeatureFast.nav": "Schnell ab Werk",
+  "FeatureFast.title": "Ansichten öffnen vom Gerät und holen dann auf",
+  "FeatureFast.lead":
+    "Jede Liste, die die App schon gezeigt hat, bleibt auf dem Gerät, außer gelöschten Notizen und Gruppen. Eine Ansicht zeigt diese Kopie sofort und tauscht sie gegen die Antwort des Servers, sobald sie ankommt. So wartet kein Wechsel in der offenen App auf eine Runde zum Server. Beim Öffnen prüft die App zuerst die Anmeldung beim Server, der erste Besuch lädt die Daten herunter, und einige Ansichten fragen immer den Server.",
+  "FeatureFast.fact1":
+    "Zuerst erscheint die Kopie vom Gerät, dann ersetzt sie die Antwort des Servers (cachedRead über IndexedDB)",
+  "FeatureFast.fact2":
+    "Suche und Filter der Notizliste laufen über die Liste auf dem Gerät, ohne Anfrage pro Tastendruck",
+  "FeatureFast.fact3":
+    "Warten weiterhin auf den Server: die Prüfung der Anmeldung beim Öffnen der App, gelöschte Notizen und Gruppen und jedes Speichern, etwa ein Tarifwechsel oder eine Einladung",
+  "FeatureFast.fact4":
+    "Ohne Netz wartet eine Änderung an einer Notiz oder einem Tag in einer Warteschlange, bis das Netz zurück ist",
+  "FeatureFast.code": "Lies, wie die Kopie auf dem Gerät funktioniert",
   "FeatureOffline.nav": "Offline-App",
   "FeatureOffline.title": "Eine App, die ohne Netz startet",
   "FeatureOffline.lead":
@@ -495,6 +522,19 @@ export default {
   "FeatureWorker.fact4":
     "Ein fehlgeschlagener Versuch wird mit wachsenden Pausen wiederholt; Operatoren sehen jeden Lauf im Adminbereich",
   "FeatureWorker.code": "docs/jobs.md lesen",
+  "FeatureCatalog.nav": "Katalog",
+  "FeatureCatalog.title": "Ein Katalog für Shop, Speisekarte oder Verleih",
+  "FeatureCatalog.lead":
+    "Deine Operatoren legen im Adminbereich Artikel mit Fotos, Farben und Größen an, und die Website zeigt sie auf Seiten, die Suchmaschinen verstehen – Ausverkauftes ist markiert.",
+  "FeatureCatalog.fact1":
+    "Aus, bis du CATALOG=true setzt; Währung und Sprachen sind zwei weitere Einstellungen",
+  "FeatureCatalog.fact2":
+    "Preise in der kleinsten Einheit, Texte in jeder Sprache, die du pflegst, ausverkauft je Farbe und Größe",
+  "FeatureCatalog.fact3":
+    "Der Worker macht aus Fotos AVIF und WebP, und jede Änderung im Adminbereich landet im Protokoll",
+  "FeatureCatalog.fact4":
+    "Ein Tracking-Link für jeden Ort, an dem du einen Artikel teilst, gezählt in Umami: <guide>zur Katalog-Anleitung</guide>",
+  "FeatureCatalog.code": "Katalog-Code lesen",
   "FeatureYourFeature.nav": "Deine eigenen Funktionen",
   "FeatureYourFeature.title": "Eine Funktion hinzufügen, indem du eine kopierst",
   "FeatureYourFeature.lead":
@@ -505,13 +545,11 @@ export default {
   "FeatureYourFeature.fact3": "Jede ID ist eine zeitlich sortierte UUID (Version 7)",
   "FeatureYourFeature.code": "docs/aggregates.md lesen",
   "FeatureTierRuntime.eyebrow": "Laufzeit",
-  "FeatureTierRuntime.nav": "Laufzeit-Plan",
-  "FeatureTierRuntime.title": "Läuft heute auf Deno",
+  "FeatureTierRuntime.nav": "Laufzeiten",
+  "FeatureTierRuntime.title": "Läuft auf Deno, Node und Bun",
   "FeatureTierRuntime.lead":
-    "Seed läuft heute auf Deno und soll künftig unverändert auf Deno, Node und Bun laufen; ein Datum gibt es noch nicht. Der Code baut auf Webstandards auf (fetch, Request, Web Crypto, WebSocket, ES-Module), deshalb hängt das meiste davon nicht von der Laufzeit ab. Im Oktober 2026 haben die Macher von Deno noch ein Jahr Support mit monatlichen Bugfix- und Sicherheits-Releases <announced>angekündigt</announced>; danach beenden sie seine Entwicklung. Deno bleibt Open Source.",
-  "FeatureTierRuntime.wip": "In Arbeit",
-  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> und <name>Bun</name>",
-  "FeatureTierRuntime.follow": "Den Plan auf GitHub verfolgen (Issue <issue>#623</issue>)",
+    "Die API, der Worker und die Website laufen unverändert auf Deno, Node und Bun, und die CI startet sie bei jeder Änderung auf allen dreien. Eine Zeile in der Env-Datei, APP_RUNTIME, wählt die Laufzeit. Der Code baut auf Webstandards auf (fetch, Request, Web Crypto, WebSocket, ES-Module); Seeds eigene Tasks und Tests laufen auf Deno, das npm oder Bun dir mitinstalliert. Im Oktober 2026 haben die Macher von Deno noch ein Jahr Support mit monatlichen Bugfix- und Sicherheits-Releases <announced>angekündigt</announced>; danach beenden sie seine Entwicklung. Deno bleibt Open Source.",
+  "FeatureTierRuntime.pick": "So wählst du die Laufzeit",
   "FeatureTierOperations.eyebrow": "Betrieb",
   "FeatureTierOperations.title": "Betreiben, überwachen, die Leute darauf unterstützen",
   "FeatureTierOperations.lead":
@@ -550,12 +588,12 @@ export default {
   "FeatureWebsite.lead":
     "Diese Website: schnell, auf dem Server gerendert und auch ohne JavaScript nutzbar, mit Preisen, Rechtsseiten, einem Blog und einem Newsletter.",
   "FeatureWebsite.fact1":
-    "Fresh auf dem Server; jede Aktion ist ein echter Link oder ein echtes Formular",
+    "Preact auf dem Server, gebaut mit Vite; jede Aktion ist ein echter Link oder ein echtes Formular",
   "FeatureWebsite.fact2": "Preise direkt aus dem Tarifkatalog der App",
   "FeatureWebsite.fact3":
     "Ein Newsletter mit Double-Opt-in, Abbestellen mit einem Klick und E-Mails in der Sprache des Empfängers",
   "FeatureWebsite.fact4":
-    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed, strukturierten Daten für Artikel, alten Links, die nach einer URL-Änderung auf die neue Adresse umleiten, und einem IndexNow-Ping, der Suchmaschinen sofort von neuen oder geänderten Beiträgen erfahren lässt",
+    "Ein Blog, geschrieben im Adminbereich, mit Beiträgen in jeder Sprache samt Übersetzungen, Themen, interaktiven Grafiken zum Ausprobieren, einem RSS-Feed, strukturierten Daten für Artikel, alten Links, die nach einer URL-Änderung auf die neue Adresse umleiten, Titelbildern in den Listen, einer optionalen Kopie auf Dev.to, die den Beitrag als Original nennt, automatischen Posts auf Telegram, Mastodon, Bluesky, Hashnode und LinkedIn und einem IndexNow-Ping, der Suchmaschinen sofort von neuen oder geänderten Beiträgen erfahren lässt",
   "FeatureWebsite.fact5":
     "Kontaktlinks, im Adminbereich festgelegt und im Footer und in den strukturierten Daten angezeigt",
   "FeatureWebsite.fact6":
@@ -583,7 +621,7 @@ export default {
     "Nein. Seed läuft als dauerhaft laufende Container mit Docker Compose auf einem gemieteten Linux-Server, weil die API WebSocket-Verbindungen offen hält und ein Worker eine Warteschlange abarbeitet.",
   "FeaturesFaq.runtimeQuestion": "Läuft Seed mit Node.js oder Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Noch nicht. Seed läuft heute auf Deno, und der Umstieg auf Deno, Node und Bun ist in Arbeit. Den Fortschritt kannst du in Issue #623 auf Seeds GitHub verfolgen.",
+    "Ja. Die API, der Hintergrund-Worker und die Website laufen auf Deno, Node oder Bun: Eine Einstellung in der Env-Datei, APP_RUNTIME, wählt die Laufzeit. Seeds eigene Tasks und Tests laufen auf Deno, das npm oder Bun dir mitinstalliert, du musst Deno also nicht extra installieren.",
   "FeaturesFaq.databaseQuestion": "Kann Seed eine andere Datenbank als Postgres nutzen?",
   "FeaturesFaq.databaseAnswer":
     "Nein. Seed ist auf Postgres gebaut: Migrationen, Abfragen und Integrationstests setzen es voraus.",
@@ -605,7 +643,7 @@ export default {
     "Was Seed mitbringt: 2FA und Social Login, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit, eine Offline-App, einen Adminbereich, Monitoring und Backups.",
   "FeaturesHero.title": "Alles, was Seed mitbringt, und was noch fehlt",
   "FeaturesHero.lead":
-    "Seed ist ein kostenloser SaaS-Starter unter MIT-Lizenz mit Anmeldung per E-Mail, Google und GitHub, Passkeys, Magic Links, Gastkonten, 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit-Updates, einer Offline-App, einem Adminbereich, Monitoring und optionalen täglichen, verschlüsselten Backups. Jeder Abschnitt unten verlinkt auf seinen Code.",
+    "Seed ist ein kostenloser SaaS-Starter unter MIT-Lizenz mit Anmeldung per E-Mail, Google und GitHub, Passkeys, Anmeldecodes per E-Mail, Gastkonten, 2FA, Gruppen mit Rollen, Stripe-Abrechnung pro Mitglied, Echtzeit-Updates, einer Offline-App, einem Adminbereich, Monitoring und optionalen täglichen, verschlüsselten Backups. Jeder Abschnitt unten verlinkt auf seinen Code.",
   "FeaturesHero.note":
     "Seed ist heute schon nutzbar und wird öffentlich entwickelt. Was fehlt, ist neben der betroffenen Funktion mit „Noch nicht gebaut“ markiert, mit einem Link zum Issue, wenn es eines gibt.",
   "Features.compare": "Seed im Vergleich",
@@ -649,14 +687,15 @@ export default {
     "Der Adminbereich von Seed: eine Person finden, ihre Sitzungen beenden, eine Zahlung erstatten, einen fehlgeschlagenen Job neu starten. Riskante Aktionen fragen vorher nach; alles wird protokolliert. Kostenlos, MIT.",
   "AdminTour.heroTitle": "Ein Adminbereich für die Leute, die dein Produkt betreiben",
   "AdminTour.heroLead":
-    "Seed bringt einen Adminbereich auf einem eigenen Host mit. Deine Operatoren finden eine Person, sehen ihre Anmeldemethoden, Sitzungen und Gruppen und helfen ihr: eine Sitzung beenden, einen Link zum Zurücksetzen des Passworts schicken, eine Zahlung erstatten. Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll.",
+    "Seed bringt einen Adminbereich auf einem eigenen Host mit. Deine Operatoren finden eine Person, sehen ihre Anmeldemethoden, Sitzungen und Gruppen und helfen ihr: eine Sitzung beenden, eine E-Mail zum Zurücksetzen des Passworts schicken, eine Zahlung erstatten. Riskante Aktionen fragen vorher nach, und jede Aktion landet im Protokoll.",
   "AdminTour.code": "Code der Admin-App lesen",
   "AdminTour.dashboard": "Dashboard",
   "AdminTour.dashboardText": "Personen, Registrierungen, Aktive, Gruppen und Notizen über 30 Tage.",
   "AdminTour.stats": "Statistik",
   "AdminTour.statsText": "Website-Besuche und Bestellklicks aus deinem Umami. Nur Summen.",
   "AdminTour.users": "Personen",
-  "AdminTour.usersText": "Person finden, sperren, Sitzung beenden oder Reset-Link schicken.",
+  "AdminTour.usersText":
+    "Person finden, sperren, Sitzung beenden oder E-Mail zum Zurücksetzen schicken.",
   "AdminTour.groups": "Gruppen",
   "AdminTour.groupsText": "Mitglieder, Einladungen, Dateien. Datei löschen oder Inhaber wechseln.",
   "AdminTour.billing": "Abrechnung",
@@ -665,7 +704,8 @@ export default {
   "AdminTour.newsletterText":
     "Wer abonniert hat und was verschickt wurde. Liste als CSV exportieren.",
   "AdminTour.blog": "Blog",
-  "AdminTour.blogText": "Beiträge für die Website in jeder Sprache, vom Entwurf bis online.",
+  "AdminTour.blogText":
+    "Beiträge für die Website in jeder Sprache, vom Entwurf bis online, automatisch auf deinen Kanälen gepostet.",
   "AdminTour.contactLinks": "Kontaktlinks",
   "AdminTour.contactLinksText": "Wo man dich erreicht, im Footer der Website, ohne Deploy.",
   "AdminTour.catalog": "Katalog",
@@ -682,7 +722,7 @@ export default {
   "AdminTour.tokensText": "Jedes API-Token, wem es gehört und wann es zuletzt benutzt wurde.",
   "AdminTour.operator": "Operator",
   "AdminTour.operatorText":
-    "Der tägliche Support: Leute finden, Sitzungen beenden, Links zum Zurücksetzen des Passworts schicken, Gruppen verwalten.",
+    "Der tägliche Support: Leute finden, Sitzungen beenden, E-Mails zum Zurücksetzen des Passworts schicken, Gruppen verwalten.",
   "AdminTour.supervisor": "Supervisor",
   "AdminTour.supervisorText":
     "Erstattet außerdem Zahlungen, kündigt ein Abo sofort und überträgt eine Gruppe an ein anderes Mitglied.",
@@ -738,7 +778,7 @@ export default {
   "CompareRow.makerkitLite": "Makerkit: nur das Lite-Kit",
   "CompareRow.openSource": "Open Source (MIT)",
   "CompareRow.password": "Anmeldung mit Passwort",
-  "CompareRow.magicLinks": "Magic Links",
+  "CompareRow.magicLinks": "Passwortlose Anmeldung per E-Mail",
   "CompareRow.social": "Social Login",
   "CompareRow.socialNote": "Seed: Google, GitHub",
   "CompareRow.totp": "2FA per App",
@@ -758,6 +798,8 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Audit-Log",
   "CompareRow.realtime": "Echtzeit-Updates",
+  "CompareRow.instant": "Daten auf dem Gerät",
+  "CompareRow.instantNote": "Eine Kopie jeder Liste auf dem Gerät",
   "CompareRow.offline": "Offline-App",
   "CompareRow.offlineNote": "Merkt sich offline gemachte Änderungen",
   "CompareRow.ops": "Monitoring und Backups",
@@ -873,6 +915,7 @@ export default {
   "Blog.published": "Veröffentlicht am <time>{date}</time>",
   "Blog.updated": "· Aktualisiert am <time>{date}</time>",
   "Blog.alsoIn": "Auch verfügbar auf: <links></links>",
+  "Blog.relatedFeature": "Seed-Funktion: {name} →",
   "Blog.minutes": {
     "one": "· {count} Min. Lesezeit",
     "other": "· {count} Min. Lesezeit",
@@ -947,7 +990,7 @@ export default {
   "FeaturePage.all": "Alle Funktionen",
   "FeaturePage.runtimeQuestion": "Läuft Seed auf Node oder Bun?",
   "FeaturePage.runtimeAnswer":
-    "Noch nicht. Seed läuft heute auf Deno, und die Umstellung auf Deno, Node und Bun ist im Gange (#623). Den Plan dazu findest du auf der Funktionsseite.",
+    "Ja. Die API, der Hintergrund-Worker und die Website laufen auf Deno, Node oder Bun, gewählt mit einer Einstellung (APP_RUNTIME). Seeds eigene Tasks laufen auf Deno, das npm oder Bun dir mitinstalliert. Mehr dazu im Abschnitt zu den Laufzeiten auf der Funktionsseite.",
   "FeaturePageMissing.title": "Diese Funktionsseite gibt es hier nicht",
   "FeaturePageMissing.description":
     "Vielleicht ist sie umgezogen. Jede Funktion von Seed steht auf der Funktionsseite.",
@@ -955,19 +998,19 @@ export default {
   "FeaturePageSignIn.name": "Anmeldung",
   "FeaturePageSignIn.title": "Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.description":
-    "Passkeys, Anmeldelinks per E-Mail, Google, GitHub und 2FA, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
+    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und Zwei-Faktor-Schutz, geprüft von deiner eigenen API, ohne Auth-Dienst und Gebühr pro Nutzer. Kostenlos, MIT-Lizenz.",
   "FeaturePageSignIn.h1": "Passkeys und Login für dein SaaS, ohne externen Auth-Dienst",
   "FeaturePageSignIn.answer":
-    "Seed meldet Leute mit Passkeys, Anmeldelinks per E-Mail, Google und GitHub an, geprüft von der eigenen API auf deinem Server, ohne fremden Auth-Dienst. Passwörter, Passkeys und Anmeldelinks funktionieren direkt nach dem Deployment, ohne Gebühr pro Nutzer; Google und GitHub brauchen je zwei Schlüssel in der Env-Datei.",
+    "Seed meldet Leute mit Passkeys, Anmeldecodes per E-Mail, Google und GitHub an, geprüft von der eigenen API auf deinem Server, ohne fremden Auth-Dienst. Passwörter, Passkeys und Anmeldecodes funktionieren direkt nach dem Deployment, ohne Gebühr pro Nutzer; Google und GitHub brauchen je zwei Schlüssel in der Env-Datei.",
   "FeaturePageSignIn.summary":
-    "Passkeys, Anmeldelinks per E-Mail, Google, GitHub und 2FA, ohne Auth-Dienst.",
+    "Passkeys, Anmeldecodes per E-Mail, Google, GitHub und Zwei-Faktor-Schutz, ohne Auth-Dienst.",
   "FeaturePageSignIn.how1":
-    "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldelink meldet an oder registriert, gilt einmal und 15 Minuten lang und wird nur als Hash gespeichert.",
+    "Die API prüft jede Anmeldung selbst und antwortet mit einem signierten Sitzungs-Cookie. Ein Passkey nutzt das eingebaute WebAuthn des Browsers: Der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal. Ein Anmeldecode per E-Mail meldet an oder registriert, gilt nur einmal, 10 Minuten lang und nur im Browser, der ihn angefordert hat, und wird nur als Hash gespeichert.",
   "FeaturePageSignIn.how2":
     "Eine Authenticator-App ergänzt die Anmeldung um einen zweiten Faktor. Das Profil listet jeden Zugang zum Konto und jedes angemeldete Gerät auf; wer einen Zugang ändert, muss sich ausweisen, und es geht eine E-Mail raus. Besucher können auch mit einem Gastkonto starten und später eine Anmeldemethode hinzufügen.",
   "FeaturePageSignIn.authServiceQuestion": "Brauche ich einen Auth-Dienst?",
   "FeaturePageSignIn.authServiceAnswer":
-    "Nein. Die eigene API von Seed prüft Passwörter, Passkeys, Anmeldelinks und die Antworten von Google und GitHub auf deinem Server, also wird nichts pro Nutzer berechnet.",
+    "Nein. Die eigene API von Seed prüft Passwörter, Passkeys, Anmeldecodes und die Antworten von Google und GitHub auf deinem Server, deshalb fallen keine Kosten pro Nutzer an.",
   "FeaturePageSignIn.passkeysQuestion": "Unterstützt Seed Passkeys?",
   "FeaturePageSignIn.passkeysAnswer":
     "Ja. Leute fügen in ihrem Profil einen Passkey hinzu und melden sich damit an; der Server speichert nur seinen öffentlichen Schlüssel, und jede Anmelde-Challenge gilt nur einmal.",
@@ -1126,4 +1169,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "Gibt es ein Backup?",
   "FeaturePageDeploy.backupAnswer":
     "Ja. Ein optionales tägliches, verschlüsseltes restic-Backup der Datenbank, mit einer schriftlichen Anleitung zur Wiederherstellung.",
+  "Catalog.title": "Katalog",
+  "Catalog.intro": "Alles, was wir verkaufen, mit Preisen, Größen und Farben.",
+  "Catalog.categories": "Kategorien",
+  "Catalog.all": "Alle",
+  "Catalog.empty": "Noch nichts im Angebot",
+  "Catalog.emptyLead": "Neue Artikel erscheinen hier, sobald sie bereit sind.",
+  "Catalog.categoryIntro": "{category}: Preise, Größen und Farben.",
+  "CatalogItem.intro": "{item}: Preis, Größen und Farben.",
+  "CatalogItem.photos": "Fotos",
+  "CatalogItem.material": "Material",
+  "CatalogItem.fit": "Passform",
+  "CatalogItem.care": "Pflege",
+  "CatalogItem.inStock": "{choice}: auf Lager",
+  "CatalogItem.soldOut": "{choice}: ausverkauft",
 } satisfies Catalog

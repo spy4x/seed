@@ -35,7 +35,7 @@ export const post = (body?: unknown): RequestInit => ({
 
 /**
  * One call to the API whose refusal says its `message` in the operator's language, translated by
- * its code through the `errors` catalog (#275), so every module shows it as it is.
+ * its code through the `errors` catalog, so every module shows it as it is.
  */
 export async function adminFetch<T>(
   path: string,

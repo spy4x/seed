@@ -10,6 +10,9 @@ tldr:
   - The language is a setting of the person, stored on the server, and separate from date format, time zone and clock.
   - Adding a tenth language is one list entry, one file per catalog and a few loader lines.
 topic: Deep dive
+intro: "Seed speaks nine languages from the first commit, Arabic right-to-left included. This post shows how the catalogs stay complete, and the tests that stop a missing translation before it ships."
+cover: covers/nine-languages-and-right-to-left-from-day-one.webp
+coverAlt: "A violet globe circled by empty speech bubbles, with arrows turning both ways around it."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T20:00:00Z
@@ -106,9 +109,9 @@ by browser or IP, and every page tells search engines which versions exist.
 AI agents, following a written guide, `i18n/TRANSLATING.md`. It sets the voice per language (`du`
 in German, `vous` in French, です/ます in Japanese), a glossary so one thing has one name on every
 screen, and the rule to translate the situation, not the words. A second agent reads each new
-translation back into English and compares the meaning, and I check the Russian myself. It is not
-a professional translation agency, and I won't pretend it is. It is far better than a screen
-nobody can read.
+translation back into English and compares the meaning, and I fix any wording that reads badly.
+It is not a professional translation agency, and I won't pretend it is. It is far better than a
+screen nobody can read.
 
 ## Adding a tenth language
 

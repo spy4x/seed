@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
-import { Head } from "fresh/runtime"
+import { Head } from "@spy4x/preact-server"
 import type { PublicContactLink } from "@domain/contact-links"
 import type { Language } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
@@ -87,15 +87,18 @@ export function ogImageAlt(key: OgImageKey): string {
 export const OG_IMAGE_SIZE = { width: 1200, height: 630 } as const
 
 /**
- * The SPA's sign-in and sign-up pages, and `/try`, which starts a guest account (#224): the
- * website has no session, the product signs people in. A link to `try` carries `rel="nofollow"`
+ * The SPA's sign-in and sign-up pages, and `/try`, which starts a guest account: the
+ * website has no session, the product signs people in. `/try` is the demo's when `DEMO_ORIGIN`
+ * puts the demo on a host of its own. A link to `try` carries `rel="nofollow"`
  * ({@link TRY_REL}), and the app's `robots.txt` keeps crawlers off it.
  */
-export function spaLinks(spaOrigin: string): { signIn: string; signUp: string; try: string } {
+export function spaLinks(
+  { spaOrigin, demoOrigin = spaOrigin }: Pick<State, "spaOrigin" | "demoOrigin">,
+): { signIn: string; signUp: string; try: string } {
   return {
     signIn: `${spaOrigin}${SCREEN_PATHS.signIn}`,
     signUp: `${spaOrigin}${SCREEN_PATHS.signUp}`,
-    try: `${spaOrigin}/try`,
+    try: `${demoOrigin}/try`,
   }
 }
 
@@ -159,7 +162,7 @@ export function softwareJsonLd(origin: string, extra: Record<string, unknown> = 
     license: `https://opensource.org/licenses/MIT`,
     codeRepository: REPOSITORY_URL,
     programmingLanguage: `TypeScript`,
-    runtimePlatform: `Deno`,
+    runtimePlatform: [`Deno`, `Node.js`, `Bun`],
     author: { "@id": PERSON_JSON_LD["@id"] },
     // Only Seed itself is offered. The demo's plans are an example and are not sold.
     offers: { "@type": `Offer`, price: 0, priceCurrency: `USD` },
@@ -206,10 +209,10 @@ export interface SitePageHead {
   /** Which Open Graph image the page shares with. Defaults to the home page's. */
   og?: OgImageKey
   /**
-   * An image of the page's own, such as a blog post's cover, shared instead of {@link og}. Its size
-   * is not known, so none is stated.
+   * An image of the page's own, such as a blog post's card or cover, shared instead of {@link og}.
+   * Its size is stated only when given.
    */
-  image?: { url: string; alt: string }
+  image?: { url: string; alt: string; width?: number; height?: number }
   /** The Open Graph type: `article` for a blog post. Defaults to `website`. */
   ogType?: `website` | `article`
   /** Structured data about the page, such as a FAQ or the software, for its JSON-LD graph. */
@@ -259,7 +262,13 @@ export interface SiteFrameProps {
    */
   state: Pick<
     State,
-    "webAppOrigin" | "spaOrigin" | "newsletter" | "blog" | "blogLanguages" | "contactLinks"
+    | "webAppOrigin"
+    | "spaOrigin"
+    | "demoOrigin"
+    | "newsletter"
+    | "blog"
+    | "blogLanguages"
+    | "contactLinks"
   >
   /**
    * The page's path on this website in the default language, such as `/pricing`. The frame puts
@@ -279,6 +288,7 @@ export interface SiteFrameProps {
 /** The header's links, in display order, by catalog key. The Blog link joins them once a post is live. */
 export const NAV_LINKS = [
   { label: `SiteNav.features`, href: `/features` },
+  { label: `SiteNav.docs`, href: DOCS_PATH },
   { label: `SiteNav.blog`, href: BLOG_PATH },
   { label: `SiteNav.compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
   { label: `SiteNav.pricing`, href: `/pricing` },
@@ -303,13 +313,13 @@ export function SiteFrame(
   { state, path, head, footerNewsletter = true, children }: SiteFrameProps,
 ): JSX.Element {
   const { t, language, href } = useSite()
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   const og = head.og ?? `home`
   const blog = state.blog === true
   const origin = state.webAppOrigin
   const navLinks = blog ? NAV_LINKS : NAV_LINKS.filter((link) => link.href !== BLOG_PATH)
   // This page in another language: its translated version, or where the page says to go instead;
-  // the home page in place of another language's blog index while it has no posts (#530).
+  // the home page in place of another language's blog index while it has no posts.
   const languageHref = (tag: string) => {
     const target = isSiteLanguage(tag) ? tag : DEFAULT_LANGUAGE
     const version = head.alternates?.find(({ language }) => language === target)
@@ -327,8 +337,8 @@ export function SiteFrame(
           ogType={head.ogType}
           ogImage={head.image?.url ?? `${origin}/og/${og}.png`}
           imageAlt={head.image?.alt ?? ogImageAlt(og)}
-          imageWidth={head.image ? undefined : OG_IMAGE_SIZE.width}
-          imageHeight={head.image ? undefined : OG_IMAGE_SIZE.height}
+          imageWidth={head.image ? head.image.width : OG_IMAGE_SIZE.width}
+          imageHeight={head.image ? head.image.height : OG_IMAGE_SIZE.height}
           siteName={SITE_NAME}
           locale={ogLocale(language)}
           noindex={head.noindex}

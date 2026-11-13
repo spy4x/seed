@@ -1,5 +1,5 @@
 /**
- * The operator area's Jobs list and one job's page (#394), driven in a browser DOM (happy-dom):
+ * The operator area's Jobs list and one job's page, driven in a browser DOM (happy-dom):
  * the search and state chips, which actions each run offers, the confirmations a mail job asks
  * for, and where focus goes once an action went through.
  */
@@ -383,6 +383,23 @@ describe("admin job page", () => {
     const due = find(`[data-e2e="admin-job-facts"] time[datetime="2030-03-04T03:00:00.000Z"]`)
     expect(due.textContent).toMatch(/^in \d+ years?$/)
     expect(due.getAttribute("title")).toContain("2030")
+  })
+
+  it("shows no due time on a finished run, and keeps it on one still to run", async () => {
+    const labels = () =>
+      [...document.querySelectorAll(`[data-e2e="admin-job-facts"] dt`)].map((dt) => dt.textContent)
+    const finished = [AdminJobState.Done, AdminJobState.Failed, AdminJobState.Cancelled]
+    const unfinished = [
+      AdminJobState.Scheduled,
+      AdminJobState.Due,
+      AdminJobState.Running,
+      AdminJobState.Retrying,
+    ]
+    for (const state of [...finished, ...unfinished]) {
+      await mount(jobPage({ job: { ...failedJob, state } }).node)
+      expect({ state, due: labels().includes("Due at") })
+        .toEqual({ state, due: unfinished.includes(state) })
+    }
   })
 
   it("says the UTC clock time a waiting run was due at when asked to run it now", async () => {

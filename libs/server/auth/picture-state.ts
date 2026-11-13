@@ -3,8 +3,8 @@ import { type } from "arktype"
 import { announceJson, listenJson } from "@spy4x/server/db/notify"
 
 /**
- * The Postgres channel the worker announces a person's picture on once it is ready or refused
- * (#464). Sent inside the job's transaction, so it arrives only after that commits. The API
+ * The Postgres channel the worker announces a person's picture on once it is ready or refused.
+ * Sent inside the job's transaction, so it arrives only after that commits. The API
  * listens and sends the person's open pages the hint to read their profile again.
  */
 export const PICTURE_STATE_CHANNEL = `user_picture`

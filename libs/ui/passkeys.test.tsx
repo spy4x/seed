@@ -1,5 +1,5 @@
 /**
- * Passkeys (#222) on the screens, driven in a browser DOM (happy-dom): the rows and the "Add a
+ * Passkeys on the screens, driven in a browser DOM (happy-dom): the rows and the "Add a
  * passkey" flow of the sign-in methods card, the passkey button on the sign-in page, and the
  * passkey proof of an account without a password. What is offered, what asks first, what the app
  * receives and where focus goes.

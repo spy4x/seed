@@ -17,7 +17,7 @@ import { GUEST_PATHS } from "./guest-screens.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
-/** The Profile's parts for a guest account (#224): what it is, its missing ways in, deleting it. */
+/** The Profile's parts for a guest account: what it is, its missing ways in, deleting it. */
 
 /** The first row of the Account group for a guest; a full account shows none. */
 export function GuestAccountRow({ navigate }: { navigate?: Navigate }): JSX.Element {
@@ -172,7 +172,7 @@ export function GuestAccountDelete(
   )
 }
 
-/** The catalog keys of each refusal's title and text (#224); `other` for the rest. */
+/** The catalog keys of each refusal's title and text; `other` for the rest. */
 export const GUEST_REFUSALS: Record<GuestLimitedAction | "other", { title: string; text: string }> =
   {
     invite: { title: `GuestProfile.inviteTitle`, text: `GuestProfile.inviteText` },

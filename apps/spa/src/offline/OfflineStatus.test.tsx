@@ -197,7 +197,7 @@ describe("OfflineStatus", () => {
     }
   })
 
-  it("keeps a section gap between itself and the page header under it", async () => {
+  it("brings no margin of its own, so the page's gap spaces it under the page header", async () => {
     const storage = createMemoryStorage()
     await storage.of(7).tagsQueue.putEntry({
       key: "tag-key",
@@ -212,7 +212,8 @@ describe("OfflineStatus", () => {
 
     await mountStrip(storage)
 
-    expect(root!.querySelector("[data-e2e=offline-status]")!.classList.contains("mb-8")).toBe(true)
+    const classes = [...root!.querySelector("[data-e2e=offline-status]")!.classList]
+    expect(classes.filter((name) => /^-?m[trblxy]?-/.test(name))).toEqual([])
   })
 
   it("tells the person a tag was taken off their notes, until they dismiss it", async () => {
@@ -221,7 +222,7 @@ describe("OfflineStatus", () => {
       layer.notices.value = [{ key: `OfflineStatus.tagTakenOff`, values: { count: 2 } }]
     })
     expect(root!.querySelector("[data-e2e=sync-notice]")?.textContent).toContain(
-      "A tag you created offline couldn't be saved, so we removed it from 2 notes.",
+      "A tag you created offline could not be saved, so we removed it from 2 notes.",
     )
 
     await act(() => {
@@ -276,7 +277,7 @@ describe("OfflineStatus", () => {
     }
   }
 
-  it("says the server's version is unknown, not that the note is gone, for a refused edit", async () => {
+  it("says in muted text that the server's version is unknown, not that the note is gone, for a refused edit", async () => {
     const storage = createMemoryStorage()
     await storage.of(7).queue.putEntry(
       noteConflict({ reason: "rejected", message: "Your role no longer allows edits." }),
@@ -284,9 +285,9 @@ describe("OfflineStatus", () => {
 
     await mountStrip(storage)
 
-    expect(root!.querySelector("[data-e2e=conflict-theirs]")?.textContent).toBe(
-      "The server's version isn't available.",
-    )
+    const theirs = root!.querySelector("[data-e2e=conflict-theirs]")
+    expect(theirs?.textContent).toBe("Not available right now.")
+    expect(theirs?.classList.contains("text-muted")).toBe(true)
   })
 
   it("says the note is no longer in this group when the server deleted it", async () => {
@@ -297,9 +298,60 @@ describe("OfflineStatus", () => {
 
     await mountStrip(storage)
 
-    expect(root!.querySelector("[data-e2e=conflict-theirs]")?.textContent).toBe(
-      "The note is no longer in this group.",
-    )
+    const theirs = root!.querySelector("[data-e2e=conflict-theirs]")
+    expect(theirs?.textContent).toBe("The note is no longer in this group.")
+    expect(theirs?.classList.contains("text-muted")).toBe(false)
+  })
+
+  /** The labels of the chooser's buttons for the one conflict shown, "mine" first. */
+  const choices = () =>
+    [...root!.querySelectorAll("[data-conflict-choice]")].map((button) => button.textContent)
+
+  it("offers Discard mine and a muted not-available line for a version conflict without a server copy", async () => {
+    const storage = createMemoryStorage()
+    // As an entry saved by an older version can hold it: the reason, and no server copy.
+    await storage.of(7).tagsQueue.putEntry({
+      ...TAG_CONFLICT,
+      conflict: { reason: "version", message: `TagSync.version`, server: null },
+    })
+
+    await mountStrip(storage)
+
+    expect(choices()).toEqual(["Discard mine"])
+    const theirs = root!.querySelector("[data-e2e=conflict-theirs]")
+    expect(theirs?.textContent).toBe("Not available right now.")
+    expect(theirs?.classList.contains("text-muted")).toBe(true)
+  })
+
+  it("offers Keep mine and Use the server's, and shows the server copy unmuted, when there is one", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).tagsQueue.putEntry({
+      ...TAG_CONFLICT,
+      conflict: { reason: "version", message: `TagSync.version`, server: SERVER_TAG },
+    })
+
+    await mountStrip(storage)
+
+    expect(choices()).toEqual(["Keep mine", "Use the server's"])
+    const theirs = root!.querySelector("[data-e2e=conflict-theirs]")
+    expect(theirs?.textContent).toBe("Theirs (Blue)")
+    expect(theirs?.classList.contains("text-muted")).toBe(false)
+  })
+
+  it("draws Copy my text with the look and size of the chooser's button, 44 px tall on a phone", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).tagsQueue.putEntry({
+      ...TAG_CONFLICT,
+      conflict: { reason: "version", message: `TagSync.version`, server: SERVER_TAG },
+    })
+
+    await mountStrip(storage)
+
+    const copy = root!.querySelector("[data-e2e=conflict-copy]")!
+    const chooser = root!.querySelector("[data-conflict-choice=theirs]")!
+    expect(copy.textContent).toBe("Copy my text")
+    expect([...chooser.classList].filter((name) => !copy.classList.contains(name))).toEqual([])
+    expect(copy.classList.contains("max-sm:min-h-11")).toBe(true)
   })
 
   it("says in the person's language that a tag was taken off notes, and dismisses it", async () => {

@@ -1,4 +1,4 @@
-import { createDefine } from "fresh"
+import { createDefine } from "@spy4x/preact-server"
 import type { PublicContactLink } from "@domain/contact-links"
 import type { Language } from "@domain/identity"
 import type { Api } from "./api.ts"
@@ -19,6 +19,8 @@ export interface State {
   spaOrigin: string
   /** The admin app's origin while the public demo is on, as `MpaConfig.demoAdminOrigin`. */
   demoAdminOrigin?: string
+  /** The origin of a demo on its own host, as `MpaConfig.demoOrigin`: the try links go there. */
+  demoOrigin?: string
   /** Whether the API takes newsletter subscriptions; `false` hides every newsletter form. */
   newsletter: boolean
   /**
@@ -28,7 +30,7 @@ export interface State {
   blog?: boolean
   /**
    * The languages with a live post (`blogLinkMiddleware`): the language links never send a reader
-   * to the blog of a language outside it, which would be empty (#530). Missing counts as none.
+   * to the blog of a language outside it, which would be empty. Missing counts as none.
    */
   blogLanguages?: ReadonlySet<Language>
   /**

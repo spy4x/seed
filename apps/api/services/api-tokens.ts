@@ -33,7 +33,7 @@ export interface ApiTokensOptions {
    */
   checkPassword: (tx: AppDbBase, userId: number, password: string) => Promise<boolean | null>
   /**
-   * The sign-in's count of wrong passwords per account (#406, `SignIn.countPasswordCheck`): runs
+   * The sign-in's count of wrong passwords per account (`SignIn.countPasswordCheck`): runs
    * `check` and counts a `false`, and throws `PasswordLockedError` without running it while the
    * account is locked.
    */
@@ -134,7 +134,7 @@ export function createApiTokens(
       const { secret, hash } = await mintApiToken(key)
       const run = () =>
         db.begin(async (tx) => {
-          // The password is checked under the lock a password change and a reset take (#293): this
+          // The password is checked under the lock a password change and a reset take: this
           // create either commits before their revoke runs, or reads the new password and is
           // refused. The connection is held for one verify.
           await tx.lockUser(userId)
@@ -157,7 +157,7 @@ export function createApiTokens(
           }
           return result
         })
-      // Counted around the transaction, which holds its connection (#406). Only a wrong password
+      // Counted around the transaction, which holds its connection. Only a wrong password
       // is a guess; an account with none has nothing to guess.
       const held: { outcome?: Awaited<ReturnType<typeof run>> } = {}
       await countPasswordCheck(userId, async () => {

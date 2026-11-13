@@ -2,6 +2,10 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 
 export default {
   "AppShell.attachFiles": "Attach files to this note",
+  "AppShell.copyNoteLink": "Copy link to this note",
+  "AppShell.deleteNote": "Delete this note",
+  "AppShell.duplicateNote": "Duplicate this note",
+  "AppShell.moveNote": "Move this note to another group",
   "AttachmentMessages.load": "Could not load the files",
   "AttachmentMessages.type":
     "{name} can't be attached. Only JPEG, PNG, WebP and GIF images and PDF files are allowed.",
@@ -55,6 +59,9 @@ export default {
     "<who>{who}</who> renamed the group from “<value>{from}</value>” to “<value>{to}</value>”",
   "GroupActivity.detailsUpdated":
     "<who>{who}</who> changed the group's description, colour or emoji",
+  "GroupActivity.timeZoneChanged":
+    "<who>{who}</who> changed the time zone from <value>{from}</value> to <value>{to}</value>",
+  "GroupActivity.timeZoneChangedPlain": "<who>{who}</who> changed the time zone",
   "GroupActivity.deleted": "<who>{who}</who> deleted the group",
   "GroupActivity.restored": "<who>{who}</who> restored the group",
   "GroupActivity.roleChanged": "<who>{who}</who> changed the role of <target>{target}</target>",
@@ -190,7 +197,7 @@ export default {
   "GroupEditor.currentGroup": "your current group",
   "GroupEditor.invite": "Invite",
   "GroupEditor.exportRetry": "Try again",
-  "GroupEditor.exportFailed": "We couldn't prepare the file. Nothing in your group changed.",
+  "GroupEditor.exportFailed": "We could not prepare the file. Nothing in your group changed.",
   "GroupEditor.transferTitle": 'Transfer "{name}"',
   "GroupEditor.moveAllTitle": 'Move all data from "{name}"',
   "GroupEditor.close": "Close",
@@ -235,6 +242,10 @@ export default {
       "New groups start on the free plan. Your {count}-day free trial goes to the first group you move to a paid plan.",
   },
   "GroupEditor.readOnly": "Only admins and the owner can change this group's details.",
+  "GroupEditor.timeZoneHint": "Days and months start at midnight here, for everyone in the group.",
+  "GroupEditor.timeZoneInvalid": "We don't know this time zone. Pick another from the list.",
+  "GroupEditor.timeZoneChangedElsewhere":
+    "Someone else changed this to {zone} while you were editing. Save to use yours, or Discard.",
   "GroupEditor.nameRequired": "Enter a name.",
   "GroupEditor.nameInvalid":
     "Use at most 100 characters, with no line breaks or hidden characters.",
@@ -275,7 +286,7 @@ export default {
   "GroupImport.checking": "Checking the file…",
   "GroupImport.contains": "Contains: {contents}.",
   "GroupImport.refused": "This file can't be imported. Nothing was saved.",
-  "GroupImport.unchecked": "We couldn't check the file.",
+  "GroupImport.unchecked": "We could not check the file.",
   "GroupImport.title": "Import a group",
   "GroupImport.back": "Back to groups",
   "GroupImport.intro":
@@ -313,7 +324,7 @@ export default {
   "GroupInvitations.copyNowMailed":
     "Copy this link now. You won't see it again. We also sent it by email.",
   "GroupInvitations.copyNowMailFailed":
-    "Copy this link now. You won't see it again. We couldn't send the email, so share the link yourself.",
+    "Copy this link now. You won't see it again. We could not send the email, so share the link yourself.",
   "GroupInvitations.copyLink": "Copy invitation link",
   "GroupInvitations.linkCopied": "Link copied",
   "GroupInvitations.done": "Done",
@@ -364,7 +375,7 @@ export default {
   "GroupInvitations.verifyEmail": "Verify email",
   "GroupInvitations.notForYou":
     "This invitation was sent to a different email. If it's yours, confirm it in your <link>profile</link> first, or sign in with the account that uses it.",
-  "GroupInvitations.somethingWrong": "Something went wrong. Try again.",
+  "GroupInvitations.somethingWrong": "Could not complete the invitation request. Try again.",
   "GroupInvitations.unreachable": "Can't reach the server. Try again.",
   "GroupMembers.unnamed": "Unnamed member",
   "GroupMembers.title": "Members",
@@ -432,7 +443,7 @@ export default {
   "GroupTransfer.failed": "Could not transfer the group",
   "GroupTransfer.unreachable": "Can't reach the server. Try again.",
   "GroupTransfer.tooManyAttempts": "Too many attempts. Wait a few minutes, then try again.",
-  "GroupTransfer.somethingWrong": "Something went wrong. Try again.",
+  "GroupTransfer.somethingWrong": "Could not transfer ownership. Try again.",
   "Groups.title": "Groups",
   "Groups.new": "New group",
   "Groups.import": "Import a group…",
@@ -487,7 +498,6 @@ export default {
   "InvitationNew.discardLeave": "Discard changes",
   "InvitationNew.discardStay": "Keep editing",
   "GroupBillingPanel.planFree": "Free",
-  "GroupBillingPanel.planPro": "Pro",
   "GroupBillingPanel.paymentFailed": {
     "one":
       "A payment failed. To keep {plan}, update your card with Change card within {count} day, by {date}.",
@@ -497,15 +507,14 @@ export default {
   "GroupBillingPanel.paymentFailedFree":
     "A payment failed, so the group moved to the free plan. Update your card with Change card to get {plan} back.",
   "GroupBillingPanel.offline": "Can't reach the server. Try again.",
-  "GroupBillingPanel.unreadable": "Couldn't load the plan.",
+  "GroupBillingPanel.unreadable": "Could not load the plan",
   "GroupBillingPanel.unsafePage": "The payment provider sent back an address this app won't open.",
   "GroupBillingPanel.checkoutUnreachable":
     "Could not open Stripe's checkout. Check your connection and try again.",
   "GroupBillingPanel.portalUnreachable":
     "Could not open Stripe's billing page. Check your connection and try again.",
   "GroupBillingPanel.title": "Billing",
-  "GroupBillingPanel.description":
-    "What <group>{group}</group> pays each month. Stripe handles the billing.",
+  "GroupBillingPanel.description": "What <group>{group}</group> pays. Stripe handles the billing.",
   "GroupBillingPanel.loading": "Loading the plan",
   "GroupBillingPanel.statusTrial": "Trial",
   "GroupBillingPanel.statusRenews": "Renews on {date}",
@@ -549,7 +558,7 @@ export default {
   "GroupBillingPanel.confirming":
     "Stripe is confirming your plan. This page will update on its own.",
   "GroupBillingPanel.paymentMethod": "Payment method",
-  "GroupBillingPanel.paymentMethodText": "The card Stripe charges each month.",
+  "GroupBillingPanel.paymentMethodText": "The card Stripe charges for this plan.",
   "GroupBillingPanel.changeCard": "Change card",
   "GroupBillingPanel.invoices": "Invoices",
   "GroupBillingPanel.invoicesText": "Every invoice and receipt, to read or download.",
@@ -558,6 +567,52 @@ export default {
   "GroupBillingPanel.cancelFree": "You won't be charged if you cancel before {date}.",
   "GroupBillingPanel.cancelKeep": "You keep {plan} until the period ends.",
   "GroupBillingPanel.cancelPlan": "Cancel plan",
+  "GroupBillingPanel.periodTitle": "Billing period",
+  "GroupBillingPanel.monthly": "Monthly",
+  "GroupBillingPanel.yearly": "Yearly",
+  "GroupBillingPanel.priceYear": "{plan} costs {price} per member a year.",
+  "GroupBillingPanel.priceForGroupYear": {
+    "one": "With {count} member, <group>{group}</group> would pay {total} a year.",
+    "other": "With {count} members, <group>{group}</group> would pay {total} a year.",
+  },
+  "GroupBillingPanel.saving": "{amount} less than paying monthly.",
+  "GroupBillingPanel.finePrintYear":
+    "Billed yearly per member. Cancel anytime and keep {plan} until the period ends.",
+  "GroupBillingPanel.trialThenYear":
+    "After that, <group>{group}</group> pays {total} a year unless you cancel.",
+  "GroupBillingPanel.seatsYear": {
+    "one": "{total} a year, for {count} member at {price} each, the owner included.",
+    "other": "{total} a year, for {count} members at {price} each, the owner included.",
+  },
+  "GroupBillingPanel.periodMonthly": "You pay monthly. Yearly costs {price} a year, {saving} less.",
+  "GroupBillingPanel.periodYearly": "You pay yearly. Monthly costs {price} a month.",
+  "GroupBillingPanel.periodHint": "Stripe shows what you pay today before you confirm.",
+  "GroupBillingPanel.switchYearly": "Switch to yearly",
+  "GroupBillingPanel.switchMonthly": "Switch to monthly",
+  "GroupBillingPanel.startHeading": "Start with <plan>{plan}</plan>",
+  "GroupBillingPanel.unitMonth": "a month",
+  "GroupBillingPanel.unitYear": "a year",
+  "GroupBillingPanel.unitMemberMonth": "per member a month",
+  "GroupBillingPanel.unitMemberYear": "per member a year",
+  "GroupBillingPanel.wholeGroup": {
+    "one": "For the whole group, up to {count} member.",
+    "other": "For the whole group, up to {count} members.",
+  },
+  "GroupBillingPanel.wholeGroupNoCap": "For the whole group.",
+  "GroupBillingPanel.continueToPayment": "Continue to payment",
+  "GroupBillingPanel.priceFlat": "{plan} costs {price} a month for the whole group.",
+  "GroupBillingPanel.priceFlatYear": "{plan} costs {price} a year for the whole group.",
+  "GroupBillingPanel.finePrintFlat":
+    "Billed monthly. Cancel anytime and keep {plan} until the period ends.",
+  "GroupBillingPanel.finePrintFlatYear":
+    "Billed yearly. Cancel anytime and keep {plan} until the period ends.",
+  "GroupBillingPanel.refund": {
+    "one": "Changed your mind? Ask within {count} day for a full refund.",
+    "other": "Changed your mind? Ask within {count} days for a full refund.",
+  },
+  "GroupBillingPanel.joinInstead":
+    "Joining someone else's group? Ask its owner for an invitation link instead of paying.",
+  "HomeView.opening": "Opening the app…",
   "GroupBillingView.trialStarted": {
     "one": "Your {count}-day {plan} trial has started",
     "other": "Your {count}-day {plan} trial has started",
@@ -565,10 +620,10 @@ export default {
   "GroupBillingView.trialUntil": "“{group}” is on {plan} until {date}.",
   "GroupBillingView.paid": "You’re on {plan}",
   "GroupBillingView.paidText": "Stripe confirmed the payment for “{group}”.",
-  "NotificationsScreen.loadFailed": "Could not load the notifications.",
-  "NotificationsScreen.loadMoreFailed": "Could not load more notifications.",
-  "NotificationsScreen.readFailed": "Could not mark it as read.",
-  "NotificationsScreen.readAllFailed": "Could not mark them as read.",
+  "NotificationsScreen.loadFailed": "Could not load the notifications",
+  "NotificationsScreen.loadMoreFailed": "Could not load more notifications",
+  "NotificationsScreen.readFailed": "Could not mark it as read",
+  "NotificationsScreen.readAllFailed": "Could not mark them as read",
   "NotificationsScreen.invitedViewer":
     "You were invited to join “<group>{group}</group>” as a viewer.",
   "NotificationsScreen.invitedEditor":
@@ -611,7 +666,7 @@ export default {
   "NotificationsScreen.emptyText": "Invitations and changes to your groups show up here.",
   "NotificationsScreen.loadMore": "Load more",
   "NotificationsScreen.unreadMark": "Unread:",
-  "OnboardingCard.failed": "Couldn't save that. Try again.",
+  "OnboardingCard.failed": "Could not save that. Try again.",
   "OnboardingCard.emailTitle": "Verify your email",
   "OnboardingCard.emailText":
     "Enter the code we sent you, so you can reset your password if you ever forget it.",
@@ -670,6 +725,8 @@ export default {
   "OverviewScreen.emptyGroup": "No notes in {group} yet",
   "OverviewScreen.emptyGroupText": "The overview fills in as people in the group add notes.",
   "OverviewScreen.newNote": "New note",
+  "OverviewScreen.choosePlanText": "Choose a plan to start adding.",
+  "OverviewScreen.choosePlan": "Choose a plan",
   "OverviewScreen.allHidden": "All widgets are hidden",
   "OverviewScreen.allHiddenText": "Choose the ones you want to see.",
   "OverviewScreen.gridLabel": "Overview of {group}",
@@ -679,9 +736,10 @@ export default {
   "OverviewScreen.customRange": "Custom range",
   "OverviewScreen.rangeTooLong": "Choose a range of a year or less.",
   "OverviewScreen.asOf": "As of {time}",
+  "OverviewScreen.zoneNote": "{city} time",
   "OverviewScreen.hide": "Hide widget",
   "OverviewView.opening": "Opening the overview…",
-  "OverviewView.saveFailed": "We couldn't save your layout. Check your connection and try again.",
+  "OverviewView.saveFailed": "We could not save your layout. Check your connection and try again.",
   "OverviewView.undo": "Undo",
   "OverviewView.widget": "Widget",
   "OverviewView.hidden": "{widget} hidden.",
@@ -715,6 +773,9 @@ export default {
     "On this group's plan, you can lower a member's role or remove them, but not promote them.",
   "PlanRefusalNotice.openBilling": "Open the Billing tab",
   "PlanRefusalNotice.askOwner": "Ask the group's owner to upgrade the plan.",
+  "PlanRefusalNotice.noPlanTitle": "{group} has no paid plan",
+  "PlanRefusalNotice.noPlanTitleUnnamed": "This group has no paid plan",
+  "PlanRefusalNotice.noPlanText": "Choose a plan to start adding.",
   "GuestProfile.accountType": "Account type",
   "GuestProfile.guestAccount": "Guest account. Only this browser can open it.",
   "GuestProfile.methods": "Sign-in methods",
@@ -752,7 +813,7 @@ export default {
   "GuestScreens.tryTitle": "Try the app",
   "GuestScreens.opening": "Opening the app…",
   "GuestScreens.rateLimited": "Too many new accounts from your network",
-  "GuestScreens.failed": "Couldn't open the app",
+  "GuestScreens.failed": "Could not open the app",
   "GuestScreens.failedText": "Check your connection and try again.",
   "GuestScreens.tryAgain": "Try again",
   "GuestScreens.signedIn": "You're already signed in",
@@ -844,7 +905,7 @@ export default {
   "GuestScreens.signOutAnyway": "Sign out anyway",
   "GuestScreens.signOutText":
     "This account has no sign-in method, so you won't be able to sign back in. You'll lose everything in it.",
-  "GuestScreens.offline": "You're offline. Connect and try again.",
+  "GuestScreens.offline": "Can't reach the server. Try again.",
   "GuestScreens.providerFailed":
     "{provider} didn't finish. Your account wasn't changed. Try again or choose another method.",
   "GuestScreens.noPasskey": "No passkey was added. Your account is still a guest account.",
@@ -856,34 +917,34 @@ export default {
   "OAuthNotice.busy": "Too many attempts. Wait a minute, then try again.",
   "OAuthNotice.kept": "Sign-in method added. You can now sign in with it on any device.",
   "OAuthNotice.guestTaken": "That sign-in method belongs to another account.",
-  "PasswordResetScreen.forgotFailed": "Could not send the link",
+  "PasswordResetScreen.forgotFailed": "Could not send the code",
   "PasswordResetScreen.resetFailed": "Could not change the password",
-  "PasswordResetScreen.sent":
-    "If an account uses this email, we've sent it a link to reset the password.",
+  "PasswordResetScreen.sentTitle": "Enter your reset code",
+  "PasswordResetScreen.sent": "If an account uses <email>{email}</email>, we sent it a code.",
   "PasswordResetScreen.forgotDescription": {
     "one":
-      "Enter the email you signed up with. We'll send you a link to choose a new password. It works once, for {count} minute.",
+      "Enter the email you signed up with. We'll send you a code to choose a new password. It works for {count} minute.",
     "other":
-      "Enter the email you signed up with. We'll send you a link to choose a new password. It works once, for {count} minutes.",
+      "Enter the email you signed up with. We'll send you a code to choose a new password. It works for {count} minutes.",
   },
   "PasswordResetScreen.remembered": "Remembered it? <link>Back to sign in</link>",
-  "PasswordResetScreen.send": "Send the link",
+  "PasswordResetScreen.send": "Send a code",
   "PasswordResetScreen.doneTitle": "Password changed",
   "PasswordResetScreen.done": "You've been signed out everywhere. Sign in with your new password.",
   "PasswordResetScreen.signIn": "Sign in",
-  "PasswordResetScreen.askNew": "Ask for a new link",
   "PasswordResetScreen.chooseTitle": "Choose a new password",
   "PasswordResetScreen.choose":
     "For <email>{email}</email>. Saving it signs you out on every device.",
-  "PasswordResetScreen.expired": "Link expired? <link>Ask for a new one</link>",
+  "PasswordResetScreen.expired": "Took too long? <link>Ask for a new code</link>",
+  "PasswordResetScreen.tookTooLong": "That took too long. Ask for a new code.",
   "PasswordResetScreen.newPassword": "New password",
   "PasswordResetScreen.newPasswordHint": "{min} to {max} characters.",
   "PasswordResetScreen.saving": "Saving…",
   "PasswordResetScreen.save": "Save new password",
   "MoveNote.title": "Move to group",
   "MoveNote.cancel": "Cancel",
-  "MoveNote.question":
-    'Choose where to move "<title>{title}</title>". Everyone in that group will see it.',
+  "MoveNote.hint": "Everyone in the group you choose will see it.",
+  "MoveNote.move": "Move",
   "NewNote.title": "New note",
   "NewNote.close": "Close",
   "NewNote.titleLabel": "Title",
@@ -939,7 +1000,7 @@ export default {
   "NoteEditor.switchTo": "Switch to <group>{group}</group>",
   "NoteEditor.notFoundTitle": "This note does not exist.",
   "NoteEditor.notFound":
-    "We couldn't find this note in <group>{group}</group>. It may have been deleted, or it's in another of your groups: switch to that group and open it from there.",
+    "We could not find this note in <group>{group}</group>. It may have been deleted, or it's in another of your groups: switch to that group and open it from there.",
   "NoteEditor.loading": "Loading the note…",
   "NoteEditor.createdBy": "Created by <name>{name}</name>, <date>{date}</date>",
   "NoteEditor.created": "Created, <date>{date}</date>",
@@ -963,6 +1024,8 @@ export default {
   "NoteEditor.tags": "Tags",
   "NoteEditorView.createdTitle": "Note added",
   "NoteEditorView.created": '"{title}" was created.',
+  "NoteEditorView.copyTitle": "{title} (copy)",
+  "NoteEditorView.duplicateFailed": "Could not duplicate the note",
   "NoteEditorView.savedTitle": "Note saved",
   "NoteEditorView.saved": '"{title}" was saved.',
   "NoteEditorView.unsaved": "You have unsaved changes. If you leave now, you'll lose them.",
@@ -1032,7 +1095,7 @@ export default {
     "other": "{count} selected",
   },
   "Notes.cancelSelect": "Cancel",
-  "Notes.moveTo": "Move to group",
+  "Notes.moveTo": "To group",
   "Notes.moving": "Moving…",
   "Notes.move": "Move",
   "Notes.updated": "Updated <date>{date}</date>",
@@ -1050,7 +1113,6 @@ export default {
   "NotesFilter.allTags": "All of these tags",
   "NotesFilter.author": "Author",
   "NotesFilter.anyone": "Anyone",
-  "NotesFilter.you": "You",
   "NotesFilter.search": "Search notes",
   "NotesFilter.mine": "Created by me",
   "NotesFilter.sortUpdated": "Last updated",
@@ -1112,7 +1174,7 @@ export default {
   "NoteWidgets.seriesDay": "Day",
   "OfflineStatus.copied": "Copied.",
   "OfflineStatus.copy": "Copy my text",
-  "OfflineStatus.copyFailed": "Couldn't copy. Select the text above and copy it yourself.",
+  "OfflineStatus.copyFailed": "Could not copy. Select the text above and copy it yourself.",
   "OfflineStatus.deletedNote": "Deleted note",
   "OfflineStatus.deletedTag": "Deleted tag",
   "OfflineStatus.dismiss": "Dismiss",
@@ -1128,12 +1190,12 @@ export default {
   "OfflineStatus.tagNoName": "Tag without a name",
   "OfflineStatus.tagTakenOff": {
     "one":
-      "A tag you created offline couldn't be saved, so we removed it from {count} note. The note is saved without it.",
+      "A tag you created offline could not be saved, so we removed it from {count} note. The note is saved without it.",
     "other":
-      "A tag you created offline couldn't be saved, so we removed it from {count} notes. The notes are saved without it.",
+      "A tag you created offline could not be saved, so we removed it from {count} notes. The notes are saved without it.",
   },
   "OfflineStatus.theirs": "Server's version",
-  "OfflineStatus.theirsUnknown": "The server's version isn't available.",
+  "OfflineStatus.theirsUnknown": "Not available right now.",
   "OfflineStatus.untitledNote": "Untitled note",
   "OfflineStatus.useServers": "Use the server's",
   "OfflineStatus.youDeletedNote": "You deleted this note.",
@@ -1176,6 +1238,8 @@ export default {
   "Preferences.updatedElsewhere": "Preferences updated from another device.",
   "SeatPriceConfirm.hint":
     "Each new member adds {price} a month, so one more member takes the group from {now} to {next}. The difference for the rest of this period is billed on the next invoice.",
+  "SeatPriceConfirm.hintYear":
+    "Each new member adds {price} a year, so one more member takes the group from {now} to {next}. The difference for the rest of this period is billed on the next invoice.",
   "SeatPriceConfirm.accept": "I accept the higher price for each person who joins",
   "ProfileAccount.name": "Name",
   "ProfileAccount.notSet": "Not set",
@@ -1202,9 +1266,9 @@ export default {
   "ProfileExport.downloadZip": "Download ZIP",
   "ProfileExport.expired": "Your last file expired on <day></day>.",
   "ProfileExport.prepareNew": "Prepare a new file",
-  "ProfileExport.failed": "We couldn't prepare your file. Try again.",
+  "ProfileExport.failed": "We could not prepare your file. Try again.",
   "ProfileExport.label": "Your data",
-  "ProfileExport.network": "Couldn't request your file. Check your connection and try again.",
+  "ProfileExport.network": "Could not request your file. Check your connection and try again.",
   "ProfileExport.tooSoonToday": "You can request one file a day. Try again after {time} today.",
   "ProfileExport.tooSoonTomorrow":
     "You can request one file a day. Try again after {time} tomorrow.",
@@ -1228,7 +1292,7 @@ export default {
   "ProfilePicture.saved": "Profile picture saved.",
   "ProfilePicture.removed": "Profile picture removed.",
   "ProfilePicture.preparing": "Preparing your picture…",
-  "ProfilePicture.refused": "We couldn't use that picture. Choose another one.",
+  "ProfilePicture.refused": "We could not use that picture. Choose another one.",
   "ProfilePicture.label": "Profile picture",
   "ProfilePicture.rule": "JPEG, PNG, WebP or HEIC, up to {max}.",
   "ProfilePicture.changeHidden": "Change<hidden> profile picture</hidden>",
@@ -1328,9 +1392,10 @@ export default {
   "ProfileSecurity.turnOff": "Turn off",
   "ProfileTelegram.title": "Telegram",
   "ProfileTelegram.statusFailed":
-    "Couldn't load your Telegram link. Check your connection and try again.",
-  "ProfileTelegram.codeFailed": "Couldn't create a link code. Check your connection and try again.",
-  "ProfileTelegram.unlinkFailed": "Couldn't unlink Telegram. Check your connection and try again.",
+    "Could not load your Telegram link. Check your connection and try again.",
+  "ProfileTelegram.codeFailed":
+    "Could not create a link code. Check your connection and try again.",
+  "ProfileTelegram.unlinkFailed": "Could not unlink Telegram. Check your connection and try again.",
   "ProfileTelegram.theBot": "the bot",
   "ProfileTelegram.description":
     "Get your notifications in a chat with {bot}, and use its commands there.",
@@ -1391,7 +1456,7 @@ export default {
   "ProfileView.tokenRevoked": "Token revoked",
   "ProfileView.tokenRevokedBody": "That token no longer works.",
   "ProviderProof.passkey": "a passkey",
-  "ProviderProof.link": "a sign-in link",
+  "ProviderProof.link": "an email code",
   "ProviderProof.fresh": "You signed in with {methods} a moment ago, so you don't need a password.",
   "ProviderProof.needed": {
     "one":
@@ -1401,55 +1466,31 @@ export default {
   },
   "ProviderProof.passkeyAgain": "Sign in with a passkey again",
   "ProviderProof.providerAgain": "Sign in with {provider} again",
-  "SignInLinkScreen.sendFailed": "Could not send the link. Try again in a moment.",
-  "SignInLinkScreen.unreachable":
-    "Could not reach the server. Check your connection and press Continue again.",
-  "SignInLinkScreen.openFailed":
-    "Couldn't sign you in. Press Continue to try again, or ask for a new link.",
-  "SignInLinkScreen.title": "Sign in with a link",
-  "SignInLinkScreen.description":
-    "We'll email you a link that signs you in. No account with that email yet? The link creates one.",
-  "SignInLinkScreen.ratherPassword": "Prefer a password? <link>Back to sign in</link>",
-  "SignInLinkScreen.submit": "Email me a link",
-  "SignInLinkScreen.sent": {
-    "one": "We sent a sign-in link to <email>{email}</email>. It works once, for {count} minute.",
-    "other":
-      "We sent a sign-in link to <email>{email}</email>. It works once, for {count} minutes.",
-  },
-  "SignInLinkScreen.openHere": "Open it on this device to sign in here.",
-  "SignInLinkScreen.newLink": "Send a new link",
-  "SignInLinkScreen.waiting": {
-    "one": "Not there? Check your spam folder. You can send a new link in {count} second.",
-    "other": "Not there? Check your spam folder. You can send a new link in {count} seconds.",
-  },
-  "SignInLinkScreen.resent":
-    "A new link is on its way. Earlier links still work until one is used.",
-  "SignInLinkScreen.refusedTitle": "This link no longer works",
-  "SignInLinkScreen.refused": {
+  "SignInCodeScreen.sendFailed": "Could not send the code. Try again in a moment.",
+  "SignInCodeScreen.title": "Sign in with an email code",
+  "SignInCodeScreen.description":
+    "We'll email you a code to type here. No account with that email yet? The code creates one.",
+  "SignInCodeScreen.ratherPassword": "Prefer a password? <link>Back to sign in</link>",
+  "SignInCodeScreen.submit": "Email me a code",
+  "SignInCodeScreen.confirmTitle": "Confirm it's you",
+  "SignInCodeScreen.confirmDescription":
+    "We'll email a code to <email>{email}</email>. Type it on the next step to confirm it's you.",
+  "CodeStep.sent": "We sent a code to <email>{email}</email>.",
+  "CodeStep.invalid": "The code has 8 characters. Check for a missing one.",
+  "SignInCodeScreen.guest":
+    "You're using the app as a guest. Signing in saves what you made here under this email. If it already has an account, we'll ask you first.",
+  "CodeStep.deadTitle": "This code no longer works",
+  "CodeStep.dead": {
     "one":
-      "Sign-in links work once, for {count} minute. Ask for a new one and use the latest email.",
+      "Codes work once, for {count} minute, and only a few wrong tries are allowed. Send a new one and use the latest email.",
     "other":
-      "Sign-in links work once, for {count} minutes. Ask for a new one and use the latest email.",
+      "Codes work once, for {count} minutes, and only a few wrong tries are allowed. Send a new one and use the latest email.",
   },
-  "SignInLinkScreen.elsewhereTitle": "This link was requested in another browser",
-  "SignInLinkScreen.elsewhere":
-    "It didn't sign you in, and your guest account hasn't changed. Request a new link in this browser to sign in here.",
-  "SignInLinkScreen.incompleteTitle": "This link is incomplete",
-  "SignInLinkScreen.incomplete": "Open the link from the email again, or ask for a new one.",
-  "SignInLinkScreen.backToApp": "Back to the app",
-  "SignInLinkScreen.finishTitle": "Finish signing in",
-  "SignInLinkScreen.finish":
-    "Continue to sign in on this device. If the email is new, this creates your account.",
-  "SignInLinkScreen.signedInAs":
-    "You're signed in as <email>{email}</email>. Continuing signs you in to the link's account instead.",
-  "SignInLinkScreen.guest":
-    "You're using the app as a guest. If you requested this link in this browser, continuing saves this guest account under the link's email. If that email already has an account, we'll ask you first.",
-  "SignInLinkScreen.signingIn": "Signing in…",
-  "SignInLinkScreen.stay": "Stay signed in",
-  "SignInMethods.failed": "Couldn't change your sign-in methods",
+  "CodeStep.differentEmail": "Use a different email",
+  "SignInMethods.failed": "Could not change your sign-in methods",
   "SignInMethods.loadFailed":
-    "Couldn't load your sign-in methods. Check your connection and try again.",
-  "SignInMethods.renameFailed": "Couldn't save the name. Try again.",
+    "Could not load your sign-in methods. Check your connection and try again.",
+  "SignInMethods.renameFailed": "Could not save the name. Try again.",
   "SignInMethods.password": "Password",
   "SignInMethods.passkey": "Passkey",
   "SignInMethods.title": "Ways to sign in",
@@ -1490,22 +1531,16 @@ export default {
   "SignInMethods.usedHere": "Used on this device",
   "SignInMethods.onlyPasskey": "This is your only way to sign in, so you can't remove it.",
   "SignInMethods.onlyLinked": "This is your only way to sign in, so you can't unlink it.",
-  "SignInMethods.passkeyNotSaved": "Couldn't save the passkey. Try again.",
+  "SignInMethods.passkeyNotSaved": "Could not save the passkey. Try again.",
   "SignInMethods.passkeyOnDevice": "This device already has a passkey for your account.",
-  "SignUpCodeScreen.checkFailed": "Couldn't check the code",
-  "SignUpCodeScreen.offline": "You're offline. Connect and try again.",
+  "SignUpCodeScreen.checkFailed": "Could not check the code",
+  "SignUpCodeScreen.offline": "Can't reach the server. Try again.",
   "SignUpCodeScreen.title": "Check your inbox",
   "SignUpCodeScreen.loading": "Loading…",
-  "SignUpCodeScreen.sent": {
-    "one": "We sent a code to <email>{email}</email>. It works for {count} minute.",
-    "other": "We sent a code to <email>{email}</email>. It works for {count} minutes.",
-  },
-  "SignUpCodeScreen.wrongAddress": "Wrong email? <button>Use a different one</button>",
   "SignUpCodeScreen.code": "Code",
   "SignUpCodeScreen.checking": "Checking…",
   "SignUpCodeScreen.resend": "Send a new code",
-  "SignUpCodeScreen.resent": "A new code is on its way.",
-  "SignUpCodeScreen.resendFailed": "Couldn't send a new code",
+  "SignUpCodeScreen.resendFailed": "Could not send a new code",
   "SignUpCodeScreen.existsTitle": "You already have an account",
   "SignUpCodeScreen.exists":
     "<email>{email}</email> already has an account here. Nothing new was created.",
@@ -1520,7 +1555,7 @@ export default {
       "It took longer than {count} minutes, or the code was entered wrong too many times. Nothing was created.",
   },
   "SignUpCodeScreen.startAgain": "Start again",
-  "SignedInDevices.failed": "Couldn't sign that device out",
+  "SignedInDevices.failed": "Could not sign that device out",
   "SignedInDevices.savedTitle": "Saved copy of your devices",
   "SignedInDevices.savedBody":
     "Can't reach the server. Showing the list saved on this device: {time}. Devices signed in or out since then are missing.",
@@ -1545,21 +1580,26 @@ export default {
   "SignedInDevices.lastActive": "Last active <when></when>",
   "SignedInDevices.ip": "<label>IP address</label> <ip>{ip}</ip>",
   "Search.search": "Search",
-  "Search.placeholder": "Search notes and groups",
+  "Search.placeholder": "Search or run a command",
   "Search.close": "Close search",
   "Search.loading": "Searching…",
-  "Search.error": "Couldn't search. Change your search to try again.",
+  "Search.error": "Could not search. Change your search to try again.",
   "Search.tooShort": {
     "one": "Type at least {count} character to search notes.",
     "other": "Type at least {count} characters to search notes.",
   },
-  "Search.empty": "No notes or groups match “{query}”.",
+  "Search.empty": "Nothing matches “{query}”.",
   "Search.emptyOnDevice":
     "Nothing on this device matches “{query}”. Search again when you're back online.",
   "Search.notes": "Notes",
   "Search.notesOnDevice": "Notes on this device",
   "Search.groups": "Groups",
-  "Search.actions": "Actions",
+  "Search.create": "Create",
+  "Search.settings": "Settings",
+  "Search.account": "Account",
+  "Search.switchTo": "Switch to {group}",
+  "Search.installApp": "Install app",
+  "Search.needsConnection": "Needs a connection",
   "Search.untitled": "Untitled note",
   "Search.current": "Current",
   "Search.inGroup": "In {group}",
@@ -1571,7 +1611,6 @@ export default {
   "Search.openOverview": "Open overview",
   "Search.openNotifications": "Open notifications",
   "Search.openProfile": "Open profile",
-  "Search.profileDetail": "Name, email, password, two-factor sign-in",
   "Search.downloadData": "Download my data",
   "Search.downloadDetail": "A ZIP of your profile, groups and notes",
   "Search.changePicture": "Change profile picture",
@@ -1584,7 +1623,7 @@ export default {
   "Shortcuts.switchLabel": "Single-key shortcuts",
   "Shortcuts.inFields": "Shortcuts don't work while you type in a field.",
   "Shortcuts.off": "Single-key shortcuts are off on this device.",
-  "Shortcuts.search": "Search notes and groups",
+  "Shortcuts.search": "Search or run a command",
   "Shortcuts.newNoteRow": "New note",
   "Shortcuts.undo": "Undo deleting a note, while its message shows",
   "Shortcuts.notifications": "Notifications",
@@ -1688,9 +1727,9 @@ export default {
   },
   "TelegramBot.stale": {
     "one":
-      "This button no longer works. It was used already, a newer one replaced it, or it is older than {count} minute. To link this chat, make a new code in the app.",
+      "This button no longer works: it was used already, a newer one replaced it, it is older than {count} minute, the account's password was reset or changed, or the account was deleted or blocked. To link this chat, make a new code in the app.",
     "other":
-      "This button no longer works. It was used already, a newer one replaced it, or it is older than {count} minutes. To link this chat, make a new code in the app.",
+      "This button no longer works: it was used already, a newer one replaced it, it is older than {count} minutes, the account's password was reset or changed, or the account was deleted or blocked. To link this chat, make a new code in the app.",
   },
   "TelegramBot.privateOnly": "Send me that in a private chat.",
   "TelegramBot.codeSpent":
@@ -1753,7 +1792,7 @@ export default {
   "ApiTokenNewView.discardMessage": "You haven't created this token yet.",
   "ApiTokenNewView.discard": "Discard changes",
   "ApiTokenNewView.keepEditing": "Keep editing",
-  "ApiTokens.failed": "Something went wrong with your API tokens.",
+  "ApiTokens.failed": "Could not load or revoke your API tokens. Try again.",
   "ApiTokens.savedCopyTitle": "Saved copy of your API tokens",
   "ApiTokens.savedCopyBody":
     "Can't reach the server. Showing the list saved on this device: {time}. Tokens created or revoked since then are missing.",
@@ -1812,11 +1851,11 @@ export default {
   "AuthScreen.email": "Email",
   "AuthScreen.signInTitle": "Welcome back",
   "AuthScreen.signInDescription": "Sign in with your email or username.",
-  "AuthScreen.signInFailed": "Couldn't sign you in. Try again.",
+  "AuthScreen.signInFailed": "Could not sign you in. Try again.",
   "AuthScreen.signUpTitle": "Create your account",
   "AuthScreen.signUpDescription":
     "Just an email and a password. We'll send you a code to confirm your email.",
-  "AuthScreen.signUpFailed": "Couldn't create your account. Try again.",
+  "AuthScreen.signUpFailed": "Could not create your account. Try again.",
   "AuthScreen.codeTitle": "Enter your code",
   "AuthScreen.codeDescription":
     "Open your authenticator app and enter the six-digit code it shows.",
@@ -1824,7 +1863,9 @@ export default {
   "AuthScreen.forgotten": "Done. This browser won't remember how you signed in.",
   "AuthScreen.lastPassword": "Last time you signed in with your password<email> ({email})</email>.",
   "AuthScreen.lastPasskey": "Last time you signed in with a passkey<email> ({email})</email>.",
-  "AuthScreen.lastLink": "Last time you signed in with an email link<email> ({email})</email>.",
+  "AuthScreen.lastLink": "Last time you signed in with an email code<email> ({email})</email>.",
+  "AuthScreen.emailSignInCode": "Email me a sign-in code",
+  "AuthScreen.emailSignUpCode": "Email me a sign-up code",
   "AuthScreen.lastProvider": "Last time you signed in with {provider}<email> ({email})</email>.",
   "AuthScreen.forget": "Not you? Use another account",
   "AuthScreen.openProfile": "Open your profile",
@@ -1836,8 +1877,6 @@ export default {
   "AuthScreen.haveAccount": "Already have an account? <link>Sign in</link>",
   "AuthScreen.lostDevice": "Lost your device? <link>Back to sign in</link>",
   "AuthScreen.sending": "Sending…",
-  "AuthScreen.emailSignInLink": "Email me a sign-in link",
-  "AuthScreen.emailSignUpLink": "Email me a sign-up link",
   "AuthScreen.orCreate": "or create an account",
   "AuthScreen.createAccount": "Create account",
   "AuthScreen.continue": "Continue",
@@ -1847,7 +1886,7 @@ export default {
   "AuthScreen.waitingDevice": "Waiting for your device…",
   "AuthScreen.passkey": "Sign in with a passkey",
   "AuthScreen.continueWith": "Continue with {provider}",
-  "ConfirmSignUpScreen.failed": "Couldn't create your account",
+  "ConfirmSignUpScreen.failed": "Could not create your account",
   "ConfirmSignUpScreen.title": "Create a new account?",
   "ConfirmSignUpScreen.goneTitle": "Nothing to confirm",
   "ConfirmSignUpScreen.gone":
@@ -1862,10 +1901,10 @@ export default {
   "ConfirmSignUpScreen.back": "I already have an account. Back to sign in",
   "ConfirmSignUpScreen.creating": "Creating your account…",
   "ConfirmSignUpScreen.create": "Create a new account",
-  "EmailScreen.verifyFailed": "Couldn't check the code",
-  "EmailScreen.sendFailed": "Couldn't send a new code",
-  "EmailScreen.changeFailed": "Couldn't change your email",
-  "EmailScreen.loadFailed": "Couldn't load your email.",
+  "EmailScreen.verifyFailed": "Could not check the code",
+  "EmailScreen.sendFailed": "Could not send a new code",
+  "EmailScreen.changeFailed": "Could not change your email",
+  "EmailScreen.loadFailed": "Could not load your email",
   "EmailScreen.enterCode": "Enter the code",
   "EmailScreen.banner": "Confirm <email>{email}</email> with the code we send there.",
   "EmailScreen.tryAgain": "Try again",
@@ -1961,7 +2000,8 @@ export default {
   "Benchmark.noLargeTitle": "No large group yet",
   "Benchmark.noLargeBody": "Make one with the generator, then reload this page:",
   "Benchmark.copyCommand": "Copy command",
-  "Benchmark.noLargeFoot": "The sizes and how to remove the group again are in docs/capacity.md.",
+  "Benchmark.noLargeFoot":
+    "The sizes and how to remove the group again are in docs/large-group.md.",
   "Benchmark.lastStoppedTitle": "The last run stopped at {measure}",
   "Benchmark.lastStoppedBody":
     "The tab closed before the run finished, which usually means it ran out of memory or storage. Group: {group}, started {time}.",
@@ -1976,4 +2016,13 @@ export default {
   "Search.benchmarkDetail": "Measure how a large group performs on this device",
   "Shortcuts.runBenchmark": "Run the benchmark",
   "Shortcuts.copyResults": "Copy the results",
+  "NoteSpreadsheet.id": "ID",
+  "NoteSpreadsheet.title": "Title",
+  "NoteSpreadsheet.text": "Text",
+  "NoteSpreadsheet.tagIds": "Tag IDs",
+  "NoteSpreadsheet.created": "Created",
+  "NoteSpreadsheet.updated": "Last changed",
+  "GroupSpreadsheets.readme":
+    "This group's data as spreadsheets: one CSV file for each kind of item, UTF-8 with a heading row. Dates and times are ISO 8601, in UTC. To move the group to another app, download the JSON file instead: only that file can be imported.",
+  "GroupSpreadsheets.notSpreadsheets": "Not available as a spreadsheet (the JSON file holds them):",
 } satisfies Catalog

@@ -21,7 +21,7 @@ export function guestRefusal(action: GuestLimitedAction): GuestRefusal {
 }
 
 /**
- * Refuses `action` to a guest (#224) with 403 and {@link guestRefusal}: inviting, push, API
+ * Refuses `action` to a guest with 403 and {@link guestRefusal}: inviting, push, API
  * tokens, uploads and checkout need a sign-in method first. Anyone else, and a request with no
  * session, passes untouched; the route's own guard answers for those. `onRefused` runs after the
  * refusal is decided, for the reminder an invite attempt sends; its failure never changes the
@@ -48,7 +48,7 @@ export const GUEST_LIMITED_PATHS: Record<GuestLimitedAction, readonly string[]> 
   invite: ["/groups/:groupId/invitations"],
   push: ["/push"],
   "api-token": ["/tokens"],
-  upload: ["/groups/import", "/groups/import/check"],
+  upload: ["/groups/import", "/groups/import/check", "/groups/:groupId/imports"],
   billing: ["/groups/:groupId/billing/checkout"],
   telegram: ["/telegram/code"],
 }

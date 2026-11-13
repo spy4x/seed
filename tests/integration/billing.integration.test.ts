@@ -4,6 +4,7 @@ import postgres from "postgres"
 import {
   type BillingEvent,
   BillingEventType,
+  BillingPeriod,
   type SubscriptionEvent,
   SubscriptionStatus,
 } from "@spy4x/billing"
@@ -11,6 +12,7 @@ import {
   BILLING_EVENTS,
   BillingNoticeKind,
   effectivePlanId,
+  findPlan,
   FREE_PLAN_ID,
   PRO_PLAN_ID,
 } from "@domain/billing"
@@ -73,6 +75,9 @@ async function seedGroup(sql: postgres.Sql): Promise<{ groupId: string; owner: n
 }
 
 const T0 = new Date("2026-10-01T10:00:00Z")
+// The worker names the plan from the product's own catalog, so a product that renames it still
+// passes.
+const PRO_NAME = findPlan(PRO_PLAN_ID)!.name
 
 function event(
   input: {
@@ -87,8 +92,12 @@ function event(
     cancelAtPeriodEnd?: boolean
     trialEnd?: Date | null
     quantity?: number | null
+    /** The price the event bills, with the plan and period the adapter maps it to. */
+    price?: { priceId: string; planId: string | null; period?: BillingPeriod }
   },
 ): SubscriptionEvent {
+  const price = input.price ??
+    { priceId: "price_pro", planId: PRO_PLAN_ID, period: BillingPeriod.Monthly }
   return {
     id: input.id,
     type: input.type ?? BillingEventType.SubscriptionCreated,
@@ -97,8 +106,9 @@ function event(
       id: input.subscriptionId ?? "sub_1",
       customerId: input.customerId ?? "cus_1",
       status: input.status ?? SubscriptionStatus.Active,
-      planId: PRO_PLAN_ID,
-      priceId: "price_pro",
+      planId: price.planId,
+      priceId: price.priceId,
+      ...(price.period === undefined ? {} : { period: price.period }),
       currentPeriodEnd: input.currentPeriodEnd ?? new Date("2026-11-01T10:00:00Z"),
       cancelAtPeriodEnd: input.cancelAtPeriodEnd ?? false,
       trialEnd: input.trialEnd ?? null,
@@ -295,6 +305,123 @@ Deno.test("billing events against Postgres", async (t) => {
       expect(await billing.applyEvent(payment)).toBe("ignored")
       expect(await billing.applyEvent(payment)).toBe("duplicate")
     })
+
+    const YEARLY = {
+      priceId: "price_pro_yearly",
+      planId: PRO_PLAN_ID,
+      period: BillingPeriod.Yearly,
+    }
+
+    await t.step(
+      "the period of the price the provider reports is stored, and a switch updates it and the pages",
+      async () => {
+        const { groupId } = await seedGroup(sql)
+
+        const bought = await billing.applyEvent(
+          event({
+            id: "evt_period_1",
+            reference: groupId,
+            customerId: "cus_period_1",
+            price: YEARLY,
+          }),
+        )
+        const yearly = (await billing.get(groupId))?.period
+        const switched = await billing.applyEvent(
+          event({
+            id: "evt_period_2",
+            type: BillingEventType.SubscriptionUpdated,
+            reference: groupId,
+            customerId: "cus_period_1",
+            at: new Date(T0.getTime() + 60_000),
+          }),
+        )
+
+        expect([bought, switched]).toEqual(["applied", "applied"])
+        expect([yearly, (await billing.get(groupId))?.period])
+          .toEqual([BillingPeriod.Yearly, BillingPeriod.Monthly])
+        expect(await planChanges(sql, groupId)).toHaveLength(2)
+      },
+    )
+
+    await t.step("a second delivery of a yearly event changes nothing", async () => {
+      const { groupId } = await seedGroup(sql)
+      const yearly = event({
+        id: "evt_period_3",
+        reference: groupId,
+        customerId: "cus_period_2",
+        price: YEARLY,
+      })
+      await billing.applyEvent(yearly)
+      const sequence = await nextSequence(sql, groupId)
+
+      const again = await billing.applyEvent({
+        ...yearly,
+        subscription: { ...yearly.subscription, period: BillingPeriod.Monthly },
+      })
+
+      expect(again).toBe("duplicate")
+      expect((await billing.get(groupId))?.period).toBe(BillingPeriod.Yearly)
+      expect(await nextSequence(sql, groupId)).toBe(sequence)
+      expect(await planChanges(sql, groupId)).toHaveLength(1)
+    })
+
+    await t.step(
+      "an event for a price no plan maps to changes no subscription, and its resend applies once the price is known",
+      async () => {
+        const paying = await seedGroup(sql)
+        const fresh = await seedGroup(sql)
+        const unknown = { priceId: "price_nobody_sells", planId: null }
+        await billing.applyEvent(
+          event({
+            id: "evt_unknown_price_1",
+            reference: paying.groupId,
+            customerId: "cus_unknown_price_1",
+          }),
+        )
+        const held = await billing.get(paying.groupId)
+
+        const outcomes = [
+          await billing.applyEvent(event({
+            id: "evt_unknown_price_2",
+            type: BillingEventType.SubscriptionUpdated,
+            reference: paying.groupId,
+            customerId: "cus_unknown_price_1",
+            status: SubscriptionStatus.Canceled,
+            at: new Date(T0.getTime() + 60_000),
+            price: unknown,
+          })),
+          await billing.applyEvent(
+            event({
+              id: "evt_unknown_price_3",
+              reference: fresh.groupId,
+              customerId: "cus_unknown_price_2",
+              price: unknown,
+            }),
+          ),
+        ]
+        const before = [
+          await billing.get(paying.groupId),
+          await billing.get(fresh.groupId),
+          await billing.customerOf(fresh.groupId),
+          (await planChanges(sql, paying.groupId)).length,
+          (await planChanges(sql, fresh.groupId)).length,
+        ]
+        // The operator adds the price to the settings and Stripe resends the same event.
+        const resent = await billing.applyEvent(
+          event({
+            id: "evt_unknown_price_3",
+            reference: fresh.groupId,
+            customerId: "cus_unknown_price_2",
+            price: { ...unknown, planId: PRO_PLAN_ID, period: BillingPeriod.Yearly },
+          }),
+        )
+
+        expect(outcomes).toEqual(["unknown_price", "unknown_price"])
+        expect(before).toEqual([held, null, null, 1, 0])
+        expect(resent).toBe("applied")
+        expect((await billing.get(fresh.groupId))?.period).toBe(BillingPeriod.Yearly)
+      },
+    )
 
     await t.step(
       "a failure while applying rolls back the stored event id, so the retry applies in full",
@@ -1120,11 +1247,14 @@ Deno.test("billing notices reach the owner through the worker's queue", async (t
 
         expect(result.failed).toBe(0)
         expect(sender.sent.map((mail) => [mail.to, mail.subject]).sort()).toEqual([
-          ["ending@example.com", "Your Pro plan ends on " + longDate(start.getTime() + 20 * DAY)],
-          ["failed@example.com", "A payment for Pro failed"],
-          ["moved@example.com", "Your Pro trial ends on " + longDate(movedEnd.getTime())],
-          ["renewal@example.com", "A payment for Pro failed"],
-          ["trial@example.com", "Your Pro trial ends on " + longDate(trialEnd.getTime())],
+          [
+            "ending@example.com",
+            `Your ${PRO_NAME} plan ends on ${longDate(start.getTime() + 20 * DAY)}`,
+          ],
+          ["failed@example.com", `A payment for ${PRO_NAME} failed`],
+          ["moved@example.com", `Your ${PRO_NAME} trial ends on ${longDate(movedEnd.getTime())}`],
+          ["renewal@example.com", `A payment for ${PRO_NAME} failed`],
+          ["trial@example.com", `Your ${PRO_NAME} trial ends on ${longDate(trialEnd.getTime())}`],
         ])
         const textTo = (to: string) => sender.sent.find((mail) => mail.to === to)?.text
         expect(textTo("failed@example.com")).toContain("The group is now on the free plan.")
@@ -1218,7 +1348,9 @@ Deno.test("billing notices reach the owner through the worker's queue", async (t
 
         expect((await processor.drainOnce()).failed).toBe(0)
 
-        const failed = sender.sent.find((mail) => mail.subject === "A payment for Pro failed")
+        const failed = sender.sent.find((mail) =>
+          mail.subject === `A payment for ${PRO_NAME} failed`
+        )
         expect(failed?.to).toBe("leaving@example.com")
         expect(failed?.text).toContain(
           `You keep the plan until ${longDate(periodEnd.getTime())} while`,

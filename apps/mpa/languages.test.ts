@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { App } from "fresh"
+import { App } from "@spy4x/preact-server"
 import AppWrapper from "./routes/_app.tsx"
 import Layout from "./routes/_layout.tsx"
 import Pricing, { handler as pricing } from "./routes/[[lang]]/pricing.tsx"
@@ -142,7 +142,7 @@ describe("languageMiddleware", () => {
     }
   })
 
-  it("serves //pricing as /pricing, since Fresh collapses repeated slashes before it routes", async () => {
+  it("serves //pricing as /pricing, since the server collapses repeated slashes before it routes", async () => {
     expect((await get(guarded, `//pricing`)).status).toBe(200)
     expect((await get(pages, `//pricing`)).html).toContain(
       `<link rel="canonical" href="${site}/pricing"`,
@@ -220,6 +220,19 @@ describe("a page's head in each language", () => {
       `<title>Seed-Preise: ein kostenloser SaaS-Starter unter MIT-Lizenz</title>`,
     )
     expect(html).not.toContain(`Seed pricing: a free, MIT-licensed SaaS starter`)
+  })
+
+  it("writes the hire prices the way the page's language writes money", async () => {
+    const german = (await get(pages, `/de/pricing`)).html
+    const arabic = (await get(pages, `/ar/pricing`)).html
+
+    expect(german).toContain(`8.000\u00a0$`)
+    expect(german).toContain(`150\u00a0$`)
+    expect(german).not.toContain(`$8,000`)
+    expect(arabic).toContain(`8,000\u00a0US$`)
+    // The free card writes its zero the same way as the prices beside it.
+    expect(german).toContain(`>0\u00a0$</span>`)
+    expect(arabic).toContain(`>\u200f0\u00a0US$</span>`)
   })
 
   it("keeps a legal page English at a translated address, says so, and names no alternates", async () => {

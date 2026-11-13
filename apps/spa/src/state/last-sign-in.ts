@@ -4,7 +4,7 @@ import type { LastSignInHint } from "@ui/auth-screen.tsx"
 import { signInMethodsHttp } from "./sign-in-methods.ts"
 
 /**
- * How a person last signed in on this browser (#142): the method and the address with most of it
+ * How a person last signed in on this browser: the method and the address with most of it
  * hidden, in `localStorage`. The sign-in page shows it so that someone with two Google accounts
  * picks the one they used before. It is not a secret and not a session: signing out keeps it, and
  * "Not you? Forget" on the sign-in page drops it.

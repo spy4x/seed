@@ -1,9 +1,9 @@
 /**
- * Processed images (#464, docs/files.md): an uploaded photo becomes upright AVIF and WebP widths
+ * Processed images (docs/file-uploads.md): an uploaded photo becomes upright AVIF and WebP widths
  * with no metadata, and its original, which may carry where it was taken, is deleted.
  *
  * A feature that keeps a photo calls {@link queueImage} in the transaction that keeps it. The
- * worker then runs `processImage` of `@spy4x/server/images` on it in two jobs (#514). The first,
+ * worker then runs `processImage` of `@spy4x/server/images` on it in two jobs. The first,
  * {@link IMAGE_PROCESS_JOB}, makes only the narrowest width, the one the admin's thumbnails show,
  * records it in `image_variants` and queues the second. The second, {@link IMAGE_WIDTHS_JOB},
  * makes the wider ones, marks the image processed and the owner's picture ready (or refused), tells
@@ -143,6 +143,9 @@ function imageJob(
 
     const finish = !first || refused !== null
     const gone = await deps.sql.begin(async (tx) => {
+      // `users` before `images`, as `setUserPicture` and account deletion take them (their trigger
+      // deletes the replaced image): the opposite order deadlocks with them.
+      await tx`SELECT id FROM users WHERE picture_id = ${id} ORDER BY id FOR UPDATE`
       const [row] = await tx<{ processedAt: Date | null }[]>`
         SELECT processed_at FROM images WHERE id = ${id} FOR UPDATE
       `

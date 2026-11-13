@@ -60,7 +60,7 @@ export async function enqueueSubscriberMail(
 }
 
 /**
- * Keeps `language` as the language of `email` on `list` (#527): the page's the address confirmed
+ * Keeps `language` as the language of `email` on `list`: the page's the address confirmed
  * on. An address no longer on the list is left alone.
  */
 export async function rememberSubscriberLanguage(
@@ -187,8 +187,8 @@ interface IssueRow {
 }
 
 /**
- * The addresses on `list` whose language is `language`. A subscriber with no language (one from
- * before #527, or one whose page named none) counts as the main language's.
+ * The addresses on `list` whose language is `language`. A subscriber with no language (an old
+ * one, or one whose page named none) counts as the main language's.
  */
 export async function subscribersInLanguage(
   sql: postgres.Sql,
@@ -204,7 +204,7 @@ export async function subscribersInLanguage(
 
 /**
  * The send-issue job: mails the stored issue to everyone on its list, or, for an issue with a
- * language, to the subscribers of that language only (#527), except addresses on domains reserved
+ * language, to the subscribers of that language only, except addresses on domains reserved
  * for examples (`isExampleAddress`), through `sendIssue`, which records
  * each recipient in the Postgres send log. A rerun mails only the audience members the log
  * does not list as reached. Throws when any mail failed or another run holds the send lock, so the

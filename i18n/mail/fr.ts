@@ -5,36 +5,41 @@ export default {
   "Mail.signIn": "Se connecter",
   "Mail.openProfile": "Ouvrir votre profil",
   "Mail.openGroup": "Ouvrir le groupe",
-  "PasswordResetMail.subject": "Réinitialisez votre mot de passe",
+  "Mail.dontShare": "Ne partagez pas ce code. {host} ne vous le demandera jamais.",
+  "PasswordResetMail.subject": "Votre code pour réinitialiser votre mot de passe",
   "PasswordResetMail.asked":
-    "Quelqu’un a demandé à réinitialiser le mot de passe de votre compte sur {host}.",
-  "PasswordResetMail.open": {
-    "one": "Ouvrez ce lien dans un délai de {count} minute pour choisir un nouveau mot de passe.",
-    "many": "Ouvrez ce lien dans un délai de {count} minutes pour choisir un nouveau mot de passe.",
+    "Quelqu’un a demandé à réinitialiser le mot de passe de votre compte sur {host}. Saisissez ce code dans l’onglet où vous l’avez demandé :",
+  "PasswordResetMail.valid": {
+    "one":
+      "Il ne sert qu’une fois et reste valable {count} minute. Son utilisation vous déconnecte de tous vos appareils.",
+    "many":
+      "Il ne sert qu’une fois et reste valable {count} minutes. Son utilisation vous déconnecte de tous vos appareils.",
     "other":
-      "Ouvrez ce lien dans un délai de {count} minutes pour choisir un nouveau mot de passe.",
+      "Il ne sert qu’une fois et reste valable {count} minutes. Son utilisation vous déconnecte de tous vos appareils.",
   },
-  "PasswordResetMail.button": "Choisir un nouveau mot de passe",
-  "PasswordResetMail.once":
-    "Le lien ne fonctionne qu’une fois. En l’utilisant, vous serez déconnecté de tous vos appareils.",
   "PasswordResetMail.ignore":
     "Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail. Votre mot de passe ne changera pas.",
-  "SignInLinkMail.subject": "Votre lien de connexion à {host}",
-  "SignInLinkMail.asked":
-    "Quelqu’un a demandé à se connecter à {host} avec cette adresse e-mail le {when}.",
-  "SignInLinkMail.open": {
+  "PasswordResetNoticeMail.subject": "Réinitialisez votre mot de passe",
+  "PasswordResetNoticeMail.asked":
+    "L’équipe de {host} vous envoie cet e-mail pour que vous puissiez choisir un nouveau mot de passe pour votre compte.",
+  "PasswordResetNoticeMail.how":
+    "Ouvrez la page ci-dessous et saisissez cette adresse e-mail. Nous vous y enverrons un code, et vous choisirez le nouveau mot de passe.",
+  "PasswordResetNoticeMail.button": "Réinitialiser le mot de passe",
+  "PasswordResetNoticeMail.ignore":
+    "Si vous ne voulez pas de nouveau mot de passe, ignorez cet e-mail. Votre mot de passe ne changera pas.",
+  "SignInCodeMail.subject": "Votre code de connexion à {host}",
+  "SignInCodeMail.asked":
+    "Quelqu’un a demandé à se connecter à {host} avec cette adresse e-mail le {when}. Saisissez ce code dans l’onglet où vous l’avez demandé :",
+  "SignInCodeMail.valid": {
     "one":
-      "Ouvrez ce lien dans un délai de {count} minute pour vous connecter. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
+      "Il ne sert qu’une fois et reste valable {count} minute. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
     "many":
-      "Ouvrez ce lien dans un délai de {count} minutes pour vous connecter. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
+      "Il ne sert qu’une fois et reste valable {count} minutes. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
     "other":
-      "Ouvrez ce lien dans un délai de {count} minutes pour vous connecter. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
+      "Il ne sert qu’une fois et reste valable {count} minutes. Si aucun compte n’utilise encore cette adresse e-mail, il en crée un.",
   },
-  "SignInLinkMail.button": "Se connecter à {host}",
-  "SignInLinkMail.once":
-    "Le lien ne fonctionne qu’une fois. Il ouvre une page avec un bouton Continuer, et rien ne se passe tant que vous n’appuyez pas dessus.",
-  "SignInLinkMail.ignore":
-    "Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail. Personne ne peut se connecter sans le lien.",
+  "SignInCodeMail.ignore":
+    "Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail. Personne ne peut se connecter sans le code.",
   "EmailCodeMail.subject": "Votre code pour confirmer votre adresse e-mail",
   "EmailCodeMail.asked": "Saisissez ce code sur {host} pour confirmer votre adresse e-mail.",
   "EmailCodeMail.valid": {

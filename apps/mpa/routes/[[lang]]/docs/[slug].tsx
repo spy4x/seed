@@ -2,7 +2,7 @@
 // The docs are English at every language's address: they are the repository's own guides, which
 // are written in English only. The frame around them is translated.
 import type { JSX } from "preact"
-import type { FreshContext } from "fresh"
+import type { Context } from "@spy4x/preact-server"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { Breadcrumbs } from "@spy4x/preact-ui/breadcrumbs"
 import { Button } from "@spy4x/preact-ui/button"
@@ -10,6 +10,7 @@ import { DOCS_NAV_LABELS, DocsNav } from "@spy4x/preact-ui/docs-nav"
 import { OnThisPage } from "@spy4x/preact-ui/on-this-page"
 import { PREV_NEXT_LABELS, PrevNext } from "@spy4x/preact-ui/prev-next"
 import { Prose, PROSE_LABELS } from "@spy4x/preact-ui/prose"
+import CodeCopy from "../../../islands/code-copy.tsx"
 import { REPOSITORY_URL } from "../../../brand.ts"
 import { CHANGELOG_FORMAT } from "../../../changelog.ts"
 import {
@@ -162,9 +163,11 @@ function DocPage({ doc }: { doc: SiteDoc }): JSX.Element {
           as="article"
           html={doc.html}
           anchors
+          copyCode
           labels={PROSE_LABELS}
           class="min-w-0 lg:col-start-2 lg:row-start-3 xl:row-start-2"
         />
+        <CodeCopy />
         <footer class="flex min-w-0 flex-col gap-6 border-t border-subtle pt-6 lg:col-start-2 lg:row-start-4 xl:row-start-3">
           <p class="text-sm text-muted" data-e2e="doc-edit">
             {updated}
@@ -185,7 +188,7 @@ function DocPage({ doc }: { doc: SiteDoc }): JSX.Element {
 }
 
 /** The 404 of a guide that is not published: why, and the way to the ones that are. */
-function renderNotFound(ctx: FreshContext<State>): Response | Promise<Response> {
+function renderNotFound(ctx: Context<State>): Response | Promise<Response> {
   return ctx.render(
     <SiteLanguage language={ctx.state.language}>
       <SiteFrame

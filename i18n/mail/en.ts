@@ -5,29 +5,34 @@ export default {
   "Mail.signIn": "Sign in",
   "Mail.openProfile": "Open your profile",
   "Mail.openGroup": "Open the group",
-  "PasswordResetMail.subject": "Reset your password",
-  "PasswordResetMail.asked": "Someone asked to reset the password of your account at {host}.",
-  "PasswordResetMail.open": {
-    "one": "Open this link within {count} minute to choose a new password.",
-    "other": "Open this link within {count} minutes to choose a new password.",
+  "Mail.dontShare": "Don't share this code. {host} will never ask you for it.",
+  "PasswordResetMail.subject": "Your code to reset your password",
+  "PasswordResetMail.asked":
+    "Someone asked to reset the password of your account at {host}. Enter this code in the tab where you asked:",
+  "PasswordResetMail.valid": {
+    "one": "It works once, for {count} minute. Using it signs you out on every device.",
+    "other": "It works once, for {count} minutes. Using it signs you out on every device.",
   },
-  "PasswordResetMail.button": "Choose a new password",
-  "PasswordResetMail.once": "The link works once. Using it signs you out on every device.",
   "PasswordResetMail.ignore":
     "If you didn't ask for this, ignore this email. Your password won't change.",
-  "SignInLinkMail.subject": "Your sign-in link for {host}",
-  "SignInLinkMail.asked": "Someone asked to sign in to {host} with this email on {when}.",
-  "SignInLinkMail.open": {
-    "one":
-      "Open this link within {count} minute to sign in. If there's no account with this email yet, it creates one.",
+  "PasswordResetNoticeMail.subject": "Reset your password",
+  "PasswordResetNoticeMail.asked":
+    "The team behind {host} sent you this so you can choose a new password for your account.",
+  "PasswordResetNoticeMail.how":
+    "Open the page below and enter this email. We'll send you a code there, and you choose the new password.",
+  "PasswordResetNoticeMail.button": "Reset your password",
+  "PasswordResetNoticeMail.ignore":
+    "If you don't want a new password, ignore this email. Your password won't change.",
+  "SignInCodeMail.subject": "Your sign-in code for {host}",
+  "SignInCodeMail.asked":
+    "Someone asked to sign in to {host} with this email on {when}. Enter this code in the tab where you asked:",
+  "SignInCodeMail.valid": {
+    "one": "It works once, for {count} minute. If no account uses this email yet, it creates one.",
     "other":
-      "Open this link within {count} minutes to sign in. If there's no account with this email yet, it creates one.",
+      "It works once, for {count} minutes. If no account uses this email yet, it creates one.",
   },
-  "SignInLinkMail.button": "Sign in to {host}",
-  "SignInLinkMail.once":
-    "The link works once. It opens a page with a Continue button, and nothing happens until you press it.",
-  "SignInLinkMail.ignore":
-    "If you didn't ask for this, ignore this email. Nobody can sign in without the link.",
+  "SignInCodeMail.ignore":
+    "If you didn't ask for this, ignore this email. Nobody can sign in without the code.",
   "EmailCodeMail.subject": "Your code to confirm your email",
   "EmailCodeMail.asked": "Enter this code at {host} to confirm your email.",
   "EmailCodeMail.valid": {

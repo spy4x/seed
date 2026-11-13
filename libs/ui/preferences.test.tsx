@@ -1,5 +1,5 @@
 /**
- * "Language and region" (#163) and "Appearance": the person's profile sections and the operator's
+ * "Language and region" and "Appearance": the person's profile sections and the operator's
  * read-only copy. What a person does in a browser DOM (happy-dom): pick a theme, pick a clock that
  * saves at once, see a refused save's notice, and switch to the device's zone.
  */
@@ -111,6 +111,12 @@ describe(`RegionSection`, () => {
     expect(input(`#preferences-time-zone`).value).toContain(`Automatic: Berlin`)
     expect(input(`[data-e2e="preferences-clock-format"]`).checked).toBe(true)
     expect($(`[data-e2e="preferences-example"]`)?.textContent).toContain(`14:05`)
+  })
+
+  it(`names an Automatic region with Latin digits by its region alone`, async () => {
+    await mount(setup({ device: { ...BERLIN, locale: `ar-EG-u-nu-latn` } }).region)
+
+    expect(input(`#preferences-formats`).value).toBe(`Automatic: Arabic (Egypt)`)
   })
 
   it(`saves a picked clock at once, with no Save button`, async () => {

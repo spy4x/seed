@@ -35,6 +35,7 @@ import { createNoteOperations } from "../../apps/api/features/notes/operations.t
 import { createSessionGate } from "../../apps/api/cqrs/session-gate.ts"
 import { createEntitlementGate } from "../../apps/api/cqrs/entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "../../apps/api/cqrs/entitlement-needs.ts"
+import { testUsage } from "../../libs/domain/billing/test-plans.ts"
 import {
   createNoteCreateHandler,
   createNoteDeleteHandler,
@@ -130,10 +131,7 @@ function buses(sql: postgres.Sql) {
     billingEnabled: false,
     planOf: () => Promise.reject(new Error("billing is off")),
     roleOf: dependencies.groups.roleOf,
-    usage: {
-      maxNotes: () => Promise.reject(new Error("billing is off")),
-      maxMembers: () => Promise.reject(new Error("billing is off")),
-    },
+    usage: testUsage(),
   }, ENTITLEMENT_NEEDS))
   commands.register(NoteCreateCommand, createNoteCreateHandler(dependencies))
   commands.register(NoteUpdateCommand, createNoteUpdateHandler(dependencies))

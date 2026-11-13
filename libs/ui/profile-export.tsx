@@ -38,7 +38,7 @@ export interface DataExportRowProps {
 }
 
 /**
- * The Account section's "Your data" row (#229): the newest export's state and the one action it
+ * The Account section's "Your data" row: the newest export's state and the one action it
  * allows. The value is a live region from the first render, so "Preparing your file" and the file
  * turning ready are read out without moving focus. When a render takes the focused control away,
  * such as a request that leaves the file in preparation, focus moves to the value instead of
@@ -48,6 +48,7 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
   const { exportState, pending } = props
   const now = props.now ?? Date.now()
   const t = useAppText()
+  const format = useFormat()
   const status = useRef<HTMLDivElement>(null)
   const askButton = useRef<HTMLButtonElement>(null)
   // When a render removes the focused control (the row's button, or "Prepare a new file." inside
@@ -97,7 +98,7 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
             <span>
               <Rich
                 parts={t.parts(`ProfileExport.ready`, {
-                  size: formatBytes(exportState.sizeBytes ?? 0),
+                  size: formatBytes(exportState.sizeBytes ?? 0, format.locale),
                 })}
                 tags={{
                   hidden: (text) => <span class="sr-only">{text}</span>,

@@ -4,7 +4,7 @@ import { isUuid } from "@spy4x/platform/universal/uuid"
 import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 
 /**
- * Personal API tokens (#167): a person lets a script or another service use the API in one of
+ * Personal API tokens: a person lets a script or another service use the API in one of
  * their groups, without their password. A token is shown once, when it is created; the server
  * keeps only a keyed hash of it. It carries a name, one group, read-only or read-write access, an
  * expiry and the time it was last used.
@@ -79,7 +79,7 @@ export interface ApiTokenCreateResponse {
 
 /**
  * `POST /api/tokens`: the token's name, its group, what it may do, how many days it lives (`null`
- * for never) and the person's current password, which a stolen session does not have (#293). The
+ * for never) and the person's current password, which a stolen session does not have. The
  * field names are the form's.
  */
 export const apiTokenCreateRequestSchema = type({
@@ -165,7 +165,7 @@ export function apiTokenExpiresAt(now: Date, days: number | null): Date | null {
   return days === null ? null : new Date(now.getTime() + days * 24 * 60 * 60_000)
 }
 
-// The operator area's API tokens (#427): every token across people, and one person's.
+// The operator area's API tokens: every token across people, and one person's.
 
 /** Where a token stands for the operator: it works, its time ran out, or it was revoked. */
 export type AdminApiTokenState = "live" | "expired" | "revoked"

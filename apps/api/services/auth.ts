@@ -1,4 +1,12 @@
+/**
+ * The app's sign-in instance, built from the environment, and the guards the routes use. Not
+ * `@server/auth` (`libs/server/auth`), which stores sign-in state, nor JSR's `@spy4x/server/auth`.
+ *
+ * @module
+ */
 import { createKvOAuthFlowStore } from "@spy4x/server/auth/oauth"
+import { createInvitationPlanOf } from "../features/billing/config.ts"
+import { billingSetup } from "./billing.ts"
 import { kv } from "./cache.ts"
 import { config } from "./config.ts"
 import { db } from "./db.ts"
@@ -14,6 +22,8 @@ export const signIn = createSignIn({
   sessionMinutes: config.authSessionDurationMin,
   totpIssuer: config.domain,
   guests: config.guestMode,
+  signUp: config.signUp,
+  invitationPlan: createInvitationPlanOf(db.billing, billingSetup),
   oauth: {
     providers: enabledOAuthProviders(config.oauth),
     origin: config.webAppUrl,

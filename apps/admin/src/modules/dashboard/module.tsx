@@ -25,7 +25,7 @@ function DashboardView({ context }: { context: AdminContext }): JSX.Element {
   return <AdminDashboardScreen stats={stats} error={error} onRetry={load} />
 }
 
-/** The operator area's first page (#424): stat cards and two 30-day charts. */
+/** The operator area's first page: stat cards and two 30-day charts. */
 export const dashboardModule: AdminModule = {
   id: `dashboard`,
   nav: { name: `AdminNav.dashboard`, href: ADMIN_PATHS.dashboard, Icon: IconHome },

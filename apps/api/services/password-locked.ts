@@ -1,5 +1,5 @@
 /**
- * Wrong passwords typed by a signed-in account (#406), and the refusal every locked password check
+ * Wrong passwords typed by a signed-in account, and the refusal every locked password check
  * gives. The sign-in page's own count per name is in `password-failures.ts`; both share
  * {@link PASSWORD_LOCK_POLICY}.
  *

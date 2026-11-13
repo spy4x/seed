@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
 import { UserRole } from "@domain/identity"
-import { BlogError, type BlogPost, BlogVersionConflictError } from "@domain/blog"
+import { BlogError, type BlogPost, type BlogRevision, BlogVersionConflictError } from "@domain/blog"
 import type { APIContext } from "../../_types.ts"
 import { buildAuthData } from "../../_testing/fake-auth.ts"
 import {
@@ -31,6 +31,9 @@ const post: BlogPost = {
   topic: null,
   coverUrl: null,
   coverAlt: null,
+  coverFile: null,
+  intro: null,
+  relatedFeature: null,
   bodyMd: `Hi`,
   language: `en`,
   translationOf: null,
@@ -44,9 +47,34 @@ const post: BlogPost = {
   newsletterList: null,
   newsletterSentAt: null,
   newsletterRecipients: null,
+  crosspostedAt: null,
+  devtoUrl: null,
   createdAt: NOW.toISOString(),
   updatedAt: NOW.toISOString(),
   version: 1,
+}
+
+const REVISION_ID = `01a1658a-5fe7-7ab6-8e4a-0ad1c6ed7041`
+
+/** The post's one earlier version. */
+const revision: BlogRevision = {
+  id: REVISION_ID,
+  savedAt: NOW.toISOString(),
+  savedBy: `Maya Chen`,
+  title: `Hello`,
+  slug: `hello-world`,
+  description: `A post.`,
+  seoTitle: null,
+  tldr: [],
+  topic: null,
+  coverUrl: null,
+  coverAlt: null,
+  intro: null,
+  relatedFeature: null,
+  authorUrl: null,
+  bodyMd: `Hi, as it was`,
+  language: `en`,
+  translationOf: null,
 }
 
 const FIELDS = {
@@ -86,6 +114,23 @@ function buildApp(
     ) => (calls.push([`list`, filter]),
       Promise.resolve({ posts: [], counts: { all: 0, draft: 0, scheduled: 0, published: 0 } })),
     get: (id) => (calls.push([`get`, id]), Promise.resolve(id === ID ? post : null)),
+    revisions: (id) => (
+      calls.push([`revisions`, id]),
+        Promise.resolve(
+          id === ID
+            ? [{
+              id: REVISION_ID,
+              savedAt: revision.savedAt,
+              savedBy: revision.savedBy,
+              title: revision.title,
+            }]
+            : null,
+        )
+    ),
+    revision: (id, revisionId) => (
+      calls.push([`revision`, id, revisionId]),
+        Promise.resolve(id === ID && revisionId === REVISION_ID ? revision : null)
+    ),
     topics: () => (calls.push([`topics`]), Promise.resolve([{ topic: `Product`, count: 2 }])),
     create: write(`create`),
     update: write(`update`),
@@ -134,6 +179,8 @@ function request(
 const ROUTES: { method: string; path: string; body?: unknown }[] = [
   { method: `GET`, path: `/posts` },
   { method: `GET`, path: `/posts/${ID}` },
+  { method: `GET`, path: `/posts/${ID}/revisions` },
+  { method: `GET`, path: `/posts/${ID}/revisions/${REVISION_ID}` },
   { method: `POST`, path: `/posts`, body: { id: ID, ...FIELDS } },
   { method: `POST`, path: `/posts/${ID}`, body: { ...FIELDS, version: 1 } },
   { method: `POST`, path: `/posts/${ID}/publish`, body: { version: 1 } },
@@ -198,6 +245,8 @@ describe(`operator area: blog routes`, () => {
       topic: null,
       coverUrl: null,
       coverAlt: null,
+      intro: null,
+      relatedFeature: null,
       authorUrl: null,
       language: `en`,
       translationOf: null,
@@ -280,6 +329,34 @@ describe(`operator area: blog routes`, () => {
     expect((await request(app, `GET`, `/posts/not-a-uuid`)).status).toBe(404)
     expect((await request(app, `POST`, `/posts/x/delete`, { version: 1 })).status).toBe(404)
     expect(calls.map((call) => call[0])).toEqual([`unpublish`])
+  })
+
+  it(`lists a post's earlier versions without bodies, and answers one with every field (#418)`, async () => {
+    const { app, calls } = buildApp()
+    const list = await request(app, `GET`, `/posts/${ID}/revisions`)
+    expect(await list.json()).toEqual({
+      revisions: [{
+        id: REVISION_ID,
+        savedAt: NOW.toISOString(),
+        savedBy: `Maya Chen`,
+        title: `Hello`,
+      }],
+    })
+    const one = await request(app, `GET`, `/posts/${ID}/revisions/${REVISION_ID}`)
+    expect(await one.json()).toEqual({ revision })
+    expect(calls).toEqual([[`revisions`, ID], [`revision`, ID, REVISION_ID]])
+  })
+
+  it(`answers 404 for the versions of a post that is gone, and for a version it does not have (#418)`, async () => {
+    const { app, calls } = buildApp()
+    const OTHER = `01a1658a-5fe7-7ab6-8e4a-0ad1c6ed7099`
+    expect((await request(app, `GET`, `/posts/${OTHER}/revisions`)).status).toBe(404)
+    const missing = await request(app, `GET`, `/posts/${ID}/revisions/${OTHER}`)
+    expect(missing.status).toBe(404)
+    expect(await apiError(missing)).toMatchObject({ reason: `REVISION_NOT_FOUND` })
+    expect((await request(app, `GET`, `/posts/${ID}/revisions/not-a-uuid`)).status).toBe(404)
+    expect((await request(app, `GET`, `/posts/x/revisions`)).status).toBe(404)
+    expect(calls).toEqual([[`revisions`, OTHER], [`revision`, ID, OTHER]])
   })
 
   it(`publishes now when no time is given, with the chosen list`, async () => {

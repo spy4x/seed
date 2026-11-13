@@ -2,7 +2,7 @@ import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { Kpi, KpiGrid } from "@spy4x/preact-charts/kpi"
-import { IconCreditCard, IconExternalLink } from "@spy4x/preact-icons"
+import { IconClock, IconCreditCard, IconExternalLink } from "@spy4x/preact-icons"
 import { Badge, type BadgeColor } from "@spy4x/preact-ui/badge"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
@@ -14,7 +14,7 @@ import { Input } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
-import { PageHeader } from "@spy4x/preact-ui/page-header"
+import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   ADMIN_BILLING_SEARCH_MAX_LENGTH,
@@ -26,13 +26,16 @@ import {
   adminBillingStatus,
   type AdminBillingStatusFilter,
   type AdminBillingStatusView,
+  billedPriceOf,
   BILLING_AUDIT_EVENTS,
   type BillingAuditEvent,
+  BillingPeriod,
   BillingStatus,
   findPlan,
   listPriceOf,
   type Money,
   monthlyRevenueOf,
+  type Plan,
   seatsOf,
 } from "@domain/billing"
 import { adminGroupPersonName } from "./admin-groups-list.tsx"
@@ -46,6 +49,8 @@ import { useAdminText } from "./i18n.ts"
 /** The billing module's pages in the admin app. */
 export const ADMIN_BILLING_PATHS = {
   list: `/billing`,
+  /** The groups that have never paid. */
+  neverPaid: `/billing/never-paid`,
   customer: (groupId: string) => `/billing/${encodeURIComponent(groupId)}`,
 } as const
 
@@ -74,8 +79,6 @@ const STATUS_CHIPS: { value: AdminBillingStatusFilter; label: string }[] = [
   { value: `all`, label: `AdminBilling.all` },
 ]
 
-const NUMBER = new Intl.NumberFormat(`en`)
-
 /** A date as the admin shows it, in the operator's format: `23 Oct 2026` or `Oct 23, 2026`. */
 export function billingDate(at: string, format: Pick<Formatters, "date">): string {
   return format.date(at)
@@ -86,9 +89,17 @@ export function money(value: Money): string {
   return formatMoney(value.amount, value.currency)
 }
 
-/** The plan's name, `Pro`, or `Unknown plan` (in the operator's language) for a price no plan maps to. */
-export function billingPlanName(t: Translator<string>, planId: string | null): string {
-  return (planId === null ? null : findPlan(planId))?.name ?? t.t(`AdminBilling.unknownPlan`)
+/**
+ * The plan's name, `Pro`, or `Unknown plan` (in the operator's language) for a price no plan maps
+ * to. `plans` is the catalog, `PLANS` unless a test passes its own.
+ */
+export function billingPlanName(
+  t: Translator<string>,
+  planId: string | null,
+  plans?: readonly Plan[],
+): string {
+  return (planId === null ? null : findPlan(planId, plans))?.name ??
+    t.t(`AdminBilling.unknownPlan`)
 }
 
 const STATE_BADGES: Record<AdminBillingState, { key: string; color: BadgeColor }> = {
@@ -147,31 +158,41 @@ export function BillingStatusLine(
 
 /**
  * What the customer pays a month now, and how it is made up: `€36.00` over `4 × €9.00`. During a
- * trial it pays nothing, and the second line says what it would pay. `null` for an unknown price.
+ * trial it pays nothing, and the second line says what it would pay. A yearly subscription counts
+ * its twelfth, so every row keeps one scale, and `yearly` says what the year bills. `null` for an
+ * unknown price. `catalog` is the plan catalog, `PLANS` unless a test passes its own.
  */
 export function perMonth(
   t: Translator<string>,
   customer: AdminBillingCustomer,
-): { amount: string; detail: string | null } | null {
-  const now = monthlyRevenueOf(customer)
-  const price = listPriceOf(customer)
-  if (now === null || price === null) return null
+  format: Pick<Formatters, "number">,
+  catalog?: readonly Plan[],
+): { amount: string; detail: string | null; yearly: string | null } | null {
+  const now = monthlyRevenueOf(customer, catalog)
+  const price = listPriceOf(customer, catalog)
+  const billed = billedPriceOf(customer, catalog)
+  if (now === null || price === null || billed === null) return null
+  const yearly = customer.period === BillingPeriod.Yearly
+    ? t.t(`AdminBilling.billedYearly`, { amount: money(billed) })
+    : null
   const seats = seatsOf(customer)
   if (now.amount === 0) {
     const trial = customer.status === BillingStatus.Trialing
     return {
       amount: money(now),
       detail: trial ? t.t(`AdminBilling.wouldBe`, { amount: money(price) }) : null,
+      yearly,
     }
   }
   return {
     amount: money(now),
     detail: seats > 1
       ? t.t(`AdminBilling.seatPrice`, {
-        seats: NUMBER.format(seats),
+        seats: format.number(seats),
         price: money({ amount: price.amount / seats, currency: price.currency }),
       })
       : null,
+    yearly,
   }
 }
 
@@ -201,10 +222,12 @@ export interface AdminBillingListScreenProps {
   /** Reads the figures and the list again after a failure. */
   onRetry: () => void
   navigate?: Navigate
+  /** The plan catalog the rows are priced from: `PLANS` unless a test passes its own. */
+  plans?: readonly Plan[]
 }
 
 /**
- * The billing page (#196): four figures from the stored subscriptions, then every customer with
+ * The billing page: four figures from the stored subscriptions, then every customer with
  * its status word, key date and monthly amount, searched by group or owner and filtered by status
  * chips that show their counts. Each name opens the customer's page, where the actions are.
  */
@@ -239,6 +262,16 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
       title={t.t(`AdminBilling.title`)}
       subtitle={t.t(`AdminBilling.subtitle`)}
       titleDataE2E="admin-billing-title"
+      action={list?.enabled && (
+        <PageAction
+          label={t.t(`AdminNeverPaid.title`)}
+          Icon={IconClock}
+          href={ADMIN_BILLING_PATHS.neverPaid}
+          navigate={navigate}
+          variant="secondary"
+          dataE2E="admin-billing-never-paid"
+        />
+      )}
     />
   )
 
@@ -249,8 +282,9 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
         <Card data-e2e="admin-billing-off">
           <EmptyState
             inset
+            headingLevel={2}
             icon={<IconCreditCard class="size-8" aria-hidden="true" />}
-            // What the module says while billing is off (decision 10 of #196).
+            // What the module says while billing is off.
             title={t.t(`AdminBilling.off`)}
             description={t.t(`AdminBilling.offText`)}
             action={
@@ -278,6 +312,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
           <Card data-e2e="admin-billing-none">
             <EmptyState
               inset
+              headingLevel={2}
               icon={<IconCreditCard class="size-8" aria-hidden="true" />}
               title={t.t(`AdminBilling.noneYet`)}
               description={t.t(`AdminBilling.noneHint`)}
@@ -340,7 +375,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                     label: list?.enabled
                       ? t.t(`AdminBilling.chipCount`, {
                         label: t.t(chip.label),
-                        count: NUMBER.format(list.counts[chip.value]),
+                        count: format.number(list.counts[chip.value]),
                       })
                       : t.t(chip.label),
                   }))}
@@ -398,7 +433,14 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}
-                    columns={customerColumns(t, props.now, list.graceDays, format, navigate)}
+                    columns={customerColumns(
+                      t,
+                      props.now,
+                      list.graceDays,
+                      format,
+                      navigate,
+                      props.plans,
+                    )}
                     rows={list.customers.map((customer) => ({ customer }))}
                     caption={t.t(`AdminBilling.customers`)}
                     captionHidden
@@ -444,6 +486,7 @@ function Figures(
   { figures, figuresError, onRetry }: AdminBillingListScreenProps,
 ): JSX.Element {
   const t = useAdminText()
+  const format = useFormat()
   if (figuresError) {
     return (
       <div class="flex flex-col items-center gap-3" data-e2e="admin-billing-figures-error">
@@ -476,19 +519,19 @@ function Figures(
         />
         <Kpi
           label={t.t(`AdminBilling.payingGroups`)}
-          value={NUMBER.format(figures.paying)}
+          value={format.number(figures.paying)}
           sub={t.t(`AdminBilling.pastDueCount`, { count: figures.pastDue })}
           tone="neutral"
         />
         <Kpi
           label={t.t(`AdminBilling.inTrial`)}
-          value={NUMBER.format(figures.trials)}
+          value={format.number(figures.trials)}
           sub={t.t(`AdminBilling.trialsEnding`, { count: figures.trialsEndingSoon })}
           tone="neutral"
         />
         <Kpi
           label={t.t(`AdminBilling.ending`)}
-          value={NUMBER.format(figures.ending)}
+          value={format.number(figures.ending)}
           sub={t.t(`AdminBilling.endingHint`)}
           tone="neutral"
         />
@@ -551,8 +594,9 @@ function customerColumns(
   t: Translator<string>,
   now: Date,
   graceDays: number,
-  format: Pick<Formatters, "date">,
+  format: Pick<Formatters, "date" | "number">,
   navigate?: Navigate,
+  plans?: readonly Plan[],
 ): DataTableColumn<CustomerRow, "customer">[] {
   return [
     {
@@ -600,7 +644,7 @@ function customerColumns(
       header: t.t(`AdminBilling.perMonth`),
       align: `right`,
       render: ({ customer }) => {
-        const amount = perMonth(t, customer)
+        const amount = perMonth(t, customer, format, plans)
         return amount === null
           ? <span class="text-sm text-muted">{t.t(`AdminBilling.unknownPrice`)}</span>
           : (
@@ -609,6 +653,14 @@ function customerColumns(
               {amount.detail && (
                 <span class="whitespace-nowrap text-xs text-muted tabular-nums">
                   {amount.detail}
+                </span>
+              )}
+              {amount.yearly && (
+                <span
+                  class="whitespace-nowrap text-xs text-muted tabular-nums"
+                  data-e2e="admin-billing-row-yearly"
+                >
+                  {amount.yearly}
                 </span>
               )}
             </div>

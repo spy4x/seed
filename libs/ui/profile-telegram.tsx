@@ -45,7 +45,7 @@ export interface TelegramLinkProps {
 }
 
 /**
- * The profile's Telegram row (#269), under Notifications: whether the person's Telegram account
+ * The profile's Telegram row, under Notifications: whether the person's Telegram account
  * is linked, with "Link Telegram" or "Unlink". Linking opens a dialog with the code: "Open
  * Telegram" sends it in one tap, and the message to send by hand is there to copy for another
  * device. The app closes the dialog once the bot has linked the account. Unlinking asks first,

@@ -5,6 +5,7 @@ export default {
   "TryEntry.line":
     "Sem cadastro. Você entra numa conta de visitante com dados de exemplo, e tudo é apagado toda noite.",
   "SiteNav.features": "Recursos",
+  "SiteNav.docs": "Docs",
   "SiteNav.blog": "Blog",
   "SiteNav.compare": "Comparar",
   "SiteNav.pricing": "Preços",
@@ -34,7 +35,7 @@ export default {
   "SiteFooter.terms": "Termos",
   "FooterNewsletter.title": "Newsletter",
   "FooterNewsletter.lead":
-    "Um e-mail curto quando o {site} muda. Você confirma uma vez por e-mail e sai com um clique.",
+    "Um e-mail curto quando {site} muda. Você confirma uma vez por e-mail e sai com um clique.",
   "NewsletterForm.email": "E-mail",
   "NewsletterForm.placeholder": "voce@exemplo.com",
   "NewsletterForm.submit": "Inscrever-se",
@@ -42,9 +43,9 @@ export default {
   "LegalPage.updated": "Atualizada em {date}",
   "LegalPage.noticeTitle": "Um ponto de partida, não uma orientação jurídica",
   "LegalPage.notice":
-    "Esta página vale para a demo do {site}. Se você criar um produto com o {site}, adapte este texto ao que o seu produto guarda e faz, e peça a um advogado para revisar.",
+    "Esta página vale para a demo de {site}. Se você criar um produto com {site}, adapte este texto ao que o seu produto guarda e faz, e peça a um advogado para revisar.",
   "OnThisPage.title": "Nesta página",
-  "Blog.name": "Blog do {site}",
+  "Blog.name": "Blog de {site}",
   "ErrorPage.notFoundTitle": "Página não encontrada",
   "ErrorPage.notFoundDescription": "Não existe nenhuma página neste endereço.",
   "ErrorPage.errorTitle": "Algo deu errado",
@@ -96,10 +97,10 @@ export default {
   "Unsubscribe.unsubscribing": "Cancelando…",
   "Unsubscribe.submit": "Cancelar inscrição",
   "NewsletterPage.title": "Newsletter",
-  "NewsletterPage.description": "Confirme ou cancele sua inscrição na newsletter do {site}.",
+  "NewsletterPage.description": "Confirme ou cancele sua inscrição na newsletter de {site}.",
   "NewsletterPage.subscribeTitle": "Newsletter de {site}: novidades curtas por e-mail",
   "NewsletterPage.subscribeDescription":
-    "Um e-mail curto quando o {site} muda: o que saiu, o que quebrou e o que aprendi construindo. Confirmação por e-mail e saída com um clique.",
+    "Um e-mail curto quando {site} muda: o que saiu, o que quebrou e o que aprendi construindo. Confirmação por e-mail e saída com um clique.",
   "NewsletterPage.about": "Sobre a newsletter",
   "NewsletterPage.heading": "Receba um e-mail curto quando {site} tiver novidades",
   "NewsletterPage.lead":
@@ -109,12 +110,12 @@ export default {
   "NewsletterPage.promiseUnsubscribe":
     "Todo e-mail tem um link que cancela a inscrição com um clique.",
   "NewsletterPage.promisePrivate": "Seu e-mail serve só para esta newsletter e mais nada.",
-  "NewsletterOff.title": "A newsletter do {site}",
+  "NewsletterOff.title": "A newsletter de {site}",
   "NewsletterOff.noticeTitle": "A newsletter está pausada",
   "NewsletterOff.notice":
     "No momento, este site não está aceitando inscrições nem enviando a newsletter. Os links de confirmação e de cancelamento voltam a funcionar quando ela for reativada.",
   "NewsletterOff.lead":
-    "Para saber quando o {site} mudar, acompanhe as releases no GitHub. Ou veja o que ele já faz hoje.",
+    "Para saber quando {site} mudar, acompanhe as releases no GitHub. Ou veja o que {site} já faz hoje.",
   "NewsletterOff.releases": "Releases no GitHub",
   "CtaBand.title": "Veja funcionando em um minuto",
   "CtaBand.lead":
@@ -130,13 +131,13 @@ export default {
   "Architecture.worker": "Worker",
   "Architecture.mail": "E-mail, push",
   "Architecture.webAppNote": "Preact, no navegador",
-  "Architecture.websiteNote": "Fresh, como esta página",
-  "Architecture.apiNote": "Hono no Deno",
+  "Architecture.websiteNote": "Preact, no servidor",
+  "Architecture.apiNote": "Deno · Node · Bun",
   "Architecture.postgresNote": "cada alteração",
   "Architecture.workerNote": "o trabalho pesado",
   "Architecture.mailNote": "e a limpeza",
   "Architecture.webAppNoteShort": "Preact",
-  "Architecture.websiteNoteShort": "Fresh",
+  "Architecture.websiteNoteShort": "Preact SSR",
   "Architecture.events": "eventos, na mesma transação",
   "Architecture.caption": "Tudo num só servidor, atrás do Traefik, com Valkey e Grafana",
   "Architecture.captionTop": "Tudo num só servidor, atrás do Traefik,",
@@ -145,11 +146,11 @@ export default {
     "Como as peças do Seed se encaixam: o app web e o site chamam a API, a API grava cada alteração e seus eventos no Postgres, e o worker envia e-mails e notificações push a partir desses eventos. Tudo roda num só servidor.",
   "Home.title": "Seed: o starter kit de SaaS gratuito com padrões da web",
   "Home.description":
-    "O starter kit de SaaS gratuito, com licença MIT, feito com padrões da web: login com 2FA, grupos com funções, cobrança por membro no Stripe. Roda no Deno.",
+    "Starter kit de SaaS gratuito, MIT, feito com padrões da web: 2FA, grupos, Stripe, tempo real, offline, telas que abrem direto do dispositivo. Deno, Node e Bun.",
   "HomeProof.tests": "arquivos de teste nos apps e nas bibliotecas, todos rodando no CI",
   "HomeProof.licence": "licença: sem conta, sem paywall",
   "HomeStatus.signIn":
-    "Cadastro, login, confirmação de e-mail, redefinição de senha, entrar com Google e GitHub, chaves de acesso, links mágicos e verificação em duas etapas com app autenticador",
+    "Cadastro, login, confirmação de e-mail, redefinição de senha, entrar com Google e GitHub, chaves de acesso, códigos de login por e-mail e verificação em duas etapas com app autenticador",
   "HomeStatus.guests":
     "Contas de visitante: experimente o app com um clique e fique com a conta adicionando uma forma de entrar",
   "HomeStatus.groups": "Grupos com membros, funções, convites e transferência de dono",
@@ -171,10 +172,13 @@ export default {
   "HomeFaq.tryQuestion": "Dá para testar sem criar conta?",
   "HomeFaq.tryAnswer":
     "Dá. “Experimente a demo” abre o app numa conta de visitante com dados de exemplo, sem e-mail nem senha. Você pode adicionar uma forma de entrar, mas a demo continua sendo apagada toda noite. Já o Seed em si não pede conta nenhuma: é só clonar do GitHub.",
+  "HomeFaq.fastQuestion": "Por que um app feito com Seed é tão rápido?",
+  "HomeFaq.fastAnswer":
+    "Depois de aberto, ele não espera o servidor para mostrar o que você já viu. O app guarda uma cópia de cada lista no dispositivo, monta a tela com ela na hora e troca pela resposta do servidor quando ela chega. A busca e os filtros da lista de notas rodam no dispositivo. Ao abrir, o app primeiro confere seu login com o servidor, a primeira visita baixa os dados, e salvar uma alteração espera o servidor.",
   "HomeFaq.freeQuestion": "O Seed é gratuito mesmo?",
   "HomeFaq.freeAnswer":
     "É. A licença é MIT: use em quantos produtos quiser, comerciais ou não, publique seu fork, sem precisar de conta. Você só paga o servidor que alugar e os serviços que ativar, como o Stripe ou um provedor de e-mail.",
-  "HomeFaq.stackQuestion": "Por que Deno e Preact em vez de Next.js?",
+  "HomeFaq.stackQuestion": "Por que Hono e Preact em vez de Next.js?",
   "HomeFaq.stackAnswer":
     "Eles se apoiam em padrões da web (<code>fetch</code>, <code>Request</code>, Web Crypto, módulos ES), iniciam rápido e precisam de poucas dependências, então há menos para atualizar e menos para quebrar. Se você trabalha no ecossistema do Next.js, um starter de Next.js vai servir melhor; <compare>a comparação</compare> indica bons exemplos.",
   "HomeFaq.clientQuestion": "Posso usar em projetos para clientes?",
@@ -183,10 +187,10 @@ export default {
   "HomeFaq.productionQuestion": "Está pronto para produção?",
   "HomeFaq.productionAnswer":
     "As partes listadas em “Já funciona” têm testes no CI: todo pull request roda os testes de login, perfil, notas e grupos, e a suíte completa roda depois de cada merge. O Seed já pode ser usado e continua crescendo; leia a lista de status antes de confiar numa parte.",
-  "HomeHero.badge": "Roda no Deno 2",
+  "HomeHero.badge": "Roda no Deno, Node e Bun",
   "HomeHero.title": "A base do seu SaaS, já pronta.",
   "HomeHero.lead":
-    "O Seed é o starter kit de SaaS gratuito feito com padrões da web: login com verificação em duas etapas (2FA), grupos com funções, cobrança por membro no Stripe, tempo real, um app offline e um painel de administração. Tem licença MIT, roda no Deno hoje e você faz o deploy com Docker Compose num único servidor Linux alugado.",
+    "O Seed é o starter kit de SaaS gratuito feito com padrões da web: login com verificação em duas etapas (2FA), grupos com funções, cobrança por membro no Stripe, tempo real, um app offline e um painel de administração. Tem licença MIT, roda no Deno, no Node e no Bun, e você faz o deploy com Docker Compose num único servidor Linux alugado.",
   "HomeHero.github": "Ver no GitHub",
   "HomeHero.status":
     "O Seed já pode ser usado e é construído à vista de todos: <status>veja o que funciona</status>.",
@@ -207,7 +211,7 @@ export default {
   "HomeFeatures.signInAlt":
     "A página de segurança de um perfil: a senha, um botão Adicionar chave de acesso, a verificação em duas etapas ativada e o começo da lista de dispositivos conectados.",
   "HomeFeatures.signInText":
-    "E-mail e senha com código de confirmação, redefinição de senha, entrar com Google e GitHub, chaves de acesso, links de acesso por e-mail, contas de visitante e verificação em duas etapas com app autenticador. Sessões que você vê e encerra.",
+    "E-mail e senha com código de confirmação, redefinição de senha, entrar com Google e GitHub, chaves de acesso, códigos de login por e-mail, contas de visitante e verificação em duas etapas com app autenticador. Sessões que você vê e encerra.",
   "HomeFeatures.billingTitle": "Cobrança por membro",
   "HomeFeatures.billingLink": "Como funciona a cobrança",
   "HomeFeatures.billingText":
@@ -231,6 +235,12 @@ export default {
   "HomeFeatures.websiteText":
     "Este site: renderizado no servidor, funciona com o JavaScript desligado, em nove idiomas, com preços vindos do seu catálogo de planos, páginas legais e uma newsletter com confirmação por e-mail.",
   "HomeFeatures.all": "Todos os recursos, com capturas de tela e status",
+  "HomeSpeed.eyebrow": "Rápido de fábrica",
+  "HomeSpeed.title": "Nada de “carregando” entre um clique e outro",
+  "HomeSpeed.text":
+    "A maioria dos apps web consulta o servidor de novo a cada clique, e você espera. Com um app feito com Seed já aberto, uma tela que você já visitou abre na hora a partir da cópia no seu dispositivo, e a busca e os filtros da lista de notas respondem enquanto você digita. A cópia mais recente do servidor substitui a do dispositivo um instante depois, em segundo plano.",
+  "HomeSpeed.demo": "Experimente: navegue pela demo",
+  "HomeSpeed.how": "Como funciona",
   "HomeServer.eyebrow": "Roda num servidor que você aluga",
   "HomeServer.title": "Um servidor, um <code>docker compose</code>, nenhuma conta surpresa.",
   "HomeServer.text":
@@ -238,11 +248,13 @@ export default {
   "HomeServer.skip":
     "Se você quer funções serverless ou a Vercel, o Seed não é para você: ele foi feito para um servidor que você controla.",
   "HomeQuickStart.title": "Rodando localmente em quatro comandos",
-  "HomeQuickStart.needs": "Você precisa do Deno 2 e do Docker; a CLI do GitHub é opcional.",
+  "HomeQuickStart.needs":
+    "Você precisa do Docker e do Deno 2; a CLI do GitHub é opcional. No Node ou no Bun, <readme>o README</readme> instala o Deno para você e mostra os mesmos comandos com npm ou bun.",
   "HomeQuickStart.text":
     "O <init>init</init> copia o arquivo de ambiente e gera todos os segredos e as chaves de push da web; o <dev>dev</dev> sobe o Traefik e todo o resto. Depois, abra <url>http://app.localhost</url>. O <readme>README</readme> lista todas as configurações e explica o deploy.",
   "HomeQuickStart.agent": "Ou peça ao seu agente de IA: <prompt></prompt>.",
   "HomeQuickStart.terminal": "Terminal",
+  "HomeQuickStart.guide": "Leia o guia passo a passo",
   "HomeStatus.eyebrow": "Status sem rodeios",
   "HomeStatus.title": "Como está hoje",
   "HomeStatus.lead":
@@ -268,6 +280,8 @@ export default {
   "Pricing.description":
     "O Seed é gratuito sob a licença MIT, sem plano pago. Para rodar, você paga um servidor Linux pelo preço do seu provedor, mais os serviços que ativar.",
   "Pricing.crumb": "Preços",
+  "Pricing.saving":
+    "{plan} custa {monthly} por mês ou {yearly} por ano: {saving} a menos do que pagando todo mês.",
   "PricingFaq.paidQuestion": "Existe uma versão paga do Seed?",
   "PricingFaq.paidAnswer":
     "Não. Não há plano pro, chave de licença nem recurso reservado para quem paga. Se quiser ajuda, me contrate: meu tempo é a única coisa que eu vendo.",
@@ -348,7 +362,7 @@ export default {
   "FeatureSignIn.nav": "Contas e login",
   "FeatureSignIn.title": "Login resolvido",
   "FeatureSignIn.lead":
-    "As pessoas criam conta com e-mail e senha e confirmam o e-mail com um código. Podem redefinir uma senha esquecida, continuar com Google ou GitHub, entrar com uma chave de acesso ou receber por e-mail um link de acesso que também cria a conta. Ou experimentam o app primeiro numa conta de visitante e adicionam uma forma de entrar depois. Um app autenticador ativa a verificação em duas etapas (2FA). Cada pessoa vê todos os dispositivos em que está conectada e pode desconectar os outros. Mudar uma forma de entrar exige confirmação e gera um e-mail de aviso.",
+    "As pessoas criam conta com e-mail e senha e confirmam o e-mail com um código. Podem redefinir uma senha esquecida, continuar com Google ou GitHub, entrar com uma chave de acesso ou receber por e-mail um código de login que também cria a conta. Ou experimentam o app primeiro numa conta de visitante e adicionam uma forma de entrar depois. Um app autenticador ativa a verificação em duas etapas (2FA). Cada pessoa vê todos os dispositivos em que está conectada e pode desconectar os outros. Mudar uma forma de entrar exige confirmação e gera um e-mail de aviso.",
   "FeatureSignIn.fact1":
     "Senhas com hash PBKDF2-SHA-256 via Web Crypto, 600.000 iterações por padrão",
   "FeatureSignIn.fact2":
@@ -357,7 +371,7 @@ export default {
   "FeatureSignIn.fact4":
     "Chaves de acesso: só a chave pública é guardada, e cada desafio de login vale uma vez",
   "FeatureSignIn.fact5":
-    "Links mágicos: um só link entra ou cria a conta, vale uma vez, por 15 minutos, e é guardado só como hash",
+    "Códigos de login por e-mail: um código de 8 caracteres serve para entrar ou criar a conta, vale uma vez, por 10 minutos, só no navegador que o pediu, e é guardado só como hash",
   "FeatureSignIn.fact6":
     "Contas de visitante (login anônimo): a pessoa começa com um clique, sem forma de entrar, e depois adiciona e-mail e senha, Google, GitHub ou uma chave de acesso à mesma conta",
   "FeatureSignIn.fact7":
@@ -446,6 +460,19 @@ export default {
   "FeatureRealtime.fact3":
     "O tempo real pode ser desligado: aí o app consulta o servidor de tempos em tempos e funciona igual",
   "FeatureRealtime.code": "Ler o design do tempo real",
+  "FeatureFast.nav": "Rápido de fábrica",
+  "FeatureFast.title": "As telas abrem do dispositivo e depois se atualizam",
+  "FeatureFast.lead":
+    "Toda lista que o app já mostrou, exceto as notas e os grupos excluídos, fica guardada no dispositivo. A tela mostra essa cópia na hora e troca pela resposta do servidor quando ela chega, então navegar pelo app aberto não espera uma ida e volta ao servidor. Ao abrir, o app primeiro confere o login com o servidor, a primeira visita baixa os dados, e algumas telas sempre consultam o servidor.",
+  "FeatureFast.fact1":
+    "A cópia do dispositivo aparece primeiro, e a resposta do servidor a substitui (cachedRead sobre IndexedDB)",
+  "FeatureFast.fact2":
+    "A busca e os filtros da lista de notas percorrem a lista no dispositivo, sem uma requisição por tecla",
+  "FeatureFast.fact3":
+    "Ainda esperam o servidor: a conferência do login ao abrir o app, as notas e os grupos excluídos e todo salvamento, como trocar de plano ou enviar um convite",
+  "FeatureFast.fact4":
+    "Sem internet, uma alteração em nota ou etiqueta espera numa fila até a conexão voltar",
+  "FeatureFast.code": "Ler como funciona a cópia no dispositivo",
   "FeatureOffline.nav": "App offline",
   "FeatureOffline.title": "Um app que abre sem internet",
   "FeatureOffline.lead":
@@ -491,6 +518,19 @@ export default {
   "FeatureWorker.fact4":
     "Uma tentativa que falha é repetida com esperas cada vez maiores; os operadores veem cada execução no painel de administração",
   "FeatureWorker.code": "Ler docs/jobs.md",
+  "FeatureCatalog.nav": "Catálogo",
+  "FeatureCatalog.title": "Um catálogo para loja, cardápio ou aluguel",
+  "FeatureCatalog.lead":
+    "Seus operadores cadastram itens com fotos, cores e tamanhos no painel de administração, e o site mostra tudo em páginas que os buscadores entendem, com o que está esgotado marcado.",
+  "FeatureCatalog.fact1":
+    "Desligado até você definir CATALOG=true; a moeda e os idiomas são mais duas configurações",
+  "FeatureCatalog.fact2":
+    "Preços na menor unidade, textos em cada idioma que você mantém, esgotado por cor e tamanho",
+  "FeatureCatalog.fact3":
+    "O worker converte as fotos para AVIF e WebP, e cada mudança no painel de administração fica no registro de auditoria",
+  "FeatureCatalog.fact4":
+    "Um link de rastreamento para cada lugar onde você compartilha um item, contado no Umami: <guide>leia o guia do catálogo</guide>",
+  "FeatureCatalog.code": "Ler o código do catálogo",
   "FeatureYourFeature.nav": "Seus próprios recursos",
   "FeatureYourFeature.title": "Crie um recurso copiando outro",
   "FeatureYourFeature.lead":
@@ -501,13 +541,11 @@ export default {
   "FeatureYourFeature.fact3": "Todo id é um UUID ordenado no tempo (versão 7)",
   "FeatureYourFeature.code": "Ler docs/aggregates.md",
   "FeatureTierRuntime.eyebrow": "Runtime",
-  "FeatureTierRuntime.nav": "Plano de runtime",
-  "FeatureTierRuntime.title": "Roda no Deno hoje",
+  "FeatureTierRuntime.nav": "Runtimes",
+  "FeatureTierRuntime.title": "Roda no Deno, no Node e no Bun",
   "FeatureTierRuntime.lead":
-    "O Seed roda no Deno hoje e está a caminho de rodar sem mudanças no Deno, no Node e no Bun; ainda não há data. O código é feito com padrões da web (fetch, Request, Web Crypto, WebSocket, módulos ES), então a maior parte dele não depende do runtime. Em outubro de 2026, a equipe do Deno <announced>anunciou</announced> mais um ano de suporte, com versões mensais de correções e de segurança, e depois encerra o próprio desenvolvimento; o Deno continua de código aberto.",
-  "FeatureTierRuntime.wip": "Em andamento",
-  "FeatureTierRuntime.wipRuntimes": "<name>Node</name> e <name>Bun</name>",
-  "FeatureTierRuntime.follow": "Acompanhe o plano no GitHub (issue <issue>#623</issue>)",
+    "A API, o worker e o site rodam sem nenhuma mudança no Deno, no Node e no Bun, e o CI os inicia nos três runtimes a cada alteração. Uma única linha no arquivo env, APP_RUNTIME, escolhe o runtime. O código é feito com padrões da web (fetch, Request, Web Crypto, WebSocket, módulos ES); as tarefas e os testes do próprio Seed rodam no Deno, que o npm ou o Bun instala para você. Em outubro de 2026, a equipe do Deno <announced>anunciou</announced> mais um ano de suporte, com versões mensais de correções e de segurança, e depois encerra o próprio desenvolvimento; o Deno continua de código aberto.",
+  "FeatureTierRuntime.pick": "Como escolher o runtime",
   "FeatureTierOperations.eyebrow": "Operação",
   "FeatureTierOperations.title": "Rode, acompanhe e dê suporte a quem usa",
   "FeatureTierOperations.lead":
@@ -547,12 +585,13 @@ export default {
   "FeatureWebsite.title": "Um site público para você adaptar",
   "FeatureWebsite.lead":
     "Este site: rápido, renderizado no servidor e usável com o JavaScript desligado, com preços, páginas legais, blog e newsletter.",
-  "FeatureWebsite.fact1": "Fresh no servidor; toda ação é um link ou formulário de verdade",
+  "FeatureWebsite.fact1":
+    "Preact no servidor, compilado com Vite; toda ação é um link ou formulário de verdade",
   "FeatureWebsite.fact2": "Preços lidos do catálogo de planos do app",
   "FeatureWebsite.fact3":
     "Uma newsletter com confirmação por e-mail, cancelamento com um clique e e-mails no idioma de quem lê",
   "FeatureWebsite.fact4":
-    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS, dados estruturados de artigo, links antigos que redirecionam quando a URL de um post muda e um aviso ao IndexNow para que os buscadores saibam na hora de um post novo ou alterado",
+    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS, dados estruturados de artigo, links antigos que redirecionam quando a URL de um post muda, capas nas listas, uma cópia opcional no Dev.to que aponta o post como original, publicação automática no Telegram, Mastodon, Bluesky, Hashnode e LinkedIn e um aviso ao IndexNow para que os buscadores saibam na hora de um post novo ou alterado",
   "FeatureWebsite.fact5":
     "Links de contato definidos no painel de administração, exibidos no rodapé e nos dados estruturados",
   "FeatureWebsite.fact6":
@@ -582,7 +621,7 @@ export default {
     "Não. O Seed roda como contêineres de longa duração com Docker Compose num servidor Linux que você aluga, porque a API mantém conexões WebSocket abertas e um worker esvazia uma fila.",
   "FeaturesFaq.runtimeQuestion": "O Seed roda no Node.js ou no Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Ainda não. O Seed roda no Deno hoje, e o trabalho para rodar no Deno, no Node e no Bun está em andamento. Dá para acompanhar o progresso na issue #623 do GitHub do Seed.",
+    "Sim. A API, o worker em segundo plano e o site rodam no Deno, no Node ou no Bun: uma única configuração no arquivo env, APP_RUNTIME, escolhe o runtime. As tarefas e os testes do próprio Seed rodam no Deno, que o npm ou o Bun instala para você, então não é preciso instalar o Deno à parte.",
   "FeaturesFaq.databaseQuestion": "O Seed funciona com outro banco além do Postgres?",
   "FeaturesFaq.databaseAnswer":
     "Não. O Seed foi feito sobre o Postgres: as migrações, as consultas e os testes de integração contam com ele.",
@@ -604,7 +643,7 @@ export default {
     "O que vem no Seed: 2FA e login social, grupos com funções, cobrança por membro no Stripe, tempo real, app offline, painel de administração, monitoramento e backups.",
   "FeaturesHero.title": "Tudo o que vem no Seed, e o que ainda não vem",
   "FeaturesHero.lead":
-    "O Seed é um starter kit de SaaS gratuito, com licença MIT, que traz login por e-mail, Google e GitHub, chaves de acesso, links mágicos, contas de visitante, 2FA, grupos com funções, cobrança por membro no Stripe, atualizações em tempo real, um app offline, um painel de administração, monitoramento e backups diários criptografados opcionais. Cada seção abaixo leva ao código correspondente.",
+    "O Seed é um starter kit de SaaS gratuito, com licença MIT, que traz login por e-mail, Google e GitHub, chaves de acesso, códigos de login por e-mail, contas de visitante, 2FA, grupos com funções, cobrança por membro no Stripe, atualizações em tempo real, um app offline, um painel de administração, monitoramento e backups diários criptografados opcionais. Cada seção abaixo leva ao código correspondente.",
   "FeaturesHero.note":
     "O Seed já pode ser usado e é construído à vista de todos. O que falta aparece marcado como “Ainda não existe” ao lado do recurso afetado, com um link para a issue quando houver uma aberta.",
   "Features.compare": "Como o Seed se compara",
@@ -647,7 +686,7 @@ export default {
     "O painel de administração do Seed: encontre uma pessoa, encerre as sessões dela, reembolse um pagamento, rode de novo uma tarefa que falhou. Ações arriscadas pedem confirmação, e tudo fica registrado. Gratuito, MIT.",
   "AdminTour.heroTitle": "Um painel de administração para quem opera o seu produto",
   "AdminTour.heroLead":
-    "O Seed traz uma área de operação num host próprio. Seus operadores encontram uma pessoa, veem suas formas de entrar, sessões e grupos, e ajudam: encerram uma sessão, enviam um link para redefinir a senha, reembolsam um pagamento. Ações arriscadas pedem confirmação, e toda ação vai para o registro de auditoria.",
+    "O Seed traz uma área de operação num host próprio. Seus operadores encontram uma pessoa, veem suas formas de entrar, sessões e grupos, e ajudam: encerram uma sessão, enviam um e-mail para redefinir a senha, reembolsam um pagamento. Ações arriscadas pedem confirmação, e toda ação vai para o registro de auditoria.",
   "AdminTour.code": "Ler o código do painel",
   "AdminTour.dashboard": "Painel",
   "AdminTour.dashboardText": "Pessoas, cadastros, quem está ativo, grupos e notas em 30 dias.",
@@ -655,7 +694,7 @@ export default {
   "AdminTour.statsText": "Visitas ao site e cliques em pedidos do seu Umami. Só totais.",
   "AdminTour.users": "Usuários",
   "AdminTour.usersText":
-    "Encontre uma pessoa, bloqueie, encerre uma sessão ou envie um link de senha.",
+    "Encontre uma pessoa, bloqueie, encerre uma sessão ou envie um e-mail para redefinir a senha.",
   "AdminTour.groups": "Grupos",
   "AdminTour.groupsText": "Membros, convites e arquivos. Remova um arquivo ou troque o dono.",
   "AdminTour.billing": "Cobrança",
@@ -663,7 +702,8 @@ export default {
   "AdminTour.newsletter": "Newsletter",
   "AdminTour.newsletterText": "Quem assinou e o que foi enviado. Exporte a lista em CSV.",
   "AdminTour.blog": "Blog",
-  "AdminTour.blogText": "Posts do site em cada idioma, do rascunho à publicação.",
+  "AdminTour.blogText":
+    "Posts do site em cada idioma, do rascunho à publicação, divulgados automaticamente nos seus canais.",
   "AdminTour.contactLinks": "Links de contato",
   "AdminTour.contactLinksText": "Onde as pessoas falam com você, no rodapé do site, sem deploy.",
   "AdminTour.catalog": "Catálogo",
@@ -679,7 +719,7 @@ export default {
     "Todos os tokens de API, de quem são e quando foram usados pela última vez.",
   "AdminTour.operator": "Operador",
   "AdminTour.operatorText":
-    "O suporte do dia a dia: encontrar pessoas, encerrar sessões, enviar links para redefinir a senha, gerenciar grupos.",
+    "O suporte do dia a dia: encontrar pessoas, encerrar sessões, enviar e-mails para redefinir a senha, gerenciar grupos.",
   "AdminTour.supervisor": "Supervisor",
   "AdminTour.supervisorText":
     "Também reembolsa pagamentos, cancela uma assinatura na hora e passa um grupo para outro membro.",
@@ -736,7 +776,7 @@ export default {
   "CompareRow.makerkitLite": "Makerkit: só o kit Lite",
   "CompareRow.openSource": "Código aberto (MIT)",
   "CompareRow.password": "Login com senha",
-  "CompareRow.magicLinks": "Links mágicos",
+  "CompareRow.magicLinks": "Login por e-mail sem senha",
   "CompareRow.social": "Login social",
   "CompareRow.socialNote": "Seed: Google, GitHub",
   "CompareRow.totp": "2FA com app autenticador",
@@ -756,6 +796,8 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Log de auditoria",
   "CompareRow.realtime": "Atualizações em tempo real",
+  "CompareRow.instant": "Dados no dispositivo",
+  "CompareRow.instantNote": "Uma cópia de cada lista guardada no dispositivo",
   "CompareRow.offline": "App offline",
   "CompareRow.offlineNote": "Guarda numa fila o que é feito offline",
   "CompareRow.ops": "Monitoramento e backups",
@@ -867,10 +909,11 @@ export default {
   "Blog.emptyNewsletter": "O primeiro está a caminho. Receba por e-mail:",
   "Blog.notFoundTitle": "Este post não está aqui",
   "Blog.notFoundLead": "Ele pode ter mudado de lugar ou saído do ar.",
-  "Blog.ctaTitle": "Veja o {site} funcionando em um minuto",
+  "Blog.ctaTitle": "Veja {site} funcionando em um minuto",
   "Blog.published": "Publicado em <time>{date}</time>",
   "Blog.updated": "· Atualizado em <time>{date}</time>",
   "Blog.alsoIn": "Também disponível em: <links></links>",
+  "Blog.relatedFeature": "Recurso do Seed: {name} →",
   "Blog.minutes": {
     "one": "· {count} min de leitura",
     "many": "· {count} min de leitura",
@@ -943,7 +986,7 @@ export default {
   "FeaturePage.all": "Todos os recursos",
   "FeaturePage.runtimeQuestion": "O Seed roda no Node ou no Bun?",
   "FeaturePage.runtimeAnswer":
-    "Ainda não. Hoje o Seed roda no Deno, e a mudança para rodar no Deno, no Node e no Bun está em andamento (#623). Veja o plano de runtimes na página de recursos.",
+    "Sim. A API, o worker em segundo plano e o site rodam no Deno, no Node ou no Bun, escolhidos por uma única configuração (APP_RUNTIME). As tarefas do próprio Seed rodam no Deno, que o npm ou o Bun instala para você. Veja a seção de runtimes na página de recursos.",
   "FeaturePageMissing.title": "Esta página de recurso não está aqui",
   "FeaturePageMissing.description":
     "Ela pode ter mudado de lugar. Todos os recursos que o Seed oferece estão na página de recursos.",
@@ -951,20 +994,20 @@ export default {
   "FeaturePageSignIn.name": "Login",
   "FeaturePageSignIn.title": "Login para seu SaaS sem serviço de autenticação",
   "FeaturePageSignIn.description":
-    "Chaves de acesso, links por e-mail, Google, GitHub e 2FA, verificados pela sua API, sem serviço de autenticação nem taxa por usuário. Grátis, MIT.",
+    "Chaves de acesso, códigos por e-mail, Google, GitHub e 2FA, verificados pela sua API, sem serviço de autenticação nem taxa por usuário. Grátis, MIT.",
   "FeaturePageSignIn.h1":
     "Chaves de acesso (passkeys) e login para seu SaaS, sem serviço de autenticação",
   "FeaturePageSignIn.answer":
-    "O Seed faz o login com chaves de acesso, links de acesso por e-mail, Google e GitHub, verificados pela própria API no seu servidor, sem serviço de autenticação de terceiros. Senhas, chaves de acesso e links de acesso funcionam assim que você faz o deploy, sem taxa por usuário; Google e GitHub precisam, cada um, de duas chaves no arquivo de ambiente.",
+    "O Seed faz o login com chaves de acesso, códigos de login por e-mail, Google e GitHub, verificados pela própria API no seu servidor, sem serviço de autenticação de terceiros. Senhas, chaves de acesso e códigos de login funcionam assim que você faz o deploy, sem taxa por usuário; Google e GitHub precisam, cada um, de duas chaves no arquivo de ambiente.",
   "FeaturePageSignIn.summary":
-    "Chaves de acesso, links de acesso por e-mail, Google, GitHub e 2FA, sem serviço de autenticação.",
+    "Chaves de acesso, códigos de login por e-mail, Google, GitHub e 2FA, sem serviço de autenticação.",
   "FeaturePageSignIn.how1":
-    "A API verifica cada login por conta própria e responde com um cookie de sessão assinado. Uma chave de acesso usa o WebAuthn do próprio navegador: o servidor guarda só a chave pública, e cada desafio de login vale uma vez. Um link de acesso entra ou cria a conta, vale uma vez, por 15 minutos, e é guardado só como hash.",
+    "A API verifica cada login por conta própria e responde com um cookie de sessão assinado. Uma chave de acesso usa o WebAuthn do próprio navegador: o servidor guarda só a chave pública, e cada desafio de login vale uma vez. Um código de login por e-mail serve para entrar ou criar a conta, vale uma vez, por 10 minutos, só no navegador que o pediu, e é guardado só como hash.",
   "FeaturePageSignIn.how2":
     "Um app autenticador ativa a verificação em duas etapas. O perfil lista todas as formas de entrar na conta e todos os dispositivos conectados, e mudar uma forma de entrar exige confirmação e envia um e-mail. Quem chega também pode começar numa conta de visitante e adicionar uma forma de entrar depois.",
   "FeaturePageSignIn.authServiceQuestion": "Preciso de um serviço de autenticação?",
   "FeaturePageSignIn.authServiceAnswer":
-    "Não. A própria API do Seed verifica senhas, chaves de acesso, links de acesso e as respostas do Google e do GitHub, no seu servidor, então nada é cobrado por usuário.",
+    "Não. A própria API do Seed verifica senhas, chaves de acesso, códigos de login e as respostas do Google e do GitHub, no seu servidor, então nada é cobrado por usuário.",
   "FeaturePageSignIn.passkeysQuestion": "O Seed tem suporte a chaves de acesso (passkeys)?",
   "FeaturePageSignIn.passkeysAnswer":
     "Sim. As pessoas adicionam uma chave de acesso no perfil e entram com ela; o servidor guarda só a chave pública, e cada desafio de login vale uma vez.",
@@ -1122,4 +1165,18 @@ export default {
   "FeaturePageDeploy.backupQuestion": "Tem backup?",
   "FeaturePageDeploy.backupAnswer":
     "Sim. Um backup diário criptografado do banco de dados com restic, opcional, com instruções escritas de restauração.",
+  "Catalog.title": "Catálogo",
+  "Catalog.intro": "Tudo o que vendemos, com preços, tamanhos e cores.",
+  "Catalog.categories": "Categorias",
+  "Catalog.all": "Tudo",
+  "Catalog.empty": "Ainda não há nada à venda",
+  "Catalog.emptyLead": "Os novos itens aparecem aqui assim que ficarem prontos.",
+  "Catalog.categoryIntro": "{category}: preços, tamanhos e cores.",
+  "CatalogItem.intro": "{item}: preço, tamanhos e cores.",
+  "CatalogItem.photos": "Fotos",
+  "CatalogItem.material": "Material",
+  "CatalogItem.fit": "Caimento",
+  "CatalogItem.care": "Cuidados",
+  "CatalogItem.inStock": "{choice}: em estoque",
+  "CatalogItem.soldOut": "{choice}: esgotado",
 } satisfies Catalog

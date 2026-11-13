@@ -1,6 +1,6 @@
 /**
  * The operator area's reads and writes over `users`, `auth_keys`, `group_members` and
- * `auth_audits` (#146): the searchable user list, one person's detail, blocking, setting a role, the reset address and the CSV export.
+ * `auth_audits`: the searchable user list, one person's detail, blocking, setting a role, the reset address and the CSV export.
  * Who may call them is the API's business (`apps/api/routes/admin/users.ts`); nothing here checks it.
  *
  * Reads no environment and imports no singleton: the API and the role script both use it.
@@ -21,6 +21,7 @@ import {
   type AdminUserRow,
   type AdminUserSortKey,
   AuthAuditEventType,
+  type PictureState,
   SIGN_IN_LINK_METHOD,
   USER_ROLE_NAMES,
   type UserRole,
@@ -43,6 +44,7 @@ interface UserRowRaw {
   lastSeenAt: Date | null
   guestSince: Date | null
   pictureId: string | null
+  pictureState: PictureState | null
 }
 
 /**
@@ -53,7 +55,7 @@ interface UserRowRaw {
 function userColumns(sql: postgres.Sql) {
   return sql`
     u.id, u.first_name, u.last_name, u.role, u.blocked_at, u.created_at, u.last_seen_at,
-    u.guest_since, u.picture_id,
+    u.guest_since, u.picture_id, u.picture_state,
     (
       SELECT COALESCE(k.email, CASE WHEN k.method = ${PASSWORD_METHOD} THEN k.subject END)
       FROM auth_keys k
@@ -76,6 +78,7 @@ function toRow(row: UserRowRaw): AdminUserRow {
     lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
     guestSince: row.guestSince?.toISOString() ?? null,
     pictureId: row.pictureId,
+    pictureState: row.pictureState,
   }
 }
 
@@ -157,7 +160,7 @@ export async function listAdminUsers(
 }
 
 /**
- * Every person `filter` matches, on all its pages, in its sort, `batchSize` rows at a time (#425):
+ * Every person `filter` matches, on all its pages, in its sort, `batchSize` rows at a time:
  * the CSV export. A cursor reads them, so the whole list is never in memory at once; stopping the
  * loop early closes the cursor.
  */
@@ -313,9 +316,9 @@ export async function setUserRole(
 }
 
 /**
- * The address a password-reset link for `userId` goes to: their password key's, as "Forgot
- * password" looks it up. `null` when they have no password, or only a username with no address
- * (#139), so no link can reach them.
+ * The address an operator's password-reset mail for `userId` goes to: their password key's, as
+ * "Forgot password" looks it up. `null` when they have no password, or only a username with no
+ * address, so no mail can reach them.
  */
 export async function readPasswordResetAddress(
   sql: postgres.Sql,

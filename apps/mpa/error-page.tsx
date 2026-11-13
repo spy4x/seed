@@ -1,6 +1,6 @@
 // Seed's own site: see docs/start-a-product.md
 import type { JSX } from "preact"
-import { type FreshContext, HttpError } from "fresh"
+import { type Context, HttpError } from "@spy4x/preact-server"
 import { Button } from "@spy4x/preact-ui/button"
 import { HIRE_PAGE_URL } from "./hire.ts"
 import { pathLanguage } from "./languages.ts"
@@ -11,14 +11,14 @@ import type { State } from "./utils.ts"
 /**
  * The page for an error no route handled, inside the site's frame and in the language of its
  * address: "Page not found" for the 404 of
- * an unknown address, "Something went wrong" for anything else. `pageMiddleware` renders it, not a
- * `routes/_error.tsx`: Fresh would render that one outside every middleware, without the security
- * headers.
+ * an unknown address, "Something went wrong" for anything else. `pageMiddleware` renders it inside
+ * the middleware chain, so it carries the security headers; the website's server has no
+ * `routes/_error.tsx`.
  *
  * A server error is logged with the request's method and path. The query is left out: a
  * newsletter page's query holds the visitor's token.
  */
-export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promise<Response> {
+export function renderErrorPage(ctx: Context<State>, error: unknown): Promise<Response> {
   const status = error instanceof HttpError ? error.status : 500
   if (status >= 500) console.error(`${ctx.req.method} ${ctx.url.pathname} failed:`, error)
   const { language, path } = pathLanguage(ctx.url.pathname)
@@ -37,7 +37,7 @@ function ErrorPage(
   const { t, href, rich } = useSite()
   const title = t.t(notFound ? `ErrorPage.notFoundTitle` : `ErrorPage.errorTitle`)
   const description = t.t(notFound ? `ErrorPage.notFoundDescription` : `ErrorPage.errorDescription`)
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   return (
     <SiteFrame state={state} path={path} head={{ title, description, noindex: true }}>
       <section

@@ -72,7 +72,8 @@ screens were redesigned against these rules in October 2026.
     live, "Notifications" with its unread count, and the account: the avatar opening the library's
     `AccountMenu` (the name and address, which open the profile, then Keyboard shortcuts and Sign
     out; the theme is chosen on the profile). The admin's menu keeps the theme. The skip link
-    jumps past the rail into `<main>`. The admin's rail starts with Dashboard and has no switcher;
+    jumps past the rail into `<main>`. The admin's rail has no switcher: its top holds only Search
+    (Ctrl K), where the product's sits under the switcher, and its middle starts with Dashboard;
     a neutral "Admin" badge under the operator's avatar says where the operator is, and its tables
     use the wide column.
 12. **The rail's middle holds the daily destinations,** at most four so the phone bar keeps its

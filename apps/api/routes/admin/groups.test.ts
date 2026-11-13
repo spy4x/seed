@@ -1,7 +1,15 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
-import { ADMIN_GROUP_NO_FILTER, type AdminGroupDetail, type AdminGroupFiles } from "@domain/groups"
+import type { RateLimitStore } from "@spy4x/platform/rate-limit"
+import { NOTES_OFF, type NotesSetup } from "@server/notes/setup.ts"
+import {
+  ADMIN_GROUP_NO_FILTER,
+  type AdminGroupDetail,
+  type AdminGroupFiles,
+  canRead,
+  type WidgetDefinition,
+} from "@domain/groups"
 import { UserRole } from "@domain/identity"
 import { AdminGroupActOutcome, type AdminGroupStoredFile } from "@server/groups/admin-groups.ts"
 import type { APIContext } from "../../_types.ts"
@@ -21,9 +29,17 @@ import {
   ADMIN_GROUP_FILE_NOT_FOUND,
   ADMIN_GROUP_NOT_FOUND,
   type AdminGroupsService,
+  createAdminGroups,
   createAdminGroupsRoutes,
 } from "./groups.ts"
+import type { AppDbBase } from "@api/services/db-base.ts"
 import { apiError } from "../../_testing/api-error.ts"
+import { brokenStore, memoryStore } from "../../_testing/auth-routes.ts"
+import {
+  type AuthRateLimits,
+  createAuthRateLimits,
+  THUMBNAIL_LIMIT_FACTOR,
+} from "../../middlewares/auth-rate-limits.ts"
 
 const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
 const INVITATION_ID = `0199c3a0-0000-7000-8000-000000000002`
@@ -82,6 +98,7 @@ const detail: AdminGroupDetail = {
     id: GROUP_ID,
     name: `Family`,
     emoji: null,
+    timeZone: "UTC",
     color: null,
     owner: { id: 42, name: `Ada Lovelace`, email: `ada@example.com` },
     memberCount: 2,
@@ -109,9 +126,18 @@ function buildApp(
     outcome = AdminGroupActOutcome.Done,
     stored = true,
     auditFails = false,
-  }: { outcome?: AdminGroupActOutcome; stored?: boolean; auditFails?: boolean } = {},
+    notes,
+    rateLimits,
+  }: {
+    outcome?: AdminGroupActOutcome
+    stored?: boolean
+    auditFails?: boolean
+    notes?: NotesSetup
+    rateLimits?: AuthRateLimits
+  } = {},
 ) {
   const calls: unknown[][] = []
+  const requestIds: (string | null)[] = []
   const groups: AdminGroupsService = {
     list: (
       filter,
@@ -141,8 +167,9 @@ function buildApp(
         Promise.resolve(groupId === GROUP_ID ? STORED[fileId] ?? null : null)
     ),
     readFile: (key) => (calls.push([`readFile`, key]), Promise.resolve(stored ? BYTES : null)),
-    recordFileAccess: (actor, groupId, file, access) => {
+    recordFileAccess: (actor, groupId, file, access, requestId) => {
       calls.push([`audit`, actor, groupId, file.id, access])
+      requestIds.push(requestId)
       return auditFails ? Promise.reject(new Error(`the database is down`)) : Promise.resolve()
     },
     removeFile: (actor, groupId, fileId) => (
@@ -152,9 +179,14 @@ function buildApp(
   const route = createAdminRoute({
     auth: testSessionGuards(),
     mutationGuards: testMutationGuards,
-    modules: [createAdminGroupsRoutes({ limit: passThrough, groups })],
+    modules: [createAdminGroupsRoutes({
+      limit: rateLimits?.normal ?? passThrough,
+      thumbnailLimit: rateLimits?.thumbnail ?? passThrough,
+      groups,
+      notes,
+    })],
   })
-  return { app: mountRoute(`/admin`, route, auth), calls }
+  return { app: mountRoute(`/admin`, route, auth), calls, requestIds }
 }
 
 interface Route {
@@ -217,6 +249,20 @@ describe(`operator area group routes`, () => {
       expect(calls).toEqual([])
     })
   }
+
+  it(`answers 404 on every widget and file route with the notes off, reading nothing`, async () => {
+    const { app, calls } = buildApp(operator(), { notes: NOTES_OFF })
+    const noteReads = ROUTES.filter(({ path }) => /\/(widgets|files)\b/.test(path))
+    expect(noteReads).toHaveLength(6)
+    for (const route of noteReads) {
+      expect({ ...route, status: (await send(app, route)).status }).toEqual({
+        ...route,
+        status: 404,
+      })
+    }
+    expect(calls).toEqual([])
+    expect((await send(app, ROUTES[2])).status).toBe(200)
+  })
 
   it(`lists groups with the search, status, sort and page the address asks for`, async () => {
     const { app, calls } = buildApp()
@@ -502,6 +548,35 @@ describe(`operator area group routes`, () => {
     }
   })
 
+  it(`names an open's or a download's audit row with the UUID its address carries`, async () => {
+    for (const [access, id] of [[`open`, IMAGE_ID], [`download`, FILE_ID]]) {
+      const { app, requestIds } = buildApp()
+      const named = `0199c3a0-1234-7000-8000-0000000000aa`
+      const path = `/admin/groups/${GROUP_ID}/files/${id}/${access}?requestId=${named}`
+      expect((await send(app, { method: `GET`, path })).status).toBe(200)
+      expect(requestIds).toEqual([named])
+    }
+  })
+
+  it(`names the audit row with the request's own id when the address carries no UUID`, async () => {
+    const malformed = [
+      null,
+      ``,
+      `again`,
+      `0199C3A0-1234-7000-8000-0000000000AA`,
+      `0199c3a0-1234-7000-8000-0000000000aa0`,
+      `0199c3a0-1234-7000-8000-0000000000aa' OR '1'='1`,
+      `a`.repeat(200),
+    ]
+    for (const value of malformed) {
+      const { app, requestIds } = buildApp()
+      const query = value === null ? `` : `?${new URLSearchParams({ requestId: value })}`
+      const path = `/admin/groups/${GROUP_ID}/files/${FILE_ID}/download${query}`
+      expect((await send(app, { method: `GET`, path })).status).toBe(200)
+      expect(requestIds).toEqual([`req-test-1`])
+    }
+  })
+
   it(`refuses an open or a download another site starts, before reading or auditing anything`, async () => {
     for (const route of [ROUTES[10], ROUTES[11]]) {
       for (const site of [`cross-site`, `same-site`, `none`, null]) {
@@ -545,5 +620,132 @@ describe(`operator area group routes`, () => {
     const response = await send(app, ROUTES[11])
     expect(response.status).toBe(500)
     expect(response.headers.get(`content-disposition`)).toBe(null)
+  })
+})
+
+describe(`admin group thumbnails: their own budget (#536)`, () => {
+  /**
+   * The shipped defaults, 100 requests a minute per operator, over one in-process store per name,
+   * as Valkey keeps one key space per prefix: two limiters on the same name share their budgets.
+   */
+  const settings = () => {
+    const stores = new Map<string, RateLimitStore>()
+    return {
+      windowMs: 60_000,
+      strictLimit: 30,
+      limit: 100,
+      otpWindowMs: 900_000,
+      otpLimit: 5,
+      store: (name: string) => stores.get(name) ?? stores.set(name, memoryStore()).get(name)!,
+      onStoreError: () => {},
+    }
+  }
+  const thumbnail = ROUTES[9]
+  const otherCalls = [ROUTES[0], ROUTES[1], ROUTES[5], ROUTES[10], ROUTES[11]]
+
+  it(`refuses nothing while an operator pages through five pages of tiles and acts in one minute`, async () => {
+    const { app } = buildApp(operator(), { rateLimits: createAuthRateLimits(settings()) })
+    for (let page = 0; page < 5; page++) {
+      for (const route of otherCalls) expect((await send(app, route)).status).toBe(200)
+      for (let tile = 0; tile < 25; tile++) expect((await send(app, thumbnail)).status).toBe(200)
+    }
+    // 125 tiles spent none of the normal budget: 25 other calls leave 75 of it.
+    for (let call = 0; call < 75; call++) expect((await send(app, ROUTES[1])).status).toBe(200)
+    expect((await send(app, ROUTES[1])).status).toBe(429)
+    expect((await send(app, thumbnail)).status).toBe(200)
+  })
+
+  it(`refuses a tile past its own budget and still answers the other admin routes`, async () => {
+    const { app } = buildApp(operator(), { rateLimits: createAuthRateLimits(settings()) })
+    const budget = 100 * THUMBNAIL_LIMIT_FACTOR
+    for (let tile = 0; tile < budget; tile++) expect((await send(app, thumbnail)).status).toBe(200)
+
+    const refused = await send(app, thumbnail)
+    expect(refused.status).toBe(429)
+    expect(refused.headers.get(`retry-after`)).not.toBeNull()
+    expect((await send(app, ROUTES[1])).status).toBe(200)
+  })
+
+  it(`serves a tile and reports the error while the thumbnail budget's store is down`, async () => {
+    const errors: unknown[] = []
+    const rateLimits = createAuthRateLimits({
+      ...settings(),
+      store: brokenStore,
+      onStoreError: (error) => errors.push(error),
+    })
+    const { app } = buildApp(operator(), { rateLimits })
+
+    expect((await send(app, thumbnail)).status).toBe(200)
+    expect(errors.map((error) => (error as Error).message)).toEqual([`valkey is down`])
+  })
+})
+
+describe(`admin group widgets: what the operator may read`, () => {
+  const widget = (
+    id: string,
+    operatorView: WidgetDefinition["operatorView"],
+  ): WidgetDefinition => ({
+    id,
+    titleKey: `Test.title`,
+    size: `stat`,
+    canView: canRead,
+    operation: `test.widget`,
+    operatorView,
+  })
+
+  /** The real service over a fake database, with one reader per widget that counts its calls. */
+  function buildWidgetApp(definitions: WidgetDefinition[], readerIds: string[]) {
+    const reads: string[] = []
+    const db = {
+      noteOverview: {
+        startDay: () => (reads.push(`startDay`), Promise.resolve(`2026-01-01`)),
+      },
+    } as unknown as AppDbBase
+    const readers = Object.fromEntries(
+      readerIds.map((id) => [id, () => (reads.push(id), Promise.resolve({ current: 9 }))]),
+    )
+    const groups = createAdminGroups(
+      db,
+      25,
+      () => Promise.resolve({ maxFiles: null, maxBytes: null }),
+      () => Promise.resolve(null),
+      { definitions, readers },
+    )
+    const route = createAdminRoute({
+      auth: testSessionGuards(),
+      mutationGuards: testMutationGuards,
+      modules: [
+        createAdminGroupsRoutes({ limit: passThrough, thumbnailLimit: passThrough, groups }),
+      ],
+    })
+    return { app: mountRoute(`/admin`, route, operator()), reads }
+  }
+
+  const ask = (app: ReturnType<typeof buildWidgetApp>["app"], id: string) =>
+    send(app, {
+      method: `GET`,
+      path: `/admin/groups/${GROUP_ID}/widgets/${id}?from=2026-10-01&to=2026-10-21&timeZone=UTC`,
+    })
+
+  it(`answers a counts widget from its reader`, async () => {
+    const { app, reads } = buildWidgetApp([widget(`test.counts`, `counts`)], [`test.counts`])
+    const response = await ask(app, `test.counts`)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ current: 9 })
+    expect(reads).toEqual([`startDay`, `test.counts`])
+  })
+
+  it(`answers 404 for a members-only widget without calling its reader`, async () => {
+    const { app, reads } = buildWidgetApp([widget(`test.never`, `never`)], [`test.never`])
+    const response = await ask(app, `test.never`)
+    expect(response.status).toBe(404)
+    expect((await apiError(response)).message).toBe(ADMIN_GROUP_NOT_FOUND)
+    expect(reads).toEqual([])
+  })
+
+  it(`answers 404 for a reader whose widget has no definition, reading nothing`, async () => {
+    const { app, reads } = buildWidgetApp([], [`test.orphan`])
+    expect((await ask(app, `test.orphan`)).status).toBe(404)
+    expect(reads).toEqual([])
   })
 })

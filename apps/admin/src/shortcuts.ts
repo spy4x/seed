@@ -1,5 +1,6 @@
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { generalRows, SHORTCUT_GROUPS, type ShortcutRow } from "@ui/shortcuts.tsx"
+import type { AdminGoTo } from "@ui/admin-palette-commands.ts"
 import type { AdminModule } from "./modules/types.ts"
 
 /** The second key of each module's "Go to" sequence, by module id: `g u` opens Users. */
@@ -17,6 +18,39 @@ export const ADMIN_GO_KEYS: Readonly<Record<string, string>> = {
   jobs: "j",
   system: "s",
   "api-tokens": "k",
+}
+
+/**
+ * The blog's own pages that a `g` sequence opens too, while the blog module is shown: `g h` the
+ * sharing channels, `g n` the live posts that still need sharing.
+ */
+const BLOG_GO_PAGES: readonly AdminGoTo[] = [
+  {
+    id: "blog-channels",
+    keys: "g h",
+    key: `AdminShortcuts.sharingChannels`,
+    href: "/blog/channels",
+  },
+  {
+    id: "blog-needs-sharing",
+    keys: "g n",
+    key: `AdminShortcuts.needsSharing`,
+    href: "/blog?sharing=todo",
+  },
+]
+
+/**
+ * Every `g` destination of the modules shown, in the rail's order, then the blog's own pages while
+ * the blog is shown: the shortcuts bind them and the palette lists them.
+ */
+export function adminGoTo(modules: readonly AdminModule[]): AdminGoTo[] {
+  const goTo = modules.flatMap((module): AdminGoTo[] => {
+    const key = ADMIN_GO_KEYS[module.id]
+    if (key === undefined) return []
+    return [{ id: module.id, keys: `g ${key}`, key: module.nav.name, href: module.nav.href }]
+  })
+  const blog = modules.some((module) => module.id === `blog`) ? BLOG_GO_PAGES : []
+  return [...goTo, ...blog]
 }
 
 /** The modules whose first page is a list with a search field, which `/` focuses. */
@@ -39,6 +73,11 @@ export const ADMIN_PAGE_ACTIONS: Readonly<
   Record<string, readonly { keys: string; description: string; href: string }[]>
 > = {
   "/blog": [{ keys: "c", description: `AdminShortcuts.newPost`, href: "/blog/new" }],
+  "/blog/channels": [{
+    keys: "c",
+    description: `AdminShortcuts.addChannel`,
+    href: "/blog/channels/new",
+  }],
   "/contact-links": [{
     keys: "c",
     description: `AdminShortcuts.addLink`,
@@ -52,12 +91,26 @@ export const ADMIN_PAGE_ACTIONS: Readonly<
 
 /**
  * The pages whose save button takes Ctrl S (Command S on a Mac): the blog's editor and the
- * catalog's item editor.
+ * catalog's item editor. The blog's channels page is no post.
  */
-const SAVE_PAGES = /^\/(blog|catalog)\/(?!categories(\/|$))[^/]+$/
+const SAVE_PAGES = /^\/(blog|catalog)\/(?!(categories|channels)(\/|$))[^/]+$/
 
-/** A post's editor, new or saved, whose body takes F8 to its figure problems (#620). */
-const BLOG_POST_PAGE = /^\/blog\/[^/]+$/
+/** A post's editor, new or saved, whose body takes F8 to its figure problems. */
+const BLOG_POST_PAGE = /^\/blog\/(?!channels$)[^/]+$/
+
+/** A post's sharing checklist, whose rows take their own keys. */
+const BLOG_SHARING_PAGE = /^\/blog\/[^/]+\/sharing$/
+
+/** The checklist's keys, each a catalog key; its page binds them itself. */
+const SHARING_KEYS: readonly { keys: string; description: string }[] = [
+  { keys: "j", description: `AdminShortcuts.nextRow` },
+  { keys: "k", description: `AdminShortcuts.previousRow` },
+  { keys: "t", description: `AdminShortcuts.copyRowText` },
+  { keys: "o", description: `AdminShortcuts.openRowChannel` },
+  { keys: "p", description: `AdminShortcuts.focusRowLink` },
+  { keys: "s", description: `AdminShortcuts.skipRow` },
+  { keys: "e", description: `AdminShortcuts.rowResults` },
+]
 
 /** What the admin app's shortcuts act on. */
 export interface AdminShortcutPorts {
@@ -75,23 +128,18 @@ export interface AdminShortcutPorts {
 
 /**
  * The admin app's keyboard shortcuts, the one list its "Keyboard shortcuts" dialog shows and its
- * shell binds: `?` and Escape, a `g` sequence per module shown, named as the rail names it, `/`
- * while a list with a search field is open, and the open page's own actions (`c` on the blog's
- * list; Ctrl S, listed, in its editor). There is no New note: operators write no notes.
+ * shell binds: `?`, Ctrl K (⌘K, listed: the palette binds it) and Escape, a `g` sequence per
+ * module shown, named as the rail names it, `/` while a list with a search field is open, and the
+ * open page's own actions (`c` on the blog's list; Ctrl S, listed, in its editor). There is no New note: operators write no notes.
  */
 export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
-  const goTo = ports.modules.flatMap((module): ShortcutRow[] => {
-    const key = ADMIN_GO_KEYS[module.id]
-    if (key === undefined) return []
-    return [{
-      keys: `g ${key}`,
-      description: ports.t.t(module.nav.name),
-      group: SHORTCUT_GROUPS.goTo,
-      run: () => ports.navigate(module.nav.href),
-    }]
-  })
-  const list = ports.modules.find((module) => module.nav.href === ports.path)
-  const filter: ShortcutRow[] = list && LIST_FILTER_MODULES.has(list.id)
+  const goTo = adminGoTo(ports.modules).map((entry): ShortcutRow => ({
+    keys: entry.keys,
+    description: ports.t.t(entry.key),
+    group: SHORTCUT_GROUPS.goTo,
+    run: () => ports.navigate(entry.href),
+  }))
+  const filter: ShortcutRow[] = onListPage(ports.modules, ports.path)
     ? [{
       keys: "/",
       description: ports.t.t(`AdminShortcuts.searchList`),
@@ -122,14 +170,33 @@ export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
       { keys: `shift+f8`, description: ports.t.t(`AdminShortcuts.previousProblem`) },
     ].map((row) => ({ ...row, group: SHORTCUT_GROUPS.page }))
     : []
+  // Listed only: the checklist's rows take these keys themselves, while one has focus.
+  const rows: ShortcutRow[] = BLOG_SHARING_PAGE.test(ports.path)
+    ? SHARING_KEYS.map((row) => ({
+      keys: row.keys,
+      description: ports.t.t(row.description),
+      group: SHORTCUT_GROUPS.page,
+    }))
+    : []
+  const [show, close] = generalRows(ports.openShortcuts)
   return [
-    ...generalRows(ports.openShortcuts),
+    show,
+    // Listed only: the palette binds it itself.
+    { keys: "mod+k", description: `Shortcuts.search`, group: SHORTCUT_GROUPS.general },
+    close,
     ...goTo,
     ...filter,
     ...actions,
     ...save,
     ...problems,
+    ...rows,
   ]
+}
+
+/** Whether `path` is a shown module's first page with a search field, which `/` focuses. */
+export function onListPage(modules: readonly AdminModule[], path: string): boolean {
+  const list = modules.find((module) => module.nav.href === path)
+  return list !== undefined && LIST_FILTER_MODULES.has(list.id)
 }
 
 /** Focuses the first search field of the page, the list's own. */

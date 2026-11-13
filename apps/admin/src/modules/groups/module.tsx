@@ -7,6 +7,7 @@ import {
   adminGroupFileFilterQuery,
   type AdminGroupFilter,
   adminGroupFilterQuery,
+  groupTimeZone,
   parseAdminGroupFileFilter,
   parseAdminGroupFilter,
 } from "@domain/groups"
@@ -117,12 +118,24 @@ function GroupView(
     goFiles({ query: page.query, page: Math.ceil(page.total / page.pageSize) }, true)
   }, [page])
   const overview = overviewState(context)
-  const timeZone = useFormat().timeZone
+  // The overview counts the group's days, in the group's zone, as its members see them.
+  const viewerTimeZone = useFormat().timeZone
+  const shownGroup = current ? group.detail?.group : undefined
+  const timeZone = shownGroup ? groupTimeZone(shownGroup, viewerTimeZone) : viewerTimeZone
   const now = useMemo(() => new Date(), [groupId])
   const [range, setRange] = useState<DateRangeChoice>(() => ({
     preset: OVERVIEW_DEFAULT_PRESET,
     range: rangeForPreset(OVERVIEW_DEFAULT_PRESET, { now, timeZone }),
   }))
+  // A preset is counted again once the group's zone is known; a custom range keeps its days.
+  useEffect(() => {
+    setRange((shown) =>
+      shown.preset === `custom` ? shown : {
+        preset: shown.preset,
+        range: rangeForPreset(shown.preset, { now, timeZone }),
+      }
+    )
+  }, [timeZone])
   useEffect(() => {
     if (groupId !== null) overview.open({ groupId, range: range.range, timeZone })
   }, [groupId, range.range.from, range.range.to, timeZone])
@@ -159,12 +172,14 @@ function GroupView(
           groupName={group.detail.group.name}
           range={range}
           timeZone={timeZone}
+          viewerTimeZone={viewerTimeZone}
           now={now}
           onRangeChange={setRange}
           widgets={OVERVIEW_WIDGETS.map((widget) => ({
             id: widget.id,
             titleKey: widget.titleKey,
             size: widget.size,
+            operatorView: widget.operatorView,
             load: loads[widget.id] ?? { status: `loading` },
           }))}
           views={OVERVIEW_VIEWS}
@@ -176,7 +191,7 @@ function GroupView(
   )
 }
 
-/** Every group, and one group's page with its members, invitations, files and activity (#426). */
+/** Every group, and one group's page with its members, invitations, files and activity. */
 export const groupsModule: AdminModule = {
   id: `groups`,
   nav: { name: `AdminNav.groups`, href: ADMIN_GROUP_PATHS.list, Icon: IconFolder },

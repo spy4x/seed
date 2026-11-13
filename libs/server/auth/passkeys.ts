@@ -1,5 +1,5 @@
 /**
- * Passkeys (#222) in Postgres: the `auth_passkeys` row beside a passkey's `auth_keys` row (method
+ * Passkeys in Postgres: the `auth_passkeys` row beside a passkey's `auth_keys` row (method
  * {@link PASSKEY_METHOD}, the credential id as `subject`). Every function takes the person's id
  * from the caller, which takes it from the session or from the key a sign-in found; nothing here
  * reads a request.

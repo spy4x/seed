@@ -13,15 +13,16 @@ import {
 import type { FigureFrame } from "./components/post-figure.tsx"
 
 /**
- * The interactive figures a post can hold (#620): one file each in `islands/post/`, named after
+ * The interactive figures a post can hold: one file each in `islands/post/`, named after
  * its tag (`CostCalculator.tsx` is `<CostCalculator />`). The folder is the list: a new file is a
  * new tag, with nothing else to edit. `docs/blog.md` says how to add one.
  *
  * A tag is looked up in this map by its exact name and never turned into a path, so a post cannot
  * reach any other module; its props reach the component only after the file's `props` schema
  * accepted them. A file exports that schema as an arktype definition, a plain object, which the
- * registry compiles: Fresh ships every export of an island to the browser, and arktype there would
- * add about 190 KB and a `new Function` probe that the website's Content Security Policy blocks.
+ * registry compiles: the browser loads an island's whole file, every export, and arktype there
+ * would add about 190 KB and a `new Function` probe that the website's Content Security Policy
+ * blocks.
  *
  * @module
  */
@@ -89,8 +90,8 @@ const BUNDLED: Record<string, unknown> | undefined = (import.meta as { env?: unk
 let loaded: Promise<ReadonlyMap<string, PostFigureModule>> | undefined
 
 /**
- * The site's figures. Under Vite each island is the very module Fresh hydrates; Deno alone (the
- * tests) reads the folder from disk instead.
+ * The site's figures. Under Vite each island is the very module the browser hydrates; Deno alone
+ * (the tests) reads the folder from disk instead.
  */
 export function postFigures(): Promise<ReadonlyMap<string, PostFigureModule>> {
   loaded ??= BUNDLED
@@ -201,7 +202,7 @@ export function feedHtml(
 /**
  * `html` with each relative `href` and `src` resolved against `base`, so a link inside a post
  * (`/docs`, `#part`, `other-post`) works in a feed reader that does not resolve it against the
- * item's link (#416). It relies on the API's safe HTML, the only HTML a body has: every attribute
+ * item's link. It relies on the API's safe HTML, the only HTML a body has: every attribute
  * is double-quoted, and a `"` in text is written `&quot;`, so ` href="` appears only inside a tag.
  * An address with a scheme (`https:`, `mailto:`) is left as it is.
  */

@@ -10,7 +10,7 @@ import {
 import { isProxyAnswer, isRefusal, isUnreachable } from "@spy4x/realtime/read-cache"
 
 /**
- * The benchmark's run (#440), apart from the browser: the steps in order, what a failure or a stop
+ * The benchmark's run, apart from the browser: the steps in order, what a failure or a stop
  * leaves, the record a crash leaves behind, and the results line. `BenchmarkView` passes the real
  * measures; a test passes its own.
  *

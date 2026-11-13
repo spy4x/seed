@@ -10,10 +10,10 @@ import type {
 import { type CatalogActor, PostgresCatalog } from "./postgres-catalog.ts"
 
 /**
- * A small merch shop for local work and the public demo (#466): three categories and six items
+ * A small merch shop for local work and the public demo: three categories and six items
  * with colours, sizes, a sold-out size and a sold-out item, in English. Five are published and one
  * is a draft. They have no photos: the website shows its placeholder until an operator adds some.
- * Four tracking link sources (#483) come with them, with no links yet: an operator makes those.
+ * Four tracking link sources come with them, with no links yet: an operator makes those.
  * The ids are fixed, so seeding again adds nothing.
  */
 export const SAMPLE_CATALOG_CATEGORIES: readonly (CatalogCategoryFields & { id: string })[] = [
@@ -22,7 +22,7 @@ export const SAMPLE_CATALOG_CATEGORIES: readonly (CatalogCategoryFields & { id: 
   { id: `019a2f6c-0c00-7000-8000-00000000ca03`, slug: `accessories`, name: { en: `Accessories` } },
 ]
 
-/** The places a small shop shares its items in, for the tracking links (#483). */
+/** The places a small shop shares its items in, for the tracking links. */
 export const SAMPLE_CATALOG_SOURCES: readonly (CatalogSourceFields & { id: string })[] = [
   { id: `019a2f6c-0c00-7000-8000-00000000cb01`, slug: `facebook-group`, name: `Facebook group` },
   { id: `019a2f6c-0c00-7000-8000-00000000cb02`, slug: `zalo-group`, name: `Zalo group` },

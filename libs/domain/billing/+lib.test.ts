@@ -8,30 +8,62 @@ import {
   assertFeature,
   assertRoomFor,
   attachmentRulesOf,
+  billingCheckoutRequestSchema,
   BillingError,
   BillingNoticeKind,
   billingNoticeOf,
+  BillingPeriod,
   BillingStatus,
   DEFAULT_GRACE_DAYS,
-  effectivePlanId,
+  effectivePlanId as effectivePlanIdOf,
   entitlementsOf,
   FREE_PLAN_ID,
+  freePlanAllowsNothing,
   graceEndsAt,
   handoverTrialDays,
   hasLiveSubscription,
   isSeatBilled,
+  needsFirstPlan,
+  periodsOf,
+  type Plan,
   PlanError,
   PLANS,
+  priceOf,
   PRO_PLAN_ID,
   providerPageUrl,
   readGroupBilling,
   readPlanRefusal,
   type StoredSubscription,
-  toGroupBilling,
+  toGroupBilling as toGroupBillingOf,
   toPlanRefusal,
   TRIAL_NOTICE_DAYS,
   UNLIMITED,
+  yearlySavingOf,
 } from "./+lib.ts"
+import { TEST_FREE_PLAN, TEST_PLANS, TEST_PRO_PLAN, testLimits } from "./test-plans.ts"
+import { type } from "arktype"
+
+/** {@link effectivePlanIdOf} on the test catalog. */
+const effectivePlanId = (...[stored, now, graceDays]: Parameters<typeof effectivePlanIdOf>) =>
+  effectivePlanIdOf(stored, now, graceDays, TEST_PLANS)
+
+/** {@link toGroupBillingOf} on the test catalog. */
+const toGroupBilling = (
+  ...[stored, role, enabled, hasCustomer, now, graceDays, members, handedOver]: Parameters<
+    typeof toGroupBillingOf
+  >
+) =>
+  toGroupBillingOf(
+    stored,
+    role,
+    enabled,
+    hasCustomer,
+    now,
+    graceDays,
+    members,
+    handedOver,
+    TEST_PLANS,
+  )
 
 /** When the first payment failed in the tests below. */
 const FAILED_AT = new Date("2026-10-01T10:00:00Z")
@@ -49,6 +81,7 @@ const subscription = (status: BillingStatus, planId: string | null = PRO_PLAN_ID
     trialEnd: null,
     quantity: 1,
     everActive: status !== BillingStatus.Trialing,
+    period: planId === null ? null : BillingPeriod.Monthly,
   }) satisfies StoredSubscription
 
 /** When the trial and the period end in the tests of trials and cancellations. */
@@ -162,6 +195,7 @@ describe("billing domain", () => {
         subscribed: false,
         hasCustomer: false,
         seatPrice: null,
+        period: null,
       })
   })
 
@@ -280,21 +314,22 @@ describe("billing domain", () => {
     }
   })
 
-  it("bills the paid plan per member and the free plan not", () => {
-    expect(PLANS.map((plan) => [plan.id, plan.perSeat])).toEqual([
-      [FREE_PLAN_ID, false],
-      [PRO_PLAN_ID, true],
-    ])
+  it("sells a catalog that starts with the free plan, which costs nothing and has no trial", () => {
+    const [free, ...paid] = PLANS
+    expect([free.id, free.amount, free.yearlyAmount, free.perSeat, free.trialDays])
+      .toEqual([FREE_PLAN_ID, 0, null, false, 0])
+    expect(paid.length).toBeGreaterThan(0)
+    expect(paid.map((plan) => plan.id)).not.toContain(FREE_PLAN_ID)
   })
 
   it("bills per member only a live subscription to a per-member plan", () => {
-    expect(isSeatBilled(subscription(BillingStatus.Active))).toBe(true)
+    expect(isSeatBilled(subscription(BillingStatus.Active), TEST_PLANS)).toBe(true)
     // The provider still charges a past-due subscription, so its seats still follow the members.
-    expect(isSeatBilled(subscription(BillingStatus.PastDue))).toBe(true)
-    expect(isSeatBilled(subscription(BillingStatus.Canceled))).toBe(false)
-    expect(isSeatBilled(subscription(BillingStatus.Active, FREE_PLAN_ID))).toBe(false)
-    expect(isSeatBilled(subscription(BillingStatus.Active, null))).toBe(false)
-    expect(isSeatBilled(null)).toBe(false)
+    expect(isSeatBilled(subscription(BillingStatus.PastDue), TEST_PLANS)).toBe(true)
+    expect(isSeatBilled(subscription(BillingStatus.Canceled), TEST_PLANS)).toBe(false)
+    expect(isSeatBilled(subscription(BillingStatus.Active, FREE_PLAN_ID), TEST_PLANS)).toBe(false)
+    expect(isSeatBilled(subscription(BillingStatus.Active, null), TEST_PLANS)).toBe(false)
+    expect(isSeatBilled(null, TEST_PLANS)).toBe(false)
   })
 
   it("shows every member the per-member price and the seats of a group billed per member", () => {
@@ -303,19 +338,13 @@ describe("billing domain", () => {
 
     expect(view(subscription(BillingStatus.Active))).toEqual({
       seats: 4,
-      amount: 900,
-      currency: "EUR",
+      amount: TEST_PRO_PLAN.amount,
+      currency: TEST_PRO_PLAN.currency,
+      period: BillingPeriod.Monthly,
     })
     expect(view(subscription(BillingStatus.Canceled))).toBeNull()
     expect(view(null)).toBeNull()
     expect(view(subscription(BillingStatus.Active), false)).toBeNull()
-  })
-
-  it("offers a trial on the paid plan only", () => {
-    expect(PLANS.map((plan) => [plan.id, plan.trialDays])).toEqual([
-      [FREE_PLAN_ID, 0],
-      [PRO_PLAN_ID, 14],
-    ])
   })
 
   it("counts every subscription that is not cancelled as live, whatever plan it shows", () => {
@@ -358,26 +387,33 @@ describe("billing domain", () => {
   })
 
   it("gives a group its plan's entitlements, the free plan's for an unknown id", () => {
-    expect(entitlementsOf(PRO_PLAN_ID, true).features.memberRoles).toBe(true)
-    expect(entitlementsOf(FREE_PLAN_ID, true).features.memberRoles).toBe(false)
-    expect(entitlementsOf(FREE_PLAN_ID, true).limits.maxNotes).toBe(10)
-    expect(entitlementsOf("gone", true)).toEqual(entitlementsOf(FREE_PLAN_ID, true))
+    expect(entitlementsOf(PRO_PLAN_ID, true, TEST_PLANS).features.memberRoles).toBe(true)
+    expect(entitlementsOf(FREE_PLAN_ID, true, TEST_PLANS).features.memberRoles).toBe(false)
+    expect(entitlementsOf(FREE_PLAN_ID, true, TEST_PLANS).limits.maxNotes)
+      .toBe(TEST_FREE_PLAN.entitlements.limits.maxNotes)
+    expect(entitlementsOf("gone", true, TEST_PLANS)).toEqual(
+      entitlementsOf(FREE_PLAN_ID, true, TEST_PLANS),
+    )
   })
 
   it("allows every feature with no cap while billing is off", () => {
-    const unlimited = entitlementsOf(FREE_PLAN_ID, false)
+    const unlimited = entitlementsOf(FREE_PLAN_ID, false, TEST_PLANS)
     expect(unlimited).toBe(UNLIMITED)
     expect(Object.values(unlimited.features).every((on) => on === true)).toBe(true)
     expect(Object.values(unlimited.limits).every((max) => max === null)).toBe(true)
     // Every key a plan has is on the list, so a key added to the plans but not here fails.
-    expect(Object.keys(unlimited.features)).toEqual(Object.keys(PLANS[0].entitlements.features))
+    expect(Object.keys(unlimited.features)).toEqual(
+      Object.keys(TEST_FREE_PLAN.entitlements.features),
+    )
     expect(Object.keys(unlimited.limits).sort())
-      .toEqual(Object.keys(PLANS[0].entitlements.limits).sort())
+      .toEqual(Object.keys(TEST_FREE_PLAN.entitlements.limits).sort())
   })
 
   it("refuses a feature the plan lacks, and tells only the owner they can upgrade", () => {
-    const free = entitlementsOf(FREE_PLAN_ID, true)
-    expect(() => assertFeature(entitlementsOf(PRO_PLAN_ID, true), "memberRoles", GroupRole.ADMIN))
+    const free = entitlementsOf(FREE_PLAN_ID, true, TEST_PLANS)
+    expect(() =>
+      assertFeature(entitlementsOf(PRO_PLAN_ID, true, TEST_PLANS), "memberRoles", GroupRole.ADMIN)
+    )
       .not.toThrow()
     const refusal = (role: GroupRole) => {
       try {
@@ -426,12 +462,154 @@ describe("billing domain", () => {
   })
 
   it("keeps the file rules with billing off and takes each plan's own with billing on", () => {
-    const free = PLANS.find((plan) => plan.id === FREE_PLAN_ID)!
-    const pro = PLANS.find((plan) => plan.id === PRO_PLAN_ID)!
-    expect(free.attachments).toEqual({ maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 })
-    expect(free.entitlements.limits.maxAttachments).toBe(100)
-    expect(attachmentRulesOf(PRO_PLAN_ID, false)).toBe(free.attachments)
-    expect(attachmentRulesOf(PRO_PLAN_ID, true)).toBe(pro.attachments)
-    expect(attachmentRulesOf("unknown", true)).toBe(free.attachments)
+    const free = TEST_FREE_PLAN
+    const pro = TEST_PRO_PLAN
+    expect(attachmentRulesOf(PRO_PLAN_ID, false, TEST_PLANS)).toBe(free.attachments)
+    expect(attachmentRulesOf(PRO_PLAN_ID, true, TEST_PLANS)).toBe(pro.attachments)
+    expect(attachmentRulesOf("unknown", true, TEST_PLANS)).toBe(free.attachments)
+  })
+
+  describe("yearly prices", () => {
+    const pro = TEST_PRO_PLAN
+    const yearly: Plan = { ...pro, amount: 400, yearlyAmount: 4000 }
+
+    it("sells a plan monthly only until it has a yearly price, then both, monthly first", () => {
+      expect(periodsOf(pro)).toEqual([BillingPeriod.Monthly])
+      expect(periodsOf(yearly)).toEqual([BillingPeriod.Monthly, BillingPeriod.Yearly])
+    })
+
+    it("prices each period from its own amount, and a period the plan is not sold for as null", () => {
+      expect(priceOf(yearly, BillingPeriod.Monthly)).toBe(400)
+      expect(priceOf(yearly, BillingPeriod.Yearly)).toBe(4000)
+      expect(priceOf(pro, BillingPeriod.Yearly)).toBeNull()
+    })
+
+    it("saves twelve monthly payments minus the yearly price, never less than nothing", () => {
+      expect(yearlySavingOf(yearly)).toBe(800)
+      expect(yearlySavingOf(pro)).toBe(0)
+      expect(yearlySavingOf({ ...yearly, yearlyAmount: 5000 })).toBe(0)
+    })
+
+    it("takes a checkout with or without a period, and nothing but month or year", () => {
+      const check = (body: unknown) => !(billingCheckoutRequestSchema(body) instanceof type.errors)
+
+      expect(check({ planId: PRO_PLAN_ID })).toBe(true)
+      expect(check({ planId: PRO_PLAN_ID, period: BillingPeriod.Monthly })).toBe(true)
+      expect(check({ planId: PRO_PLAN_ID, period: BillingPeriod.Yearly })).toBe(true)
+      expect(check({ planId: PRO_PLAN_ID, period: 3 })).toBe(false)
+      expect(check({ planId: PRO_PLAN_ID, period: "year" })).toBe(false)
+      expect(check({ planId: PRO_PLAN_ID, priceId: "price_1" })).toBe(false)
+    })
+
+    it("reads a group's billing period back, and refuses a period it does not know", () => {
+      const billing = toGroupBilling(
+        { ...subscription(BillingStatus.Active), period: BillingPeriod.Yearly },
+        GroupRole.OWNER,
+        true,
+        true,
+        NOW,
+        7,
+        1,
+      )
+      const sent = JSON.parse(JSON.stringify(billing))
+
+      expect(billing.period).toBe(BillingPeriod.Yearly)
+      expect(readGroupBilling(sent)?.period).toBe(BillingPeriod.Yearly)
+      expect(readGroupBilling({ ...sent, period: null })?.period).toBeNull()
+      expect(readGroupBilling({ ...sent, period: 3 })).toBeNull()
+    })
+
+    it("prices a seat for the period the group is billed, none for a period its plan does not sell", () => {
+      const billed = (period: BillingPeriod) =>
+        toGroupBilling(
+          { ...subscription(BillingStatus.Active), period },
+          GroupRole.OWNER,
+          true,
+          true,
+          NOW,
+          7,
+          3,
+        )
+      const monthly = JSON.parse(JSON.stringify(billed(BillingPeriod.Monthly)))
+
+      expect(monthly.seatPrice).toEqual({
+        seats: 3,
+        amount: pro.amount,
+        currency: pro.currency,
+        period: BillingPeriod.Monthly,
+      })
+      expect(billed(BillingPeriod.Yearly).seatPrice).toBeNull()
+      expect(readGroupBilling(monthly)?.seatPrice?.period).toBe(BillingPeriod.Monthly)
+      expect(readGroupBilling({ ...monthly, seatPrice: { ...monthly.seatPrice, period: 3 } }))
+        .toBeNull()
+    })
+
+    it("shows no period once the subscription has ended", () => {
+      const ended = { ...subscription(BillingStatus.Canceled), period: BillingPeriod.Yearly }
+
+      expect(toGroupBilling(ended, GroupRole.OWNER, true, true, NOW, 7, 1).period).toBeNull()
+    })
+  })
+
+  describe("a free plan that allows nothing", () => {
+    const [free, pro] = TEST_PLANS
+    const nothing = (limits: Partial<Plan["entitlements"]["limits"]> = {}): Plan[] => [
+      {
+        ...free,
+        entitlements: {
+          ...free.entitlements,
+          limits: testLimits(0, { maxMembers: 1, ...limits }),
+        },
+      },
+      pro,
+    ]
+
+    it("is noticed when every free cap is 0 and the owner is the only member", () => {
+      expect(freePlanAllowsNothing(nothing())).toBe(true)
+      expect(freePlanAllowsNothing(nothing({ maxMembers: 0 }))).toBe(true)
+    })
+
+    it("is not noticed with free caps above 0, or any one free cap above 0", () => {
+      expect(freePlanAllowsNothing(TEST_PLANS)).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ maxNotes: 1 }))).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ maxAttachments: 1 }))).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ storageBytes: 1 }))).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ maxMembers: 2 }))).toBe(false)
+      expect(freePlanAllowsNothing(nothing({ maxMembers: null }))).toBe(false)
+      expect(freePlanAllowsNothing([pro])).toBe(false)
+    })
+
+    it("is not noticed when a limit key the product added is above 0 on the free plan", () => {
+      // A product's own key, such as Financy's accounts, is not in Seed's `LimitKey`.
+      const withProductKey = (cap: number | null): Plan[] => {
+        const [free] = nothing()
+        const limits = { ...free.entitlements.limits, maxAccounts: cap }
+        return [{ ...free, entitlements: { ...free.entitlements, limits } }, pro]
+      }
+      expect(freePlanAllowsNothing(withProductKey(0))).toBe(true)
+      expect(freePlanAllowsNothing(withProductKey(1))).toBe(false)
+      expect(freePlanAllowsNothing(withProductKey(null))).toBe(false)
+    })
+
+    it("sends only the owner of a group that never had a subscription to choose a plan", () => {
+      const billing = (
+        subscribed: StoredSubscription | null,
+        role = GroupRole.OWNER,
+        enabled = true,
+      ) => toGroupBilling(subscribed, role, enabled, subscribed !== null, NOW, 7, 1)
+
+      expect(needsFirstPlan(billing(null), nothing())).toBe(true)
+      expect(needsFirstPlan(billing(null), TEST_PLANS)).toBe(false)
+      expect(needsFirstPlan(billing(null, GroupRole.ADMIN), nothing())).toBe(false)
+      expect(needsFirstPlan(billing(null, GroupRole.OWNER, false), nothing())).toBe(false)
+      expect(needsFirstPlan(billing(subscription(BillingStatus.Active)), nothing())).toBe(false)
+      // A group that paid once and lapsed is back on Free, but it is not new.
+      expect(needsFirstPlan(billing(subscription(BillingStatus.Canceled)), nothing())).toBe(false)
+    })
+
+    it("reads a cap of 0 from the catalog it is given", () => {
+      expect(entitlementsOf(FREE_PLAN_ID, true, nothing()).limits.maxNotes).toBe(0)
+      expect(entitlementsOf("gone", true, nothing()).limits.maxNotes).toBe(0)
+    })
   })
 })

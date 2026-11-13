@@ -49,8 +49,6 @@ export const STATS_SKELETON_DELAY_MS = 300
 /** Below this many visits on most days, the chart draws one point per week. */
 const WEEKLY_BELOW = 3
 
-const NUMBER = new Intl.NumberFormat(`en`)
-
 export interface AdminStatsScreenProps {
   days: WebsiteStatsPeriod
   /** The chart's source, by slug, or `null` for every source. */
@@ -69,7 +67,7 @@ export interface AdminStatsScreenProps {
 }
 
 /**
- * The website's numbers for a seller (#485): where visits come from, so they know where to post,
+ * The website's numbers for a seller: where visits come from, so they know where to post,
  * and which items people order or only look at, so they know what to restock or photograph again.
  * Totals only, from Umami on the server. It says "order clicks", never "orders": the order itself
  * happens in the chat.
@@ -297,9 +295,15 @@ function listOf(
 }
 
 /** A count's change as a `Kpi` line: up, down or flat, never coloured as good or bad. */
-function countChange(t: Translator<string>, count: WebsiteStatsCount, days: number): KpiChange {
+function countChange(
+  t: Translator<string>,
+  count: WebsiteStatsCount,
+  days: number,
+  locale: string,
+): KpiChange {
+  const period = t.t(`AdminDashboard.previousDays`, { count: days })
   return {
-    text: changeText(count, t.t(`AdminDashboard.previousDays`, { count: days }), `en`, t),
+    text: changeText(count, period, locale, t),
     direction: count.current > count.previous
       ? `up`
       : count.current < count.previous
@@ -343,6 +347,7 @@ function Report(
   { report, source, onSource, navigate }: AdminStatsScreenProps & { report: WebsiteStatsReport },
 ): JSX.Element {
   const t = useAdminText()
+  const format = useFormat()
   const days = report.days
   const channels = report.channels.map((channel) => channel.name)
 
@@ -394,13 +399,13 @@ function Report(
         <KpiGrid minWidth="9.5rem">
           <Kpi
             label={t.t(`AdminStats.visits`)}
-            value={NUMBER.format(report.visits.current)}
-            change={countChange(t, report.visits, days)}
+            value={format.number(report.visits.current)}
+            change={countChange(t, report.visits, days, format.locale)}
           />
           <Kpi
             label={t.t(`AdminStats.orderClicks`)}
-            value={NUMBER.format(report.orderClicks.current)}
-            change={countChange(t, report.orderClicks, days)}
+            value={format.number(report.orderClicks.current)}
+            change={countChange(t, report.orderClicks, days, format.locale)}
           />
           <Kpi
             label={t.t(`AdminStats.orderRate`)}
@@ -435,7 +440,7 @@ function Report(
                   { label: t.t(`AdminStats.orderRate`), format: (rate) => percent(rate) },
                 ],
               }}
-              format={(value) => NUMBER.format(value)}
+              format={(value) => format.number(value)}
               data={report.sources.map((row): RankedBarRow => ({
                 label: row.slug === null ? t.t(`AdminStats.noSource`) : row.name,
                 value: row.visits,
@@ -487,7 +492,7 @@ function Report(
                 label: channel.name,
                 value: channel.clicks,
               }))}
-              format={(value) => NUMBER.format(value)}
+              format={(value) => format.number(value)}
               emptyLabel={t.t(`AdminStats.noOrderClicks`)}
             />
           </CardBody>
@@ -507,7 +512,8 @@ function VisitsChart(
   },
 ): JSX.Element {
   const t = useAdminText()
-  const day = useFormat().utc()
+  const format = useFormat()
+  const day = format.utc()
   const weekly = chartIsWeekly(report.perDay)
   const current = chartPoints(report.perDay, weekly)
   // The period before, bucketed the same way and drawn under the same days, so the lines compare.
@@ -524,7 +530,7 @@ function VisitsChart(
         headingLevel={2}
         action={
           <span class="text-sm text-muted">
-            {t.t(`AdminStats.chartSummary`, { total: NUMBER.format(total), count: report.days })}
+            {t.t(`AdminStats.chartSummary`, { total: format.number(total), count: report.days })}
           </span>
         }
       />
@@ -559,7 +565,7 @@ function VisitsChart(
           yDomain={[0, countAxisTop([...current, ...previous].map((point) => point.y))]}
           yTicks={5}
           xFormat={(x) => day.dayMonth(typeof x === `string` ? `${x}T00:00:00Z` : x)}
-          yFormat={(value) => NUMBER.format(value)}
+          yFormat={(value) => format.number(value)}
           ariaLabel={t.t(`AdminStats.chartLabel`, { count: report.days })}
           emptyLabel={t.t(`AdminDashboard.nothingYet`)}
         />
@@ -577,6 +583,7 @@ function Items(
   },
 ): JSX.Element {
   const t = useAdminText()
+  const format = useFormat()
   const row = (item: WebsiteStatsItem, value: number, values: (number | null)[]): RankedBarRow => ({
     label: item.name,
     value,
@@ -601,11 +608,11 @@ function Items(
                 label: t.t(`AdminStats.item`),
                 value: t.t(`AdminStats.orderClicks`),
                 extra: [
-                  { label: t.t(`AdminStats.views`), format: (value) => NUMBER.format(value) },
+                  { label: t.t(`AdminStats.views`), format: (value) => format.number(value) },
                   { label: t.t(`AdminStats.orderRate`), format: (rate) => percent(rate) },
                 ],
               }}
-              format={(value) => NUMBER.format(value)}
+              format={(value) => format.number(value)}
               navigate={navigate}
               data={items.mostOrdered.map((item) =>
                 row(item, item.orderClicks, [item.views, item.rate])
@@ -623,7 +630,7 @@ function Items(
                 value: t.t(`AdminStats.views`),
                 extra: [{ label: t.t(`AdminStats.orderClicks`) }],
               }}
-              format={(value) => NUMBER.format(value)}
+              format={(value) => format.number(value)}
               navigate={navigate}
               data={items.viewedNotOrdered.map((item) => row(item, item.views, [item.orderClicks]))}
               emptyLabel={items.mostOrdered.length > 0

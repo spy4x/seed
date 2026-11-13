@@ -25,7 +25,7 @@ export interface LanguageSyncDependencies {
 }
 
 /**
- * The SPA's language (#216), as the preferences decide it: the person's stored choice, else the one
+ * The SPA's language, as the preferences decide it: the person's stored choice, else the one
  * kept on this device, else the browser's languages, else English. Signed out, the device's choice
  * decides. The device keeps a copy of every saved choice, so the sign-in page after a sign-out
  * speaks it too. A record never saved (version `0`, a new account) takes the choice this device made

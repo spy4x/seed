@@ -9,6 +9,7 @@ import {
 } from "@domain/billing"
 import { ADMIN_BILLING_PATHS, AdminBillingListScreen } from "@ui/admin-billing-list.tsx"
 import { AdminBillingCustomerScreen } from "@ui/admin-billing-detail.tsx"
+import { AdminNeverPaidScreen } from "@ui/admin-never-paid.tsx"
 import { operatorOf } from "../../state.ts"
 import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
@@ -65,6 +66,32 @@ function BillingView({ context }: { context: AdminContext }): JSX.Element {
   )
 }
 
+/** The groups that have never paid, newest first. The page lives in the address. */
+function NeverPaidView({ context }: { context: AdminContext }): JSX.Element {
+  const state = billingState(context)
+  const search = useSearch()
+  const page = useMemo(() => parseAdminBillingFilter(new URLSearchParams(search)).page, [search])
+  useEffect(() => {
+    state.loadNeverPaid(page)
+  }, [page])
+  const current = state.neverPaid.value
+  return (
+    <AdminNeverPaidScreen
+      list={current.list}
+      pending={current.pending}
+      error={current.error}
+      onPage={(next) =>
+        context.navigate(
+          next > 1
+            ? `${ADMIN_BILLING_PATHS.neverPaid}?page=${next}`
+            : ADMIN_BILLING_PATHS.neverPaid,
+        )}
+      onRetry={() => state.loadNeverPaid(page)}
+      navigate={context.navigate}
+    />
+  )
+}
+
 /** One customer: the stored subscription, the last payment from Stripe and the actions. */
 function CustomerView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
@@ -108,12 +135,13 @@ function CustomerView(
   )
 }
 
-/** Who pays and what, and the support actions on one customer (#196). */
+/** Who pays and what, and the support actions on one customer. */
 export const billingModule: AdminModule = {
   id: `billing`,
   nav: { name: `AdminNav.billing`, href: ADMIN_BILLING_PATHS.list, Icon: IconCreditCard },
   routes: [
     { path: ADMIN_BILLING_PATHS.list, View: BillingView },
+    { path: ADMIN_BILLING_PATHS.neverPaid, View: NeverPaidView },
     { path: `/billing/:groupId`, View: CustomerView },
   ],
 }

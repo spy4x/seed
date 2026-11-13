@@ -31,8 +31,8 @@ const ARROWS = [
 ] as const
 
 /**
- * What the diagram shows, for a screen reader. An `aria-label`, not an SVG `<title>`: Fresh treats
- * every `<title>` it renders as the page's.
+ * What the diagram shows, for a screen reader. An `aria-label`, not an SVG `<title>`: the website's
+ * renderer (`@spy4x/preact-server`) treats every `<title>` as the page's.
  */
 const OUTBOX_LABEL = `Outbox.label`
 
@@ -114,6 +114,25 @@ export function AggregateFiles(): JSX.Element {
       <TerminalText>
         {AGGREGATE_FILES.map((path, index) => `${index + 1}  ${path}`).join(`\n`)}
       </TerminalText>
+    </WindowFrame>
+  )
+}
+
+/** The env file's catalog lines, as `docs/catalog.md` sets them: the switch and two settings. */
+const CATALOG_ENV = [
+  `CATALOG=true`,
+  `CATALOG_CURRENCY=VND`,
+  `CATALOG_LANGUAGES=vi,en`,
+] as const
+
+/** The env file those lines go in, the terminal's title: a path, the same in every language. */
+const CATALOG_ENV_FILE = `infra/envs/.env`
+
+/** The env file that turns the catalog on, as a terminal shows it. */
+export function CatalogEnv(): JSX.Element {
+  return (
+    <WindowFrame variant="terminal" title={CATALOG_ENV_FILE}>
+      <TerminalText>{CATALOG_ENV.join(`\n`)}</TerminalText>
     </WindowFrame>
   )
 }

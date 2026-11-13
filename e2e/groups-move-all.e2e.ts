@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { groupLink, openNotes } from "./fixtures/groups.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode, stopPaying } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -56,6 +56,7 @@ test.describe("moving all of a group's data", () => {
           data: { id: groupId, name },
         })
         expect(created.status(), await created.text()).toBe(201)
+        await payForGroup(ownerPage.request, apiBase, groupId)
       }
       // A group the owner can only read: it must not be offered.
       const readOnly = uuidV7()
@@ -64,6 +65,7 @@ test.describe("moving all of a group's data", () => {
         data: { id: readOnly, name: "Read only" },
       })
       expect(made.status(), await made.text()).toBe(201)
+      await payForGroup(strangerPage.request, apiBase, readOnly)
       for (const [login, groupId] of [[owner, readOnly], [watcher, groups.Target]]) {
         const added = await request.post(`${apiBase}/api/test/add-member`, {
           data: { login, groupId, role: VIEWER },
@@ -98,11 +100,10 @@ test.describe("moving all of a group's data", () => {
       await expect(dialog.locator("[data-e2e=group-move-all-done]")).toContainText(
         `Moved 3 notes from "Source" to "Target".`,
       )
-      await expect(watcherPage.locator("[data-e2e=note-item-title]")).toHaveCount(3, {
-        timeout: 5_000,
-      })
+      await expect(watcherPage.locator("[data-e2e=note-item-title]")).toHaveCount(3)
 
-      // The emptied group can be deleted from the same dialog.
+      // The emptied group can be deleted from the same dialog, once nobody pays for it.
+      await stopPaying(ownerPage.request, apiBase, groups.Source)
       await dialog.locator("[data-e2e=group-move-all-delete]").click()
       const confirm = ownerPage.locator("[data-e2e=group-delete-dialog]")
       await expect(confirm).toContainText(`Delete "Source"?`)

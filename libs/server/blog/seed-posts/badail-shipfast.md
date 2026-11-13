@@ -11,6 +11,8 @@ tldr:
   - إن كان عملاؤك فرقًا، فاختر قالبًا فيه مجموعات وأدوار ودفع لكل عضو.
   - Stripe متاح للشركات في الإمارات وغير متاح في السعودية ومصر، فتحقّق من بلدك قبل أن تختار.
 topic: أسئلة
+intro: "ShipFast مجموعة جيدة، لكنها ليست الوحيدة وليست مجانية. قارنتُ سبعة قوالب من حيث السعر والترخيص والتقنيات والفرق والاستضافة، مع مصدر لكل معلومة."
+coverAlt: "سبعة قوارب شراعية مختلفة الأشكال مصطفة على ماء هادئ، أحدها بنفسجي."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-02T09:00:00Z
@@ -47,7 +49,7 @@ CodeFast. يتضمّن تسجيل الدخول عبر Google أو رابط سح�
 | القالب                                                                | السعر                            | الترخيص                     | التقنيات                                  | الفرق والأدوار        | الاستضافة                              |
 | --------------------------------------------------------------------- | -------------------------------- | --------------------------- | ----------------------------------------- | --------------------- | -------------------------------------- |
 | [ShipFast](https://shipfa.st/)                                        | 199 أو 249 دولارًا مرة واحدة      | مدفوع، دون إعادة توزيع      | Next.js؛ MongoDB أو Supabase              | غير مذكورة            | Vercel كخيار مجاني                     |
-| [Seed](https://github.com/spy4x/seed)                                 | مجاني                            | MIT                         | Deno وHono وFresh وPreact؛ Postgres       | نعم، مع الدفع لكل عضو | خادم Linux واحد خاص بك، Docker Compose |
+| [Seed](https://github.com/spy4x/seed)                                 | مجاني                            | MIT                         | Deno وHono وPreact؛ Postgres              | نعم، مع الدفع لكل عضو | خادم Linux واحد خاص بك، Docker Compose |
 | [Open SaaS](https://github.com/wasp-lang/open-saas)                   | مجاني                            | MIT                         | Wasp (React وNode.js وPrisma)؛ Postgres   | غير مذكورة            | Railway أو Fly.io بأمر واحد            |
 | [ShipFree](https://github.com/revokslab/shipfree)                     | مجاني                            | MIT                         | Next.js وBun وDrizzle؛ Postgres           | غير مذكورة            | Vercel أو Docker                       |
 | [Next.js SaaS Starter](https://github.com/nextjs/saas-starter)        | مجاني                            | MIT                         | Next.js وDrizzle؛ Postgres                | Owner وMember         | Vercel                                 |

@@ -2,8 +2,7 @@
  * Browser entry for `e2e/url-filters.e2e.ts`: one list-like screen whose two filters live in the
  * query string through `useUrlFilters`.
  *
- * The hook comes from the published `@spy4x/preact-signals` package
- * (https://github.com/spy4x/template/issues/41).
+ * The hook comes from the published `@spy4x/preact-signals` package.
  */
 import { useSignal } from "@preact/signals"
 import { render } from "preact"

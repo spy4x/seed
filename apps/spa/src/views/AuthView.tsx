@@ -11,13 +11,13 @@ import { OAUTH_NOTICE_PARAM, oauthNotice, type OAuthProviderId } from "@domain/i
 import {
   checkTotp,
   type PasskeySignInAnswer,
-  requestSignInLink,
+  requestSignInCode,
   signIn,
   signInWithPasskey,
   signUp,
 } from "../state/auth.ts"
-import { rememberSentLink } from "../state/sign-in-link.ts"
-import { linkRequestFailure } from "./SignInLinkViews.tsx"
+import { rememberSentCode } from "../state/sign-in-code.ts"
+import { codeFailure } from "./SignInCodeView.tsx"
 import { listProviders } from "../state/sign-in-methods.ts"
 import { lastSignIn, lastSignInHint } from "../state/last-sign-in.ts"
 import { takeHandedOffAddress } from "../state/address-handoff.ts"
@@ -46,7 +46,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
   const [busy, setBusy] = useState(false)
   const [last, setLast] = useState(() => lastSignInHint())
   const [providers, setProviders] = useState<OAuthProviderId[]>([])
-  // An address another page handed over (#142): "Sign in instead" after a sign-up found its
+  // An address another page handed over: "Sign in instead" after a sign-up found its
   // account, or "Use a different address" back to the sign-up form. It fills the login field, and
   // focus goes to the field after it.
   const [handed] = useState(() => (screen === "one-time-code" ? null : takeHandedOffAddress()))
@@ -71,7 +71,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
   }, [screen])
   const session = sessionState.value
 
-  // Passkeys (#222): the button when the browser has them, and the autofill request that waits
+  // Passkeys: the button when the browser has them, and the autofill request that waits
   // for a pick in the login field while the sign-in page is open. The server's challenge lives
   // five minutes, so the waiting request is started again a little before that.
   const [passkeyBusy, setPasskeyBusy] = useState(false)
@@ -89,7 +89,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     return false
   }
   // Bitwarden, and any extension that stands in for `navigator.credentials` like it, brings the
-  // tab and its window to the front whenever a request ends, an abort included (#609). So the
+  // tab and its window to the front whenever a request ends, an abort included. So the
   // request starts and renews only while the page has focus: one that falls due in the
   // background waits for the person to come back.
   const renewal = useRef(() => {})
@@ -170,6 +170,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     const answer = await signUp(email, password)
     setBusy(false)
     if (answer.ok) {
+      rememberSentCode({ email, sentAt: Date.now() }, "sign-up")
       navigate(withNext(SCREEN_PATHS.signUpCode, next))
       return
     }
@@ -181,25 +182,25 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
   }
 
   /**
-   * "Email me a sign-in link" (#391): with an address in the field it sends the link and opens
-   * "Check your inbox"; with a username or nothing, it opens the link page with the field to fill.
+   * "Email me a sign-in code": with an address in the field it sends the code and
+   * opens the code step; with a username or nothing, it opens the code page with the field to fill.
    */
   const [linkBusy, setLinkBusy] = useState(false)
   const emailLink = async (login: string) => {
     if (!login.includes("@")) {
-      navigate(withNext(SCREEN_PATHS.signInLink, next))
+      navigate(withNext(SCREEN_PATHS.signInCode, next))
       return
     }
     setError(null)
     setLinkBusy(true)
-    const answer = await requestSignInLink(login, next)
+    const answer = await requestSignInCode(login, next)
     setLinkBusy(false)
     if (!answer.ok) {
-      setError(linkRequestFailure(t, answer))
+      setError(codeFailure(t, answer))
       return
     }
-    rememberSentLink({ email: login, sentAt: Date.now() })
-    navigate(withNext(SCREEN_PATHS.signInLink, next))
+    rememberSentCode({ email: login, sentAt: Date.now() })
+    navigate(withNext(SCREEN_PATHS.signInCode, next))
   }
 
   return (

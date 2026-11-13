@@ -24,7 +24,7 @@ import {
   type OverviewWidgetLoad,
 } from "./overview-screen.tsx"
 import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "./overview-widgets.ts"
-import { AdminGroupOverview } from "./admin-group-overview.tsx"
+import { AdminGroupOverview, type AdminOverviewWidget } from "./admin-group-overview.tsx"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import type { WidgetView } from "./note-widgets.tsx"
 import { englishLeft, PSEUDO } from "./i18n-testing.ts"
@@ -198,6 +198,15 @@ describe("the group overview", () => {
     expect(text("[data-e2e=overview-period]")).toBe(
       "22 Sept – 21 Oct, compared with the 30 days before",
     )
+  })
+
+  it("ends the range line with the group's city when the group's zone is not the viewer's", async () => {
+    await mount(READY, { timeZone: "Europe/Berlin", viewerTimeZone: "Asia/Tokyo" })
+    expect(text("[data-e2e=overview-period]")).toMatch(/ · \u2068Berlin\u2069 time$/)
+
+    await act(() => render(null, root!))
+    await mount(READY, { timeZone: "Europe/Berlin", viewerTimeZone: "Europe/Berlin" })
+    expect(text("[data-e2e=overview-period]")).not.toContain("Berlin")
   })
 
   it("names the last day instead of now for a range that ended before today", async () => {
@@ -400,6 +409,25 @@ describe("the group overview", () => {
     expect(document.querySelectorAll("[data-e2e=overview-new-note]").length).toBe(0)
   })
 
+  it("asks the owner to choose a plan, linking the Billing tab, when the plan allows nothing yet", async () => {
+    await mount(READY, {
+      emptyGroup: { canCreate: false },
+      choosePlanHref: "/groups/g/billing",
+    })
+
+    expect(text("[data-e2e=overview-choose-plan]")).toContain("Choose a plan to start adding.")
+    const action = find("[data-e2e=overview-choose-plan] a")
+    expect(action.getAttribute("href")).toBe("/groups/g/billing")
+    expect(action.textContent).toBe("Choose a plan")
+    expect(document.querySelectorAll("[data-e2e=overview-new-note]").length).toBe(0)
+  })
+
+  it("shows no plan line to a group that can add notes", async () => {
+    await mount(READY, { emptyGroup: { canCreate: true } })
+
+    expect(document.querySelectorAll("[data-e2e=overview-choose-plan]").length).toBe(0)
+  })
+
   it("tells a person outside the group that it does not exist", async () => {
     await mount(READY, { group: null })
 
@@ -418,7 +446,7 @@ describe("the group overview", () => {
 })
 
 describe("the admin group page's overview widgets", () => {
-  it("shows every widget in the default layout, read-only, with what the section is", async () => {
+  async function mountAdmin(widgets: AdminOverviewWidget[]) {
     root = document.createElement("div")
     document.body.append(root)
     await act(() =>
@@ -432,7 +460,7 @@ describe("the admin group page's overview widgets", () => {
             timeZone="UTC"
             now={NOW}
             onRangeChange={() => {}}
-            widgets={OVERVIEW_WIDGETS.map((widget) => ({ ...widget, load: READY[widget.id] }))}
+            widgets={widgets}
             views={OVERVIEW_VIEWS}
             onRetry={() => {}}
           />
@@ -440,6 +468,20 @@ describe("the admin group page's overview widgets", () => {
         root!,
       )
     )
+  }
+
+  /** The notes' widgets, ready, with the one named marked members-only. */
+  const widgetsWith = (never: string[]): AdminOverviewWidget[] =>
+    OVERVIEW_WIDGETS.map((widget) => ({
+      ...widget,
+      operatorView: never.includes(widget.id) ? "never" : widget.operatorView,
+      load: READY[widget.id],
+    }))
+
+  const membersOnly = () => document.querySelector("[data-e2e=admin-group-overview-members-only]")
+
+  it("shows every widget in the default layout, read-only, with what the section is", async () => {
+    await mountAdmin(widgetsWith([]))
 
     expect(text("[data-e2e=admin-group-overview] h2")).toBe("Overview widgets")
     expect(text("[data-e2e=admin-group-overview]")).toContain(
@@ -447,6 +489,32 @@ describe("the admin group page's overview widgets", () => {
     )
     expect(document.querySelectorAll("[data-widget-status=ready]")).toHaveLength(3)
     expect(document.querySelectorAll("[data-widget-status] button[aria-haspopup]").length).toBe(0)
+    expect(membersOnly()).toBe(null)
+  })
+
+  it("draws no members-only widget, and says under the cards that its figures are for members", async () => {
+    await mountAdmin(widgetsWith([NOTE_WIDGET_IDS.added]))
+
+    expect(document.querySelectorAll("[data-widget-status=ready]")).toHaveLength(2)
+    expect(text("[data-e2e=admin-group-overview]")).not.toContain("Notes added")
+    expect(membersOnly()?.textContent).toBe(
+      "Widgets that show this group's own figures are visible to its members only.",
+    )
+    // The line closes the section, after the cards, as the eye reads it.
+    expect(document.querySelector("[data-e2e=admin-group-overview]")!.lastElementChild).toBe(
+      membersOnly(),
+    )
+  })
+
+  it("keeps only the title and the reason when every widget is members-only", async () => {
+    await mountAdmin(widgetsWith(OVERVIEW_WIDGETS.map((widget) => widget.id)))
+
+    expect(document.querySelectorAll("[data-widget-status]")).toHaveLength(0)
+    expect(document.querySelector("[data-e2e=admin-group-overview-range]")).toBe(null)
+    expect(text("[data-e2e=admin-group-overview]")).not.toContain("their own layouts")
+    expect(membersOnly()?.textContent).toBe(
+      "Every widget on this group's Overview page shows the group's own figures, so only its members can see them.",
+    )
   })
 })
 
@@ -493,6 +561,7 @@ describe("the group overview in another language", () => {
             layoutError="⟦not saved⟧"
             onCopyLink={() => {}}
             emptyGroup={{ canCreate: true }}
+            choosePlanHref="/groups/g/billing"
             {...props}
           />
         </FormatContext.Provider>
@@ -510,6 +579,8 @@ describe("the group overview in another language", () => {
       const key of [
         "OverviewScreen.title",
         "OverviewScreen.emptyGroupText",
+        "OverviewScreen.choosePlanText",
+        "OverviewScreen.choosePlan",
         "OverviewScreen.customiseText",
         "OverviewScreen.last30Days",
       ]

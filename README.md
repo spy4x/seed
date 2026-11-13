@@ -2,10 +2,10 @@
 
 # Seed
 
-**Seed: the free SaaS starter built on web standards. Runs on Deno.** The groundwork of your SaaS,
-already built: sign-in with a second factor, groups with roles, per-member Stripe billing, realtime,
-an offline app and an admin area, on Postgres and Docker Compose. MIT-licensed, usable today, built
-in public.
+**Seed: the free SaaS starter built on web standards. Runs on Deno, Node and Bun.** The groundwork
+of your SaaS, already built: sign-in with a second factor, groups with roles, per-member Stripe
+billing, realtime, an offline app and an admin area, on Postgres and Docker Compose. MIT-licensed,
+usable today, built in public.
 
 [![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -31,7 +31,7 @@ parts live here and in the published [`@spy4x/*`](https://jsr.io/@spy4x) package
 stay out.
 
 **Status:** usable today, and still growing in public. On `main` now: passkeys, Google and
-GitHub sign-in, sign-in links, guest accounts, a second factor, groups with roles and invitations,
+GitHub sign-in, email sign-in codes, guest accounts, a second factor, groups with roles and invitations,
 Stripe billing per member, notes (the reference feature), the file store, notifications in the app,
 by web push and in Telegram, nine languages, an offline SPA, the admin panel, and a public website
 with a blog and a newsletter. All of it is tested in CI, and most of it runs in the
@@ -45,7 +45,7 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
   membership checks and roles, from viewer to owner. A group can be renamed, deleted and, for 30
   days, restored, and a person always keeps at least one.
 - **Sign-in that is done.** E-mail and password with a confirmation code, passkeys, Google and
-  GitHub, and sign-in links by e-mail. A visitor can start in a guest account with one click and
+  GitHub, and email sign-in codes. A visitor can start in a guest account with one click and
   add a sign-in method later, keeping their data. An authenticator app adds a second factor,
   people see and end their sessions, and personal API tokens are stored only as hashes.
 - **Billing per member, through Stripe.** A free plan with limits, a 14-day trial, quantities that
@@ -67,16 +67,17 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
 - **An admin panel on its own host.** Operators find a person and see their sign-in methods,
   sessions and groups, refund a payment, write the blog, look after the newsletter's subscribers
   and rerun a failed job. Every action goes to the audit log.
-- **A public website.** Fresh, server-rendered and usable with JavaScript off: pricing, legal
+- **A public website.** Server-rendered by a small Fresh-compatible layer built with Vite, and
+  usable with JavaScript off: pricing, legal
   pages, a blog with an RSS feed, and a newsletter with double opt-in and one-click unsubscribe:
   [docs/apps.md](docs/apps.md).
 - **CQRS with an outbox.** Commands, queries and events go through one bus. Every group change
   writes its event to `outbox_events`, and the worker drains that table.
 - **Safe API defaults.** Every mutation must come from the web app's own origin, and group lists
   page with HMAC-signed cursors.
-- **Built on web standards.** Hono handlers take a Fetch `Request` and return a `Response`;
-  password hashes and cursor signatures use Web Crypto; live updates travel over a standard
-  WebSocket; everything is an ES module. The servers run on Deno 2 in Docker on any Linux host you
+- **Built on web standards.** Hono handlers take a Fetch `Request` and return a `Response`; password
+  hashes and cursor signatures use Web Crypto; live updates travel over a standard WebSocket;
+  everything is an ES module. The servers run on Deno, Node or Bun in Docker on any Linux host you
   control, and the clients run in any modern browser.
 - **Operations included.** Docker Compose for development and single-node production: Traefik,
   Postgres, Valkey, VictoriaMetrics, VictoriaLogs and Grafana.
@@ -85,24 +86,52 @@ with a blog and a newsletter. All of it is tested in CI, and most of it runs in 
 settled before the first feature. **Skip it if** you deploy to serverless functions rather than a
 server you run.
 
-## Runtime plan
+## Runtimes
 
-Seed runs on Deno today: the servers run on Deno 2 in Docker, and the tasks and tests use Deno.
-Seed is moving to run unchanged on Deno, Node and Bun
-([#623](https://github.com/spy4x/seed/issues/623)). There is no date yet.
+Seed runs on Deno, Node and Bun. The API, the worker, the migration and the website start
+unchanged on each, and CI starts the API, the worker and the website on all three for every pull
+request. One line in the env
+file picks the runtime of a product's servers ([docs/apps.md](docs/apps.md#runtime)):
 
-Most of the code is already independent of the runtime, because it is built on web standards: Fetch
-`Request` and `Response`, Web Crypto, WebSocket and ES modules. On 9 October 2026 the Deno team
-[announced](https://deno.com/blog/cloudflare) one more year of support for the runtime, with monthly
-bug-fix and security releases, after which it ends its own development; Deno stays open source.
-Running on all three runtimes keeps that choice with you. Seed never used Deno Deploy, so Deploy's
-shutdown does not affect a Seed product.
+```sh
+APP_RUNTIME=node   # or bun; deno, empty or no line keeps Deno
+```
+
+The code is built on web standards: Fetch `Request` and `Response`, Web Crypto, WebSocket and ES
+modules. Seed's own tasks and tests run on Deno 2, which npm or Bun installs for you below. On 9
+October 2026 the Deno team [announced](https://deno.com/blog/cloudflare) one more year of support
+for the runtime, with monthly bug-fix and security releases, after which it ends its own
+development; Deno stays open source. Running on all three runtimes keeps that choice with you. Seed
+never used Deno Deploy, so Deploy's shutdown does not affect a Seed product.
 
 ## Quick start
 
-Requires [Deno](https://deno.com) 2 and Docker. The services run in Docker; the tasks that set
-them up run on Deno. The [GitHub CLI](https://cli.github.com) is optional: GitHub's "Use this
-template" button and a clone do the same as the first line.
+Requires Docker and one of Node, Bun or Deno. The services run in Docker; the tasks that set them
+up run on Deno, which the first command installs on Node and Bun. The
+[GitHub CLI](https://cli.github.com) is optional: GitHub's "Use this template" button and a clone
+do the same as the `gh` line.
+
+### Node
+
+```sh
+npm install -g deno
+gh repo create my-product --template spy4x/seed --private --clone
+cd my-product
+npm run init
+npm run dev
+```
+
+### Bun
+
+```sh
+bun add -g deno
+gh repo create my-product --template spy4x/seed --private --clone
+cd my-product
+bun run init
+bun run dev
+```
+
+### Deno
 
 ```sh
 gh repo create my-product --template spy4x/seed --private --clone
@@ -111,9 +140,18 @@ deno task init
 deno task dev
 ```
 
-`init` copies `infra/envs/.env.example` to `infra/envs/.env`, generates every secret and the web
-push keys, and asks for the project name. `dev` starts Traefik, unless one already runs, then
+The root `package.json` hands the common tasks (`init`, `dev`, `test`, `compose` and the others it
+lists) to Deno, so the docs' `deno task <name>` also runs as `npm run <name>` or
+`bun run <name>`. To run the product's servers on Node or Bun as well, set `APP_RUNTIME=node` or
+`APP_RUNTIME=bun` in `infra/envs/.env` before `dev`; to switch later, rebuild the images as
+[docs/apps.md](docs/apps.md#runtime) says.
+
+`init` checks that Docker runs, copies `infra/envs/.env.example` to `infra/envs/.env`, generates
+every secret and the web push keys, records the Seed commit your copy came from, and asks for the
+project name. `dev` starts Traefik, unless one already runs, then
 Postgres, Valkey, the API, the worker, the SPA and the monitoring. Then open http://app.localhost.
+[Get started](docs/get-started.md) walks through it step by step: what opens where, and what to do
+when a step fails.
 
 Or ask your AI agent:
 
@@ -128,7 +166,7 @@ To keep taking Seed's fixes and features in your product later, see
 [docs/products.md](docs/products.md).
 
 The rest of the local stack (monitoring, migrations, demo data, resetting the database) is in
-[docs/development.md](docs/development.md).
+[docs/local-stack.md](docs/local-stack.md).
 
 ## What you get
 
@@ -149,7 +187,7 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 <details>
 <summary>How the parts fit together</summary>
 
-<img src="docs/architecture.svg" alt="Architecture diagram. Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is the public website on Fresh, server-rendered, calling the API only for the newsletter. Servers: apps/api on Hono (auth, groups, CQRS dispatch, web push) and apps/worker, which drains outbox_events. Data: Postgres is authoritative and Valkey is the API cache; Docker Compose also runs Traefik, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui and the @spy4x packages on JSR." width="860">
+<img src="docs/architecture.svg" alt="Architecture diagram. Clients: apps/spa, the product, a Preact and Vite PWA with an IndexedDB offline copy that pulls what changed since its cursor; apps/admin, the operator area on its own host; apps/mpa, the public website on Preact and Vite, rendered on the server. All three call apps/api, the SPA over REST, the call route and the WebSocket, the admin app over REST, the MPA over REST for the blog, contact links, the catalog and the newsletter. Servers: apps/api on Hono (auth, CQRS dispatch, REST, the call route, the WebSocket) and apps/worker, which runs the outbox jobs. Data: Postgres 18 behind PgBouncer is the source of truth, Valkey holds rate limits, sign-in flows and the cache, and Garage stores files with the files profile. Docker Compose also runs Traefik and, with the monitoring profile, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui, libs/platform and the @spy4x packages on JSR." width="860">
 
 </details>
 
@@ -159,14 +197,17 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 > not internal, with the changelog at [seedsaas.com/changelog](https://seedsaas.com/changelog).
 
 - [The three apps](docs/apps.md): the SPA, the admin app and the public website.
-- [Deploy and operate](docs/deploy.md): certificates, the deploy, consoles, several projects on one
-  server, releases.
+- [Deploy to a server](docs/deploy.md): the first deploy. Then [updates](docs/deploy-updates.md),
+  [certificates](docs/certificates.md), [operator access](docs/operator-access.md),
+  [several projects](docs/several-projects.md) and [releases](docs/releases.md).
+- [Settings](docs/settings.md): every variable of the env file.
 - [Guest accounts](docs/guests.md)
 - [Sign in with Google and GitHub](docs/sign-in-providers.md)
-- [Backups](docs/backups.md): set up, restore, rehearse.
+- [Backups](docs/backups.md): set up, and [restore and rehearse](docs/restore.md).
 - [The file store](docs/files.md): Garage or another S3 store, signed uploads and downloads.
-- [Development](docs/development.md): every task and the browser tests.
-- [Adding a feature](docs/aggregates.md): every file of the notes aggregate, in order.
+- [Every task](docs/development.md) and [the browser tests](docs/browser-tests.md).
+- [Add your first feature](docs/first-feature.md), then
+  [the aggregate reference](docs/aggregates.md).
 - [Everything else](docs/README.md)
 
 ## Development
