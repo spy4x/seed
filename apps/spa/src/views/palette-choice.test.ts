@@ -41,7 +41,7 @@ describe(`runChoice`, () => {
     ])
   })
 
-  it(`signs out through the shell's sign-out, which asks about unsent changes first`, async () => {
+  it(`signs out through the shell's sign-out port, never on its own`, async () => {
     expect(await run({ kind: `sign-out` })).toEqual([`signOut`])
   })
 
