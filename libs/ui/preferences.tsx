@@ -87,7 +87,7 @@ const FAILURE_KEYS: Record<PreferencesFailure, string> = {
 }
 
 /** Each theme in one word, by its key in the `app` catalog. */
-const THEME_KEYS: Record<ThemePreference, string> = {
+export const THEME_KEYS: Record<ThemePreference, string> = {
   system: `Preferences.themeSystem`,
   light: `Preferences.themeLight`,
   dark: `Preferences.themeDark`,
@@ -113,10 +113,21 @@ function regions(language: string): LocaleOption[] {
 
 /**
  * A region format's name in `language` (English by default), `German (Germany)`, or the tag when
- * the list lacks it.
+ * the list lacks it. Extensions do not change the name: Automatic Arabic, `ar-EG-u-nu-latn`, is
+ * named as `ar-EG`.
  */
 export function regionName(locale: string, language = `en`): string {
-  return regions(language).find((option) => option.value === locale)?.name ?? locale
+  const base = baseLocale(locale)
+  return regions(language).find((option) => option.value === base)?.name ?? locale
+}
+
+/** `tag` without its extensions (`ar-EG-u-nu-latn` → `ar-EG`); an invalid tag stays as it is. */
+function baseLocale(tag: string): string {
+  try {
+    return new Intl.Locale(tag).baseName
+  } catch {
+    return tag
+  }
 }
 
 /** A clock as a person reads it. */
@@ -446,6 +457,19 @@ export function AdminPreferencesGroup(
 }
 
 /**
+ * A language's name for a reader of `inLanguage`: `ru` is "Russian" on an English page; `null` when
+ * `Intl` cannot read the tag.
+ */
+export function languageNameIn(language: string, inLanguage: string): string | null {
+  try {
+    const name = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
+    return name.charAt(0).toLocaleUpperCase(inLanguage) + name.slice(1)
+  } catch {
+    return null
+  }
+}
+
+/**
  * A language's name for a reader of `inLanguage`, with the name in the language itself after it
  * when the two differ, in that language: `German (Deutsch)`, so an operator who reads neither
  * still recognises it.
@@ -454,13 +478,8 @@ export function LanguageLabel(
   { language, inLanguage }: { language: string; inLanguage: string },
 ): JSX.Element {
   const own = languageName(language)
-  let theirs = own
-  try {
-    const text = new Intl.DisplayNames([inLanguage], { type: `language` }).of(language) ?? language
-    theirs = text.charAt(0).toLocaleUpperCase(inLanguage) + text.slice(1)
-  } catch {
-    // A tag `Intl` cannot read: its own name alone.
-  }
+  // A tag `Intl` cannot read: its own name alone.
+  const theirs = languageNameIn(language, inLanguage) ?? own
   const ownName = <span lang={language} dir={textDirection(language)}>{own}</span>
   return theirs === own ? ownName : <>{theirs} ({ownName})</>
 }

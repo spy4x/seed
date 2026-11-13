@@ -22,9 +22,9 @@ import { createGroupActivityRoute } from "./routes/group-activity.ts"
 import { createGroupsRoute } from "./routes/groups.ts"
 import { createGroupFilesRoute } from "./routes/group-files.ts"
 import { createGroupFileRateLimits } from "./features/groups/file-rate-limits.ts"
-import { createNotesRoute } from "./routes/notes.ts"
-import { createTagsRoute } from "./routes/tags.ts"
+import { createImportsRoute } from "./routes/imports.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
+import { mountNotesRoutes } from "./features/notes/switch.ts"
 import { createDataExportRoute } from "./routes/data-export.ts"
 import { createPictureRoute } from "./routes/pictures.ts"
 import {
@@ -36,7 +36,6 @@ import { createAdminRoute } from "./routes/admin/+routes.ts"
 import { adminModuleRoutes } from "./routes/admin/registry.ts"
 import { createAdminOwnPreferencesRoute } from "./routes/admin/own-preferences.ts"
 import { preferencesDefinition } from "@domain/identity"
-import { createTokenApiRoute } from "./routes/token-api.ts"
 import { createApiTokens } from "./services/api-tokens.ts"
 import { createTokenRateLimits } from "./middlewares/token-rate-limits.ts"
 import { deriveSecret } from "@spy4x/platform/tokens"
@@ -49,6 +48,7 @@ import { invitationRateLimits } from "./cqrs/invitation-dependencies.ts"
 import { createBillingRoute, createBillingTrialRoute } from "./routes/billing.ts"
 import { createBillingWebhookRoute } from "./routes/billing-webhook.ts"
 import { billingSetup } from "./services/billing.ts"
+import { freePlanAllowsNothing } from "@domain/billing"
 import { createMutationGuards } from "./middlewares/mutation-guards.ts"
 import { createTotpFailures } from "./services/totp-failures.ts"
 import { createEmailCodeFailures } from "./services/email-code-failures.ts"
@@ -77,6 +77,7 @@ import { createHealthRoute } from "./routes/health.ts"
 import { isCacheConnected, kv } from "./services/cache.ts"
 import { files } from "./services/files.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
+import { readLinkedinExpiry } from "@server/blog/blog-post-linkedin-job.ts"
 import { readCatalogSetup } from "@server/catalog/setup.ts"
 import { createUmamiLinks, DEFAULT_ITEM_PATH, readTrackingSetup } from "@server/catalog/tracking.ts"
 import { readWebsiteStatsSetup } from "./services/website-stats.ts"
@@ -287,7 +288,9 @@ app.route(
       sql,
       subscribers: subscribersSetup,
       siteUrl,
+      linkedinExpiresAt: readLinkedinExpiry(processEnv),
       limit: rateLimits.normal,
+      thumbnailLimit: rateLimits.thumbnail,
       resetByAddress: rateLimits.resetByAddress,
       emit,
       now: () => new Date(),
@@ -298,6 +301,7 @@ app.route(
       build: config.build,
       billing: billingSetup,
       catalog: catalogSetup,
+      notes: config.notes,
       files: serverFiles,
       websiteStats,
     }).concat(
@@ -307,20 +311,6 @@ app.route(
           preferencesDefinition.resolve(await db.preferences.store.read(String(userId))),
       }),
     ),
-  }),
-)
-// The only routes that accept a token, and they accept nothing else.
-app.route(
-  "/v1",
-  createTokenApiRoute({
-    authenticate: (c, presented) => apiTokens.authenticate(c, presented),
-    auditRefusal: (c, tokenId, reason) => apiTokens.auditRefusal(c, tokenId, reason),
-    list: (query) => queryBus.execute(query),
-    get: (query) => queryBus.execute(query),
-    create: (command) => commandBus.execute(command),
-    cursor: noteListCursor,
-    limitByIp: tokenRateLimits.failuresByIp,
-    limitByToken: tokenRateLimits.byToken,
   }),
 )
 // Awaited here so a missing VAPID keys file stops the API at start-up, not at the first push call.
@@ -349,27 +339,31 @@ app.route(
   }),
 )
 // Before "/groups": its authentication middleware would otherwise answer for these paths too.
+// Off with NOTES=false: no note, tag or token-API route is mounted, so their paths answer 404.
+mountNotesRoutes(app, config.notes, {
+  commandBus,
+  queryBus,
+  cursor: noteListCursor,
+  noteCreated: (userId) => signIn.guests.remind(userId, GuestReminderKind.FirstNote),
+  expectedOrigin,
+  tokenApi: {
+    authenticate: (c, presented) => apiTokens.authenticate(c, presented),
+    auditRefusal: (c, tokenId, reason) => apiTokens.auditRefusal(c, tokenId, reason),
+    limitByIp: tokenRateLimits.failuresByIp,
+    limitByToken: tokenRateLimits.byToken,
+  },
+})
 app.route(
-  "/groups/:groupId/notes",
-  createNotesRoute({
-    create: async (command) => {
-      const created = await commandBus.execute(command)
-      await signIn.guests.remind(command.data.actor.userId, GuestReminderKind.FirstNote)
-      return created
-    },
-    update: (command) => commandBus.execute(command),
-    delete: (command) => commandBus.execute(command),
-    restore: (command) => commandBus.execute(command),
-    move: (command) => commandBus.execute(command),
+  "/groups/:groupId/imports",
+  createImportsRoute({
+    create: (command) => commandBus.execute(command),
     list: (query) => queryBus.execute(query),
     get: (query) => queryBus.execute(query),
-    cursor: noteListCursor,
+    check: (query) => queryBus.execute(query),
+    commit: (command) => commandBus.execute(command),
+    undo: (command) => commandBus.execute(command),
     expectedOrigin,
   }),
-)
-app.route(
-  "/groups/:groupId/tags",
-  createTagsRoute({ list: (query) => queryBus.execute(query) }),
 )
 // Before "/groups" too, for the same reason.
 app.route(
@@ -433,7 +427,7 @@ const telegram = telegramSetup
     db,
     store: kv,
     webAppUrl: config.webAppUrl,
-    product: createTelegramProduct({ queryBus }),
+    product: createTelegramProduct({ queryBus, notes: config.notes }),
     log,
   })
   : null
@@ -556,6 +550,7 @@ if (config.isDev) {
       isDev: config.isDev,
       db,
       sql,
+      freePlanAllowsNothing: billingSetup.provider !== null && freePlanAllowsNothing(),
       closeSockets: (userId) => realtime.closeUser(userId, "closed by a development script", 1012),
       forgetCodeBudget: async (email, client) => {
         await createRedisRateLimitStore(kv, { keyPrefix: EMAIL_CODE_STORE })

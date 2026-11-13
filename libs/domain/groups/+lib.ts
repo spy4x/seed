@@ -13,6 +13,7 @@ import type { FieldErrors } from "@spy4x/validation"
 import type { ChangesAnswer } from "@spy4x/realtime/changes"
 
 export * from "./activity.ts"
+export * from "./product-activity.ts"
 export * from "./invitations.ts"
 export * from "./move-all.ts"
 export * from "./admin-groups.ts"

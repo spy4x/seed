@@ -62,6 +62,11 @@ export interface AccountSectionProps {
   /** Opens the e-mail dialog at its address step, whenever this turns true (`?email`). */
   openEmailAddress?: boolean
   /**
+   * The dialog opened because `openEmailCode` or `openEmailAddress` asked for it. The app drops the
+   * ask (the `?verify` or `?email` in the address), so a reload does not open the dialog again.
+   */
+  onEmailOpened?: () => void
+  /**
    * Given only when the address could not be read: the row gives way to the failure and a way to
    * read it again.
    */
@@ -94,6 +99,7 @@ export function AccountSection(
     emailChange,
     openEmailCode,
     openEmailAddress,
+    onEmailOpened,
     onRetryEmail,
     providerProof,
     guestRow,
@@ -111,11 +117,15 @@ export function AccountSection(
   // A link asks for the code (`?verify`): open it whenever that ask arrives, also while the section
   // stays on screen, and once the address it is for has been read.
   useEffect(() => {
-    if (openEmailCode && target) setEmailStep("code")
+    if (!openEmailCode || !target) return
+    setEmailStep("code")
+    onEmailOpened?.()
   }, [openEmailCode, Boolean(target)])
   // The password dialog asks for an address first (`?email`): open the address step, once read.
   useEffect(() => {
-    if (openEmailAddress && email) setEmailStep("address")
+    if (!openEmailAddress || !email) return
+    setEmailStep("address")
+    onEmailOpened?.()
   }, [openEmailAddress, Boolean(email)])
   const cancelName = () => {
     setEditingName(false)

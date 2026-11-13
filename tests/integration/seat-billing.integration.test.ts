@@ -21,6 +21,8 @@ import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
 import { expectVersion7Ids } from "./ids.ts"
+import { TEST_PLANS } from "../../libs/domain/billing/test-plans.ts"
+import { JOBS_ON_TEST_PLANS } from "./jobs-on-test-plans.ts"
 
 /**
  * Per-member billing (#205) against a real Postgres built from schema.sql, with the worker's outbox
@@ -73,7 +75,7 @@ async function subscribe(
   status = SubscriptionStatus.Active,
 ): Promise<void> {
   eventCount++
-  await new PostgresBillingRepository(sql).applyEvent({
+  await new PostgresBillingRepository(sql, TEST_PLANS).applyEvent({
     id: `evt_seat_${eventCount}`,
     type: BillingEventType.SubscriptionUpdated,
     occurredAt: new Date(Date.now() + eventCount),
@@ -143,7 +145,16 @@ const NO_MAIL = {
 Deno.test("seats of a group billed per member follow its members", async (t) => {
   await withSchema(async (sql) => {
     const { provider, calls, state } = fakeProvider()
-    const processor = createOutboxProcessor(sql, NO_MAIL, provider)
+    const processor = createOutboxProcessor(
+      sql,
+      NO_MAIL,
+      provider,
+      null,
+      0,
+      true,
+      null,
+      JOBS_ON_TEST_PLANS,
+    )
     // Owner, admin, editor, viewer and "onlyHere": five members.
     const { repository, groupId, owner, editor, viewer } = await team(sql)
 
@@ -274,7 +285,7 @@ Deno.test("seats of a group billed per member follow its members", async (t) => 
       expect(calls.map((call) => [call.subscriptionId, call.quantity])).toEqual([
         [`sub_${other.groupId}`, 4],
       ])
-      expect(await queueSeatDrift(sql)).toBe(0)
+      expect(await queueSeatDrift(sql, undefined, TEST_PLANS)).toBe(0)
     })
 
     await t.step("a group whose subscription is canceled is not billed per member", async () => {
@@ -288,7 +299,7 @@ Deno.test("seats of a group billed per member follow its members", async (t) => 
       await drain(processor)
 
       expect(calls).toEqual([])
-      expect(await queueSeatDrift(sql)).toBe(0)
+      expect(await queueSeatDrift(sql, undefined, TEST_PLANS)).toBe(0)
     })
   })
 })

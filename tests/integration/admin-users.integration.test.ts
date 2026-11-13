@@ -2,7 +2,7 @@
 import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
-import { AuthAuditEventType, GuestEventKind, UserRole } from "@domain/identity"
+import { AuthAuditEventType, GuestEventKind, PictureState, UserRole } from "@domain/identity"
 import { ADMIN_NO_FILTER, type AdminUserFilter } from "@domain/identity"
 import { apiTokenRows } from "@server/api-tokens/api-tokens.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
@@ -509,6 +509,30 @@ Deno.test("an operator removes a picture with an audit row and a profile hint, a
 
     // Only the removal that changed something tells the person's open tabs.
     expect(app.profiles).toEqual([target.id, null, null])
+  })
+})
+
+Deno.test("the user list and the detail say where each person's picture stands", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const preparing = await signUp(app, "prep@example.com")
+    const refused = await signUp(app, "refused@example.com")
+    const none = await signUp(app, "none@example.com")
+    const db = new AppDbBase({ sql })
+    const picture = { id: uuidV7(), contentType: "image/webp" }
+    await sql.begin((tx) => setUserPicture(tx, preparing.id, picture))
+    await sql.begin((tx) => setUserPicture(tx, refused.id, { ...picture, id: uuidV7() }))
+    await sql`
+      UPDATE users SET picture_state = ${PictureState.Refused} WHERE id = ${refused.id}
+    `
+
+    const listed = new Map(
+      (await db.admin.list(ADMIN_NO_FILTER, 10)).users.map((user) => [user.id, user.pictureState]),
+    )
+    expect(listed.get(preparing.id)).toBe(PictureState.Preparing)
+    expect(listed.get(refused.id)).toBe(PictureState.Refused)
+    expect(listed.get(none.id)).toBe(null)
+    expect((await db.admin.find(refused.id))?.pictureState).toBe(PictureState.Refused)
   })
 })
 

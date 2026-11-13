@@ -11,16 +11,21 @@ type Outcome =
   | "blank after network change"
   | "blank after a network change of another origin"
   | "waits on a request"
+  | "the worker's fetch failed"
 
 const APP = "http://app.localhost:8080"
 type Handler = (arg: never) => void
 
-/** A request for `url` that fails with `errorText`, or never fails when that is left out. */
-const fakeRequest = (url: string, errorText?: string, navigation = false) =>
+/**
+ * A request for `url` that fails with `errorText`, or never fails when that is left out. `worker`
+ * makes it a fetch of the service worker's own.
+ */
+const fakeRequest = (url: string, errorText?: string, navigation = false, worker = false) =>
   ({
     url: () => url,
     isNavigationRequest: () => navigation,
     failure: () => (errorText ? { errorText } : null),
+    serviceWorker: () => (worker ? {} : null),
   }) as unknown as Request
 
 /**
@@ -61,18 +66,25 @@ function fakePage(outcomes: Outcome[]) {
     } else if (outcome === "throws, then a network change") {
       emit("pageerror", new Error("signal is not a function"))
       fail(fakeRequest(`${APP}/src/main.tsx`, "net::ERR_NETWORK_CHANGED"))
+    } else if (outcome === "the worker's fetch failed") {
+      const module = `${APP}/@id/__x00__deno::TSX::https://jsr.io/@spy4x/preact-ui/1.0.0/a.tsx`
+      // The context hears the page's requests too; only the worker's own fetch is logged from it.
+      emit("context:requestfailed", fakeRequest(module, "net::ERR_FAILED"))
+      emit("context:requestfailed", fakeRequest(module, "net::ERR_CONNECTION_RESET", false, true))
+      fail(fakeRequest(module, "net::ERR_FAILED"))
     } else if (outcome === "waits on a request") {
       emit("request", fakeRequest("https://fonts.example/a.css"))
     }
     return Promise.resolve()
   }
-  const page = {
+  const listen = (prefix: string) => ({
     on: (event: string, handler: Handler) => {
-      handlers.set(event, (handlers.get(event) ?? new Set()).add(handler))
+      handlers.set(prefix + event, (handlers.get(prefix + event) ?? new Set()).add(handler))
     },
-    off: (event: string, handler: Handler) => handlers.get(event)?.delete(handler),
-    goto: (url: string) => load("goto", url),
-  }
+    off: (event: string, handler: Handler) => handlers.get(prefix + event)?.delete(handler),
+  })
+  const context = listen("context:")
+  const page = { ...listen(""), context: () => context, goto: (url: string) => load("goto", url) }
   const ready = {
     waitFor: () =>
       outcomes[starts.length - 1] === "boots"
@@ -140,6 +152,16 @@ Deno.test("gotoApp names the failed requests and the console in the error it thr
   const error = await gotoApp(fake.page, "/sign-in", fake.ready).catch((e: Error) => e)
   expect((error as Error).message).toContain(`${APP}/src/app.tsx net::ERR_CONNECTION_REFUSED`)
   expect((error as Error).message).toContain("error: boom in the module")
+})
+
+Deno.test("gotoApp names the service worker's failed fetch, with its own error, in the error it throws", async () => {
+  const fake = fakePage(["the worker's fetch failed"])
+  const error = await gotoApp(fake.page, "/sign-in", fake.ready).catch((e: Error) => e)
+  const message = (error as Error).message
+  expect(message).toContain("Failed requests (2):")
+  expect(message).toContain(
+    "a.tsx net::ERR_CONNECTION_RESET (fetched by the service worker)",
+  )
 })
 
 Deno.test("gotoApp names the uncaught errors of the page in the error it throws", async () => {

@@ -106,7 +106,7 @@ export const handler = define.handlers({
         {ctx.state.newsletter ? <NewsletterBand /> : (
           <CtaBand
             title={t.t(`Blog.ctaTitle`, { site: SITE_NAME })}
-            demoHref={spaLinks(ctx.state.spaOrigin).try}
+            demoHref={spaLinks(ctx.state).try}
           />
         )}
         <ReadNext posts={readNext} />

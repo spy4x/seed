@@ -27,7 +27,7 @@ export const PASSWORD_SET_CODE_REQUIRED = ACCOUNT_DELETE_CODE_REQUIRED
 export const PASSWORD_ALREADY_SET = "This account has a password already. Change it instead."
 
 /** The answer when a first password is asked for by an account with no address to sign in with. */
-export const PASSWORD_NEEDS_ADDRESS = "Add an e-mail address first: you sign in with it."
+export const PASSWORD_NEEDS_ADDRESS = "Add an email address first: you sign in with it."
 
 /** The answer when a first password cannot be stored. */
 export const PASSWORD_SET_REFUSED = "This password cannot be set. Try another one."

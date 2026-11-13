@@ -10,9 +10,16 @@ import {
   AdminBlogListScreen,
 } from "@ui/admin-blog-list.tsx"
 import { AdminBlogEditorScreen } from "@ui/admin-blog-editor.tsx"
+import {
+  ADMIN_BLOG_SHARING_PATHS,
+  AdminBlogChannelScreen,
+  AdminBlogChannelsScreen,
+} from "@ui/admin-blog-channels.tsx"
+import { AdminBlogSharingScreen } from "@ui/admin-blog-sharing.tsx"
 import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { type BlogState, createBlogState } from "./state.ts"
+import { createSharingState, type SharingState } from "./sharing-state.ts"
 
 /** How long after the last keystroke the Problems panel checks the body again, in ms. */
 const PROBLEMS_CHECK_DELAY = 1_000
@@ -29,11 +36,25 @@ function blogState(context: AdminContext): BlogState {
   return state
 }
 
+/** One sharing state per signed-in session, as for the blog's own. */
+const sharingStates = new WeakMap<AdminContext, SharingState>()
+
+function sharingState(context: AdminContext): SharingState {
+  let state = sharingStates.get(context)
+  if (!state) {
+    state = createSharingState(context.request, context.toasts)
+    sharingStates.set(context, state)
+  }
+  return state
+}
+
 /**
- * The list's address for a filter: the status only, and only when one is chosen. The search text
- * stays out, since an address is kept in the browser's history and sent in `Referer`.
+ * The list's address for a filter: the status or the sharing filter, and only when one is chosen.
+ * The search text stays out, since an address is kept in the browser's history and sent in
+ * `Referer`.
  */
 export function blogListHref(filter: AdminBlogFilter): string {
+  if (filter.sharing) return ADMIN_BLOG_SHARING_PATHS.needsSharing
   return filter.status ? `${ADMIN_BLOG_PATHS.list}?status=${filter.status}` : ADMIN_BLOG_PATHS.list
 }
 
@@ -42,10 +63,12 @@ function BlogListView({ context }: { context: AdminContext }): JSX.Element {
   const state = blogState(context)
   const search = useSearch()
   const query = state.query.value
-  const filter = useMemo<AdminBlogFilter>(
-    () => ({ status: parseBlogStatusFilter(new URLSearchParams(search).get(`status`)), query }),
-    [search, query],
-  )
+  const filter = useMemo<AdminBlogFilter>(() => {
+    const params = new URLSearchParams(search)
+    return params.get(`sharing`) === `todo`
+      ? { status: null, query, sharing: true }
+      : { status: parseBlogStatusFilter(params.get(`status`)), query }
+  }, [search, query])
   useEffect(() => {
     state.loadList(filter)
   }, [filter])
@@ -100,6 +123,12 @@ function BlogEditorView(
     const timer = setTimeout(() => void state.renderPreview(), PROBLEMS_CHECK_DELAY)
     return () => clearTimeout(timer)
   }, [body])
+  // A live post's summary of where it was shared, read from its checklist.
+  const sharing = sharingState(context)
+  const live = editor.post?.status === `published` ? editor.post.id : null
+  useEffect(() => {
+    if (live !== null) void sharing.loadSharing(live)
+  }, [live, context])
   const dialog = state.dialog.value
   const preview = state.preview.value
   /** After the create page's first save, the page moves to the post's own address. */
@@ -112,6 +141,7 @@ function BlogEditorView(
     <>
       <AdminBlogEditorScreen
         post={editor.post}
+        sharing={live === null ? null : sharing.counts(live)}
         loading={editor.loading}
         notFound={editor.notFound}
         loadError={editor.loadError}
@@ -172,12 +202,127 @@ function BlogEditorView(
   )
 }
 
-/** Posts on the public website: the list and the editor. */
+/** The sharing channels, at `/blog/channels`. */
+function BlogChannelsView({ context }: { context: AdminContext }): JSX.Element {
+  const state = sharingState(context)
+  useEffect(() => {
+    void state.loadChannels()
+  }, [context])
+  return (
+    <AdminBlogChannelsScreen
+      list={state.channels.value}
+      error={state.channelsError.value}
+      busy={state.busy.value}
+      archived={state.archived.value}
+      onShowArchived={(archived) => state.archived.value = archived}
+      onRetry={() => void state.loadChannels()}
+      onArchive={(channel, archived) => void state.archive(channel, archived)}
+      onDelete={(channel) => void state.deleteChannel(channel)}
+      navigate={context.navigate}
+    />
+  )
+}
+
+/** One channel's form, at `/blog/channels/new` and `/blog/channels/:id`. A save goes back to the list. */
+function BlogChannelView(
+  { context, params }: { context: AdminContext; params: Record<string, string> },
+): JSX.Element {
+  const t = useAdminText()
+  const state = sharingState(context)
+  const id = params.id === `new` ? null : params.id
+  const [, go] = useLocation()
+  const list = state.channels.value
+  const known = id === null || list !== null
+  useEffect(() => {
+    void state.loadChannels()
+  }, [context])
+  useEffect(() => {
+    if (known) state.openChannel(id)
+  }, [id, known])
+  const form = state.form.value
+  const channel = id === null ? null : state.find(id)
+  return (
+    <>
+      <AdminBlogChannelScreen
+        channel={channel}
+        loading={!known || form.id !== id}
+        notFound={id !== null && list !== null && channel === null}
+        value={form.value}
+        onChange={state.editChannel}
+        errors={form.errors}
+        saving={form.saving}
+        onSave={async () => {
+          if (await state.saveChannel()) go(ADMIN_BLOG_SHARING_PATHS.channels)
+        }}
+        livePosts={list?.livePosts ?? []}
+        now={state.now()}
+        navigate={context.navigate}
+      />
+      <UnsavedGuard
+        when={state.unsavedChannel()}
+        owns={(url) => url.origin === globalThis.location?.origin}
+        navigate={go}
+        leaveGuard={context.leaveGuard}
+        labels={{
+          title: t.t(`AdminApp.leaveTitle`),
+          message: t.t(`AdminBlogChannels.leaveMessage`),
+          leave: t.t(`AdminApp.leave`),
+          stay: t.t(`AdminApp.keepEditing`),
+        }}
+      />
+    </>
+  )
+}
+
+/** How often an open checklist with a row still posting reads itself again. */
+const SHARING_POLL_MS = 5000
+
+/** A post's sharing checklist, at `/blog/:id/sharing`; it reads again while a row is posting. */
+function BlogSharingView(
+  { context, params }: { context: AdminContext; params: Record<string, string> },
+): JSX.Element {
+  const state = sharingState(context)
+  const postId = params.id
+  useEffect(() => {
+    void state.loadSharing(postId)
+  }, [postId, context])
+  const page = state.sharing.value
+  const current = page.postId === postId
+  const posting = current && state.posting()
+  useEffect(() => {
+    if (!posting) return
+    const timer = setInterval(() => void state.loadSharing(postId), SHARING_POLL_MS)
+    return () => clearInterval(timer)
+  }, [posting, postId, context])
+  return (
+    <AdminBlogSharingScreen
+      postId={postId}
+      sharing={current ? page.data : null}
+      loadError={current ? page.error : null}
+      onRetry={() => void state.loadSharing(postId)}
+      pending={page.pending}
+      rowErrors={page.rowErrors}
+      onChange={(change) => void state.setShares(change)}
+      resultsPending={page.resultsPending}
+      resultsError={page.resultsError}
+      onResults={(channelId, counts) => void state.enterResults(channelId, counts)}
+      onRetryPost={(channelId) => void state.retryPost(channelId)}
+      announcement={page.announcement}
+      navigate={context.navigate}
+    />
+  )
+}
+
+/** Posts on the public website: the list, the editor, the sharing channels and checklists. */
 export const blogModule: AdminModule = {
   id: `blog`,
   nav: { name: `AdminNav.blog`, href: ADMIN_BLOG_PATHS.list, Icon: IconPencilSquare },
   routes: [
     { path: ADMIN_BLOG_PATHS.list, View: BlogListView },
+    // Before `/blog/:id`, which would take `channels` for a post's id.
+    { path: ADMIN_BLOG_SHARING_PATHS.channels, View: BlogChannelsView },
+    { path: `/blog/channels/:id`, View: BlogChannelView },
+    { path: `/blog/:id/sharing`, View: BlogSharingView },
     // One route for `/blog/new` and `/blog/:id`, so the first save's move to the post's address
     // keeps the same editor mounted, and with it the field and caret being typed in.
     { path: `/blog/:id`, View: BlogEditorView },

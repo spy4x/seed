@@ -20,7 +20,7 @@ import { securityHeaderList, withSecurityHeaders } from "@spy4x/server/http/secu
  *
  * Two things widen it. The pricing page's form posts to the MPA, which redirects to the SPA's
  * sign-up, and a browser applies `form-action` to that redirect too: on a domain of its own the
- * MPA therefore allows the SPA's origin there. With analytics on, the Umami origin is allowed in
+ * MPA therefore allows the SPA's origin there, and the demo's origin when `DEMO_ORIGIN` sets one. With analytics on, the Umami origin is allowed in
  * `script-src` (its tracker) and `connect-src` (the events it sends), and nowhere else.
  *
  * With `postImages`, `img-src` also allows any `https:` image: a blog post's cover and the images
@@ -33,11 +33,16 @@ function securityHeaderSet(
   { postImages }: { postImages: boolean },
 ): Promise<[string, string][]> {
   const umami = config.analytics?.origin
+  // The pricing form's redirect goes to the demo's `/try` when the demo has a host of its own.
+  const formAction = [
+    ...(config.apiOrigin === config.webAppOrigin ? [] : [config.apiOrigin]),
+    ...(config.demoOrigin ? [config.demoOrigin] : []),
+  ]
   // Vite's dev server injects the styles it hot-reloads and talks to the page over a WebSocket.
   const dev: boolean = import.meta.env?.DEV ?? false
   return securityHeaderList({
     extraSources: {
-      ...(config.apiOrigin === config.webAppOrigin ? {} : { formAction: [config.apiOrigin] }),
+      ...(formAction.length ? { formAction } : {}),
       ...(postImages ? { imgSrc: [`https:`] } : {}),
       ...(umami ? { scriptSrc: [umami], connectSrc: [umami] } : {}),
       ...(dev
@@ -124,6 +129,7 @@ export function pageMiddleware(
     ctx.state.language = pathLanguage(pathname).language
     ctx.state.webAppOrigin = config.webAppOrigin
     ctx.state.spaOrigin = config.apiOrigin
+    ctx.state.demoOrigin = config.demoOrigin
     ctx.state.api = createApi({
       apiUrl: config.apiUrl,
       request: ctx.req,

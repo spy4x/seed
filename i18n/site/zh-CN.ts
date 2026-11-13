@@ -133,7 +133,7 @@ export default {
     "Seed 的整体结构：Web 应用和网站调用 API，API 把每一次更改及其事件写入 Postgres，Worker 根据这些事件发送邮件和推送。所有服务都运行在一台服务器上。",
   "Home.title": "Seed：基于 Web 标准的免费 SaaS 启动模板",
   "Home.description":
-    "基于 Web 标准、免费且 MIT 许可的 SaaS 启动模板：支持双重验证的登录、带角色的群组、按成员计费的 Stripe 订阅、实时同步、离线使用。可运行在 Deno、Node 和 Bun 上。",
+    "基于 Web 标准、免费且 MIT 许可的 SaaS 启动模板：双重验证、群组、Stripe 订阅、实时同步、离线使用、直接从设备打开的页面。可运行在 Deno、Node 和 Bun 上。",
   "HomeProof.tests": "测试文件，覆盖各个应用和库，全部在 CI 中运行",
   "HomeProof.licence": "许可证：无需账号，没有付费墙",
   "HomeStatus.signIn":
@@ -155,6 +155,9 @@ export default {
   "HomeFaq.tryQuestion": "不注册账号能试用吗？",
   "HomeFaq.tryAnswer":
     "可以。点击“体验在线演示”，就会用一个带示例数据的访客账号打开应用，不需要邮箱或密码。你可以添加登录方式，但演示数据仍然每晚清空。使用 Seed 本身完全不需要账号：直接从 GitHub 克隆即可。",
+  "HomeFaq.fastQuestion": "为什么基于 Seed 的应用用起来这么快？",
+  "HomeFaq.fastAnswer":
+    "因为应用打开之后，显示你已经看过的内容不必等服务器。应用会在设备上保存每个列表的副本，立即用它显示页面，等服务器的回应到达后再替换。笔记列表的搜索和筛选都在设备上进行。打开应用时会先向服务器确认登录状态，首次访问会下载数据，保存更改也要等服务器。",
   "HomeFaq.freeQuestion": "Seed 真的免费吗？",
   "HomeFaq.freeAnswer":
     "是的。它采用 MIT 许可证：可以用于任意数量的产品，商用或非商用都行，也可以公开你的分支，无需任何账号。你只需为租用的一台服务器，以及你开启的服务（例如 Stripe 或邮件服务商）付费。",
@@ -212,6 +215,12 @@ export default {
   "HomeFeatures.websiteText":
     "就是本站：服务端渲染，关闭 JavaScript 也能正常使用，支持九种语言，价格来自你的套餐目录，还有法律页面和双重确认订阅的邮件简报。",
   "HomeFeatures.all": "全部功能，附截图和状态",
+  "HomeSpeed.eyebrow": "天生就快",
+  "HomeSpeed.title": "点击之间不再转圈等待",
+  "HomeSpeed.text":
+    "大多数 Web 应用每次点击都要重新问一遍服务器，你只能等着。基于 Seed 的应用一旦打开，你访问过的页面会立即从设备上的副本打开，笔记列表的搜索和筛选也随输随出。片刻之后，服务器的最新副本会在后台替换设备上的副本。",
+  "HomeSpeed.demo": "试试看：在演示里随便点点",
+  "HomeSpeed.how": "了解原理",
   "HomeServer.eyebrow": "运行在你租用的一台服务器上",
   "HomeServer.title": "一台服务器，一条 <code>docker compose</code>，没有意外账单。",
   "HomeServer.text":
@@ -404,6 +413,16 @@ export default {
   "FeatureRealtime.fact2": "从休眠中唤醒的标签页会重新连接，并拉取错过的内容",
   "FeatureRealtime.fact3": "实时同步可以关闭：应用会改为定时轮询，使用体验不变",
   "FeatureRealtime.code": "阅读实时同步设计",
+  "FeatureFast.nav": "天生就快",
+  "FeatureFast.title": "页面先从设备打开，再与服务器同步",
+  "FeatureFast.lead":
+    "应用显示过的每个列表都会保存在设备上，已删除的笔记和群组除外。页面会立即显示这份副本，等服务器的回应到达后再换上，所以在打开的应用里切换页面不用等一次服务器往返。打开应用时会先向服务器确认登录状态，首次访问会下载数据，少数页面始终要询问服务器。",
+  "FeatureFast.fact1": "先显示设备上的副本，再用服务器的回应替换（基于 IndexedDB 的 cachedRead）",
+  "FeatureFast.fact2": "笔记列表的搜索和筛选在设备上的列表中进行，不会每按一个键就发一次请求",
+  "FeatureFast.fact3":
+    "仍要等服务器的：打开应用时的登录检查、已删除的笔记和群组，以及每次保存，比如更换套餐或发送邀请",
+  "FeatureFast.fact4": "没有网络时，笔记或标签的更改会在队列中等待，直到网络恢复",
+  "FeatureFast.code": "阅读设备副本的工作原理",
   "FeatureOffline.nav": "离线应用",
   "FeatureOffline.title": "没有网络也能打开的应用",
   "FeatureOffline.lead":
@@ -441,6 +460,17 @@ export default {
   "FeatureWorker.fact3": "一个任务就是一个定义：名称、处理函数，如果需要重复执行，再加上调度计划",
   "FeatureWorker.fact4": "失败的尝试会以逐渐延长的间隔重试；运营人员可以在管理后台看到每一次运行",
   "FeatureWorker.code": "阅读 docs/jobs.md",
+  "FeatureCatalog.nav": "商品目录",
+  "FeatureCatalog.title": "适合网店、菜单或租赁的商品目录",
+  "FeatureCatalog.lead":
+    "运营人员在管理后台添加商品，配上照片、颜色和尺码；网站把它们展示在搜索引擎看得懂的页面上，并标出已售罄的款式。",
+  "FeatureCatalog.fact1": "默认关闭，设置 CATALOG=true 即可开启；货币和语言另有两项设置",
+  "FeatureCatalog.fact2":
+    "价格以最小货币单位存储，文案支持你维护的每种语言，售罄按颜色和尺码分别记录",
+  "FeatureCatalog.fact3": "Worker 把照片转成 AVIF 和 WebP，管理后台的每次修改都写入审计日志",
+  "FeatureCatalog.fact4":
+    "在每个分享商品的地方各用一个追踪链接，由 Umami 统计：<guide>阅读商品目录指南</guide>",
+  "FeatureCatalog.code": "阅读商品目录代码",
   "FeatureYourFeature.nav": "你自己的功能",
   "FeatureYourFeature.title": "复制一个功能，就能添加一个新功能",
   "FeatureYourFeature.lead":
@@ -492,7 +522,7 @@ export default {
   "FeatureWebsite.fact2": "价格读取自应用的套餐目录",
   "FeatureWebsite.fact3": "双重确认订阅的邮件简报，一键退订，邮件以收件人的语言发送",
   "FeatureWebsite.fact4":
-    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源、文章结构化数据、文章网址变更后会自动跳转的旧链接、文章列表中的封面图、注明原文地址的可选 Dev.to 转载，以及在文章发布或更新时立即通知搜索引擎的 IndexNow 推送",
+    "在管理后台撰写的博客，支持每种语言的文章及其译文、主题、读者可动手试用的交互图表、RSS 订阅源、文章结构化数据、文章网址变更后会自动跳转的旧链接、文章列表中的封面图、注明原文地址的可选 Dev.to 转载、自动发布到 Telegram、Mastodon、Bluesky、Hashnode 和 LinkedIn，以及在文章发布或更新时立即通知搜索引擎的 IndexNow 推送",
   "FeatureWebsite.fact5": "在管理后台设置的联系方式，显示在页脚和结构化数据中",
   "FeatureWebsite.fact6":
     "可选的商品目录，适合网店，在管理后台编辑：商品照片、颜色、尺码、尺码表和售罄尺码，覆盖你销售的每种语言，并为每个商品和每个分享渠道生成一个短追踪链接",
@@ -593,7 +623,7 @@ export default {
   "AdminTour.newsletter": "邮件简报",
   "AdminTour.newsletterText": "谁订阅了，发送过什么。可将列表导出为 CSV。",
   "AdminTour.blog": "博客",
-  "AdminTour.blogText": "网站上每种语言的文章，从草稿到发布。",
+  "AdminTour.blogText": "网站上每种语言的文章，从草稿到发布，并自动发到你的各个渠道。",
   "AdminTour.contactLinks": "联系方式",
   "AdminTour.contactLinksText": "在网站页脚展示用户联系你的方式，无需重新部署。",
   "AdminTour.catalog": "商品目录",
@@ -670,6 +700,8 @@ export default {
   "CompareRow.blog": "博客",
   "CompareRow.audit": "审计日志",
   "CompareRow.realtime": "实时更新",
+  "CompareRow.instant": "设备上的数据",
+  "CompareRow.instantNote": "每个列表的副本都保存在设备上",
   "CompareRow.offline": "离线应用",
   "CompareRow.offlineNote": "离线写入会排队等待",
   "CompareRow.ops": "监控和备份",
@@ -1206,4 +1238,18 @@ export default {
   "LaunchChecklistItem.supportDeployRollback": "写下部署和回滚的步骤。",
   "LaunchChecklistItem.supportDeployRollbackWhy":
     "最不适合琢磨怎么回滚的时刻，就是部署出问题的时候。",
+  "Catalog.title": "商品目录",
+  "Catalog.intro": "在售的全部商品，附价格、尺码和颜色。",
+  "Catalog.categories": "分类",
+  "Catalog.all": "全部",
+  "Catalog.empty": "暂无在售商品",
+  "Catalog.emptyLead": "新商品准备好后会第一时间出现在这里。",
+  "Catalog.categoryIntro": "{category}：价格、尺码和颜色。",
+  "CatalogItem.intro": "{item}：价格、尺码和颜色。",
+  "CatalogItem.photos": "照片",
+  "CatalogItem.material": "材质",
+  "CatalogItem.fit": "版型",
+  "CatalogItem.care": "洗护",
+  "CatalogItem.inStock": "{choice}：有货",
+  "CatalogItem.soldOut": "{choice}：已售罄",
 } satisfies Catalog

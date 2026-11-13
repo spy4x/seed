@@ -15,6 +15,7 @@ import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { RadioChips } from "@spy4x/preact-ui/radio-chips"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import {
   ADMIN_BILLING_NOTE_MAX_LENGTH,
@@ -252,7 +253,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
 
   const { customer } = detail
   const view = adminBillingStatus(customer, props.now, detail.graceDays)
-  const yearly = perMonth(t, customer, props.plans)?.yearly ?? null
+  const yearly = perMonth(t, customer, format, props.plans)?.yearly ?? null
   const entries = billingMenu(detail, props.payment, props.operator)
   const owner = adminGroupPersonName(t, customer.owner)
   const stripe = detail.providerUrl && (
@@ -316,7 +317,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
         <Fact label={t.t(`AdminBillingCustomer.status`)}>
           <BillingStatusLine view={view} dataE2E="admin-billing-status" />
         </Fact>
-        <Fact label={t.t(`AdminBillingCustomer.plan`)}>{planLine(t, customer)}</Fact>
+        <Fact label={t.t(`AdminBillingCustomer.plan`)}>{planLine(t, customer, props.plans)}</Fact>
         {customer.period !== null && (
           <Fact label={t.t(`AdminBillingCustomer.period`)}>
             <span data-e2e="admin-billing-period" data-period={customer.period}>
@@ -329,7 +330,9 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
           </Fact>
         )}
         <Fact label={t.t(`AdminBillingCustomer.perMonth`)}>
-          <span data-e2e="admin-billing-per-month">{perMonthLine(t, customer, props.plans)}</span>
+          <span data-e2e="admin-billing-per-month">
+            {perMonthLine(t, customer, format, props.plans)}
+          </span>
           {yearly && (
             <span class="block text-sm text-muted" data-e2e="admin-billing-billed-yearly">
               {yearly}
@@ -415,9 +418,13 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
 }
 
 /** `Pro, 4 members`. */
-function planLine(t: Translator<string>, customer: AdminBillingCustomer): string {
+function planLine(
+  t: Translator<string>,
+  customer: AdminBillingCustomer,
+  plans?: readonly Plan[],
+): string {
   return t.t(`AdminBillingCustomer.planLine`, {
-    plan: billingPlanName(t, customer.planId),
+    plan: billingPlanName(t, customer.planId, plans),
     count: seatsOf(customer),
   })
 }
@@ -426,9 +433,10 @@ function planLine(t: Translator<string>, customer: AdminBillingCustomer): string
 function perMonthLine(
   t: Translator<string>,
   customer: AdminBillingCustomer,
+  format: Pick<Formatters, "number">,
   plans?: readonly Plan[],
 ): string {
-  const amount = perMonth(t, customer, plans)
+  const amount = perMonth(t, customer, format, plans)
   if (amount === null) return t.t(`AdminBillingCustomer.unknownPrice`)
   if (amount.detail === null) return amount.amount
   return t.t(
@@ -607,7 +615,7 @@ function ActionDialog(
   const format = useFormat()
   const t = useAdminText()
   const group = customer.groupName
-  const plan = billingPlanName(t, customer.planId)
+  const plan = billingPlanName(t, customer.planId, props.plans)
   // What the next renewal charges: a yearly subscription renews at its yearly price.
   const price = billedPriceOf(customer, props.plans)
   const charge = price ? money(price) : t.t(`AdminBillingCustomer.itsPlanPrice`)
@@ -664,18 +672,19 @@ function ActionDialog(
       }
       body = (
         <>
-          <RadioGroup
-            legend={t.t(`AdminBillingCustomer.howLong`)}
-            name="length"
-            required
-            value={length}
-            onChange={(value) => setLength(value as AdminBillingTimeLength)}
-            data-e2e="admin-billing-length"
-            options={ADMIN_BILLING_TIME_LENGTHS.map((value) => ({
-              value,
-              label: t.t(TIME_LABELS[value]),
-            }))}
-          />
+          {/* `RadioChips` takes no attributes of its own, so the hook sits on a wrapper. */}
+          <div data-e2e="admin-billing-length">
+            <RadioChips
+              legend={t.t(`AdminBillingCustomer.howLong`)}
+              name="length"
+              value={length}
+              onChange={(value) => setLength(value as AdminBillingTimeLength)}
+              options={ADMIN_BILLING_TIME_LENGTHS.map((value) => ({
+                value,
+                label: t.t(TIME_LABELS[value]),
+              }))}
+            />
+          </div>
           <p class="text-sm text-muted" aria-live="polite" data-e2e="admin-billing-until">
             <Rich
               parts={t.parts(
@@ -702,6 +711,7 @@ function ActionDialog(
         danger: true,
       }
       body = (
+        // Not chips: each choice carries a line of help, or why it is unavailable, under its title.
         <RadioGroup
           legend={t.t(`AdminBillingCustomer.when`)}
           name="when"

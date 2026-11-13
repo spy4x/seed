@@ -10,7 +10,6 @@ import { matchRoute, Redirect, Route, Switch, useLocation, useRouter } from "wou
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
 import {
   ADMIN_PATHS,
-  ADMIN_PRODUCT,
   AdminFrame,
   AdminNoAccess,
   adminPageTitle,
@@ -18,16 +17,19 @@ import {
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
 import { NotFoundScreen } from "@ui/not-found-screen.tsx"
+import { PRODUCT_NAME } from "@ui/brand.ts"
 import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from "./state.ts"
 import { ADMIN_MODULES, adminPersonTabs, shownModules } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
+import { deviceFormat } from "@spy4x/time/format"
 import { I18nContext, useT } from "@spy4x/preact-ui/i18n"
 import { isLanguage, LANGUAGES } from "@domain/identity"
 import { languageSetting, pickLanguage } from "@platform/i18n.ts"
 import { kept, languages as pageLanguages } from "./i18n.ts"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
-import { adminShortcutRows, focusListFilter } from "./shortcuts.ts"
+import { adminGoTo, adminShortcutRows, focusListFilter, onListPage } from "./shortcuts.ts"
+import { type AdminSearchChoice, AdminSearchPalette } from "@ui/admin-palette.tsx"
 import { guardNavigate } from "./leave.ts"
 import {
   type createSingleKeysSetting,
@@ -79,7 +81,11 @@ function Operator(
     languages = pageLanguages,
   }: AppProps,
 ): JSX.Element {
-  const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])
+  const own = useMemo(() =>
+    operatorFormat ?? createOperatorFormat(store.request, {
+      language: () => languages.translator.value.language,
+      deviceLocales: () => [deviceFormat().locale, ...(globalThis.navigator?.languages ?? [])],
+    }), [store])
   const session = store.session.value
   const [path, navigate] = useLocation()
   // Shortcuts, the sidebar and modules navigate through this one, so a page with unsaved changes
@@ -118,10 +124,10 @@ function Operator(
     module.routes.some((route) => matchRoute(parser, route.path, path)[0])
   )
   const title = !user || !hasAdminAccess(user)
-    ? `${tag} · ${ADMIN_PRODUCT}`
+    ? `${tag} · ${PRODUCT_NAME}`
     : found
     ? adminPageTitle(navItems, path, tag)
-    : [t.t(`AdminNotFound.title`), tag, ADMIN_PRODUCT].join(" · ")
+    : [t.t(`AdminNotFound.title`), tag, PRODUCT_NAME].join(" · ")
   useRouteAnnouncer({ path, title })
   // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
   // far down the list would show with their header under the top bar. A tab change (`?tab=`) keeps
@@ -197,6 +203,17 @@ function Operator(
   })
   // Bound only in the signed-in shell, which draws the list too.
   useShortcuts(user && hasAdminAccess(user) ? shortcutRows : [], singleKeys.on.value)
+  // A palette pick runs what its shortcut, menu entry or switch runs.
+  const pick = (choice: AdminSearchChoice) => {
+    if (choice.kind === "page") leave(choice.href)
+    // The account menu's Theme sets it the same way.
+    else if (choice.kind === "theme") theme.set(choice.theme as Parameters<typeof theme.set>[0])
+    else if (choice.kind === "single-keys") singleKeys.set(choice.on)
+    else if (choice.kind === "shortcuts") setShortcutsOpen(true)
+    else if (choice.kind === "list-filter") focusListFilter()
+    // The account menu's Sign out runs the same.
+    else if (choice.kind === "sign-out") store.signOut()
+  }
   const toastr = <Toastr toasts={toasts.list.value} onDismiss={toasts.remove} dataE2E="toasts" />
 
   if (session.step === "loading") {
@@ -241,12 +258,22 @@ function Operator(
     <FormatContext.Provider value={own.format.value}>
       <AdminShell
         navItems={navItems}
-        currentPath={path}
+        // The not-found page belongs to no section: `/users/x/y` marks no rail entry.
+        currentPath={found ? path : undefined}
         operator={{ name: operatorName(user, email), email }}
         theme={theme}
         language={language}
         onSignOut={store.signOut}
         navigate={leave}
+        search={
+          <AdminSearchPalette
+            goTo={adminGoTo(modules)}
+            listFilter={onListPage(modules, path)}
+            theme={theme.preference.value}
+            singleKeys={singleKeys.on.value}
+            onSelect={pick}
+          />
+        }
         shortcuts={{
           rows: shortcutRows,
           open: shortcutsOpen,

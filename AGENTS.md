@@ -53,7 +53,9 @@ says what is missing. Do not copy the gap into a new screen.
   (`@spy4x/preact-system/boundary`) over every module, with this repository's app aliases.
 - **Built on preact-components' forms.** A form here is `ScreenForm` (`libs/ui/progressive.tsx`):
   `EnhancedForm` with its status taken from the screen's `pending` prop, so a pending form is
-  disabled and refuses a second submit. A form takes its submit over with `onSubmit`; only the
+  disabled and refuses a second submit. The exception is a list's search form (admin Users and
+  Groups): it leaves `pending` out, because a disabled fieldset drops focus out of the field, and
+  its busy submit button refuses a second search instead. A form takes its submit over with `onSubmit`; only the
   newsletter's pass `action` too. A screen whose whole form the library already has draws that
   instead: the sign-in screens (`AuthScreen`, `AdminSignInScreen`) use preact-system's `AuthForm`,
   and the billing screens use `PlanCard`'s and `PricingTable`'s forms and a `<form>`, each inside a
@@ -100,7 +102,8 @@ one it has.
 
 `deno task lighthouse` (CI step `lighthouse`) measures the website against the Lighthouse budget
 in the global `design` skill. The pages it measures are listed in
-`apps/mpa/lighthouse/lighthouserc.json`.
+`apps/mpa/lighthouse/lighthouserc.json`; a pull request measures only those in
+`apps/mpa/lighthouse/quick.ts`.
 
 ## The public demo
 

@@ -92,6 +92,10 @@ sign-in page with "That sign-in did not work. Try again.", and linking it on the
 - **An unconfirmed password account** with the same address loses its password when the new
   account is created, because the provider has proven who owns the address. The question warns
   about this first, and the old account gets an audit row.
+- **With `SIGN_UP=invite`** ([who may sign up](deploy.md#who-may-sign-up)), "Create a new
+  account?" makes the account only with an invitation. An invitation tied to an address admits it
+  only when the provider has verified that address; a link invitation admits any. Without one, the
+  answer is `SIGN_UP_CLOSED` and nothing is created. A known person still signs in.
 - **A guest** ([guest accounts](guests.md)) links a provider on `/keep` without a password step.
   If that provider account already signs in to another account here, `/keep/taken` offers the
   choice instead.

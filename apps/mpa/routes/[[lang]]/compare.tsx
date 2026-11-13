@@ -104,6 +104,7 @@ function rows({ t, language }: Site): readonly ComparisonRow[] {
     row(`CompareRow.blog`, [`yes`, `yes`, `yes`, `yes`, `no`, `yes`]),
     row(`CompareRow.audit`, [`yes`, `no`, `no`, `no`, `yes`, `no`]),
     row(`CompareRow.realtime`, [`yes`, `no`, `no`, `no`, `no`, `no`]),
+    row(`CompareRow.instant`, [`yes`, `no`, `no`, `no`, `no`, `no`], `CompareRow.instantNote`),
     row(`CompareRow.offline`, [`yes`, `no`, `no`, `no`, `no`, `no`], `CompareRow.offlineNote`),
     row(`CompareRow.ops`, [`yes`, `no`, `partial`, `partial`, `no`, `no`], `CompareRow.opsNote`),
   ]
@@ -372,7 +373,7 @@ function Questions(): JSX.Element {
  * way into the demo. Server-rendered; it needs no JavaScript.
  */
 export default define.page(function Compare({ state }) {
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   const t = siteTranslator(state.language)
   const head: SitePageHead = {
     ...compareHead(t),

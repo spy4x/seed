@@ -33,8 +33,8 @@ mention `restore`.
    never queues a restore: it needs the server.
 7. **Tests.** Both transports (every role, a stranger, a live row, the cap), Postgres (version,
    sequence, audit row, the deleted list's cursor), the purge with a fixed clock, the store, the
-   screens and an e2e spec. Notes: `e2e/notes-restore.e2e.ts` and
-   `tests/integration/notes-purge.integration.test.ts`.
+   screens and an e2e spec. Notes: `e2e/notes-restore.e2e.ts`, `e2e/notes-restore-offline.e2e.ts`
+   and `tests/integration/notes-purge.integration.test.ts`.
 
 Anything that hangs off the row, such as attachments, must go with it in the purge, or it is left
 behind.
@@ -90,15 +90,20 @@ register stays behind and is lost with the group.
    failure after yours leaves nothing moved.
 
 The mover has already locked both groups, checked edit rights in both and recorded both changes.
-Only the notes cap is wired: the gate hands one number, `allowance`, to the handler
-(`apps/api/cqrs/entitlement-needs.ts`). A second capped aggregate needs the gate to read several
-caps first; that is not built.
+The entitlement gate hands every cap of the target group's plan to the mover as
+`context.allowances`, the product's own limit keys included. A capped aggregate reads its own,
+such as `context.allowances.maxNotes`, counts what it moves under the group's lock and refuses
+with a `PlanError` when the target would pass it. Nothing in Seed's files changes for it.
 
 ## Make it exportable
 
 The owner of a group downloads it as one JSON file, and anyone who may create a group makes one
 from such a file. The file holds one list per registered aggregate, keyed by its `kind`. An
 aggregate that does not register is left out of every export.
+
+The owner can also download the group as spreadsheets (`GET /api/groups/:groupId/export?format=csv`):
+a ZIP with one `<kind>.csv` per aggregate that has a `csv` part, and a `README.txt` that names the
+ones without. Nothing imports it; it is for a person to open.
 
 1. **Domain.** Write the entry's arktype schema and a parser that reuses the aggregate's field
    rules (`noteExportEntrySchema` and `parseNoteExportEntry`). An entry has an `id`, what a person
@@ -112,6 +117,13 @@ aggregate that does not register is left out of every export.
    (`libs/domain/groups/export-import.ts`) and still reads the older version.
 5. Add it to `tests/integration/group-files.integration.test.ts`: a round trip gives the same
    contents under new ids, and a failure halfway writes nothing.
+6. **Spreadsheet.** Give it a `csv` part: the columns of `CsvColumn` (`@spy4x/platform/universal/csv`),
+   each a field of the entry, its `header` an `app` catalog key such as `NoteSpreadsheet.title`
+   (add the key to `i18n/app/*.ts` in every language, `i18n/TRANSLATING.md`), and a `format` for a
+   field that is not text: a date as its ISO 8601 text, a list joined into one cell. The writer
+   adds the byte order mark and guards every text cell against spreadsheet formulas; never write a
+   second guard. Without a `csv` part the aggregate is listed in the ZIP's `README.txt` as not
+   available as a spreadsheet.
 
 | Part                           | What it does                                                               |
 | ------------------------------ | -------------------------------------------------------------------------- |
@@ -121,6 +133,7 @@ aggregate that does not register is left out of every export.
 | `parse`, `check`               | One entry, and what is wrong across entries, such as a duplicate name      |
 | `read(sql, groupId)`           | The group's live rows, in pages                                            |
 | `write(tx, entries, context)`  | Writes the rows with new ids, and returns the new id of each file id      |
+| `csv`                          | The columns of its spreadsheet, if it has one                              |
 
 `write` gives every row a new `uuidV7()` id and stamps it with `context.changeSequence`. It maps
 what a row points at with `context.newIdOf(kind, fileId)`.

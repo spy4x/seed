@@ -1,8 +1,20 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { signal } from "@preact/signals"
-import { DEFAULT_PREFERENCES, type Language, type Preferences } from "@domain/identity"
+import { createThemeStore, ThemeValue } from "@spy4x/preact-signals/theme"
+import {
+  saveSettings,
+  type SettingsStore,
+  type StoredSettings,
+} from "@spy4x/platform/universal/settings"
+import {
+  DEFAULT_PREFERENCES,
+  type Language,
+  type Preferences,
+  preferencesDefinition,
+} from "@domain/identity"
 import { syncLanguage } from "./language.ts"
+import { createPreferencesState } from "./preferences.ts"
 
 /** A preferences slice, a device copy and a page switch, all recorded. */
 function setup(
@@ -128,5 +140,131 @@ describe(`syncLanguage`, () => {
     expect(blocked.sync.current.value).toBe(`ar`)
 
     expect(setup({ kept: `../x` }).sync.current.value).toBeNull()
+  })
+})
+
+/** The server in memory: one record (`row` at first) behind the API's compare-and-set. */
+function server(row: StoredSettings | null = null) {
+  let record = row
+  const settings: SettingsStore = {
+    read: () => Promise.resolve(record),
+    write: (_owner, expected, next) => {
+      if ((record?.version ?? 0) !== expected) return Promise.resolve(false)
+      record = next
+      return Promise.resolve(true)
+    },
+  }
+  return {
+    row: () => record,
+    save: (payload: unknown) => saveSettings(preferencesDefinition, settings, `7`, payload),
+  }
+}
+
+/** One device's storage, shared by its tabs: a theme and a language kept from before sign-in. */
+function deviceStorage({ theme = `dark`, language = `de` } = {}) {
+  const items = new Map<string, string | null>([[`theme`, theme], [`language`, language]])
+  return { items, language: () => items.get(`language`) ?? null }
+}
+
+/**
+ * One page of the SPA on the real preferences store, theme sync and language sync. `unloads`: the
+ * page goes away once its first save has left, as sign-in loads the page again; any later save
+ * never leaves it.
+ */
+function tab(
+  backend: ReturnType<typeof server>,
+  storage: ReturnType<typeof deviceStorage>,
+  { unloads = false } = {},
+) {
+  let sent = 0
+  const call = (name: string, payload: unknown): Promise<unknown> => {
+    if (name === `preferences.get`) return Promise.resolve(backend.row())
+    if (name !== `preferences.save`) return Promise.resolve(null)
+    if (unloads && ++sent > 1) return new Promise(() => {})
+    return backend.save(payload)
+  }
+  const write = (key: string, value: string | null) => void storage.items.set(key, value)
+  const theme = createThemeStore({
+    storage: { getItem: (key) => storage.items.get(key) ?? null, setItem: write },
+    media: null,
+    apply: () => {},
+  })
+  theme.attach()
+  const kept = {
+    read: storage.language,
+    write: (language: string | null) => write(`language`, language),
+  }
+  const state = createPreferencesState({
+    query: (name) => call(name, undefined) as never,
+    command: (name, payload) => call(name, payload) as never,
+    theme,
+    language: kept,
+    device: () => ({ locale: `en-GB`, timeZone: `Europe/Berlin` }),
+    requested: () => [],
+    keptZone: { read: () => null, write: () => {} },
+    online: () => true,
+  })
+  const shown: Language[] = []
+  const sync = syncLanguage({
+    preferences: state,
+    use: (language) => {
+      shown.push(language)
+      return Promise.resolve(true)
+    },
+    kept,
+    requested: () => [`en-GB`],
+    numberLocale: signal(`en-GB`),
+    setNumberLocale: () => {},
+  })
+  return { state, theme, sync, shown }
+}
+
+/** Signs every tab in at once and lets every save and its answer land. */
+async function signInAll(...tabs: ReturnType<typeof tab>[]) {
+  await Promise.all(tabs.map((page) => page.state.refresh()))
+  for (let turn = 0; turn < 5; turn++) await new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+describe(`a new account on a device that kept a language and a theme`, () => {
+  it(`keeps the device's language when the page loads again right after the theme's save, as sign-in does`, async () => {
+    const backend = server()
+    const storage = deviceStorage()
+    await signInAll(tab(backend, storage, { unloads: true }))
+    const next = tab(backend, storage)
+    await signInAll(next)
+    expect(backend.row()?.value).toMatchObject({ theme: `dark`, language: `de` })
+    expect(storage.language()).toBe(`de`)
+    expect(next.shown.every((language) => language === `de`)).toBe(true)
+    expect(next.sync.current.value).toBe(`de`)
+  })
+
+  it(`keeps it in a second tab whose first save lost to the first tab's`, async () => {
+    const backend = server()
+    const storage = deviceStorage()
+    const first = tab(backend, storage)
+    const second = tab(backend, storage)
+    await signInAll(first, second)
+    expect(backend.row()?.value).toMatchObject({ theme: `dark`, language: `de` })
+    expect(storage.language()).toBe(`de`)
+    expect(second.shown.every((language) => language === `de`)).toBe(true)
+  })
+
+  it(`saves the theme without a device language off the list`, async () => {
+    const backend = server()
+    await signInAll(tab(backend, deviceStorage({ language: `../x` })))
+    expect(backend.row()?.value).toMatchObject({ theme: `dark`, language: null })
+  })
+
+  it(`never adds the device's language to a record saved before, even with a theme change`, async () => {
+    // Saved on another device with "follow this device": a later save here keeps that.
+    const saved = { version: 3, value: { ...DEFAULT_PREFERENCES, theme: `light` } }
+    const backend = server(saved)
+    const storage = deviceStorage()
+    const page = tab(backend, storage)
+    await signInAll(page)
+    page.theme.set(ThemeValue.DARK)
+    await signInAll()
+    expect(backend.row()).toMatchObject({ version: 4, value: { theme: `dark`, language: null } })
+    expect(storage.language()).toBeNull()
   })
 })

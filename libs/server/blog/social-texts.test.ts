@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { socialTexts, X_LINK_LENGTH, X_MAX } from "./social-texts.ts"
+import { channelText, socialTexts, X_LINK_LENGTH, X_MAX } from "./social-texts.ts"
 
 const POST = {
   title: `Neun Sprachen ab Tag eins`,
@@ -42,5 +42,22 @@ describe("socialTexts (#733)", () => {
     const longTitle = socialTexts({ ...POST, title: `t`.repeat(300) }, ORIGIN).x
     expect(xLength(longTitle)).toBe(X_MAX)
     expect(longTitle.endsWith(`…\n\n${URL_DE}`)).toBe(true)
+  })
+})
+
+describe(`channelText`, () => {
+  it(`ends each pasted text at the post's address tagged with the channel's utm_source`, () => {
+    const tagged = `${URL_DE}?utm_source=t-me-seed`
+    expect(channelText(`telegram`, POST, ORIGIN, `t-me-seed`)).toBe(
+      `**Neun Sprachen ab Tag eins**\n\nDie Einleitung.\n\n• Erster Punkt.\n• Zweiter Punkt.\n\n${tagged}`,
+    )
+    expect(channelText(`mastodon`, POST, ORIGIN, `t-me-seed`)).toMatch(/\?utm_source=t-me-seed$/)
+    expect(channelText(`newsletter`, POST, ORIGIN, null)).toMatch(/neun-sprachen$/)
+  })
+
+  it(`gives no text to a channel that copies the post or takes only a title and a link`, () => {
+    for (const kind of [`devto`, `hashnode`, `reddit`, `hackernews`] as const) {
+      expect(channelText(kind, POST, ORIGIN, `x`)).toBe(null)
+    }
   })
 })

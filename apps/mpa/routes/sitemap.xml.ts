@@ -1,6 +1,7 @@
 import { FORM_ACTIONS } from "@ui/progressive.tsx"
 import { sitemapXml } from "@spy4x/platform/universal/seo"
 import { blogPages } from "../blog.ts"
+import { catalogPages } from "../catalog.ts"
 import { SITE_PAGES } from "../pages.ts"
 import { languageAlternates } from "../site.tsx"
 import { define } from "../utils.ts"
@@ -14,7 +15,10 @@ import { localePath, SITE_LANGUAGES } from "../languages.ts"
  * names its language versions (`hreflang`), as its own head does. The newsletter page is left out while
  * subscriptions are off. The blog's index in each language with a live post follows, then each
  * post at its own language's address, with the day it was published or last significantly
- * updated; with no live post, or while the API cannot answer, the blog is left out. The admin panel video has its own sitemap, `/video-sitemap.xml`.
+ * updated; with no live post, or while the API cannot answer, the blog is left out. The catalog's
+ * page, each category's and each item's follow, in every language both the site and the catalog
+ * keep, each item with its cover photo; while the catalog is off, has no published item, or the
+ * API cannot answer, the catalog is left out. The admin panel video has its own sitemap, `/video-sitemap.xml`.
  */
 export const handler = define.handlers({
   async GET(ctx) {
@@ -37,6 +41,17 @@ export const handler = define.handlers({
         url: `${origin}${path}`,
         lastmod: new Date(lastmod),
       })),
+      ...(await catalogPages(ctx.state.api)).flatMap(({ path, languages, lastmod, images }) => {
+        const alternates = languageAlternates(origin, path, {
+          alternates: languages.map((language) => ({ language, path })),
+        }).map(({ hreflang, href }) => ({ lang: hreflang, url: href }))
+        return languages.map((language) => ({
+          url: `${origin}${localePath(language, path)}`,
+          lastmod: new Date(lastmod),
+          ...(images.length > 0 ? { images: images.map((image) => `${origin}${image}`) } : {}),
+          ...(alternates.length > 0 ? { alternates } : {}),
+        }))
+      }),
     ])
     return new Response(body, { headers: { "content-type": "application/xml; charset=utf-8" } })
   },

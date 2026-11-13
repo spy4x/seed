@@ -8,6 +8,7 @@ import {
   type GroupError,
   GroupRole,
   OPERATOR_DETAIL,
+  type ProductActivityKind,
 } from "./+lib.ts"
 
 const ada = { userId: 1, name: "Ada" }
@@ -125,4 +126,30 @@ Deno.test("activity: every kind the server writes has its own sentence", () => {
   for (const kind of ACTIVITY_KINDS) {
     expect(say(kind)).not.toBe(say("future.kind"))
   }
+})
+
+const currencyChanged: ProductActivityKind = {
+  kind: `household.base_currency_changed`,
+  label: `AdminAuditEvent.baseCurrencyChanged`,
+  message: (details) => ({ key: `GroupActivity.baseCurrencyChanged`, values: { ...details } }),
+  describe: (who, details) =>
+    `${who} changed the main currency from ${details.from} to ${details.to}`,
+}
+
+Deno.test("activity: a product's own kind reads as the sentence the product gives it", () => {
+  expect(
+    describeActivity(
+      { kind: currencyChanged.kind, actor: ada, target: null, details: { from: `EUR`, to: `USD` } },
+      [currencyChanged],
+    ),
+  ).toBe(`Ada changed the main currency from EUR to USD`)
+})
+
+Deno.test("activity: a kind neither Seed nor the product knows still reads as a generic line", () => {
+  expect(
+    describeActivity(
+      { kind: `household.renamed`, actor: ada, target: null, details: {} },
+      [currencyChanged],
+    ),
+  ).toBe(`Ada changed something in the group`)
 })

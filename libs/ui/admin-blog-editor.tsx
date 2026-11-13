@@ -11,6 +11,7 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { Input, Select, Textarea } from "@spy4x/preact-ui/input"
+import { Link } from "@spy4x/preact-ui/link"
 import { languageName } from "@spy4x/preact-ui/language-picker"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { ListField } from "@spy4x/preact-ui/list-field"
@@ -43,6 +44,7 @@ import {
   type BlogPostStatus,
   type BlogProblem,
   type BlogRevision,
+  type BlogSharingCounts,
   isHttpsUrl,
 } from "@domain/blog"
 import type { BlogHistoryState } from "./admin-blog-history.tsx"
@@ -324,6 +326,8 @@ export interface BlogPreview {
 export interface AdminBlogEditorScreenProps {
   /** The post as saved, or `null` on the create page. */
   post: BlogPost | null
+  /** A live post's sharing counts, for the publishing facts; left out until they are read. */
+  sharing?: BlogSharingCounts | null
   /** The post is still being read. */
   loading: boolean
   /** No post has this id. */
@@ -1308,6 +1312,26 @@ function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null 
             />
           </p>
         )}
+      {post.status === `published` && props.sharing && props.sharing.total > 0 && (
+        <p class="flex flex-wrap gap-x-2" data-e2e="admin-blog-shared">
+          <span>
+            {t.t(`AdminBlogEditor.sharedOn`, {
+              done: props.sharing.done,
+              total: props.sharing.total,
+            })}
+            {props.sharing.toDo > 0 &&
+              ` · ${t.t(`AdminBlogEditor.sharingToDo`, { count: props.sharing.toDo })}`}
+          </span>
+          <Link
+            href={`${ADMIN_BLOG_PATHS.post(post.id)}/sharing`}
+            navigate={props.navigate}
+            class="pc-link"
+            data-e2e="admin-blog-sharing-link"
+          >
+            {t.t(`AdminBlogEditor.sharingChecklist`)}
+          </Link>
+        </p>
+      )}
       {post.status === `published` && (
         <Checkbox
           checked={props.significantUpdate}

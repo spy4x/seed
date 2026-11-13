@@ -11,6 +11,6 @@
   // The rule does not see English kept in constants or passed to a component's own props: the
   // en-XA tests catch those.
   "lint": {
-    "plugins": ["jsr:@spy4x/preact-theme@14.0.0/lint"]
+    "plugins": ["jsr:@spy4x/preact-theme@14.4.0/lint"]
   }
 }

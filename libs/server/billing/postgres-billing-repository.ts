@@ -11,6 +11,8 @@ import {
   BillingNoticeKind,
   type BillingRepository,
   findPlan,
+  type Plan,
+  PLANS,
   type StoredSubscription,
 } from "@domain/billing"
 import type { GroupRole } from "@domain/groups"
@@ -68,7 +70,11 @@ const PAYING_STATUSES: readonly SubscriptionStatus[] = [
  * after its signature passes.
  */
 export class PostgresBillingRepository implements BillingRepository {
-  constructor(private readonly sql: postgres.Sql) {}
+  /** `plans` is the catalog, `PLANS` unless a test passes its own. */
+  constructor(
+    private readonly sql: postgres.Sql,
+    private readonly plans: readonly Plan[] = PLANS,
+  ) {}
 
   async get(groupId: string): Promise<StoredSubscription | null> {
     const row = (
@@ -325,7 +331,7 @@ export class PostgresBillingRepository implements BillingRepository {
       // started before someone joined, is corrected by the worker.
       if (
         subscription.status !== SubscriptionStatus.Canceled &&
-        subscription.planId !== null && findPlan(subscription.planId)?.perSeat &&
+        subscription.planId !== null && findPlan(subscription.planId, this.plans)?.perSeat &&
         subscription.quantity !==
           await new PostgresInvitationRepository(transaction).countMembers(group.id)
       ) {

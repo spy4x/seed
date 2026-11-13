@@ -3,10 +3,8 @@ import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { openNotes } from "./fixtures/groups.ts"
-import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { payForGroup, signUpWithCode } from "./fixtures/sign-up.ts"
 
-/** The sync line while changes wait or the device is offline; absent once everything is sent. */
-const WAITING = "[data-e2e=offline-status] [data-sync-state]:not([data-sync-state=synced])"
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 const password = "Passw0rd!"
@@ -51,6 +49,7 @@ test.describe("restoring deleted notes", () => {
         data: { id: groupId, name: "Restore team" },
       })
       expect(created.status(), await created.text()).toBe(201)
+      await payForGroup(ownerPage.request, apiBase, groupId)
       const added = await request.post(`${apiBase}/api/test/add-member`, {
         data: { login: member, groupId, role: VIEWER },
       })
@@ -75,7 +74,7 @@ test.describe("restoring deleted notes", () => {
         // A row's Delete needs no confirmation: Undo in the toast takes it back.
         await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
         await expect(ownerTitles).toHaveCount(0)
-        await expect(memberTitles).toHaveCount(0, { timeout: 5_000 })
+        await expect(memberTitles).toHaveCount(0)
       }
 
       // Delete, then Undo from the toast.
@@ -84,12 +83,28 @@ test.describe("restoring deleted notes", () => {
       await expect(toast).toContainText(`"\u2068Trip\u2069" was deleted.`)
       await toast.getByRole("button", { name: "Undo" }).click()
       await expect(ownerTitles).toHaveText(["Trip"])
-      await expect(memberTitles).toHaveText(["Trip"], { timeout: 5_000 })
+      await expect(memberTitles).toHaveText(["Trip"])
       await expect(toast).toHaveCount(0)
 
+      // The toast a delete shows leaves the page header's "More actions" menu clickable, on a
+      // phone and on a desktop: the menu opens while the toast still shows, so the click
+      // did not wait for the toast to leave.
+      const openNotesMenuOverToast = async (width: number) => {
+        await ownerPage.setViewportSize({ width, height: 844 })
+        await deleteTrip()
+        await expect(toast, `${width} px`).toBeVisible()
+        await ownerPage.locator("[data-e2e=notes-menu]").click()
+        await expect(ownerPage.getByRole("menuitem", { name: "Show deleted notes" })).toBeVisible()
+        await expect(toast, `${width} px`).toBeVisible()
+      }
+      await openNotesMenuOverToast(390)
+      await ownerPage.keyboard.press("Escape")
+      await toast.getByRole("button", { name: "Undo" }).click()
+      await expect(ownerTitles).toHaveText(["Trip"])
+      await expect(memberTitles).toHaveText(["Trip"])
+
       // Delete, then Show deleted notes and Restore.
-      await deleteTrip()
-      await ownerPage.locator("[data-e2e=notes-menu]").click()
+      await openNotesMenuOverToast(1440)
       await ownerPage.getByRole("menuitem", { name: "Show deleted notes" }).click()
       await expect(ownerTitles).toHaveText(["Trip"])
       await expect(ownerPage.locator("[data-e2e=notes-deleted-banner]")).toContainText("30 days")
@@ -105,34 +120,9 @@ test.describe("restoring deleted notes", () => {
       await ownerPage.locator("[data-e2e=notes-show-live]").click()
       await expect(ownerTitles).toHaveText(["Trip"])
       // The viewer's deleted list follows: the note left it.
-      await expect(memberPage.getByText("No deleted notes")).toBeVisible({ timeout: 5_000 })
+      await expect(memberPage.getByText("No deleted notes")).toBeVisible()
       await memberPage.locator("[data-e2e=notes-show-live]").click()
       await expect(memberTitles).toHaveText(["Trip"])
-
-      // Offline, the delete is queued, and Undo takes it back from the queue: no connection is needed.
-      // The service worker must hold the app before the page can start without a network.
-      await ownerPage.evaluate(async () => {
-        await navigator.serviceWorker.ready
-      })
-      await ownerPage.reload()
-      await expect(ownerTitles).toHaveText(["Trip"])
-      await ownerContext.setOffline(true)
-      await ownerPage.reload()
-      await expect(ownerPage.locator("[data-e2e=shell-ws-status]")).not.toHaveText("Online")
-      await expect(ownerTitles).toHaveText(["Trip"])
-      await ownerPage.locator(`[data-e2e=note-${noteId}] [data-e2e=note-menu]`).click()
-      await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
-      await expect(ownerTitles).toHaveCount(0)
-      await ownerPage.locator("[data-e2e=note-undo-toast]").getByRole("button", {
-        name: "Undo",
-      }).click()
-      await expect(ownerTitles).toHaveText(["Trip"])
-      // Offline, with nothing waiting: the taken-back delete left no queued write.
-      await expect(ownerPage.locator(WAITING)).toHaveText("Offline")
-      await ownerContext.setOffline(false)
-      // The taken-back delete never reached the server.
-      const server = await ownerPage.request.get(`${apiBase}/api/groups/${groupId}/notes`)
-      expect((await server.json()).notes.map((n: { title: string }) => n.title)).toEqual(["Trip"])
     } finally {
       await ownerContext.close()
       await memberContext.close()

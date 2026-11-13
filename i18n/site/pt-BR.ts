@@ -35,7 +35,7 @@ export default {
   "SiteFooter.terms": "Termos",
   "FooterNewsletter.title": "Newsletter",
   "FooterNewsletter.lead":
-    "Um e-mail curto quando o {site} muda. Você confirma uma vez por e-mail e sai com um clique.",
+    "Um e-mail curto quando {site} muda. Você confirma uma vez por e-mail e sai com um clique.",
   "NewsletterForm.email": "E-mail",
   "NewsletterForm.placeholder": "voce@exemplo.com",
   "NewsletterForm.submit": "Inscrever-se",
@@ -43,9 +43,9 @@ export default {
   "LegalPage.updated": "Atualizada em {date}",
   "LegalPage.noticeTitle": "Um ponto de partida, não uma orientação jurídica",
   "LegalPage.notice":
-    "Esta página vale para a demo do {site}. Se você criar um produto com o {site}, adapte este texto ao que o seu produto guarda e faz, e peça a um advogado para revisar.",
+    "Esta página vale para a demo de {site}. Se você criar um produto com {site}, adapte este texto ao que o seu produto guarda e faz, e peça a um advogado para revisar.",
   "OnThisPage.title": "Nesta página",
-  "Blog.name": "Blog do {site}",
+  "Blog.name": "Blog de {site}",
   "ErrorPage.notFoundTitle": "Página não encontrada",
   "ErrorPage.notFoundDescription": "Não existe nenhuma página neste endereço.",
   "ErrorPage.errorTitle": "Algo deu errado",
@@ -97,10 +97,10 @@ export default {
   "Unsubscribe.unsubscribing": "Cancelando…",
   "Unsubscribe.submit": "Cancelar inscrição",
   "NewsletterPage.title": "Newsletter",
-  "NewsletterPage.description": "Confirme ou cancele sua inscrição na newsletter do {site}.",
+  "NewsletterPage.description": "Confirme ou cancele sua inscrição na newsletter de {site}.",
   "NewsletterPage.subscribeTitle": "Newsletter de {site}: novidades curtas por e-mail",
   "NewsletterPage.subscribeDescription":
-    "Um e-mail curto quando o {site} muda: o que saiu, o que quebrou e o que aprendi construindo. Confirmação por e-mail e saída com um clique.",
+    "Um e-mail curto quando {site} muda: o que saiu, o que quebrou e o que aprendi construindo. Confirmação por e-mail e saída com um clique.",
   "NewsletterPage.about": "Sobre a newsletter",
   "NewsletterPage.heading": "Receba um e-mail curto quando {site} tiver novidades",
   "NewsletterPage.lead":
@@ -110,12 +110,12 @@ export default {
   "NewsletterPage.promiseUnsubscribe":
     "Todo e-mail tem um link que cancela a inscrição com um clique.",
   "NewsletterPage.promisePrivate": "Seu e-mail serve só para esta newsletter e mais nada.",
-  "NewsletterOff.title": "A newsletter do {site}",
+  "NewsletterOff.title": "A newsletter de {site}",
   "NewsletterOff.noticeTitle": "A newsletter está pausada",
   "NewsletterOff.notice":
     "No momento, este site não está aceitando inscrições nem enviando a newsletter. Os links de confirmação e de cancelamento voltam a funcionar quando ela for reativada.",
   "NewsletterOff.lead":
-    "Para saber quando o {site} mudar, acompanhe as releases no GitHub. Ou veja o que ele já faz hoje.",
+    "Para saber quando {site} mudar, acompanhe as releases no GitHub. Ou veja o que {site} já faz hoje.",
   "NewsletterOff.releases": "Releases no GitHub",
   "CtaBand.title": "Veja funcionando em um minuto",
   "CtaBand.lead":
@@ -146,7 +146,7 @@ export default {
     "Como as peças do Seed se encaixam: o app web e o site chamam a API, a API grava cada alteração e seus eventos no Postgres, e o worker envia e-mails e notificações push a partir desses eventos. Tudo roda num só servidor.",
   "Home.title": "Seed: o starter kit de SaaS gratuito com padrões da web",
   "Home.description":
-    "Starter kit de SaaS gratuito, com licença MIT, feito com padrões da web: login com 2FA, grupos com funções, cobrança no Stripe. Roda em Deno, Node e Bun.",
+    "Starter kit de SaaS gratuito, MIT, feito com padrões da web: 2FA, grupos, Stripe, tempo real, offline, telas que abrem direto do dispositivo. Deno, Node e Bun.",
   "HomeProof.tests": "arquivos de teste nos apps e nas bibliotecas, todos rodando no CI",
   "HomeProof.licence": "licença: sem conta, sem paywall",
   "HomeStatus.signIn":
@@ -172,6 +172,9 @@ export default {
   "HomeFaq.tryQuestion": "Dá para testar sem criar conta?",
   "HomeFaq.tryAnswer":
     "Dá. “Experimente a demo” abre o app numa conta de visitante com dados de exemplo, sem e-mail nem senha. Você pode adicionar uma forma de entrar, mas a demo continua sendo apagada toda noite. Já o Seed em si não pede conta nenhuma: é só clonar do GitHub.",
+  "HomeFaq.fastQuestion": "Por que um app feito com Seed é tão rápido?",
+  "HomeFaq.fastAnswer":
+    "Depois de aberto, ele não espera o servidor para mostrar o que você já viu. O app guarda uma cópia de cada lista no dispositivo, monta a tela com ela na hora e troca pela resposta do servidor quando ela chega. A busca e os filtros da lista de notas rodam no dispositivo. Ao abrir, o app primeiro confere seu login com o servidor, a primeira visita baixa os dados, e salvar uma alteração espera o servidor.",
   "HomeFaq.freeQuestion": "O Seed é gratuito mesmo?",
   "HomeFaq.freeAnswer":
     "É. A licença é MIT: use em quantos produtos quiser, comerciais ou não, publique seu fork, sem precisar de conta. Você só paga o servidor que alugar e os serviços que ativar, como o Stripe ou um provedor de e-mail.",
@@ -232,6 +235,12 @@ export default {
   "HomeFeatures.websiteText":
     "Este site: renderizado no servidor, funciona com o JavaScript desligado, em nove idiomas, com preços vindos do seu catálogo de planos, páginas legais e uma newsletter com confirmação por e-mail.",
   "HomeFeatures.all": "Todos os recursos, com capturas de tela e status",
+  "HomeSpeed.eyebrow": "Rápido de fábrica",
+  "HomeSpeed.title": "Nada de “carregando” entre um clique e outro",
+  "HomeSpeed.text":
+    "A maioria dos apps web consulta o servidor de novo a cada clique, e você espera. Com um app feito com Seed já aberto, uma tela que você já visitou abre na hora a partir da cópia no seu dispositivo, e a busca e os filtros da lista de notas respondem enquanto você digita. A cópia mais recente do servidor substitui a do dispositivo um instante depois, em segundo plano.",
+  "HomeSpeed.demo": "Experimente: navegue pela demo",
+  "HomeSpeed.how": "Como funciona",
   "HomeServer.eyebrow": "Roda num servidor que você aluga",
   "HomeServer.title": "Um servidor, um <code>docker compose</code>, nenhuma conta surpresa.",
   "HomeServer.text":
@@ -451,6 +460,19 @@ export default {
   "FeatureRealtime.fact3":
     "O tempo real pode ser desligado: aí o app consulta o servidor de tempos em tempos e funciona igual",
   "FeatureRealtime.code": "Ler o design do tempo real",
+  "FeatureFast.nav": "Rápido de fábrica",
+  "FeatureFast.title": "As telas abrem do dispositivo e depois se atualizam",
+  "FeatureFast.lead":
+    "Toda lista que o app já mostrou, exceto as notas e os grupos excluídos, fica guardada no dispositivo. A tela mostra essa cópia na hora e troca pela resposta do servidor quando ela chega, então navegar pelo app aberto não espera uma ida e volta ao servidor. Ao abrir, o app primeiro confere o login com o servidor, a primeira visita baixa os dados, e algumas telas sempre consultam o servidor.",
+  "FeatureFast.fact1":
+    "A cópia do dispositivo aparece primeiro, e a resposta do servidor a substitui (cachedRead sobre IndexedDB)",
+  "FeatureFast.fact2":
+    "A busca e os filtros da lista de notas percorrem a lista no dispositivo, sem uma requisição por tecla",
+  "FeatureFast.fact3":
+    "Ainda esperam o servidor: a conferência do login ao abrir o app, as notas e os grupos excluídos e todo salvamento, como trocar de plano ou enviar um convite",
+  "FeatureFast.fact4":
+    "Sem internet, uma alteração em nota ou etiqueta espera numa fila até a conexão voltar",
+  "FeatureFast.code": "Ler como funciona a cópia no dispositivo",
   "FeatureOffline.nav": "App offline",
   "FeatureOffline.title": "Um app que abre sem internet",
   "FeatureOffline.lead":
@@ -496,6 +518,19 @@ export default {
   "FeatureWorker.fact4":
     "Uma tentativa que falha é repetida com esperas cada vez maiores; os operadores veem cada execução no painel de administração",
   "FeatureWorker.code": "Ler docs/jobs.md",
+  "FeatureCatalog.nav": "Catálogo",
+  "FeatureCatalog.title": "Um catálogo para loja, cardápio ou aluguel",
+  "FeatureCatalog.lead":
+    "Seus operadores cadastram itens com fotos, cores e tamanhos no painel de administração, e o site mostra tudo em páginas que os buscadores entendem, com o que está esgotado marcado.",
+  "FeatureCatalog.fact1":
+    "Desligado até você definir CATALOG=true; a moeda e os idiomas são mais duas configurações",
+  "FeatureCatalog.fact2":
+    "Preços na menor unidade, textos em cada idioma que você mantém, esgotado por cor e tamanho",
+  "FeatureCatalog.fact3":
+    "O worker converte as fotos para AVIF e WebP, e cada mudança no painel de administração fica no registro de auditoria",
+  "FeatureCatalog.fact4":
+    "Um link de rastreamento para cada lugar onde você compartilha um item, contado no Umami: <guide>leia o guia do catálogo</guide>",
+  "FeatureCatalog.code": "Ler o código do catálogo",
   "FeatureYourFeature.nav": "Seus próprios recursos",
   "FeatureYourFeature.title": "Crie um recurso copiando outro",
   "FeatureYourFeature.lead":
@@ -556,7 +591,7 @@ export default {
   "FeatureWebsite.fact3":
     "Uma newsletter com confirmação por e-mail, cancelamento com um clique e e-mails no idioma de quem lê",
   "FeatureWebsite.fact4":
-    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS, dados estruturados de artigo, links antigos que redirecionam quando a URL de um post muda, capas nas listas, uma cópia opcional no Dev.to que aponta o post como original e um aviso ao IndexNow para que os buscadores saibam na hora de um post novo ou alterado",
+    "Um blog escrito no painel de administração, com posts em cada idioma e suas traduções, tópicos, figuras interativas que o leitor pode testar, feed RSS, dados estruturados de artigo, links antigos que redirecionam quando a URL de um post muda, capas nas listas, uma cópia opcional no Dev.to que aponta o post como original, publicação automática no Telegram, Mastodon, Bluesky, Hashnode e LinkedIn e um aviso ao IndexNow para que os buscadores saibam na hora de um post novo ou alterado",
   "FeatureWebsite.fact5":
     "Links de contato definidos no painel de administração, exibidos no rodapé e nos dados estruturados",
   "FeatureWebsite.fact6":
@@ -667,7 +702,8 @@ export default {
   "AdminTour.newsletter": "Newsletter",
   "AdminTour.newsletterText": "Quem assinou e o que foi enviado. Exporte a lista em CSV.",
   "AdminTour.blog": "Blog",
-  "AdminTour.blogText": "Posts do site em cada idioma, do rascunho à publicação.",
+  "AdminTour.blogText":
+    "Posts do site em cada idioma, do rascunho à publicação, divulgados automaticamente nos seus canais.",
   "AdminTour.contactLinks": "Links de contato",
   "AdminTour.contactLinksText": "Onde as pessoas falam com você, no rodapé do site, sem deploy.",
   "AdminTour.catalog": "Catálogo",
@@ -754,6 +790,8 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Log de auditoria",
   "CompareRow.realtime": "Atualizações em tempo real",
+  "CompareRow.instant": "Dados no dispositivo",
+  "CompareRow.instantNote": "Uma cópia de cada lista guardada no dispositivo",
   "CompareRow.offline": "App offline",
   "CompareRow.offlineNote": "Guarda numa fila o que é feito offline",
   "CompareRow.ops": "Monitoramento e backups",
@@ -865,7 +903,7 @@ export default {
   "Blog.emptyNewsletter": "O primeiro está a caminho. Receba por e-mail:",
   "Blog.notFoundTitle": "Este post não está aqui",
   "Blog.notFoundLead": "Ele pode ter mudado de lugar ou saído do ar.",
-  "Blog.ctaTitle": "Veja o {site} funcionando em um minuto",
+  "Blog.ctaTitle": "Veja {site} funcionando em um minuto",
   "Blog.published": "Publicado em <time>{date}</time>",
   "Blog.updated": "· Atualizado em <time>{date}</time>",
   "Blog.alsoIn": "Também disponível em: <links></links>",
@@ -1376,4 +1414,18 @@ export default {
   "LaunchChecklistItem.supportDeployRollback": "Documente como você faz deploy e como volta atrás.",
   "LaunchChecklistItem.supportDeployRollbackWhy":
     "O pior momento para descobrir como fazer rollback é no meio de um deploy que deu errado.",
+  "Catalog.title": "Catálogo",
+  "Catalog.intro": "Tudo o que vendemos, com preços, tamanhos e cores.",
+  "Catalog.categories": "Categorias",
+  "Catalog.all": "Tudo",
+  "Catalog.empty": "Ainda não há nada à venda",
+  "Catalog.emptyLead": "Os novos itens aparecem aqui assim que ficarem prontos.",
+  "Catalog.categoryIntro": "{category}: preços, tamanhos e cores.",
+  "CatalogItem.intro": "{item}: preço, tamanhos e cores.",
+  "CatalogItem.photos": "Fotos",
+  "CatalogItem.material": "Material",
+  "CatalogItem.fit": "Caimento",
+  "CatalogItem.care": "Cuidados",
+  "CatalogItem.inStock": "{choice}: em estoque",
+  "CatalogItem.soldOut": "{choice}: esgotado",
 } satisfies Catalog

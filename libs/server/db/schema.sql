@@ -283,6 +283,11 @@ CREATE INDEX idx_audit_events_actor_created
     ON audit_events (actor_user_id, created_at DESC, id DESC);
 CREATE INDEX idx_audit_events_group_id_desc ON audit_events (group_id, id DESC);
 CREATE INDEX idx_audit_events_created ON audit_events (created_at);
+-- An operator's read of one file under one request id is one row, however often it arrives.
+CREATE UNIQUE INDEX idx_audit_events_file_access_once
+    ON audit_events (event_kind, actor_user_id, group_id, entity_id, (details->>'name'), request_id)
+    WHERE event_kind IN ('operator.file_opened', 'operator.file_downloaded')
+        AND request_id IS NOT NULL;
 
 CREATE TABLE outbox_events (
     id UUID PRIMARY KEY,
@@ -1424,3 +1429,127 @@ CREATE TABLE group_change_tombstones (
 CREATE INDEX idx_group_change_tombstones_group_sequence
     ON group_change_tombstones (group_id, change_sequence);
 CREATE INDEX idx_group_change_tombstones_created_at ON group_change_tombstones (created_at);
+
+-- See migration 2026_12_15_0002_blog_sharing_channels.sql.
+-- The places posts are shared in: a subreddit, a Telegram channel, a newsletter. Every live post
+-- in one of `languages` that went live on or after `starts_at` (any, when NULL) lists the channel
+-- on its sharing checklist, until the channel is archived. `utm_source` tags the links to the post.
+CREATE TABLE blog_channels (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    kind VARCHAR(16) NOT NULL,
+    address VARCHAR(2000) NOT NULL,
+    utm_source VARCHAR(60) NOT NULL,
+    add_utm BOOLEAN DEFAULT true NOT NULL,
+    languages TEXT[] NOT NULL,
+    starts_at TIMESTAMPTZ,
+    archived_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version INT4 DEFAULT 1 NOT NULL,
+    auto_post BOOLEAN DEFAULT false NOT NULL,
+    CONSTRAINT blog_channels_utm_source_unique UNIQUE (utm_source),
+    CONSTRAINT blog_channels_kind_check CHECK (kind IN (
+        'devto', 'telegram', 'mastodon', 'bluesky', 'hashnode', 'linkedin', 'x', 'reddit',
+        'hackernews', 'newsletter', 'other'
+    )),
+    CONSTRAINT blog_channels_name_check CHECK (length(btrim(name)) >= 1),
+    CONSTRAINT blog_channels_address_check CHECK (length(btrim(address)) >= 1),
+    CONSTRAINT blog_channels_utm_source_check CHECK (utm_source ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+    CONSTRAINT blog_channels_languages_check CHECK (cardinality(languages) BETWEEN 1 AND 20),
+    CONSTRAINT blog_channels_version_check CHECK (version >= 1)
+);
+
+CREATE UNIQUE INDEX blog_channels_name_unique ON blog_channels (lower(name));
+
+-- What happened to one post on one channel. No row means "to do", the same as a `todo` row.
+CREATE TABLE blog_post_shares (
+    id UUID PRIMARY KEY,
+    post_id UUID NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+    channel_id UUID NOT NULL REFERENCES blog_channels(id) ON DELETE RESTRICT,
+    status VARCHAR(16) NOT NULL,
+    url VARCHAR(2000),
+    shared_at TIMESTAMPTZ,
+    skip_reason VARCHAR(200),
+    automatic BOOLEAN DEFAULT false NOT NULL,
+    error VARCHAR(500),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- Why the results job's last read failed, and when; both NULL after a good read.
+    read_error VARCHAR(500),
+    read_failed_at TIMESTAMPTZ,
+    post_attempted_at TIMESTAMPTZ,
+    CONSTRAINT blog_post_shares_post_channel_unique UNIQUE (post_id, channel_id),
+    CONSTRAINT blog_post_shares_status_check
+        CHECK (status IN ('todo', 'suggested', 'posted', 'skipped')),
+    CONSTRAINT blog_post_shares_url_check CHECK (url IS NULL OR url LIKE 'https://%'),
+    CONSTRAINT blog_post_shares_skip_reason_check CHECK (skip_reason IS NULL OR status = 'skipped'),
+    CONSTRAINT blog_post_shares_read_error_check
+        CHECK ((read_error IS NULL) = (read_failed_at IS NULL))
+);
+
+CREATE INDEX idx_blog_post_shares_channel ON blog_post_shares (channel_id);
+
+-- The numbers one shared copy got, as read at `read_at`: by the results job or typed by hand.
+-- Counts only; NULL is a number the channel does not show.
+CREATE TABLE blog_share_results (
+    id UUID PRIMARY KEY,
+    share_id UUID NOT NULL REFERENCES blog_post_shares(id) ON DELETE CASCADE,
+    read_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    source VARCHAR(8) NOT NULL,
+    views INT4,
+    reactions INT4,
+    comments INT4,
+    score INT4,
+    CONSTRAINT blog_share_results_source_check CHECK (source IN ('job', 'hand')),
+    CONSTRAINT blog_share_results_counts_check CHECK (
+        (views IS NULL OR views >= 0) AND (reactions IS NULL OR reactions >= 0) AND
+        (comments IS NULL OR comments >= 0) AND (score IS NULL OR score >= 0)
+    ),
+    CONSTRAINT blog_share_results_any_check CHECK (num_nonnulls(views, reactions, comments, score) >= 1)
+);
+
+CREATE INDEX idx_blog_share_results_share
+    ON blog_share_results (share_id, read_at DESC);
+
+-- #696: records brought in from a file (docs/imports.md); see the migration for the columns.
+CREATE TABLE imports (
+    id UUID PRIMARY KEY,
+    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind VARCHAR(64) NOT NULL,
+    status INT2 NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_size INT4 NOT NULL,
+    file BYTEA,
+    columns JSONB,
+    sample JSONB,
+    mapping JSONB,
+    row_count INT4,
+    saved_count INT4,
+    error_count INT4,
+    failure VARCHAR(500),
+    created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    read_at TIMESTAMPTZ(3),
+    failed_at TIMESTAMPTZ(3),
+    commit_requested_at TIMESTAMPTZ(3),
+    committed_at TIMESTAMPTZ(3),
+    undone_at TIMESTAMPTZ(3),
+    CONSTRAINT imports_status_check CHECK (status BETWEEN 1 AND 6),
+    CONSTRAINT imports_file_size_check CHECK (file_size >= 0),
+    CONSTRAINT imports_failure_check CHECK ((failure IS NULL) = (failed_at IS NULL))
+);
+
+-- A person's imports in a group, newest first; the cleanup's scan by age.
+CREATE INDEX idx_imports_group_user_created ON imports (group_id, user_id, created_at DESC);
+CREATE INDEX idx_imports_created ON imports (created_at) WHERE committed_at IS NULL;
+CREATE INDEX idx_imports_user ON imports (user_id);
+
+-- The records one saved import made, so undo removes that batch and nothing else. A join table
+-- rather than a column on each aggregate: a kind adds no column to its own table, and the
+-- records keep no trace of the import once its row is gone.
+CREATE TABLE import_records (
+    import_id UUID NOT NULL REFERENCES imports(id) ON DELETE CASCADE,
+    record_id UUID NOT NULL,
+    PRIMARY KEY (import_id, record_id)
+);

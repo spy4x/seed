@@ -29,6 +29,9 @@ Guest accounts are on by default. To turn them off:
 | ------------ | ----------------------------------------------------------------------------- | ------- |
 | `GUEST_MODE` | `false` turns guests off: the API answers 404 and the SPA hides "Try it now". | on      |
 
+`SIGN_UP=invite` ([who may sign up](deploy.md#who-may-sign-up)) turns guests off too, whatever
+`GUEST_MODE` says. A guest made before the switch can still keep their account.
+
 Compose passes the same value to the SPA as `SPA_GUEST`, so you set it once. The line under "Try
 it now" links to the terms and the privacy notice on the website at `MPA_DOMAIN`. Without a
 website, it names them without links.
@@ -52,7 +55,7 @@ These actions answer 403 with the code `GUEST_NEEDS_SIGN_IN_METHOD`:
 - inviting people to a group;
 - adding a push device;
 - making API tokens, and so using the MCP server;
-- importing a group;
+- importing a group, or uploading a file to import records into one;
 - checkout (paying for a plan);
 - linking Telegram.
 

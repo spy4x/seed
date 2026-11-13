@@ -4,6 +4,7 @@ import {
   GROUP_FILE_EVENTS,
   GroupError,
   groupExportFileName,
+  type GroupExportOptions,
   type GroupExportResult,
   type GroupExportSettings,
   type GroupFilePorter,
@@ -15,6 +16,8 @@ import {
   parseGroupName,
 } from "@domain/groups"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { translatorFor } from "../mail/mail.ts"
+import { readMailReader } from "../mail/reader.ts"
 import { writeAuditEvent } from "./audit.ts"
 import { PostgresGroupRepository } from "./postgres-group-repository.ts"
 import {
@@ -23,6 +26,7 @@ import {
   parseGroupFile,
   type PortableAggregate,
   writeGroupFile,
+  writeGroupSpreadsheets,
 } from "./portable.ts"
 
 /**
@@ -42,6 +46,7 @@ export class PostgresGroupPorter implements GroupFilePorter {
     groupId: string,
     actorId: number,
     requestId?: string,
+    { format = "json", language }: GroupExportOptions = {},
   ): Promise<GroupExportResult> {
     const [settings] = await this.sql<GroupExportSettings[]>`
       SELECT name, description, color, emoji, time_zone FROM groups
@@ -54,10 +59,28 @@ export class PostgresGroupPorter implements GroupFilePorter {
       actorId,
       groupId,
       requestId,
+      details: { format },
     })
     const { name, description, color, emoji, timeZone } = settings
+    const fileName = groupExportFileName(name, now, format)
+    if (format === "csv") {
+      // The headings follow the person's language as their mails do: the saved one, else the page's.
+      const reader = await readMailReader(this.sql, actorId, language)
+      return {
+        fileName,
+        contentType: "application/zip",
+        chunks: writeGroupSpreadsheets(
+          this.sql,
+          groupId,
+          this.aggregates,
+          translatorFor(reader.language),
+          now,
+        ),
+      }
+    }
     return {
-      fileName: groupExportFileName(name, now),
+      fileName,
+      contentType: "application/json; charset=utf-8",
       chunks: writeGroupFile(
         this.sql,
         groupId,

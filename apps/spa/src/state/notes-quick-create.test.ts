@@ -60,6 +60,20 @@ describe("notes store quick create", () => {
     expect(store.notes.value.map((note) => note.id)).toEqual(["n-1", "old"])
   })
 
+  it("sends the body and tags it is given, as the note page's Duplicate does", async () => {
+    const { store, created } = await opened()
+    await store.quickCreate({
+      groupId: OPEN,
+      id: "n-4",
+      title: "Groceries (copy)",
+      body: "Milk",
+      tagIds: ["tag-1"],
+    })
+    expect(created).toEqual([
+      { groupId: OPEN, id: "n-4", title: "Groceries (copy)", body: "Milk", tagIds: ["tag-1"] },
+    ])
+  })
+
   it("leaves the open list alone for a note added to another group", async () => {
     const { store } = await opened()
     await store.quickCreate({ groupId: OTHER, id: "n-2", title: "Elsewhere" })

@@ -360,8 +360,8 @@ export function forgetModules(): void {
 /**
  * What a sign-out leaves in `localStorage`. None of it is a person's data: the debts that finish
  * the sign-out (the server's sign-out, a deletion the device could not do yet) and the device's own
- * answers (the theme, the dismissed install offer), plus the masked hint of how someone last signed
- * in here, which the sign-in page shows and "Not you? Forget" drops.
+ * answers (the theme, the language, the dismissed install offer), plus the masked hint of how
+ * someone last signed in here, which the sign-in page shows and "Not you? Forget" drops.
  */
 const KEPT_KEYS: ReadonlySet<string> = new Set([
   "auth:sign-out-owed", // `state/auth.ts`
@@ -369,6 +369,7 @@ const KEPT_KEYS: ReadonlySet<string> = new Set([
   "offline:kept-queue", // below: an id, whose queue only that person's next sign-in opens
   "offline:signed-out", // below: a chosen sign-out, which a session end in another tab respects
   "theme", // `state/theme.ts`, the library's default key
+  "language", // `LANGUAGE_STORAGE_KEY` of `@platform/i18n.ts`: the sign-in page speaks it
   "install-prompt-dismissed", // `install.ts`
   "last-sign-in", // `state/last-sign-in.ts`
 ])

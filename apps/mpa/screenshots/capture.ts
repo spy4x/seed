@@ -159,7 +159,7 @@ const OG_CARDS: OgCard[] = [
     file: "subscribe",
     eyebrow: "Newsletter",
     title: "What shipped in Seed, briefly.",
-    sub: "A short email when it changes",
+    sub: "A short email when Seed has news",
     shot: "",
   },
 ]

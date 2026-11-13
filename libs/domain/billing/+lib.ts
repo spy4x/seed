@@ -166,9 +166,9 @@ export const PLANS: readonly Plan[] = [
 /** The plans a checkout may name: every plan but the free one. */
 export const PAID_PLANS: readonly Plan[] = PLANS.filter((plan) => plan.id !== FREE_PLAN_ID)
 
-/** The plan with this id, or `null`. */
-export function findPlan(id: string): Plan | null {
-  return PLANS.find((plan) => plan.id === id) ?? null
+/** The plan with this id in `plans` ({@link PLANS} unless a test passes its own), or `null`. */
+export function findPlan(id: string, plans: readonly Plan[] = PLANS): Plan | null {
+  return plans.find((plan) => plan.id === id) ?? null
 }
 
 /** The periods a plan is sold for: monthly always, yearly too when it has a yearly price. */
@@ -206,25 +206,30 @@ export function entitlementsOf(
 }
 
 /**
- * Whether the free plan allows nothing: no note, no file, no storage, and no member but the owner.
- * A product that is paid from sign-up sets its free caps so, and its new owners are then sent to
- * checkout (see {@link needsFirstPlan}). `plans` is the catalog, {@link PLANS} unless a test passes
- * its own.
+ * Whether the free plan allows nothing: every cap is 0, except `maxMembers`, which lets the owner
+ * alone in. Every limit key counts, a product's own ones (such as accounts) too. A product that is
+ * paid from sign-up sets its free caps so, and its new owners are then sent to checkout (see
+ * {@link needsFirstPlan}). `plans` is the catalog, {@link PLANS} unless a test passes its own.
  */
 export function freePlanAllowsNothing(plans: readonly Plan[] = PLANS): boolean {
   const free = plans.find((plan) => plan.id === FREE_PLAN_ID)
   if (!free) return false
-  const { maxMembers, maxNotes, maxAttachments, storageBytes } = free.entitlements.limits
-  return maxNotes === 0 && maxAttachments === 0 && storageBytes === 0 &&
-    maxMembers !== null && maxMembers <= 1
+  return Object.entries(free.entitlements.limits).every(([key, cap]) =>
+    key === "maxMembers" ? cap !== null && cap <= 1 : cap === 0
+  )
 }
 
 /**
  * The file rules of a group's plan. With billing off every group has the free plan's: unlike the
- * caps of {@link entitlementsOf}, they are never lifted.
+ * caps of {@link entitlementsOf}, they are never lifted. `plans` is the catalog, {@link PLANS}
+ * unless a test passes its own.
  */
-export function attachmentRulesOf(planId: string, billingEnabled: boolean): AttachmentRules {
-  return ((billingEnabled ? findPlan(planId) : null) ?? PLANS[0]).attachments
+export function attachmentRulesOf(
+  planId: string,
+  billingEnabled: boolean,
+  plans: readonly Plan[] = PLANS,
+): AttachmentRules {
+  return ((billingEnabled ? findPlan(planId, plans) : null) ?? plans[0]).attachments
 }
 
 /** The outbox event kind a plan change is recorded under, on the group's change log. */
@@ -317,12 +322,14 @@ export function graceEndsAt(subscription: StoredSubscription, graceDays: number)
  * The plan a group is on at `now`: the subscription's plan while it is trialing or active, or past
  * due for less than `graceDays`, and only until {@link accessEndsAt}; else the free plan. Nothing is
  * deleted when the grace ends; the group only gets the free plan's entitlements, and a payment that
- * makes it active brings the plan back.
+ * makes it active brings the plan back. `plans` is the catalog, {@link PLANS} unless a test passes
+ * its own.
  */
 export function effectivePlanId(
   subscription: StoredSubscription | null,
   now: Date,
   graceDays: number,
+  plans: readonly Plan[] = PLANS,
 ): string {
   if (subscription === null || subscription.planId === null) return FREE_PLAN_ID
   const graceEnd = graceEndsAt(subscription, graceDays)
@@ -331,7 +338,7 @@ export function effectivePlanId(
   if (!paid) return FREE_PLAN_ID
   const accessEnd = accessEndsAt(subscription)
   if (accessEnd !== null && now.getTime() >= accessEnd.getTime()) return FREE_PLAN_ID
-  return findPlan(subscription.planId) ? subscription.planId : FREE_PLAN_ID
+  return findPlan(subscription.planId, plans) ? subscription.planId : FREE_PLAN_ID
 }
 
 /** Days before the end of a trial that its owner is told it is ending. */
@@ -431,11 +438,15 @@ export function handoverTrialDays(
 /**
  * Whether the provider bills the group per member: its subscription is live and its plan is
  * {@link Plan.perSeat}. A past-due subscription past its grace still counts, since the provider
- * keeps charging it; the subscription's quantity then follows the member count.
+ * keeps charging it; the subscription's quantity then follows the member count. `plans` is the
+ * catalog, {@link PLANS} unless a test passes its own.
  */
-export function isSeatBilled(subscription: StoredSubscription | null): boolean {
+export function isSeatBilled(
+  subscription: StoredSubscription | null,
+  plans: readonly Plan[] = PLANS,
+): boolean {
   if (!hasLiveSubscription(subscription) || subscription?.planId == null) return false
-  return findPlan(subscription.planId)?.perSeat === true
+  return findPlan(subscription.planId, plans)?.perSeat === true
 }
 
 /** The per-member price a group pays, as the invitation form shows it before a new member joins. */
@@ -501,7 +512,8 @@ export interface GroupBilling {
  * (see {@link effectivePlanId}). `members` is the group's member count, the owner included.
  * `handedOver` is true when the group's provider customer belongs to an owner who has since
  * transferred the group: the subscription then is not the current owner's to manage, so the view
- * offers a checkout instead and gives no notice about it.
+ * offers a checkout instead and gives no notice about it. `plans` is the catalog, {@link PLANS}
+ * unless a test passes its own.
  */
 export function toGroupBilling(
   subscription: StoredSubscription | null,
@@ -512,14 +524,17 @@ export function toGroupBilling(
   graceDays: number,
   members: number,
   handedOver = false,
+  plans: readonly Plan[] = PLANS,
 ): GroupBilling {
   const live = enabled && hasLiveSubscription(subscription) ? subscription : null
-  const seatPlan = enabled && isSeatBilled(subscription) ? findPlan(subscription!.planId!) : null
+  const seatPlan = enabled && isSeatBilled(subscription, plans)
+    ? findPlan(subscription!.planId!, plans)
+    : null
   const seatPeriod = subscription?.period ?? BillingPeriod.Monthly
   const seatAmount = seatPlan && priceOf(seatPlan, seatPeriod)
   return {
     enabled,
-    planId: enabled ? effectivePlanId(subscription, now, graceDays) : FREE_PLAN_ID,
+    planId: enabled ? effectivePlanId(subscription, now, graceDays, plans) : FREE_PLAN_ID,
     status: enabled ? subscription?.status ?? null : null,
     currentPeriodEnd: enabled ? subscription?.currentPeriodEnd ?? null : null,
     cancelAtPeriodEnd: enabled ? subscription?.cancelAtPeriodEnd ?? false : false,
@@ -651,8 +666,13 @@ export function readPersonTrial(value: unknown): PersonTrial | null {
   return { enabled: trial.enabled, used: trial.used, groupId: trial.groupId, days: trial.days }
 }
 
-/** The longest trial any paid plan starts with, in days. */
-export const LONGEST_TRIAL_DAYS = Math.max(0, ...PAID_PLANS.map((plan) => plan.trialDays))
+/**
+ * The longest trial any paid plan starts with, in days. `plans` is the catalog, {@link PLANS}
+ * unless a test passes its own.
+ */
+export function longestTrialDays(plans: readonly Plan[] = PLANS): number {
+  return Math.max(0, ...plans.map((plan) => plan.trialDays))
+}
 
 export type BillingErrorCode =
   | "ALREADY_SUBSCRIBED"

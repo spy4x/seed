@@ -149,7 +149,7 @@ export default {
     "Seedの構成：WebアプリとWebサイトがAPIを呼び出し、APIはすべての変更とそのイベントをPostgresに書き込み、ワーカーがそのイベントからメールとプッシュ通知を送ります。すべてが1台のサーバーで動きます。",
   "Home.title": "Seed：Web標準で作られた無料のSaaSスターター",
   "Home.description":
-    "Web標準で作られた、無料でMITライセンスのSaaSスターター。2段階認証付きログイン、ロール付きグループ、メンバー単位のStripe課金、リアルタイム、オフライン対応。Deno・Node・Bunで動作します。",
+    "Web標準で作られた、無料でMITライセンスのSaaSスターター。2段階認証、グループ、Stripe課金、リアルタイム、オフライン、デバイスから開く画面。Deno・Node・Bunで動作します。",
   "HomeProof.tests": "アプリとライブラリのテストファイル数。すべてCIで実行",
   "HomeProof.licence": "ライセンス：アカウント不要、ペイウォールなし",
   "HomeStatus.signIn":
@@ -173,6 +173,9 @@ export default {
   "HomeFaq.tryQuestion": "アカウントなしで試せますか？",
   "HomeFaq.tryAnswer":
     "はい。「ライブデモを試す」を押すと、サンプルデータ入りのゲストアカウントでアプリが開きます。メールアドレスもパスワードも不要です。ログイン方法を追加することもできますが、デモのデータは毎晩リセットされます。Seed自体にはアカウントが一切不要で、GitHubからクローンするだけです。",
+  "HomeFaq.fastQuestion": "Seedのアプリが速く感じるのはなぜですか？",
+  "HomeFaq.fastAnswer":
+    "アプリを開いた後は、一度見た内容を表示するのにサーバーを待たないからです。アプリは各リストのコピーをデバイスに保存し、そこから画面をすぐに描画して、サーバーの応答が届いたら置き換えます。メモ一覧の検索と絞り込みはデバイス上で動きます。アプリを開くときはまずサーバーでログイン状態を確認し、初回の訪問ではデータをダウンロードし、変更の保存はサーバーを待ちます。",
   "HomeFaq.freeQuestion": "Seedは本当に無料ですか？",
   "HomeFaq.freeAnswer":
     "はい。MITライセンスなので、商用・非商用を問わずいくつのプロダクトにも使えますし、フォークの公開も自由で、アカウントも不要です。かかる費用は、借りるサーバー1台分と、Stripeやメール配信サービスなど自分で有効にしたサービスの料金だけです。",
@@ -233,6 +236,12 @@ export default {
   "HomeFeatures.websiteText":
     "このサイトのことです。サーバーでレンダリングされ、JavaScriptがオフでも動き、9言語に対応。プランカタログから作られる料金ページ、法務ページ、ダブルオプトインのニュースレターも備えています。",
   "HomeFeatures.all": "すべての機能（スクリーンショットと対応状況付き）",
+  "HomeSpeed.eyebrow": "最初から速い",
+  "HomeSpeed.title": "クリックごとのローディング表示はありません",
+  "HomeSpeed.text":
+    "多くのWebアプリはクリックのたびにサーバーへ問い合わせ直すので、そのたびに待たされます。Seedのアプリは一度開いてしまえば、すでに見た画面はデバイス上のコピーからすぐに開き、メモ一覧の検索と絞り込みは入力するそばから結果が出ます。サーバーの最新の内容は、少し後にバックグラウンドでデバイスのコピーと置き換わります。",
+  "HomeSpeed.demo": "デモを触って試す",
+  "HomeSpeed.how": "仕組みを見る",
   "HomeServer.eyebrow": "借りたサーバー1台で動く",
   "HomeServer.title": "サーバー1台、<code>docker compose</code>ひとつ。想定外の請求なし。",
   "HomeServer.text":
@@ -437,6 +446,18 @@ export default {
   "FeatureRealtime.fact3":
     "リアルタイムはオフにもできます。その場合アプリは一定間隔でポーリングし、同じように動きます",
   "FeatureRealtime.code": "リアルタイムの設計を読む",
+  "FeatureFast.nav": "最初から速い",
+  "FeatureFast.title": "画面はデバイスから開き、あとからサーバーに追いつきます",
+  "FeatureFast.lead":
+    "アプリが一度表示したリストは、削除済みのメモとグループを除いてすべてデバイスに保存されます。画面はそのコピーをすぐに描画し、サーバーの応答が届いたら差し替えるので、開いたアプリの中での移動はサーバーとの往復を待ちません。ただしアプリを開くときはまずサーバーでログイン状態を確認し、初回の訪問ではデータをダウンロードし、いくつかの画面は常にサーバーに問い合わせます。",
+  "FeatureFast.fact1":
+    "まずデバイスのコピーを描画し、サーバーの応答で置き換えます（IndexedDB上のcachedRead）",
+  "FeatureFast.fact2":
+    "メモ一覧の検索と絞り込みはデバイス上のリストに対して行い、キー入力ごとのリクエストはありません",
+  "FeatureFast.fact3":
+    "今もサーバーを待つもの：アプリを開くときのログイン確認、削除済みのメモとグループ、そしてプランの変更や招待の送信などすべての保存",
+  "FeatureFast.fact4": "ネットワークがないときは、メモやタグの変更は接続が戻るまでキューで待ちます",
+  "FeatureFast.code": "デバイス上のコピーの仕組みを読む",
   "FeatureOffline.nav": "オフラインアプリ",
   "FeatureOffline.title": "ネットワークなしで開けるアプリ",
   "FeatureOffline.lead":
@@ -479,6 +500,18 @@ export default {
   "FeatureWorker.fact4":
     "失敗した試行は間隔を広げながら再試行。オペレーターは管理画面ですべての実行を確認できます",
   "FeatureWorker.code": "docs/jobs.mdを読む",
+  "FeatureCatalog.nav": "カタログ",
+  "FeatureCatalog.title": "ショップ、メニュー、レンタル向けのカタログ",
+  "FeatureCatalog.lead":
+    "オペレーターが管理画面で写真・カラー・サイズ付きの商品を登録すると、サイトが検索エンジンにも伝わるページで表示し、売り切れも示します。",
+  "FeatureCatalog.fact1": "CATALOG=trueを設定するまではオフです。通貨と言語も設定できます",
+  "FeatureCatalog.fact2":
+    "価格は最小通貨単位、テキストは対応する言語ごと、売り切れはカラーとサイズごとに管理",
+  "FeatureCatalog.fact3":
+    "ワーカーが写真をAVIFとWebPに変換し、管理画面での変更はすべて監査ログに残ります",
+  "FeatureCatalog.fact4":
+    "商品をシェアする場所ごとにトラッキングリンクを作り、Umamiで集計：<guide>カタログのガイドを読む</guide>",
+  "FeatureCatalog.code": "カタログのコードを読む",
   "FeatureYourFeature.nav": "独自の機能",
   "FeatureYourFeature.title": "既存の機能をコピーして、新しい機能を追加",
   "FeatureYourFeature.lead":
@@ -533,7 +566,7 @@ export default {
   "FeatureWebsite.fact3":
     "ダブルオプトイン、ワンクリック購読解除、受信者の言語で届くメールに対応したニュースレター",
   "FeatureWebsite.fact4":
-    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データ、URLを変えても新しいURLへ転送される古いリンク、記事一覧のカバー画像、元記事を示すDev.toへの任意の転載、新しい記事や更新した記事をすぐ検索エンジンに知らせるIndexNow通知に対応",
+    "管理画面で書けるブログ。言語ごとの記事とその翻訳、トピック、読者が試せるインタラクティブな図、RSSフィード、記事の構造化データ、URLを変えても新しいURLへ転送される古いリンク、記事一覧のカバー画像、元記事を示すDev.toへの任意の転載、Telegram・Mastodon・Bluesky・Hashnode・LinkedInへの自動投稿、新しい記事や更新した記事をすぐ検索エンジンに知らせるIndexNow通知に対応",
   "FeatureWebsite.fact5": "連絡先リンクは管理画面で設定し、フッターと構造化データに表示",
   "FeatureWebsite.fact6":
     "ショップ用のオプションのカタログを管理画面で編集：写真、カラー、サイズ、サイズ表、売り切れのサイズを持つアイテムを、販売するすべての言語で。アイテムと共有先ごとに短いトラッキングリンクも作れます",
@@ -641,7 +674,8 @@ export default {
   "AdminTour.newsletter": "ニュースレター",
   "AdminTour.newsletterText": "購読者と配信済みの内容。リストはCSVでエクスポート。",
   "AdminTour.blog": "ブログ",
-  "AdminTour.blogText": "サイトの記事を言語ごとに、下書きから公開まで。",
+  "AdminTour.blogText":
+    "サイトの記事を言語ごとに、下書きから公開まで。公開後は各チャンネルへ自動で投稿。",
   "AdminTour.contactLinks": "連絡先",
   "AdminTour.contactLinksText": "サイトのフッターに載せる連絡先を、デプロイなしで変更。",
   "AdminTour.catalog": "カタログ",
@@ -723,6 +757,8 @@ export default {
   "CompareRow.blog": "ブログ",
   "CompareRow.audit": "監査ログ",
   "CompareRow.realtime": "リアルタイム更新",
+  "CompareRow.instant": "デバイス上のデータ",
+  "CompareRow.instantNote": "各リストのコピーをデバイスに保存",
   "CompareRow.offline": "オフラインアプリ",
   "CompareRow.offlineNote": "オフライン中の書き込みをキューにためる",
   "CompareRow.ops": "監視とバックアップ",
@@ -1314,4 +1350,18 @@ export default {
   "LaunchChecklistItem.supportDeployRollback": "デプロイとロールバックの手順を書き残す。",
   "LaunchChecklistItem.supportDeployRollbackWhy":
     "ロールバックの方法を考えるのに最悪のタイミングは、失敗したデプロイの最中です。",
+  "Catalog.title": "カタログ",
+  "Catalog.intro": "販売中のすべての商品を、価格・サイズ・カラーとあわせて掲載しています。",
+  "Catalog.categories": "カテゴリ",
+  "Catalog.all": "すべて",
+  "Catalog.empty": "販売中の商品はまだありません",
+  "Catalog.emptyLead": "新しい商品は準備ができしだい、ここに表示されます。",
+  "Catalog.categoryIntro": "{category}：価格・サイズ・カラー",
+  "CatalogItem.intro": "{item}：価格・サイズ・カラー",
+  "CatalogItem.photos": "写真",
+  "CatalogItem.material": "素材",
+  "CatalogItem.fit": "シルエット",
+  "CatalogItem.care": "お手入れ",
+  "CatalogItem.inStock": "{choice}：在庫あり",
+  "CatalogItem.soldOut": "{choice}：売り切れ",
 } satisfies Catalog

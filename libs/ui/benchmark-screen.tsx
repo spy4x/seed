@@ -7,7 +7,7 @@ import { FactList } from "@spy4x/preact-ui/fact-list"
 import { Field } from "@spy4x/preact-ui/field"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { Select, Textarea } from "@spy4x/preact-ui/input"
-import { Stack } from "@spy4x/preact-ui/layout"
+import { Section, Stack } from "@spy4x/preact-ui/layout"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { Progress } from "@spy4x/preact-ui/progress"
@@ -190,7 +190,10 @@ function duration(t: Translator<string>, format: Formatters, ms: number): string
     })
 }
 
-/** `48 MB`, in the region's own unit words. */
+/**
+ * `5.8 GB` from a gigabyte up, `48 MB` under it, and `0.3 MB` under one megabyte, in the
+ * region's own unit words.
+ */
 function size(format: Formatters, bytes: number): string {
   const megabytes = bytes / 1_000_000
   return megabytes >= 1_000
@@ -199,7 +202,11 @@ function size(format: Formatters, bytes: number): string {
       unit: "gigabyte",
       maximumFractionDigits: 1,
     })
-    : format.number(megabytes, { style: "unit", unit: "megabyte", maximumFractionDigits: 0 })
+    : format.number(megabytes, {
+      style: "unit",
+      unit: "megabyte",
+      maximumFractionDigits: megabytes < 1 ? 1 : 0,
+    })
 }
 
 /** A done step's result as the row shows it. */
@@ -297,7 +304,6 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
   const { state, steps, groups, selectedId, json = null, stoppedRun = null } = props
   const t = useAppText()
   const format = useFormat()
-  const measuresId = useId()
   const progressId = useId()
   const stopButton = useRef<HTMLButtonElement>(null)
   const summary = useRef<HTMLParagraphElement>(null)
@@ -587,25 +593,19 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
         </Card>
       )}
 
-      <section class="flex flex-col gap-2" aria-labelledby={measuresId}>
-        <h2 id={measuresId} class="text-lg font-semibold text-foreground">
-          {t.t(`Benchmark.measurements`)}
-        </h2>
+      {/* The section is named by its heading; the list inside it needs no name of its own. */}
+      <Section title={t.t(`Benchmark.measurements`)}>
         <div data-e2e="benchmark-steps">
           <RunSteps
             steps={runSteps(t, format, steps)}
             labels={{ pending: t.t(`Benchmark.notMeasured`) }}
-            aria-labelledby={measuresId}
           />
         </div>
-      </section>
+      </Section>
 
-      <section class="flex flex-col gap-2" aria-labelledby={`${measuresId}-device`}>
-        <h2 id={`${measuresId}-device`} class="text-lg font-semibold text-foreground">
-          {t.t(`Benchmark.deviceHeading`)}
-        </h2>
+      <Section title={t.t(`Benchmark.deviceHeading`)}>
         <FactList facts={deviceFacts(t, format, props.device)} />
-      </section>
+      </Section>
     </Stack>
   )
 }

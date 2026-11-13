@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { type } from "arktype"
 import { renderToString } from "preact-render-to-string"
-import { PLANS, PRO_PLAN_ID } from "@domain/billing"
+import { TEST_PRO_PLAN } from "../../libs/domain/billing/test-plans.ts"
 import { renderBlogBody } from "@server/blog/render.ts"
 import { readSeedPosts } from "@server/blog/seed-posts.ts"
 import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
@@ -148,8 +148,8 @@ describe(`Seed's own posts`, () => {
 })
 
 describe(`CostCalculator`, () => {
-  it(`uses the demo's Pro plan: its price per member and its most members`, () => {
-    const pro = PLANS.find((plan) => plan.id === PRO_PLAN_ID)!
+  it(`uses Seed's own Pro plan, as the test catalog keeps it: its price per member and its most members`, () => {
+    const pro = TEST_PRO_PLAN
 
     expect(PRO_PRICE).toEqual({ amount: pro.amount, currency: pro.currency })
     expect(PRO_MAX_MEMBERS).toBe(pro.entitlements.limits.maxMembers)

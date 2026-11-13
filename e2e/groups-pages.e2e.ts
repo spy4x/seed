@@ -162,7 +162,8 @@ test.describe("group list and settings pages", () => {
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       await gotoApp(page, "/groups", page.getByRole("heading", { level: 1, name: "Groups" }))
-      await createGroup(page, "Trip")
+      // It stays unpaid: a group someone pays for cannot be deleted.
+      await createGroup(page, "Trip", { keepFree: true })
 
       // The footer shows once the name differs from the saved one.
       await expect(page.locator("[data-e2e=group-save]")).toHaveCount(0)

@@ -1,10 +1,10 @@
 import type { ComponentChildren } from "preact"
 import { useEffect, useMemo, useRef } from "preact/hooks"
 import { useSignal } from "@preact/signals"
-import { useLocation, useSearch } from "wouter-preact"
+import { matchRoute, useLocation, useRouter, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
 import { pictureUrl, shownPictureId } from "@domain/identity"
-import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
 import { type SearchChoice, SearchPalette } from "@ui/search-palette.tsx"
@@ -17,7 +17,9 @@ import { notificationsStore } from "../state/notifications.ts"
 import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
 import { newNoteStore } from "../state/new-note.ts"
-import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
+import { pageCommands, runNoteCommand, spaShortcutRows } from "./shortcuts.ts"
+import { SPA_ROUTE_PATHS } from "./spa-paths.ts"
+import { runChoice } from "./palette-choice.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
 import type { SessionUser } from "../state/session.ts"
 import {
@@ -43,6 +45,8 @@ import { benchmarkOpen, benchmarkPageActions, demoMode } from "../state/demo.ts"
 import { guestRefusal } from "../state/guest-refusal.ts"
 import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { overviewPageActions } from "./OverviewView.tsx"
+import { themeStore } from "../state/theme.ts"
+import { install } from "../install.ts"
 import { noteEditorPageActions } from "./NoteEditorView.tsx"
 import { useAppText } from "@ui/i18n.ts"
 
@@ -51,7 +55,9 @@ function runPageCommand(id: string): void {
   const actions = overviewPageActions.value
   if (id === "overview-range") actions?.openRange()
   if (id === "overview-customise") actions?.openCustomise()
-  if (id === "note-attach") noteEditorPageActions.value?.attach()
+  runNoteCommand(id, noteEditorPageActions.value)
+  if (id === "benchmark-run") benchmarkPageActions.value?.run()
+  if (id === "benchmark-copy") benchmarkPageActions.value?.copy()
 }
 
 /**
@@ -216,6 +222,10 @@ export function AppShell(
   },
 ) {
   const [location, navigate] = useLocation()
+  // An address no route answers shows the not-found page, which belongs to no section, so the rail
+  // marks no entry there (`/notes/x/y` is not inside the notes).
+  const { parser } = useRouter()
+  const routed = SPA_ROUTE_PATHS.some((path) => matchRoute(parser, path, location)[0])
   const t = useAppText()
   const guest = isGuestSession(user)
   const { onSignOut, dialog } = useSignOut(guest)
@@ -224,26 +234,35 @@ export function AppShell(
   const groups = groupsStore.groups.value
   const current = groups.find((group) => group.id === selectionStore.groupId.value)
   const shortcutsOpen = useSignal(false)
+  const activityGroupId = current && canViewActivity(current.role) ? current.id : null
   const rows = spaShortcutRows({
     navigate,
     openShortcuts: () => shortcutsOpen.value = true,
     openNewNote: newNoteStore.show,
-    activityGroupId: current && canViewActivity(current.role) ? current.id : null,
+    activityGroupId,
     overviewPage: overviewPageActions.value,
     benchmarkPage: benchmarkPageActions.value,
   })
   useShortcuts(rows, singleKeys.on.value)
-  const open = async (choice: SearchChoice) => {
-    if (choice.kind === "page") return navigate(choice.href)
-    if (choice.kind === "new-note") return newNoteStore.show()
-    if (choice.kind === "command") return runPageCommand(choice.id)
-    if (choice.kind === "group") return navigate(GROUP_PATHS.settings(choice.groupId))
-    // Straight to the note: never the editor's "Note in another group" page in between.
-    if (choice.groupId !== selectionStore.groupId.value) {
-      await selectionStore.select(choice.groupId)
-    }
-    navigate(NOTE_PATHS.note(choice.noteId))
+  const switchGroup = (groupId: string) => {
+    void selectionStore.select(groupId)
+    // An open note belongs to the group just left.
+    if (location.startsWith(`${NOTE_PATHS.list}/`)) navigate(NOTE_PATHS.list)
   }
+  const open = (choice: SearchChoice) =>
+    runChoice(choice, {
+      navigate,
+      currentGroupId: selectionStore.groupId.value,
+      selectGroup: (groupId) => selectionStore.select(groupId),
+      switchGroup,
+      newNote: newNoteStore.show,
+      runPageCommand,
+      // The profile's Appearance section sets it the same way.
+      setTheme: (theme) => themeStore.set(theme as Parameters<typeof themeStore.set>[0]),
+      openShortcuts: () => shortcutsOpen.value = true,
+      signOut: onSignOut,
+      install: () => void install.install(),
+    })
   return (
     <AppFrame
       search={
@@ -256,9 +275,14 @@ export function AppShell(
           online={wsStatus === "open"}
           pageCommands={pageCommands(t, {
             overview: Boolean(overviewPageActions.value),
-            noteEditor: Boolean(noteEditorPageActions.value),
-          })}
+            benchmark: Boolean(benchmarkPageActions.value),
+            noteEditor: noteEditorPageActions.value,
+          }, rows)}
           onSelect={(choice) => void open(choice)}
+          theme={themeStore.preference.value}
+          shortcuts={rows}
+          activityGroupId={activityGroupId}
+          canInstall={install.mode.value === "prompt"}
           slashKey={singleKeys.on.value}
           guest={guest}
           benchmark={benchmarkOpen()}
@@ -276,11 +300,7 @@ export function AppShell(
       groupPicker={{
         groups: groupsStore.groups.value,
         selectedId: selectionStore.groupId.value,
-        onSelect: (groupId) => {
-          void selectionStore.select(groupId)
-          // An open note belongs to the group just left.
-          if (location.startsWith(`${NOTE_PATHS.list}/`)) navigate(NOTE_PATHS.list)
-        },
+        onSelect: switchGroup,
       }}
       user={{
         // With no name and no address the menu would read "User"; a guest is named for what it is.
@@ -309,7 +329,7 @@ export function AppShell(
         : <EmailBanner status={emailStore.status.value} navigate={navigate} />}
       connection={wsStatus}
       unreadCount={notificationsStore.unreadCount.value}
-      currentPath={location}
+      currentPath={routed ? location : undefined}
       navigate={navigate}
       onSignOut={onSignOut}
       language={languageChoice()}

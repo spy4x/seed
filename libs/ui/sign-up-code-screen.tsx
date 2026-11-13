@@ -16,7 +16,7 @@ import { CodeStep } from "./sign-in-code-screen.tsx"
 /** The message shown when checking the code failed without one of its own, by its key in `app`. */
 export const SIGN_UP_CODE_FAILURE = `SignUpCodeScreen.checkFailed`
 
-/** The message shown when the browser is offline and a request could not leave it, by its key. */
+/** The message shown when a request could not reach the server, by its key. */
 export const SIGN_UP_OFFLINE = `SignUpCodeScreen.offline`
 
 export interface SignUpCodeScreenProps {

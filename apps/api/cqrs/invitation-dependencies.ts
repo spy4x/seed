@@ -1,4 +1,3 @@
-import { entitlementsOf, UNLIMITED } from "@domain/billing"
 import { hasProvenAddress, provenAddressOwner } from "@server/auth/email-verification.ts"
 import { processEnv } from "@spy4x/platform/server/process"
 import { createMailSender, readMailSetup } from "@server/mail/mail.ts"
@@ -7,7 +6,7 @@ import { PostgresInvitationRepository } from "@server/groups/postgres-invitation
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import type { InvitationHandlerDependencies } from "../features/groups/invitations.ts"
 import { createInvitationRateLimits } from "../features/groups/invitation-rate-limits.ts"
-import { createPlanOf, createSeatPriced } from "../features/billing/config.ts"
+import { createInvitationPlanOf, createSeatPriced } from "../features/billing/config.ts"
 import { billingSetup } from "../services/billing.ts"
 import { kv } from "../services/cache.ts"
 import { config } from "../services/config.ts"
@@ -22,22 +21,14 @@ export const invitationRateLimits = createInvitationRateLimits({
 })
 
 /**
- * What the invitation handlers run on. The plan of an invitation's group is read here, the way the
- * entitlement gate reads it.
+ * What the invitation handlers run on. The plan of an invitation's group is read the way the
+ * entitlement gate reads it (`createInvitationPlanOf`).
  */
-// The same plan reading, clock and grace period as the entitlement gate's.
-const planOf = createPlanOf(db.billing, billingSetup)
-
 export const invitationDependencies: InvitationHandlerDependencies = {
   invitations: new PostgresInvitationRepository(sql),
   ownerOf: (email) => provenAddressOwner(db.authStore, email),
   addressProven: (userId) => hasProvenAddress(db.authStore, userId),
-  planOf: async (groupId) => {
-    const { limits, features } = billingSetup.provider === null
-      ? UNLIMITED
-      : entitlementsOf(await planOf(groupId), true)
-    return { maxMembers: limits.maxMembers, memberRoles: features.memberRoles }
-  },
+  planOf: createInvitationPlanOf(db.billing, billingSetup),
   seatPriced: createSeatPriced(
     db.billing,
     async (groupId, userId) => (await db.group.getForMember(groupId, userId))?.role ?? null,

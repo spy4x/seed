@@ -29,8 +29,10 @@ import { createSqlFromEnv } from "@spy4x/server/db"
 import { readSubscribersSetup } from "@server/subscribers/subscribers.ts"
 import { DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { denoFileSystem } from "@spy4x/platform/server/deno-fs"
+import { seedSampleSharing } from "@server/blog/sample-sharing.ts"
 import { readSeedPosts, upsertSeedPosts } from "@server/blog/seed-posts.ts"
 import { seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
+import { readNotesSetup } from "@server/notes/setup.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { readSeedOptions, type SeedOptions } from "../../apps/worker/demo/options.ts"
 import { seedDemo, SeedRefusedError } from "../../apps/worker/demo/seed.ts"
@@ -64,10 +66,14 @@ async function main(): Promise<void> {
       adminPassword: dev ? options.password : null,
       dataSeed: DEV_DATA_SEED,
       subscribers,
+      notes: readNotesSetup(Deno.env),
     })
     // Seed's own posts: the seed runs only in development or the demo (`readSeedOptions`).
     await upsertSeedPosts(sql, await readSeedPosts(denoFileSystem))
-    if (dev) await seedSampleContactLinks(sql)
+    if (dev) {
+      await seedSampleContactLinks(sql)
+      await seedSampleSharing(sql)
+    }
     const admin = dev ? `"${DEV_ADMIN_EMAIL}" is ready. ` : ``
     console.log(`✅ ${admin}${created ? `Seeded the fake data.` : `The fake data exists already.`}`)
   } catch (error) {

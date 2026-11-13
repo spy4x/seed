@@ -63,6 +63,7 @@ The paths below are under `apps/mpa/` unless they say otherwise. `[[lang]]/` sta
 | Set     | The licence line of `llms.txt`         | "Source code" in `routes/llms.txt.ts`                    |
 | Replace | The privacy policy and terms           | `[[lang]]/privacy.tsx`, `[[lang]]/terms.tsx`             |
 | Set     | Name, icon and repository              | `SITE_NAME`, `SITE_ICON`, `REPOSITORY_URL` in `brand.ts` |
+| Set     | The product's name in the translators' guide | "Seed" in `i18n/TRANSLATING.md`: its opening lines and "Terms kept in English" |
 | Replace | The newsletter's voice                 | Four keys in `i18n/site/` (below)                        |
 | Replace | Open Graph images                      | `static/og/`, drawn by `screenshots/og.html`             |
 | Replace | Browser frames titled `app.seedsaas.com/…` | `routes/index.tsx`, `features-data.tsx`, `components/features-visuals.tsx` |
@@ -89,19 +90,64 @@ shared ones. Delete those of pages the product deleted, and point the rest at th
 - `/features/sign-in`, `/features/realtime` and `/features/shortcuts`: the product's own feature
   slugs from `features-data.tsx`;
 - `/docs/api`, `/docs/get-started` and `/docs/capacity`: guides listed in the product's
-  `PUBLISHED_DOCS`.
+  `docs-list.ts`.
+
+A pull request measures only `QUICK_PATHS` in `lighthouse/quick.ts` (the home page, `/pricing`,
+the fixture blog post and `/docs`); each must stay in `lighthouserc.json`, or the check fails.
 
 **Keep `/changelog` and `/docs`.** They read the product's own history and guides. In
 `changelog-overrides.ts`, set `CHANGELOG_START` to the full hash of the commit that copied Seed
 in, so `/changelog` lists only the changes after it, and empty `CHANGELOG_OVERRIDES`, whose
 numbers are Seed's pull requests. The file is the product's own now:
 list `apps/mpa/changelog-overrides.ts` in `.seed/skip`, so Seed's later wording never reaches it.
-Set `PUBLISHED_DOCS` and `DOCS_SITE_ORIGIN` in `docs-site.ts`. Replace the "built by one
-developer" line in `[[lang]]/changelog.tsx`.
+Replace the "built by one developer" line in `[[lang]]/changelog.tsx`.
+
+**The product's own guides.** `/docs` publishes the guides listed in `docs-list.ts`, which holds
+nothing else: each guide's import, file, address and line on the index, in groups, and
+`DOCS_SITE_ORIGIN`, the address the guides' pointer lines name. `docs-site.ts` draws them and stays
+Seed's, so the product keeps taking its fixes.
+
+1. Write the product's guides. They may live in a folder of their own, such as
+   `docs/<product>/install.md`; a relative link resolves from the guide's folder, and a link to
+   another listed guide opens its page.
+2. Replace `docs-list.ts` with the product's guides and its own `DOCS_SITE_ORIGIN`, and list
+   `apps/mpa/docs-list.ts` in `.seed/skip`.
+3. Start each guide with its pointer line (`pointerLine` in `docs-site.ts`).
+4. Replace the `!docs/…` lines in `/.dockerignore` and the `docs/…` lines in
+   `/infra/deploy/include.txt` with the product's files; keep `docs/token-api.md` in both. For a
+   guide in a folder, `include.txt` also needs a line for the folder, such as `docs/<product>/`,
+   since rsync skips a file whose folder it was not told to enter. A sync that changes these two
+   lists may conflict; keep the product's lines.
+5. In `/.woodpecker/ci.yml`, add the folder, such as `docs/<product>/*.md`, to the Lighthouse
+   step's `path` list next to `docs/*.md`, so a pull request that changes a guide measures the
+   site.
+
+`apps/mpa/docs-site.test.ts` and `tests/dockerignore.test.ts` check each listed guide: its import,
+its pointer line and its lines in both deploy lists.
 
 **The newsletter keys** are `NewsletterPage.lead`, `NewsletterPage.subscribeDescription`,
 `HomeNewsletter.lead` and `NewsletterOff.lead`. Replace the Releases on GitHub button too. Their
 uses in `subscribers.tsx` and `routes/index.tsx` are marked.
+
+**A website frame of its own.** A product that replaces `SiteFrame` keeps Seed's newsletter
+confirm and unsubscribe pages, the ones a mailed link opens, without copying their token flow.
+`apps/mpa/token-pages.tsx` builds their handlers from a frame the product passes: how to draw a
+page, the screens' `localize`, `onward` and `language`, and its "newsletter off" page. The flow
+itself (the API calls, the statuses, `Retry-After`, `Referrer-Policy`, the redirect after a
+finished step) stays Seed's, so a sync brings its fixes:
+
+```tsx
+const frame: TokenPageFrame = {
+  screen: () => ({ localize, onward: { href: `/`, label: `Back to the shop` } }),
+  render: (ctx, page, init) => ctx.render(<ShopFrame path={page.path}>{page.screen}</ShopFrame>, init),
+  off: (ctx, page, init) => ctx.render(<ShopFrame path={page.path}><Off /></ShopFrame>, init),
+}
+export const confirmHandlers = createSubscriptionConfirmHandlers(frame)
+export const unsubscribeHandlers = createUnsubscribeHandlers(frame)
+```
+
+The screens read their words through `I18nContext`, so `render` can wrap `page.screen` in a
+provider with the product's translator.
 
 ## Pictures and videos
 
@@ -123,16 +169,15 @@ draws them on the website: replace both with the product's own clips, or delete 
 
 ## The product's name, icon and colour in the apps
 
-| File                         | What says "Seed"                                       |
-| ---------------------------- | ------------------------------------------------------ |
-| `apps/spa/index.html`        | `<title>` and `apple-mobile-web-app-title`             |
-| `apps/spa/vite.config.ts`    | `name` and `short_name` in the web app manifest        |
-| `apps/admin/index.html`      | `<title>`                                              |
-| `libs/ui/frame.tsx`          | The `name` of the `BrandMark`                          |
-| `libs/ui/admin-frame.tsx`    | `ADMIN_PRODUCT`, the admin's tab titles and brand mark |
+| File                      | What says "Seed"                                                       |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `libs/ui/brand.ts`        | `PRODUCT_NAME`: the brand marks, the manifest and the admin tab titles |
+| `apps/spa/index.html`     | `<title>` and `apple-mobile-web-app-title`                             |
+| `apps/admin/index.html`   | `<title>`                                                              |
+| `libs/ui/frame.tsx`       | The `Icon` of the `BrandMark`                                          |
 
-These tests check the name: `libs/ui/admin-frame.test.tsx`, `libs/ui/account.test.tsx`,
-`e2e/pwa.e2e.ts` and `e2e/app-shell-parity.e2e.ts`.
+The browser specs read `PRODUCT_NAME`, so they pass unchanged after a rename. These unit tests
+check the name: `libs/ui/admin-frame.test.tsx` and `libs/ui/account.test.tsx`.
 
 The pictures carry no mark. Replace each with the product's own, at the same size and name:
 
@@ -155,9 +200,19 @@ there.
 | Set    | Analytics ids ([Analytics](analytics.md)) | `MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID` in the env file |
 | Set    | Domains and the demo ([demo](demo.md))   | `MPA_DOMAIN`, `DOMAIN`, `DEMO_MODE` in the env file     |
 | Set    | A website with no customers              | `SPA=false` ([Without the SPA](apps.md#without-the-spa)) |
+| Set    | A product without the notes example      | `NOTES=false` (below)                                   |
 | Set    | Where release images go                  | `IMAGE_PREFIX` in `.woodpecker/release.yml`             |
 | Set    | The billing guide link                   | `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx` |
 | Set    | The Stats guide link                     | `ADMIN_STATS_SETUP_URL` in `libs/ui/admin-stats-screen.tsx` |
+
+`NOTES=false` turns the notes example off while its files stay as Seed has them, so later syncs
+merge cleanly. The API then answers 404 to every note, tag and attachment route and to the
+personal-token API (`/api/v1`), which serves notes only, and refuses their operations over the
+socket and `/api/call` as unknown ones. The changes pull, the admin app's group widgets and files
+and the Telegram bot's `/notes` leave them out too; moving a group's data leaves notes and tags
+where they are, and a new account gets no welcome note. The tables and migrations stay, as the
+catalog's do. Unset or anything but `false` keeps the notes on. The app's screens, the export and
+the demo still show notes for now.
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):

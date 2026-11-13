@@ -55,6 +55,8 @@ test("a forgotten password is reset with the mailed code, which works once", asy
     await expect(page).toHaveURL("/forgot-password")
     await page.locator("[data-e2e=forgot-password-email]").fill(` ${email.toUpperCase()} `)
     await page.locator("[data-e2e=forgot-password-submit]").click()
+    await expect(page.getByRole("heading", { level: 1, name: "Enter your reset code" }))
+      .toBeVisible()
     // The step names the address as the server keeps it, trimmed and in lower case.
     await expect(page.locator("[data-e2e=mailed-code-step]")).toContainText(email)
     await expect(page.locator("[data-e2e=mailed-code-step]")).not.toContainText(email.toUpperCase())

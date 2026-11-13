@@ -10,6 +10,7 @@ import {
   type OAuthProvidersResponse,
   type PendingSignUpResponse,
   signInMethodProofSchema,
+  signUpInvitationSchema,
 } from "@domain/identity"
 import { validate } from "@spy4x/validation"
 import { readApiJson } from "@api/services/json-body.ts"
@@ -17,7 +18,8 @@ import type { AppAuthState, SignIn } from "@api/services/sign-in.ts"
 import { UnlinkOutcome } from "@api/services/oauth-sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
 import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
-import { PROVIDER_PROOF_REQUIRED } from "./auth-answers.ts"
+import { PROVIDER_PROOF_REQUIRED, signUpClosed } from "./auth-answers.ts"
+import { SignUpClosedError } from "@api/services/sign-up-gate.ts"
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { AuthRateLimits } from "../middlewares/auth-rate-limits.ts"
@@ -223,7 +225,25 @@ export function createOAuthRoute(
       mutationGuards.anonymous,
       rateLimits.strictByIp,
       async (c) => {
-        const signedIn = await oauth.confirmSignUp(c, c.get("auth"))
+        // The body is optional: `{ invitation }`, which matters where sign-up is by invitation.
+        // A browser's POST without a body still sends `Content-Length: 0`.
+        const empty = c.req.raw.body === null || c.req.header(`content-length`) === `0`
+        const body = empty ? {} : await readApiJson(c)
+        const validationResult = validate(signUpInvitationSchema, body)
+        if (validationResult.error) {
+          return validationResponse(c, validationResult.error.details)
+        }
+        let signedIn
+        try {
+          signedIn = await oauth.confirmSignUp(
+            c,
+            c.get("auth"),
+            validationResult.data.invitation ?? null,
+          )
+        } catch (error) {
+          if (error instanceof SignUpClosedError) return signUpClosed(c)
+          throw error
+        }
         if (!signedIn) return errorResponse(c, `bad_request`, { message: SIGN_UP_EXPIRED })
         // As a password sign-in answers: 202 while the authenticator code is owed.
         if (signedIn.session.secondFactor === SecondFactorStatus.Pending) {

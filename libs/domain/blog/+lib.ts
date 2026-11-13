@@ -11,8 +11,10 @@ import {
   sitePath,
 } from "../identity/preferences.ts"
 import type { BlogPreviewSegment, BlogProblem, BlogSegment } from "./figures.ts"
+import type { AdminBlogSharingSummary } from "./sharing.ts"
 
 export * from "./figures.ts"
+export * from "./sharing.ts"
 
 /**
  * The blog: posts an operator writes in the admin app and the public website shows once
@@ -176,6 +178,8 @@ export interface AdminBlogCounts {
 export interface AdminBlogListResponse {
   posts: AdminBlogPostRow[]
   counts: AdminBlogCounts
+  /** Left out by the repository; the route adds it. */
+  sharing?: AdminBlogSharingSummary
 }
 
 /** One topic and how many posts carry it. */
@@ -746,8 +750,26 @@ export const BLOG_PUBLISH_JOB = `blog.publish`
 /** The job that cross-posts a live post to Dev.to once ever, after its live check. */
 export const BLOG_CROSSPOST_JOB = `blog.crosspost`
 
+/**
+ * The jobs that post a live post to one channel by themselves, by kind, each about one share row
+ * (docs/blog.md). Dev.to keeps {@link BLOG_CROSSPOST_JOB}, about the post.
+ */
+export const BLOG_POST_JOBS = {
+  telegram: `blog.post-telegram`,
+  mastodon: `blog.post-mastodon`,
+  bluesky: `blog.post-bluesky`,
+  hashnode: `blog.post-hashnode`,
+  linkedin: `blog.post-linkedin`,
+} as const
+
+/** A kind one of {@link BLOG_POST_JOBS} posts to. */
+export type BlogPostJobKind = keyof typeof BLOG_POST_JOBS
+
 /** The job that tells IndexNow a post's addresses changed: it went live, changed, moved or left. */
 export const BLOG_INDEXNOW_JOB = `blog.indexnow`
+
+/** The repeating job that reads how each posted copy did on the channels that report it. */
+export const BLOG_SHARE_RESULTS_JOB = `blog.share-results`
 
 /** An IndexNow key: 8 to 128 letters, digits and dashes, as the protocol asks. */
 const INDEXNOW_KEY_PATTERN = /^[A-Za-z0-9-]{8,128}$/

@@ -140,7 +140,7 @@ export default {
     "How Seed fits together: the web app and the website call the API, the API writes every change and its events to Postgres, and the worker sends mail and push from those events. Everything runs on one server.",
   "Home.title": "Seed: the free SaaS starter built on web standards",
   "Home.description":
-    "The free, MIT-licensed SaaS starter built on web standards: 2FA sign-in, groups with roles, Stripe billing, realtime, offline. Runs on Deno, Node and Bun.",
+    "The free, MIT-licensed SaaS starter built on web standards: 2FA, groups, Stripe, realtime, offline, screens that open from the device. Deno, Node and Bun.",
   "HomeProof.tests": "test files in the apps and libraries, all run in CI",
   "HomeProof.licence": "licence: no account, no paywall",
   "HomeStatus.signIn":
@@ -165,6 +165,9 @@ export default {
   "HomeFaq.tryQuestion": "Can I try it without an account?",
   "HomeFaq.tryAnswer":
     "Yes. “Try the live demo” opens the app in a guest account with demo data, no email or password needed. You can add a sign-in method, but the demo is still wiped every night. Seed itself needs no account at all: clone it from GitHub.",
+  "HomeFaq.fastQuestion": "Why does a Seed app feel fast?",
+  "HomeFaq.fastAnswer":
+    "Once it is open, it does not wait on the server to show what you have already seen. The app keeps a copy of each list on the device, paints a screen from it at once and replaces it with the server's answer when that arrives. The notes list's search and filters run on the device. Opening the app checks your sign-in with the server first, the first visit downloads the data, and saving a change waits on the server.",
   "HomeFaq.freeQuestion": "Is Seed really free?",
   "HomeFaq.freeAnswer":
     "Yes. It is MIT-licensed: use it for any number of products, commercial or not, publish your fork, no account needed. You pay only for one server you rent and for services you turn on, such as Stripe or an email provider.",
@@ -224,6 +227,12 @@ export default {
   "HomeFeatures.websiteText":
     "This site: server-rendered, works with JavaScript turned off, in nine languages, with pricing from your plan catalog, legal pages and a double opt-in newsletter.",
   "HomeFeatures.all": "All features, with screenshots and status",
+  "HomeSpeed.eyebrow": "Fast by default",
+  "HomeSpeed.title": "No spinner between clicks",
+  "HomeSpeed.text":
+    "Most web apps ask the server again after every click, and you wait. Once a Seed app is open, a screen you have already visited opens at once from the copy on your device, and the notes list's search and filters answer as you type. The server's latest copy replaces the device's a moment later, in the background.",
+  "HomeSpeed.demo": "Try it: click around the demo",
+  "HomeSpeed.how": "How it works",
   "HomeServer.eyebrow": "Runs on one server you rent",
   "HomeServer.title": "One server, one <code>docker compose</code>, no surprise bills.",
   "HomeServer.text":
@@ -438,6 +447,19 @@ export default {
   "FeatureRealtime.fact3":
     "Realtime can be switched off: the app then polls on a timer and works the same",
   "FeatureRealtime.code": "Read the realtime design",
+  "FeatureFast.nav": "Fast by default",
+  "FeatureFast.title": "Screens open from the device, then catch up",
+  "FeatureFast.lead":
+    "Every list the app has shown, except the deleted notes and groups, is kept on the device. A screen paints that copy at once and swaps in the server's answer when it arrives, so moving around the open app does not wait on a round trip. Opening the app checks the sign-in with the server first, the first visit downloads the data, and a few screens always ask the server.",
+  "FeatureFast.fact1":
+    "The device copy paints first, then the server's answer replaces it (cachedRead over IndexedDB)",
+  "FeatureFast.fact2":
+    "The notes list's search and filters run over the list on the device, with no request per keystroke",
+  "FeatureFast.fact3":
+    "Still waits on the server: the sign-in check when the app opens, the deleted notes and groups, and every save, such as changing the plan or sending an invitation",
+  "FeatureFast.fact4":
+    "With no network, a note or tag change waits in a queue until the network returns",
+  "FeatureFast.code": "Read how the device copy works",
   "FeatureOffline.nav": "Offline app",
   "FeatureOffline.title": "An app that opens with no network",
   "FeatureOffline.lead":
@@ -480,6 +502,19 @@ export default {
   "FeatureWorker.fact4":
     "A failed attempt is retried with growing waits; operators see every run in the admin",
   "FeatureWorker.code": "Read docs/jobs.md",
+  "FeatureCatalog.nav": "Catalog",
+  "FeatureCatalog.title": "A catalog for a shop, a menu or rentals",
+  "FeatureCatalog.lead":
+    "Your operators add items with photos, colours and sizes in the admin area, and the website shows them on pages search engines understand, with what is sold out marked.",
+  "FeatureCatalog.fact1":
+    "Off until you set CATALOG=true; the currency and the languages are two more settings",
+  "FeatureCatalog.fact2":
+    "Prices in the smallest unit, texts in each language you keep, sold out per colour and size",
+  "FeatureCatalog.fact3":
+    "The worker turns photos into AVIF and WebP, and every change in the admin area goes to the audit log",
+  "FeatureCatalog.fact4":
+    "One tracking link per place you share an item, counted in Umami: <guide>read the catalog guide</guide>",
+  "FeatureCatalog.code": "Read the catalog code",
   "FeatureYourFeature.nav": "Your own features",
   "FeatureYourFeature.title": "Add a feature by copying one",
   "FeatureYourFeature.lead":
@@ -536,7 +571,7 @@ export default {
   "FeatureWebsite.fact3":
     "A newsletter with double opt-in, one-click unsubscribe and mails in the reader's language",
   "FeatureWebsite.fact4":
-    "A blog written in the admin panel, with posts in each language and their translations, topics, interactive figures readers can try, an RSS feed, article structured data, old links that redirect when a post's URL changes, covers in the post lists, an optional Dev.to cross-post that names the post as the original, and an IndexNow ping so search engines hear of a new or changed post at once",
+    "A blog written in the admin panel, with posts in each language and their translations, topics, interactive figures readers can try, an RSS feed, article structured data, old links that redirect when a post's URL changes, covers in the post lists, an optional Dev.to cross-post that names the post as the original, automatic posts to Telegram, Mastodon, Bluesky, Hashnode and LinkedIn, and an IndexNow ping so search engines hear of a new or changed post at once",
   "FeatureWebsite.fact5":
     "Contact links set in the admin panel, shown in the footer and the structured data",
   "FeatureWebsite.fact6":
@@ -645,7 +680,8 @@ export default {
   "AdminTour.newsletter": "Newsletter",
   "AdminTour.newsletterText": "Who subscribed and what was sent. Export the list as CSV.",
   "AdminTour.blog": "Blog",
-  "AdminTour.blogText": "Posts for the site in each language, from draft to published.",
+  "AdminTour.blogText":
+    "Posts for the site in each language, from draft to published, posted to your channels automatically.",
   "AdminTour.contactLinks": "Contact links",
   "AdminTour.contactLinksText": "Where people reach you, in the site's footer, with no deploy.",
   "AdminTour.catalog": "Catalog",
@@ -730,6 +766,8 @@ export default {
   "CompareRow.blog": "Blog",
   "CompareRow.audit": "Audit log",
   "CompareRow.realtime": "Realtime updates",
+  "CompareRow.instant": "On-device data",
+  "CompareRow.instantNote": "A copy of each list kept on the device",
   "CompareRow.offline": "Offline app",
   "CompareRow.offlineNote": "Queues writes made offline",
   "CompareRow.ops": "Monitoring and backups",
@@ -1319,4 +1357,18 @@ export default {
   "LaunchChecklistItem.supportDeployRollback": "Write down how you deploy and how you roll back.",
   "LaunchChecklistItem.supportDeployRollbackWhy":
     "The worst moment to work out a rollback is during a bad deploy.",
+  "Catalog.title": "Catalog",
+  "Catalog.intro": "Everything for sale, with prices, sizes and colours.",
+  "Catalog.categories": "Categories",
+  "Catalog.all": "All",
+  "Catalog.empty": "Nothing for sale yet",
+  "Catalog.emptyLead": "New items appear here as soon as they are ready.",
+  "Catalog.categoryIntro": "{category}: prices, sizes and colours.",
+  "CatalogItem.intro": "{item}: price, sizes and colours.",
+  "CatalogItem.photos": "Photos",
+  "CatalogItem.material": "Material",
+  "CatalogItem.fit": "Fit",
+  "CatalogItem.care": "Care",
+  "CatalogItem.inStock": "{choice}: in stock",
+  "CatalogItem.soldOut": "{choice}: sold out",
 } satisfies Catalog

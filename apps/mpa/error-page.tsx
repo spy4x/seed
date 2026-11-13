@@ -37,7 +37,7 @@ function ErrorPage(
   const { t, href, rich } = useSite()
   const title = t.t(notFound ? `ErrorPage.notFoundTitle` : `ErrorPage.errorTitle`)
   const description = t.t(notFound ? `ErrorPage.notFoundDescription` : `ErrorPage.errorDescription`)
-  const spa = spaLinks(state.spaOrigin)
+  const spa = spaLinks(state)
   return (
     <SiteFrame state={state} path={path} head={{ title, description, noindex: true }}>
       <section

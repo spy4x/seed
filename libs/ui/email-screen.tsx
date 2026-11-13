@@ -14,8 +14,7 @@ import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
-import { OAUTH_PROVIDER_NAMES } from "@domain/identity"
-import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
+import { proofMethods, type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAppText } from "./i18n.ts"
 
@@ -188,13 +187,16 @@ export function EmailDialog(
   useSucceeded(pending.verify, Boolean(errors.verify), () => {
     if (step === "code") close()
   })
+  // Each step starts in its first field, not on the dialog's close button. `autofocus` covers the
+  // dialog's opening: the app may draw again before this effect runs, and then the dialog opens
+  // after it. The effect covers a step change inside an open dialog.
   useEffect(() => {
     if (step === "code") codeField.current?.focus()
+    if (step === "address") emailField.current?.focus()
   }, [step])
 
   const hasEmail = status.email !== null
-  const providerNames = new Intl.ListFormat(t.language, { type: `disjunction` })
-    .format(providerProof?.providers.map((provider) => OAUTH_PROVIDER_NAMES[provider]) ?? [])
+  const providerNames = providerProof ? proofMethods(providerProof, t) : ``
   const title = t.t(
     step === "code"
       ? `EmailScreen.enterCode`
@@ -237,6 +239,7 @@ export function EmailDialog(
                 >
                   <Input
                     ref={codeField}
+                    autofocus
                     data-e2e="email-code"
                     name="code"
                     autocomplete="one-time-code"
@@ -327,6 +330,7 @@ export function EmailDialog(
               <Field id="email-new" label={t.t(`EmailScreen.newAddress`)} required>
                 <Input
                   ref={emailField}
+                  autofocus
                   data-e2e="email-new"
                   name="email"
                   type="email"

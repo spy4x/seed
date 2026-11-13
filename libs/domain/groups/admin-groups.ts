@@ -194,6 +194,13 @@ export function adminGroupFileFilterQuery(filter: AdminGroupFileFilter): string 
  */
 export type AdminGroupFileAccess = "thumbnail" | "open" | "download"
 
+/**
+ * The query parameter that names one Open or Download: a UUID the admin app makes per action. The
+ * audit row keeps it, and a second request with the same one writes no second row, so a browser
+ * that fetches the address again (Chromium's download machinery does) is counted once.
+ */
+export const ADMIN_GROUP_FILE_REQUEST_PARAM = "requestId"
+
 /** The admin API's path of one file's bytes: `/api/admin/groups/:id/files/:fileId/open`. */
 export function adminGroupFilePath(
   groupId: string,

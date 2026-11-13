@@ -61,9 +61,9 @@ like a machine made it, so:
 5. A translation is done by an agent or person whose only task is that language, never as a side
    task of a code change. A change that adds or edits English leaves the other languages to that
    pass.
-6. A second reader checks every new translation: the owner for Russian, and for the other
-   languages a separate agent that translates it back to English and compares the meaning with
-   the source.
+6. A second reader checks every new translation, Russian included: a separate agent that
+   translates it back to English and compares the meaning with the source. Never ask the owner to
+   read a translation; the owner reports one that reads badly.
 
 ## Glossary
 

@@ -2,7 +2,8 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createEnvReader, type EnvReader } from "@spy4x/server/config"
 import { BillingPeriod } from "@spy4x/billing"
-import { DEFAULT_GRACE_DAYS, PAID_PLANS, type Plan, PRO_PLAN_ID } from "@domain/billing"
+import { DEFAULT_GRACE_DAYS, type Plan, PRO_PLAN_ID } from "@domain/billing"
+import { TEST_PAID_PLANS, TEST_PRO_PLAN } from "../../domain/billing/test-plans.ts"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
   DEV_PRO_PRICE_ID,
@@ -26,10 +27,10 @@ const STRIPE_KEYS = {
   STRIPE_PRICE_PRO: "price_placeholder",
 }
 
-/** The API's options: it verifies Stripe's webhooks. */
-const API = { webhooks: true }
+/** The API's options: it verifies Stripe's webhooks. Pro is sold monthly only, on the test catalog. */
+const API = { webhooks: true, plans: TEST_PAID_PLANS }
 /** The worker's options: it changes subscriptions and verifies no webhook. */
-const WORKER = { webhooks: false }
+const WORKER = { webhooks: false, plans: TEST_PAID_PLANS }
 
 describe("billing configuration", () => {
   it("starts with billing off in production when no billing variable is set", () => {
@@ -74,7 +75,7 @@ describe("billing configuration", () => {
   })
 
   describe("a Pro sold yearly", () => {
-    const yearly = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
+    const yearly = TEST_PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
 
     it("stops start-up while Stripe lacks the yearly price", () => {
       const env = createEnvReader({ BILLING_PROVIDER: "stripe", ...STRIPE_KEYS })
@@ -187,7 +188,10 @@ describe("billing configuration", () => {
   })
 
   describe("the Stripe price a checkout bills", () => {
-    const YEARLY_PLANS = PAID_PLANS.map((plan) => ({ ...plan, yearlyAmount: plan.amount * 10 }))
+    const YEARLY_PLANS = TEST_PAID_PLANS.map((plan) => ({
+      ...plan,
+      yearlyAmount: plan.amount * 10,
+    }))
 
     /** Opens a Pro checkout for `period` and answers the price Stripe was asked to bill, if any. */
     async function billedPrice(
@@ -215,9 +219,9 @@ describe("billing configuration", () => {
     }
 
     it("bills the monthly price for a Pro sold monthly only, and has no yearly one to bill", async () => {
-      expect(await billedPrice(PAID_PLANS, BillingPeriod.Monthly))
+      expect(await billedPrice(TEST_PAID_PLANS, BillingPeriod.Monthly))
         .toEqual({ ok: true, price: "price_placeholder" })
-      expect(await billedPrice(PAID_PLANS, BillingPeriod.Yearly)).toEqual({
+      expect(await billedPrice(TEST_PAID_PLANS, BillingPeriod.Yearly)).toEqual({
         ok: false,
         price: null,
       })
@@ -286,7 +290,7 @@ describe("billing configuration", () => {
   })
 
   it("refunds the development payment once, and answers a retry with the same refund", async () => {
-    const billing = createFakeBilling("price_dev")
+    const billing = createFakeBilling("price_dev", undefined, undefined, TEST_PAID_PLANS)
     const read = await billing.readLastPayment({ subscriptionId: "sub_dev" })
     if (!read.ok || read.value === null) throw new Error("expected a payment")
     expect(read.value.refunded).toBe(false)
@@ -301,7 +305,22 @@ describe("billing configuration", () => {
     expect(other).toMatchObject({ ok: false, error: { code: "provider_error" } })
     expect(await billing.readLastPayment({ subscriptionId: "sub_dev" })).toMatchObject({
       ok: true,
-      value: { refunded: true, amountRefunded: 900 },
+      value: { refunded: true, amountRefunded: TEST_PRO_PLAN.amount },
+    })
+  })
+
+  it("charges and refunds the development payment at Pro's price, in Pro's currency", async () => {
+    const yen = [{ ...TEST_PRO_PLAN, amount: 1200, currency: "JPY" }]
+    const billing = createFakeBilling("price_dev", undefined, undefined, yen)
+
+    const read = await billing.readLastPayment({ subscriptionId: "sub_dev" })
+    if (!read.ok || read.value === null) throw new Error("expected a payment")
+    const refund = await billing.refundPayment({ paymentId: read.value.id, idempotencyKey: "k" })
+
+    expect(read.value).toMatchObject({ amount: 1200, currency: "JPY", decimals: 0 })
+    expect(refund).toMatchObject({
+      ok: true,
+      value: { amount: 1200, currency: "JPY", decimals: 0 },
     })
   })
 

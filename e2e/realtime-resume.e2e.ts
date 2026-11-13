@@ -30,6 +30,24 @@ async function recordStatusTexts(page: Page) {
   })
 }
 
+/**
+ * A reconnect timer that never fires within a spec, as in `testBackoff` of
+ * apps/spa/src/realtime/index.ts: only the page's return (`resume()`) reconnects it, so a closed
+ * socket stays closed until the spec brings the page back.
+ */
+const NO_RETRY = { baseMs: 60_000, maxMs: 60_000, jitterRatio: 0 }
+
+/**
+ * Closes the page's socket while the network is up, waits until the page shows it, and only then
+ * takes the network down. In the other order the browser can hold the server's close back, and
+ * the page says Online until its next heartbeat.
+ */
+async function dropThenGoOffline(page: Page, dropSockets: () => Promise<void>) {
+  await dropSockets()
+  await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Offline")
+  await page.context().setOffline(true)
+}
+
 const statusTexts = (page: Page) =>
   page.evaluate(() => (window as unknown as { __statusTexts: string[] }).__statusTexts)
 
@@ -76,9 +94,8 @@ test.describe("realtime when the app returns", () => {
     const { cleanup, dropSockets } = await signedIn(
       { page, request },
       "e2e_resume_pull@example.com",
-      // The first retry comes a minute after the drop, with no jitter: the spec is over long
-      // before, so only `resume()` can reconnect it.
-      { baseMs: 60_000, maxMs: 60_000, jitterRatio: 0 },
+      // The spec is over long before the first retry, so only `resume()` can reconnect it.
+      NO_RETRY,
     )
     try {
       const names = page.locator("[data-e2e=group-item-name]")
@@ -112,12 +129,11 @@ test.describe("realtime when the app returns", () => {
     const { cleanup, dropSockets } = await signedIn(
       { page, request },
       "e2e_resume_quiet@example.com",
+      NO_RETRY,
     )
     try {
       await setVisibility(page, "hidden")
-      await page.context().setOffline(true)
-      await dropSockets()
-      await expect(page.locator("[data-e2e=shell-ws-status]")).not.toHaveText("Online")
+      await dropThenGoOffline(page, dropSockets)
 
       await page.context().setOffline(false)
       await recordStatusTexts(page)
@@ -129,7 +145,6 @@ test.describe("realtime when the app returns", () => {
       expect(texts.filter((text) => text !== "Online")).toEqual([])
 
       // The quiet period is over. A real drop while the page is visible must show, not stay hidden.
-      await page.context().setOffline(true)
       await dropSockets()
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Offline")
     } finally {
@@ -142,12 +157,11 @@ test.describe("realtime when the app returns", () => {
     const { cleanup, dropSockets } = await signedIn(
       { page, request },
       "e2e_resume_slow@example.com",
+      NO_RETRY,
     )
     try {
       await setVisibility(page, "hidden")
-      await page.context().setOffline(true)
-      await dropSockets()
-      await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Offline")
+      await dropThenGoOffline(page, dropSockets)
 
       // Shown again with the network still down: quiet at first, then honest.
       await setVisibility(page, "visible")

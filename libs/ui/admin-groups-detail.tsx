@@ -81,8 +81,6 @@ export type AdminGroupAction =
 /** The group page's tabs, in order. */
 export const ADMIN_GROUP_TABS = [`members`, `invitations`, `files`, `activity`] as const
 
-const NUMBER = new Intl.NumberFormat(`en`)
-
 /** Each subscription state's word, by catalog key. */
 const BILLING_STATUS: Record<number, string> = {
   [BillingStatus.Trialing]: `AdminGroup.statusTrialing`,
@@ -294,21 +292,23 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         </div>
         {/* The counts are facts like the dates: no card inside the header card. */}
         <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4" data-e2e="admin-group-counts">
-          <Fact label={t.t(`AdminGroup.members`)}>{NUMBER.format(detail.members.length)}</Fact>
+          <Fact label={t.t(`AdminGroup.members`)}>{format.number(detail.members.length)}</Fact>
           <Fact label={t.t(`AdminGroup.notes`)}>
-            {NUMBER.format(counts.notes)}
+            {format.number(counts.notes)}
             <span class="font-normal text-muted">
               {` · `}
               {t.t(`AdminGroup.notesInTrash`, { count: counts.deletedNotes })}
             </span>
           </Fact>
-          <Fact label={t.t(`AdminGroup.tags`)}>{NUMBER.format(counts.tags)}</Fact>
+          <Fact label={t.t(`AdminGroup.tags`)}>{format.number(counts.tags)}</Fact>
           <Fact label={t.t(`AdminGroup.openInvitations`)}>
-            {NUMBER.format(counts.pendingInvitations)}
+            {format.number(counts.pendingInvitations)}
           </Fact>
           <Fact label={t.t(`AdminGroup.files`)}>
-            {NUMBER.format(counts.files)}
-            <span class="font-normal text-muted">{` · ${formatBytes(counts.fileBytes)}`}</span>
+            {format.number(counts.files)}
+            <span class="font-normal text-muted">
+              {` · ${formatBytes(counts.fileBytes, format.locale)}`}
+            </span>
           </Fact>
           <Fact label={t.t(`AdminGroup.owner`)}>
             <Link
@@ -630,15 +630,19 @@ function Invitations(
 }
 
 /** "37 of 100 files · 41 MB of 200 MB", or without "of" for a cap the plan does not set. */
-function filesUsage(t: Translator<string>, usage: AdminGroupFiles["usage"]): string {
+function filesUsage(
+  t: Translator<string>,
+  usage: AdminGroupFiles["usage"],
+  locale: string,
+): string {
   const files = usage.maxFiles === null
     ? t.t(`AdminGroup.usageFiles`, { count: usage.files })
     : t.t(`AdminGroup.usageFilesOf`, { files: usage.files, count: usage.maxFiles })
   const bytes = usage.maxBytes === null
-    ? formatBytes(usage.bytes)
+    ? formatBytes(usage.bytes, locale)
     : t.t(`AdminGroup.usageBytesOf`, {
-      used: formatBytes(usage.bytes),
-      max: formatBytes(usage.maxBytes),
+      used: formatBytes(usage.bytes, locale),
+      max: formatBytes(usage.maxBytes, locale),
     })
   return `${files} · ${bytes}`
 }
@@ -761,7 +765,11 @@ function Files(
     }
     if (none) {
       return (
-        <div ref={empty} tabIndex={-1} class="rounded-xl">
+        <div
+          ref={empty}
+          tabIndex={-1}
+          class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+        >
           <Card data-e2e="admin-group-files">
             <EmptyState inset description={t.t(`AdminGroup.noFilesYet`)} />
           </Card>
@@ -865,7 +873,7 @@ function Files(
       )}
       {files && (
         <p class="text-sm text-muted" data-e2e="admin-group-files-usage">
-          {filesUsage(t, files.usage)}
+          {filesUsage(t, files.usage, format.locale)}
         </p>
       )}
     </Stack>

@@ -16,7 +16,7 @@ import {
 import { LANGUAGES } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { queueDueBlogJobs } from "./blog-publish-job.ts"
-import { queueIndexNow } from "./blog-indexnow-job.ts"
+import { queueBlogIndexNow } from "./blog-indexnow-job.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
 
 /**
@@ -392,7 +392,7 @@ export async function upsertSeedPosts(
         `
       }
       // Seed's own posts are real (seedsaas.com): a live one that changed is announced.
-      if (live) await queueIndexNow(tx, id)
+      if (live) await queueBlogIndexNow(tx, id)
       count++
     }
     return count

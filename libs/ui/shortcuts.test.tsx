@@ -84,8 +84,8 @@ describe("the Keyboard shortcuts dialog", () => {
     await mount(true)
     expect(listed()).toEqual([
       "Show keyboard shortcuts: ?",
-      "Search notes and groups: Ctrl+K",
-      "Search notes and groups: /",
+      "Search or run a command: Ctrl+K",
+      "Search or run a command: /",
       "Close a dialog or menu: Esc",
       "Notes: G then N",
       "Add and open: Ctrl+Enter",
@@ -98,7 +98,7 @@ describe("the Keyboard shortcuts dialog", () => {
   it("leaves out the single keys while they are off, and keeps Ctrl K, Escape and Ctrl Enter", async () => {
     await mount(false)
     expect(listed()).toEqual([
-      "Search notes and groups: Ctrl+K",
+      "Search or run a command: Ctrl+K",
       "Close a dialog or menu: Esc",
       "Add and open: Ctrl+Enter",
     ])

@@ -21,14 +21,21 @@ export interface Pass {
 }
 
 /** The specs that load a page with the network cut. */
-export const OFFLINE_SPECS = [`offline.e2e.ts`, `local-data.e2e.ts`, `search-offline.e2e.ts`]
+export const OFFLINE_SPECS = [
+  `offline.e2e.ts`,
+  `local-data.e2e.ts`,
+  `search-offline.e2e.ts`,
+  `tags-offline.e2e.ts`,
+  `notes-restore-offline.e2e.ts`,
+]
 
 /**
  * The smoke set: the specs CI runs on every pull request (`.woodpecker/ci.yml`, step `e2e-smoke`),
  * and `deno task e2e:local --smoke` here. The whole suite runs after the merge, on `main`. A spec
  * joins the set with one line here; before you add one, run it ten times in a row
- * (`deno task e2e:local e2e/<spec> --repeat-each=10`): a spec that fails once on a healthy branch
- * blocks every pull request.
+ * (`E2E_LOCAL_TIMEOUT=3600 deno task e2e:local e2e/<spec> --repeat-each=10 --workers=1`): a spec
+ * that fails once on a healthy branch blocks every pull request. Ten runs take ten times one run,
+ * past the pass's default 1500 s deadline for a long spec on a busy machine, hence the 3600.
  */
 export const SMOKE_SPECS = [
   `auth-profile-ws-push.e2e.ts`, // sign-up over the API, sign-in, the profile, sign-out

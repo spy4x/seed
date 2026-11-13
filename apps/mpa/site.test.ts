@@ -5,6 +5,7 @@ import { h } from "preact"
 import { renderToString } from "preact-render-to-string"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
+import { demoPlans, demoSavings } from "./components/pricing-demo-plans.tsx"
 import AppWrapper from "./routes/_app.tsx"
 import Layout from "./routes/_layout.tsx"
 import Admin, { ADMIN_HEAD } from "./routes/[[lang]]/admin.tsx"
@@ -37,7 +38,7 @@ import { NotYetList } from "./components/features-section.tsx"
 import { SiteLanguage } from "./use-site.tsx"
 import { SITE_PAGES, type SitePage } from "./pages.ts"
 import { DOC_SLUGS } from "./docs-site.ts"
-import { localePath, pathLanguage, SITE_LANGUAGES } from "./languages.ts"
+import { localePath, pathLanguage, SITE_LANGUAGES, siteTranslator } from "./languages.ts"
 import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
 
@@ -60,6 +61,10 @@ const info = {
   completed: Promise.resolve(),
 } as Deno.ServeHandlerInfo<Deno.NetAddr>
 
+/** The pricing page's demo entries and saving sentences, in English, from the catalog it renders. */
+const DEMO_PLANS = demoPlans(siteTranslator(`en`))
+const DEMO_SAVINGS = demoSavings(siteTranslator(`en`))
+
 const neverCalled = () => Promise.reject(new Error("the website called the API"))
 
 /** A page component, typed for `App.route`: `define.page` types its props for one handler. */
@@ -72,7 +77,7 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .appWrapper(view(AppWrapper))
     .layout("*", view(Layout))
     .route("/", { component: view(Home) })
-    .route("/features", { component: view(Features) })
+    .route("{/:lang}?/features", { component: view(Features) })
     .get("{/:lang}?/features/:slug", featurePage.GET!)
     .route("/admin", { component: view(Admin) })
     .route("/compare", { component: view(Compare) })
@@ -709,6 +714,23 @@ describe("the public website", () => {
     expect(html).not.toContain(`issues/222`)
   })
 
+  it("names the catalog on /features as off until CATALOG=true, linking its guide in the page's language (#899)", async () => {
+    for (
+      const [path, off, guide] of [
+        [`/features`, `Off until you set CATALOG=true`, `/docs/catalog`],
+        [`/de/features`, `Aus, bis du CATALOG=true setzt`, `/de/docs/catalog`],
+      ]
+    ) {
+      const { html } = await page(path)
+      const start = html.indexOf(`id="catalog"`)
+      expect(start, path).toBeGreaterThan(-1)
+      const section = html.slice(start, html.indexOf(`</section>`, start))
+
+      expect(section, path).toContain(off)
+      expect(section, path).toContain(`href="${guide}"`)
+    }
+  })
+
   it("lists email sign-in codes as built on the home page, /features and /compare (#391, #752)", async () => {
     const home = (await page("/")).html
     const features = (await page("/features")).html
@@ -736,11 +758,101 @@ describe("the public website", () => {
     expect(home).toContain(`Images and PDFs attached to notes`)
     expect(features).toContain(`for images and PDFs on notes`)
     expect(rows.find((row) => row.capability === "File uploads")?.values[0]).toBe("Yes")
-    expect(pricing).toContain(`100 files, 200 MB in all`)
+    // The pricing page lists the catalog's own lines, so a catalog that sells files names them.
+    for (const feature of PLANS.flatMap((plan) => plan.features)) expect(pricing).toContain(feature)
     for (const html of [home, features]) {
       expect(html).not.toContain(`no screen uses`)
       expect(html).not.toContain(`issues/225`)
     }
+  })
+
+  it("puts the speed band right after the feature cards, with real links to the demo and to /features#fast (#441)", async () => {
+    const { html } = await page("/")
+    const start = html.indexOf(`<section id="speed"`)
+    const band = html.slice(start, html.indexOf(`</section>`, start))
+
+    expect(start).toBeGreaterThan(html.indexOf(`<section id="features"`))
+    expect(start).toBeLessThan(html.indexOf(`<section id="one-server"`))
+    expect(band).toContain(`<h2 id="speed-title"`)
+    expect(band).toContain(`>No spinner between clicks</h2>`)
+    const demo = linkNamed(band, "Try it: click around the demo")
+    expect(hrefOf(demo)).toBe(`${spa}/try`)
+    expect(demo).toContain(`rel="nofollow"`)
+    expect(demo).toContain(`data-umami-event="try-demo"`)
+    expect(demo).toContain(`data-umami-event-from="speed"`)
+    expect(hrefOf(linkNamed(band, "How it works"))).toBe(`/features#fast`)
+  })
+
+  it("links the speed band to /features#fast in the home page's language", async () => {
+    const localized = new App<State>()
+      .use(pageMiddleware(config, neverCalled, () => true))
+      .appWrapper(view(AppWrapper))
+      .layout("*", view(Layout))
+      .route("/:lang", { component: view(Home) })
+      .handler()
+    const { html } = await page("/de", localized)
+    const start = html.indexOf(`<section id="speed"`)
+    const band = html.slice(start, html.indexOf(`</section>`, start))
+
+    expect(band).toContain(`>Kein Ladekreisel zwischen den Klicks</h2>`)
+    expect(hrefOf(linkNamed(band, "So funktioniert es"))).toBe(`/de/features#fast`)
+    expect(hrefOf(linkNamed(band, "Probier es aus: klick dich durch die Demo"))).toBe(`${spa}/try`)
+  })
+
+  it("explains on /features why the app is fast with all four facts, right before the offline section, linking the offline reads doc", async () => {
+    const { html } = await page("/features")
+    const start = html.indexOf(`<section id="fast"`)
+    const section = html.slice(start, html.indexOf(`</section>`, start))
+
+    expect(start).toBeGreaterThan(html.indexOf(`<section id="realtime"`))
+    expect(start).toBeLessThan(html.indexOf(`<section id="offline"`))
+    expect(html.slice(start + 1, html.indexOf(`<section id="offline"`))).not.toContain(
+      `<section id=`,
+    )
+    expect(section).toContain(`>Screens open from the device, then catch up</h3>`)
+    const facts = [
+      `FeatureFast.fact1`,
+      `FeatureFast.fact2`,
+      `FeatureFast.fact3`,
+      `FeatureFast.fact4`,
+    ] as const
+    for (const fact of facts) {
+      expect(section).toContain(`<span class="text-pretty">${siteTranslator(`en`).t(fact)}</span>`)
+    }
+    expect(section).toContain(`Still waits on the server: the sign-in check when the app opens`)
+    expect(section).toContain(`href="${REPOSITORY_URL}/blob/main/docs/offline-data.md"`)
+    expect(html).toContain(`href="#fast"`)
+  })
+
+  it("asks why a Seed app feels fast second among the home questions, and in their structured data", async () => {
+    const { html } = await page("/")
+    const faq = jsonLdGraph(html).find((entity) => entity["@type"] === "FAQPage")!
+    const questions = (faq.mainEntity as { name: string }[]).map((question) => question.name)
+
+    expect(questions[1]).toBe(`Why does a Seed app feel fast?`)
+    expect(html.indexOf(`id="faq-fast"`)).toBeGreaterThan(html.indexOf(`id="faq-try"`))
+    expect(html.indexOf(`id="faq-fast"`)).toBeLessThan(html.indexOf(`id="faq-free"`))
+  })
+
+  it("adds On-device data to /compare, right before Offline app and with its values", async () => {
+    const { rows } = comparisonTable((await page("/compare")).html)
+    const at = rows.findIndex((row) => row.capability === "On-device data")
+
+    expect(at).toBeGreaterThan(-1)
+    expect(rows[at + 1].capability).toBe("Offline app")
+    expect(rows[at]).toEqual({
+      capability: "On-device data",
+      note: "A copy of each list kept on the device",
+      values: rows[at + 1].values,
+    })
+  })
+
+  it("says screens open from the device in the home page's description and in llms.txt", async () => {
+    const { html } = await page("/")
+    const text = await (await handler(new Request(`${site}/llms.txt`), info)).text()
+
+    expect(metaContent(html, "description")).toContain(`screens that open from the device`)
+    expect(text).toContain(`screens that open from the device`)
   })
 
   it("ends /features with its questions, listed under On this page and in its structured data", async () => {
@@ -864,8 +976,8 @@ describe("the public website", () => {
     expect(headingOne(html)).toBe("Seed is free. Here is what it costs to run.")
     expect(html).toContain(`<title>${PRICING_HEAD.title}</title>`)
     for (const card of ["way-use", "way-run", "way-hire"]) expect(html).toContain(`id="${card}"`)
-    expect(html).toContain(">$0</span>")
-    expect(html).toContain(">From $8,000</span>")
+    expect(html).toContain(">US$0</span>")
+    expect(html).toContain(">From US$8,000</span>")
     // It leaves the site, so its name says where it goes.
     expect(hrefOf(linkNamed(html, "See how it works (opens antonshubin.com)"))).toBe(
       HIRE_PAGE_URL.replaceAll("&", "&amp;"),
@@ -896,11 +1008,12 @@ describe("the public website", () => {
       expect(html).toContain(`name="planId" value="${plan.id}"`)
     }
     expect(html.match(/<form [^>]*action="\/pricing"[^>]*method="post"/g)).toHaveLength(
-      PLANS.length,
+      DEMO_PLANS.length,
     )
-    // Seed's own catalog sells no yearly price: no toggle and no saving sentence.
-    expect(html).not.toContain(`data-pricing-interval`)
-    expect(html).not.toContain(`data-e2e="pricing-saving"`)
+    // A catalog that sells no yearly price shows no toggle and no saving sentence.
+    const yearly = PLANS.some((plan) => plan.yearlyAmount !== null)
+    expect(html.includes(`data-pricing-interval`)).toBe(yearly)
+    expect(html.includes(`data-e2e="pricing-saving"`)).toBe(DEMO_SAVINGS.length > 0)
   })
 
   it("offers only Seed itself, at no cost, in the pricing page's structured data", async () => {
@@ -1039,10 +1152,14 @@ describe("the public website", () => {
   it("names the trial of every plan that has one, with its length from the catalog", async () => {
     const { html } = await page("/pricing")
 
-    const withTrial = PLANS.filter((plan) => plan.trialDays > 0)
-    expect(withTrial.length).toBeGreaterThan(0)
-    for (const plan of withTrial) expect(html).toContain(`The first ${plan.trialDays} days free`)
-    expect(html.match(/days free/g)).toHaveLength(withTrial.length)
+    // A plan sold yearly too has two entries, each with its trial line.
+    const withTrial = DEMO_PLANS.filter((entry) =>
+      PLANS.some((plan) => plan.trialDays > 0 && entry.id.replace(/-yearly$/, ``) === plan.id)
+    )
+    for (const plan of PLANS.filter((plan) => plan.trialDays > 0)) {
+      expect(html).toContain(`The first ${plan.trialDays} days free`)
+    }
+    expect(html.match(/days free/g) ?? []).toHaveLength(withTrial.length)
   })
 
   it("names every demo plan's button with its visible text, then the plan", async () => {
@@ -1050,8 +1167,8 @@ describe("the public website", () => {
 
     const buttons = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
       .filter((match) => match[1].includes(`type="submit"`) && match[2].includes("demo"))
-    expect(buttons).toHaveLength(PLANS.length)
-    for (const [index, plan] of PLANS.entries()) {
+    expect(buttons).toHaveLength(DEMO_PLANS.length)
+    for (const [index, plan] of DEMO_PLANS.entries()) {
       const [, attributes, content] = buttons[index]
       const visible = content.replace(/<[^>]+>/g, "").trim()
       const name = attributes.match(/aria-label="([^"]*)"/)?.[1]
@@ -1295,14 +1412,14 @@ describe("the public website", () => {
 
     // Every language of a page carries the English page's date: the translation says the same.
     expect(lastmods["/de/pricing"]).toBe("2026-10-21T00:00:00.000Z")
-    expect(lastmods["/ar"]).toBe("2026-11-02T00:00:00.000Z")
+    expect(lastmods["/ar"]).toBe("2026-11-13T00:00:00.000Z")
     expect(Object.values(lastmods)).not.toContain(undefined)
     const english = Object.fromEntries(
       Object.entries(lastmods).filter(([path]) => pathLanguage(path).language === "en"),
     )
     expect(english).toEqual({
-      "/": "2026-11-02T00:00:00.000Z",
-      "/features": "2026-11-02T00:00:00.000Z",
+      "/": "2026-11-13T00:00:00.000Z",
+      "/features": "2026-11-13T00:00:00.000Z",
       "/features/sign-in": "2026-11-02T00:00:00.000Z",
       "/features/groups": "2026-11-01T00:00:00.000Z",
       "/features/billing": "2026-11-01T00:00:00.000Z",
@@ -1518,5 +1635,69 @@ describe("the public website", () => {
 
     expect(html).toContain("This website keeps no visitor statistics, and neither does the demo.")
     expect(html).not.toContain("Umami")
+  })
+})
+
+describe("a demo on its own host (DEMO_ORIGIN)", () => {
+  const demo = "https://demo.example.com"
+  const withDemo = siteWith(() => true, { ...config, demoOrigin: demo })
+
+  /** Every link to a `/try`, on any host, of the home page and a feature page that names a screen. */
+  async function tryLinks(app: typeof handler): Promise<string[]> {
+    const hrefs: string[] = []
+    for (const path of ["/", "/features/sign-in"]) {
+      const { html } = await page(path, app)
+      for (const [tag] of html.matchAll(/<a\b[^>]*>/g)) {
+        const href = hrefOf(tag)?.replaceAll("&amp;", "&")
+        if (href && new URL(href, site).pathname === "/try") hrefs.push(href)
+      }
+    }
+    return hrefs
+  }
+
+  it("sends the header's, the hero's, the footer's and the feature page's try links to the demo", async () => {
+    const { html } = await page("/", withDemo)
+    expect(hrefOf(html.match(/<a[^>]*data-e2e="site-try-demo"[^>]*>/)?.[0])).toBe(`${demo}/try`)
+    expect(hrefOf(html.match(/<a[^>]*data-e2e="home-try-demo"[^>]*>/)?.[0])).toBe(`${demo}/try`)
+    const footer = html.slice(html.indexOf("<footer"))
+    expect(hrefOf(linkNamed(footer, "Try the demo"))).toBe(`${demo}/try`)
+
+    const links = await tryLinks(withDemo)
+    expect(links).toContain(`${demo}/try?next=%2Fprofile%2Fsecurity`)
+    for (const href of links) expect(href).toMatch(new RegExp(`^${demo}/try(\\?|$)`))
+  })
+
+  it("keeps sign-in and sign-up on the app, since accounts live there", async () => {
+    const { html } = await page("/", withDemo)
+    expect(html).toContain(`href="${spa}/sign-in"`)
+    expect(html).not.toContain(`href="${demo}/sign-in"`)
+  })
+
+  it("keeps every try link on the app's own /try while DEMO_ORIGIN is empty", async () => {
+    const links = await tryLinks(handler)
+    expect(links).toContain(`${spa}/try`)
+    expect(links).toContain(`${spa}/try?next=%2Fprofile%2Fsecurity`)
+    for (const href of links) expect(href).toMatch(new RegExp(`^${spa}/try(\\?|$)`))
+  })
+
+  it("sends a plan chosen without JavaScript to the demo's /try", async () => {
+    const response = await withDemo(
+      new Request(`${site}/pricing`, {
+        method: "POST",
+        headers: { origin: site, "sec-fetch-site": "same-origin" },
+        body: new URLSearchParams({ planId: PLANS[0].id }),
+      }),
+      info,
+    )
+
+    expect(response.headers.get("location")).toBe(`${demo}/try`)
+  })
+
+  it("tells the analytics script the demo's origin, so a click on a try link counts as try-demo", async () => {
+    const app = siteWith(() => true, { ...config, demoOrigin: demo, analytics: UMAMI })
+    const { html } = await page("/", app)
+    expect(html.match(/<script[^>]*src="\/analytics\.js"[^>]*>/)?.[0]).toContain(
+      `data-demo-origin="${demo}"`,
+    )
   })
 })

@@ -288,6 +288,7 @@ export function createBlogState(
       const params = new URLSearchParams()
       if (filter.status) params.set(`status`, filter.status)
       if (filter.query) params.set(`q`, filter.query)
+      if (filter.sharing) params.set(`sharing`, `todo`)
       const search = params.toString()
       const result = await request<AdminBlogListResponse>(
         `${API}/posts${search ? `?${search}` : ``}`,

@@ -74,6 +74,20 @@ export interface SignInParts {
     email: string | null,
     firstGroupId: string,
   ): Promise<User>
+  /**
+   * Throws `SignUpClosedError` unless a new account for `email` may be made: always on an open
+   * server, else only with an `invitation` that admits the address (`sign-up-gate.ts`).
+   */
+  assertSignUpAllowed(invitation: string | null | undefined, email: string | null): Promise<void>
+  /**
+   * Accepts `invitation` for the new account `userId` inside `tx`, the transaction that wrote its
+   * `users` row, or throws `SignUpClosedError`; nothing on an open server (`joinInvitedGroup`).
+   */
+  joinInvitedGroup(
+    tx: AppDbBase,
+    invitation: string | null | undefined,
+    userId: number,
+  ): Promise<void>
   /** Sets the cookie of a new session and ends the one the browser held before, if any. */
   replaceSession(
     c: Context,

@@ -33,14 +33,14 @@ export interface GroupMoveAllResult {
 /**
  * Moves every registered aggregate of one group into another, all or nothing: either all of it
  * moves, or the move is refused and nothing does. Each moved entity keeps its id and its history.
- * It counts against the target group's plan (`maxNotes` for notes), and a group with nothing to
- * move is refused with `NOTHING_TO_MOVE`. It does not delete the source group; that stays a
+ * It counts against every cap of the target group's plan (`maxNotes` for notes), and a group with
+ * nothing to move is refused with `NOTHING_TO_MOVE`. It does not delete the source group; that stays a
  * separate, confirmed step.
  */
 export class GroupMoveAllCommand implements Command<GroupMoveAllPayload, GroupMoveAllResult> {
   __resultType?: GroupMoveAllResult
-  /** The target group's cap on notes, set by the entitlement gate; see `NoteCreateCommand`. */
-  allowance?: number | null
+  /** Every cap of the target group's plan, set by the entitlement gate; `null` is no cap. */
+  allowances?: MoveAllAllowances
   constructor(public data: GroupMoveAllPayload) {}
 }
 

@@ -66,6 +66,8 @@ export interface TagEditorScreenProps {
   /** The device has no network; the tag is saved on it and sent later, which the page says. */
   offline?: boolean
   navigate?: Navigate
+  /** Drawn right under the page header, in every state of the page: the app's offline status. */
+  intro?: ComponentChildren
 }
 
 /** How long a read may take before the page says it is loading, so a fast one never flickers. */
@@ -92,6 +94,7 @@ export function TagEditorScreen(props: TagEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={back} navigate={navigate} title={t.t(`TagEditor.title`)} />
+        {props.intro}
         {props.loading
           ? waited && <Loading label={t.t(`NoGroup.loading`)} />
           : <NoGroup loading={false} navigate={navigate} />}
@@ -102,6 +105,7 @@ export function TagEditorScreen(props: TagEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={back} navigate={navigate} title={t.t(`TagEditor.title`)} />
+        {props.intro}
         <div data-e2e="tag-not-found">
           <ListEmpty
             title={t.t(`TagEditor.notFound`)}
@@ -126,6 +130,7 @@ export function TagEditorScreen(props: TagEditorScreenProps): JSX.Element {
           title={t.t(`TagEditor.title`)}
           subtitle={group.name}
         />
+        {props.intro}
         {waited && <Loading label={t.t(`TagEditor.loading`)} />}
       </EditorPage>
     )
@@ -216,6 +221,7 @@ function Editor(props: WithGroup): JSX.Element {
           </DropdownItem>
         )}
       />
+      {props.intro}
       {canWrite && props.offline && (
         <div data-e2e="tag-offline">
           <Notice title={t.t(`TagEditor.offlineTitle`)}>

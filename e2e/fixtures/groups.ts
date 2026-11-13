@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from "@playwright/test"
+import { type NewGroupPlan, payForGroup } from "./sign-up.ts"
 
 /** Page objects for the group pages: the list, the editor and the way to a group's notes. */
 
@@ -51,9 +52,14 @@ export async function openGroupTab(page: Page, tab: keyof typeof TAB_PATHS): Pro
 
 /**
  * Creates a group named `name` from the groups page's "New group", and resolves on the new group's
- * page, which takes the create page's place in the history.
+ * page, which takes the create page's place in the history. When the free plan allows nothing, the
+ * group is then put on the paid plan ({@link payForGroup}), unless `plan.keepFree`.
  */
-export async function createGroup(page: Page, name: string): Promise<void> {
+export async function createGroup(
+  page: Page,
+  name: string,
+  plan: NewGroupPlan = {},
+): Promise<void> {
   // By its hook, not its name: until the list has loaded, the empty page can show a second
   // "New group" button, and a click by name then matches two.
   await page.locator("[data-e2e=group-new]").click()
@@ -62,6 +68,9 @@ export async function createGroup(page: Page, name: string): Promise<void> {
   await page.locator("[data-e2e=group-create]").click()
   await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
   await expect(page.locator("[data-e2e=group-general-name]")).toHaveText(name)
+  if (plan.keepFree) return
+  const url = new URL(page.url())
+  await payForGroup(page.request, url.origin, url.pathname.replace("/groups/", ""))
 }
 
 /**

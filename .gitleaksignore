@@ -1,0 +1,35 @@
+# Reviewed gitleaks findings in past commits (docs/woodpecker-ci-setup.md, "secrets"). Each line is
+# the fingerprint `gitleaks git . --redact` prints; the comment above it says why it is no secret.
+
+# Test fixtures: fake UUIDs, passwords, peppers and HMAC secrets that only tests use.
+1b152765dc10f227c490adcd2f9d04a2dd370c9f:apps/api/cqrs/session-gate.test.ts:generic-api-key:120
+1b152765dc10f227c490adcd2f9d04a2dd370c9f:apps/api/routes/api-tokens.test.ts:generic-api-key:25
+1b152765dc10f227c490adcd2f9d04a2dd370c9f:tests/integration/api-tokens.integration.test.ts:generic-api-key:376
+0e5c088cdfda63a855864bd22e0eae48ccc5646d:apps/api/routes/subscribers.test.ts:generic-api-key:33
+0e5c088cdfda63a855864bd22e0eae48ccc5646d:tests/integration/subscribers.integration.test.ts:generic-api-key:30
+0c2b25589ad83db64e422fb4620fe5e3d26dc5d4:libs/server/notifications/notification-cursor.test.ts:generic-api-key:8
+25ebca96f60ce5c10f84e43505f9eea17daa8e0e:libs/ui/admin-audit-screen.test.tsx:generic-api-key:335
+999b920a8323a27a58c16b6203d36d4bd5190e89:tests/db-reset-main.test.ts:generic-api-key:40
+40c412e4dd00399905d049066a801500c6124a5d:tests/integration/auth.integration.test.ts:generic-api-key:457
+76fa372cb20026a080b942537cdac036139459d4:tests/integration/auth.integration.test.ts:generic-api-key:468
+# Test fixture: the sample WebSocket key of RFC 6455.
+95c2ade1811718b6330859e98949e8dd19cf19b2:apps/api/services/socket-route.test.ts:generic-api-key:85
+# Test fixture: a made-up IndexNow key.
+e33c4e94a332771b51fbfcb01e154e6d20d438be:apps/mpa/app.test.ts:generic-api-key:734
+e33c4e94a332771b51fbfcb01e154e6d20d438be:apps/mpa/config.test.ts:generic-api-key:88
+# Not a value: an import line the LinkedIn client-id rule mistakes for one.
+e1d3b94d5f3fcca94675b3d57532b394d3c9e174:tests/integration/blog-auto-post.integration.test.ts:linkedin-client-id:37
+# .env.example placeholders: an empty key and a commented-out example key.
+e4aacfb9921bd1a6559996f4763cf63292918cee:infra/envs/.env.example:generic-api-key:19
+e33c4e94a332771b51fbfcb01e154e6d20d438be:infra/envs/.env.example:generic-api-key:42
+# Branch v1 only, an empty placeholder in the old API's .env_example.
+9dc3c7782fe5dbbfa35b696c9dd6d0fdfb45caca:apps/back/api/.env_example:generic-api-key:3
+# Branch v1 only, the old Angular apps' Firebase web config: a browser key Firebase publishes in
+# every page by design.
+4a08b2fa4891134177d45245e68f98b425f48fae:apps/front/admin-panel/src/environments/environment.prod.ts:gcp-api-key:7
+4a08b2fa4891134177d45245e68f98b425f48fae:apps/front/admin-panel/src/environments/environment.ts:gcp-api-key:7
+4a08b2fa4891134177d45245e68f98b425f48fae:apps/front/web-client/src/environments/environment.prod.ts:gcp-api-key:7
+4a08b2fa4891134177d45245e68f98b425f48fae:apps/front/web-client/src/environments/environment.ts:gcp-api-key:7
+4a08b2fa4891134177d45245e68f98b425f48fae:apps/front/web-client/src/firebase-messaging-sw.js:gcp-api-key:11
+# Branch v1 only, an Nx Cloud token the owner confirmed is outdated (#494).
+2717e6f1dadc7b58e80caeac90f01a2df2873685:nx.json:generic-api-key:22

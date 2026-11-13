@@ -8,9 +8,18 @@ import {
   AuthAuditEventType,
   type PendingSignUp,
   PROVIDER_PROOF_MINUTES,
+  SIGN_UP_CLOSED,
   type SignInMethodsResponse,
   UserMFAStatus,
 } from "@domain/identity"
+import { GroupRole } from "@domain/groups"
+import { sha256Hex } from "@spy4x/platform/tokens"
+import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
+import {
+  newInvitationToken,
+  PostgresInvitationRepository,
+} from "@server/groups/postgres-invitation-repository.ts"
+import type { SignUpMode } from "../../apps/api/services/sign-up-gate.ts"
 import type { EmailMessage } from "@spy4x/email/message"
 import type { EmailSender } from "@spy4x/email/sender"
 import type { OutboxEvent } from "@spy4x/server/outbox"
@@ -136,12 +145,16 @@ function fakeProviders(people: Record<string, ProviderPerson>) {
 
 const pass = (_c: unknown, next: () => Promise<void>) => next()
 
-/** The real provider routes and sign-in over `sql`, with the fake providers and a clock to move. */
+/**
+ * The real provider routes and sign-in over `sql`, with the fake providers and a clock to move.
+ * `signUp` is who may make an account (`SIGN_UP`).
+ */
 function buildApp(
   sql: postgres.Sql,
   people: Record<string, ProviderPerson>,
   on: ("google" | "github")[] = ["google", "github"],
   limits: Partial<Record<"strictByIp" | "normal", MiddlewareHandler<APIContext>>> = {},
+  signUp: SignUpMode = "open",
 ) {
   let now = Date.now()
   /** The ids of the users whose sign-out was announced, and what was logged as an error. */
@@ -156,6 +169,8 @@ function buildApp(
     secureCookie: false,
     sessionMinutes: 60,
     totpIssuer: "example.test",
+    signUp,
+    invitationPlan: () => Promise.resolve({ maxMembers: null, memberRoles: true }),
     oauth: {
       providers: enabledOAuthProviders(Object.fromEntries(on.map((id) => [id, credentials]))),
       origin: ORIGIN,
@@ -1834,5 +1849,104 @@ Deno.test("a reset of an address that was proven before keeps the linked provide
     const later = browser(app)
     expect(target(await later.through("google", "work"))).toBe("/")
     expect((await methodsOf(later)).methods.find((method) => method.current)?.kind).toBe("google")
+  })
+})
+
+// Sign-up by invitation (`SIGN_UP=invite`, #704): the confirm step makes the account only for an
+// invitation that admits the address the provider vouches for.
+
+/** A working invitation to the first group of `owner`, tied to `email` or, for `null`, a link. */
+async function invitationFor(sql: postgres.Sql, owner: number, email: string | null) {
+  // A sign-up made the owner's first group already; `ensureFirst` keeps it.
+  await new PostgresGroupRepository(sql).ensureFirst({ id: uuidV7(), name: "Home" }, owner)
+  const [{ groupId }] = await sql`SELECT group_id FROM group_members WHERE user_id = ${owner}`
+  const token = newInvitationToken()
+  const created = await new PostgresInvitationRepository(sql).create(
+    {
+      groupId,
+      role: GroupRole.VIEWER,
+      expiresInDays: 7,
+      maxUses: 1,
+      email,
+      tokenHash: await sha256Hex(token),
+    },
+    owner,
+    { maxMembers: null, memberRoles: true },
+  )
+  if (!created) throw new Error("the invitation was not created")
+  return token
+}
+
+/** The answer of a confirm the gate refused. */
+async function refusal(response: Response) {
+  return { status: response.status, reason: (await response.json()).error?.reason }
+}
+
+Deno.test("with SIGN_UP=invite confirming a provider sign-up without an invitation gets SIGN_UP_CLOSED and makes nothing", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA }, undefined, undefined, "invite")
+    const visitor = browser(app)
+    expect(target(await visitor.through("google", "ada"))).toBe("/sign-up/confirm")
+
+    const confirmed = await visitor.post("/auth/sign-up/confirm")
+
+    expect(await refusal(confirmed)).toEqual({ status: 403, reason: SIGN_UP_CLOSED })
+    expect(await accounts(sql)).toEqual({ authUsers: 0, profiles: 0 })
+  })
+})
+
+Deno.test("with SIGN_UP=invite an invitation for the verified address lets the provider sign-up through", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA }, undefined, undefined, "invite")
+    const owner = await provenPasswordAccount(app, browser(app), "owner@example.com")
+    const invitation = await invitationFor(sql, owner, "ada@example.com")
+    const visitor = browser(app)
+    expect(target(await visitor.through("google", "ada"))).toBe("/sign-up/confirm")
+
+    const confirmed = await visitor.post("/auth/sign-up/confirm", { invitation })
+
+    expect(confirmed.status).toBe(201)
+    expect(await accounts(sql)).toEqual({ authUsers: 2, profiles: 2 })
+  })
+})
+
+Deno.test("with SIGN_UP=invite an address invitation admits no provider address the provider left unverified", async () => {
+  await withSchema(async (sql) => {
+    const unverified = { ...ADA, verified: false }
+    const app = buildApp(sql, { ada: unverified }, undefined, undefined, "invite")
+    const owner = await provenPasswordAccount(app, browser(app), "owner@example.com")
+    const invitation = await invitationFor(sql, owner, "ada@example.com")
+    const visitor = browser(app)
+    expect(target(await visitor.through("google", "ada"))).toBe("/sign-up/confirm")
+
+    const confirmed = await visitor.post("/auth/sign-up/confirm", { invitation })
+
+    expect(await refusal(confirmed)).toEqual({ status: 403, reason: SIGN_UP_CLOSED })
+    expect(await accounts(sql)).toEqual({ authUsers: 1, profiles: 1 })
+  })
+})
+
+Deno.test("with SIGN_UP=invite a one-use link admits one provider sign-up, who joins its group, and refuses the next", async () => {
+  await withSchema(async (sql) => {
+    const eve: ProviderPerson = { sub: "1002", email: "eve@example.com", verified: true }
+    const app = buildApp(sql, { ada: ADA, eve }, undefined, undefined, "invite")
+    const owner = await provenPasswordAccount(app, browser(app), "owner@example.com")
+    const invitation = await invitationFor(sql, owner, null)
+    const ada = browser(app)
+    const other = browser(app)
+    expect(target(await ada.through("google", "ada"))).toBe("/sign-up/confirm")
+    expect(target(await other.through("google", "eve"))).toBe("/sign-up/confirm")
+
+    const first = await ada.post("/auth/sign-up/confirm", { invitation })
+    const second = await other.post("/auth/sign-up/confirm", { invitation })
+
+    expect(first.status).toBe(201)
+    expect(await refusal(second)).toEqual({ status: 403, reason: SIGN_UP_CLOSED })
+    expect(await accounts(sql)).toEqual({ authUsers: 2, profiles: 2 })
+    const [use] = await sql`
+      SELECT group_invitations.uses, count(group_members.user_id)::int AS members
+      FROM group_invitations INNER JOIN group_members USING (group_id)
+      GROUP BY group_invitations.id`
+    expect({ uses: use.uses, members: use.members }).toEqual({ uses: 1, members: 2 })
   })
 })

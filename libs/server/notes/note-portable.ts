@@ -5,6 +5,9 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 /** Notes one page of the export reads. */
 const READ_PAGE = 500
 
+/** A date as its ISO 8601 text, in UTC. */
+const isoTime = (value: unknown) => new Date(value as Date | string).toISOString()
+
 /** Rows one statement writes: well under Postgres's 65,535 parameters at nine columns a row. */
 const WRITE_BATCH = 1_000
 
@@ -13,7 +16,7 @@ const WRITE_BATCH = 1_000
  * and its dates. Deleted notes stay behind, as they do in a move. On import each note gets a new id
  * and keeps the tags the file holds; a tag id the file has no tag for is ignored, as a create
  * ignores one (`docs/aggregate-relations.md`). They count against the new
- * group's `maxNotes`.
+ * group's `maxNotes`. In the spreadsheets, `notes.csv` has a row per note, its tags as their ids.
  */
 export const notePortable = portable<NoteExportEntry>({
   kind: "notes",
@@ -45,6 +48,20 @@ export const notePortable = portable<NoteExportEntry>({
       if (page.length < READ_PAGE) return
       after = page[page.length - 1].id
     }
+  },
+  csv: {
+    columns: [
+      { key: "id", header: "NoteSpreadsheet.id" },
+      { key: "title", header: "NoteSpreadsheet.title" },
+      { key: "body", header: "NoteSpreadsheet.text" },
+      {
+        key: "tagIds",
+        header: "NoteSpreadsheet.tagIds",
+        format: (value) => (value as string[]).join(" "),
+      },
+      { key: "createdAt", header: "NoteSpreadsheet.created", format: isoTime },
+      { key: "updatedAt", header: "NoteSpreadsheet.updated", format: isoTime },
+    ],
   },
   async write(sql, entries, context) {
     const ids = new Map<string, string>()

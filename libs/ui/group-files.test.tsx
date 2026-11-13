@@ -400,7 +400,7 @@ describe("group file menu items", () => {
     const exported = spy<[]>()
     await mount(editor({ exportFailed: true, onExport: exported.fn }))
     expect(find("[data-e2e=group-export-failed]").textContent).toContain(
-      "We couldn't prepare the file. Nothing in your group changed.",
+      "We could not prepare the file. Nothing in your group changed.",
     )
     await click("[data-e2e=group-export-failed] button")
     expect(exported.calls).toHaveLength(1)

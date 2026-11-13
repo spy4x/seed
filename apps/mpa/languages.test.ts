@@ -222,6 +222,19 @@ describe("a page's head in each language", () => {
     expect(html).not.toContain(`Seed pricing: a free, MIT-licensed SaaS starter`)
   })
 
+  it("writes the hire prices the way the page's language writes money", async () => {
+    const german = (await get(pages, `/de/pricing`)).html
+    const arabic = (await get(pages, `/ar/pricing`)).html
+
+    expect(german).toContain(`8.000\u00a0$`)
+    expect(german).toContain(`150\u00a0$`)
+    expect(german).not.toContain(`$8,000`)
+    expect(arabic).toContain(`8,000\u00a0US$`)
+    // The free card writes its zero the same way as the prices beside it.
+    expect(german).toContain(`>0\u00a0$</span>`)
+    expect(arabic).toContain(`>\u200f0\u00a0US$</span>`)
+  })
+
   it("keeps a legal page English at a translated address, says so, and names no alternates", async () => {
     const { status, html } = await get(pages, `/de/terms`)
 

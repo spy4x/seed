@@ -4,8 +4,10 @@ import postgres from "postgres"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import type { OutboxEvent } from "@spy4x/server/outbox"
 import {
   CATALOG_AUDIT_KINDS,
+  CATALOG_INDEXNOW_JOB,
   CATALOG_PHOTOS_MAX,
   CatalogError,
   type CatalogItemFields,
@@ -20,7 +22,9 @@ import {
   readTrackingTarget,
 } from "@server/catalog/public-catalog.ts"
 import { SAMPLE_CATALOG_SOURCES, seedSampleCatalog } from "@server/catalog/sample-catalog.ts"
-import type { UmamiLinks } from "@server/catalog/tracking.ts"
+import { DEFAULT_ITEM_PATH, type UmamiLinks } from "@server/catalog/tracking.ts"
+import { catalogIndexNowJob } from "@server/catalog/catalog-indexnow-job.ts"
+import type { IndexNowSetup } from "@server/jobs/indexnow.ts"
 import { IMAGE_PROCESS_JOB } from "@server/files/images.ts"
 import { createAdminCatalog } from "../../apps/api/routes/admin/catalog.ts"
 import { applyMigrations } from "./migrations.ts"
@@ -34,7 +38,11 @@ import { applyMigrations } from "./migrations.ts"
  * they are missing rather than skipping.
  */
 
-async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
+/** Runs `body` in a fresh schema, with every query the client sends pushed to `queries`. */
+async function withSchema(
+  body: (sql: postgres.Sql, queries: string[]) => Promise<void>,
+): Promise<void> {
+  const queries: string[] = []
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
   const schema = `catalog_test_${uuidV7().replaceAll(`-`, ``)}`
@@ -44,11 +52,12 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
     transform: postgres.camel,
     connection: { options: `-c search_path=${schema}` },
     onnotice: () => {},
+    debug: (_connection, query) => queries.push(query),
   })
   try {
     await admin`CREATE SCHEMA ${admin(schema)}`
     await applyMigrations(sql)
-    await body(sql)
+    await body(sql, queries)
   } finally {
     await sql.end({ timeout: 5 })
     await admin`DROP SCHEMA IF EXISTS ${admin(schema)} CASCADE`
@@ -479,6 +488,101 @@ Deno.test(`the website reads published items only, with the photos that are read
   })
 })
 
+Deno.test(`the website's list shows each item's sizes and colours, sold out when every combination is, in five queries`, async () => {
+  await withSchema(async (sql, queries) => {
+    const catalog = new PostgresCatalog(sql)
+    const actor = await operator(sql)
+    const category = await catalog.createCategory(uuidV7(), {
+      slug: `clothes`,
+      name: { en: `Clothes` },
+    }, actor)
+    const publish = async (fields: CatalogItemFields) => {
+      const item = await catalog.createItem(uuidV7(), { ...fields, categoryId: category.id }, actor)
+      await catalog.setStatus(item.id, 1, `published`, actor)
+    }
+    const settings = { currency: `VND`, languages: [`en`] }
+    const listed = async () => {
+      queries.length = 0
+      const { items } = await readPublicCatalog(sql, settings)
+      return { items, queries: queries.length }
+    }
+
+    // The S in both colours and the red M: the S and the red are sold out, the M and the blue not.
+    const { fields, red, blue, small, medium } = jacket()
+    await publish({
+      ...fields,
+      soldOut: [
+        { colourId: red, sizeId: small },
+        { colourId: blue, sizeId: small },
+        { colourId: red, sizeId: medium },
+      ],
+    })
+    const one = await listed()
+    expect(one.items.map(({ sizes, colours }) => ({ sizes, colours }))).toEqual([{
+      sizes: [{ label: `S`, soldOut: true }, { label: `M`, soldOut: false }],
+      colours: [
+        { name: { en: `Red` }, swatch: `#aa0000`, soldOut: true },
+        { name: { en: `Blue` }, swatch: `#0000aa`, soldOut: false },
+      ],
+    }])
+
+    const page = await readPublicItem(sql, `zip-jacket`)
+    expect(page?.sizes).toEqual([
+      {
+        id: small,
+        label: `S`,
+        heightCm: { min: 150, max: 162 },
+        weightKg: { min: 40, max: 52 },
+        soldOut: true,
+      },
+      { id: medium, label: `M`, heightCm: null, weightKg: null, soldOut: false },
+    ])
+    expect(page?.colours.map(({ id, soldOut }) => ({ id, soldOut }))).toEqual([
+      { id: red, soldOut: true },
+      { id: blue, soldOut: false },
+    ])
+
+    // Sizes only: its one sold-out row has no colour and sells the size out.
+    const [tall, short] = [uuidV7(), uuidV7()]
+    await publish(
+      jacket({
+        slug: `tee`,
+        colours: [],
+        sizes: [
+          { id: tall, label: `L`, heightCm: null, weightKg: null },
+          { id: short, label: `XS`, heightCm: null, weightKg: null },
+        ],
+        soldOut: [{ colourId: null, sizeId: short }],
+      }).fields,
+    )
+    // Colours only, all sold out.
+    const green = uuidV7()
+    await publish(
+      jacket({
+        slug: `scarf`,
+        colours: [{ id: green, name: { en: `Green` }, swatch: `#00aa00` }],
+        sizes: [],
+        soldOut: [{ colourId: green, sizeId: null }],
+      }).fields,
+    )
+
+    const three = await listed()
+    const bySlug = new Map(three.items.map((item) => [item.slug, item]))
+    expect(bySlug.get(`tee`)).toMatchObject({
+      stock: `some-sold-out`,
+      sizes: [{ label: `L`, soldOut: false }, { label: `XS`, soldOut: true }],
+      colours: [],
+    })
+    expect(bySlug.get(`scarf`)).toMatchObject({
+      stock: `sold-out`,
+      sizes: [],
+      colours: [{ name: { en: `Green` }, swatch: `#00aa00`, soldOut: true }],
+    })
+    expect(three.queries).toBe(one.queries)
+    expect(three.queries).toBe(5)
+  })
+})
+
 Deno.test(`the sample catalog seeds once, with five published items`, async () => {
   await withSchema(async (sql) => {
     await seedSampleCatalog(sql)
@@ -631,5 +735,170 @@ Deno.test(`a link leads only to a published item, by the item's own slug`, async
     expect(await readTrackingTarget(sql, `ZZZZZZZZZZZ`)).toBeNull()
     await catalog.setStatus(item.id, published.version, `hidden`, actor)
     expect(await readTrackingTarget(sql, code)).toBeNull()
+  })
+})
+
+const INDEXNOW: IndexNowSetup = {
+  key: `indexnow-test-key-0123`,
+  siteUrl: `https://www.example.com`,
+}
+
+/**
+ * A fake IndexNow that answers `status` (or throws when it is `null`) and records the addresses of
+ * every submission.
+ */
+function fakeIndexNow(status: number | null = 200) {
+  const sent: string[][] = []
+  const fetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    sent.push(JSON.parse(String(init?.body)).urlList)
+    if (status === null) throw new TypeError(`connection refused`)
+    return new Response(null, { status })
+  }
+  return { sent, fetch: fetch as typeof globalThis.fetch }
+}
+
+/**
+ * Runs the `catalog.indexnow` rows of item `id` that wait, as the worker would, and closes them.
+ * Answers how many ran.
+ */
+async function runIndexNow(
+  sql: postgres.Sql,
+  id: string,
+  deps: Omit<Parameters<typeof catalogIndexNowJob>[0], `sql` | `pages`>,
+): Promise<number> {
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM outbox_events
+    WHERE event_kind = ${CATALOG_INDEXNOW_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
+  `
+  const job = catalogIndexNowJob({
+    sql,
+    pages: { itemPath: DEFAULT_ITEM_PATH, languages: [`en`, `de`] },
+    ...deps,
+  })
+  for (const row of rows) {
+    await job({ id: row.id, aggregateId: id, eventKind: CATALOG_INDEXNOW_JOB } as OutboxEvent)
+    await sql`UPDATE outbox_events SET processed_at = now() WHERE id = ${row.id}`
+  }
+  return rows.length
+}
+
+/** A published jacket in the `jackets` category, with no IndexNow job left waiting. */
+async function publishedJacket(sql: postgres.Sql, actor: CatalogActor) {
+  const catalog = new PostgresCatalog(sql)
+  const category = uuidV7()
+  await catalog.createCategory(category, { slug: `jackets`, name: { en: `Jackets` } }, actor)
+  const parts = jacket({ categoryId: category })
+  const item = await catalog.createItem(uuidV7(), parts.fields, actor)
+  const published = await catalog.setStatus(item.id, item.version, `published`, actor)
+  await runIndexNow(sql, item.id, { setup: null, log: () => {} })
+  return { catalog, item: published, ...parts }
+}
+
+const JACKET_PAGES = [
+  `https://www.example.com/jackets/zip-jacket`,
+  `https://www.example.com/de/jackets/zip-jacket`,
+]
+
+Deno.test(`IndexNow hears an item's page once when it is published, and again when it is hidden (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const catalog = new PostgresCatalog(sql)
+    const category = uuidV7()
+    await catalog.createCategory(category, { slug: `jackets`, name: { en: `Jackets` } }, actor)
+    const item = await catalog.createItem(uuidV7(), jacket({ categoryId: category }).fields, actor)
+    const indexNow = fakeIndexNow()
+    const run = () =>
+      runIndexNow(sql, item.id, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+    expect(await run()).toBe(0)
+
+    const published = await catalog.setStatus(item.id, item.version, `published`, actor)
+    expect(await catalog.setStatus(item.id, published.version, `published`, actor)).toEqual(
+      published,
+    )
+    expect(await run()).toBe(1)
+    expect(indexNow.sent).toEqual([JACKET_PAGES])
+
+    await catalog.setStatus(item.id, published.version, `hidden`, actor)
+    expect(await run()).toBe(1)
+    expect(indexNow.sent).toEqual([JACKET_PAGES, JACKET_PAGES])
+  })
+})
+
+Deno.test(`a published item's price or sold-out change is sent to IndexNow, a text-only edit is not (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const { catalog, item, fields, blue, medium } = await publishedJacket(sql, actor)
+    const indexNow = fakeIndexNow()
+    const run = () =>
+      runIndexNow(sql, item.id, { setup: INDEXNOW, log: () => {}, fetch: indexNow.fetch })
+
+    const described = await catalog.updateItem(item.id, item.version, {
+      ...fields,
+      description: { en: `Warmer than ever.` },
+      name: { en: `Zip jacket, warm` },
+    }, actor)
+    expect(await run()).toBe(0)
+
+    const repriced = await catalog.updateItem(item.id, described.version, {
+      ...fields,
+      price: 400_000,
+    }, actor)
+    expect(await run()).toBe(1)
+
+    await catalog.updateItem(item.id, repriced.version, {
+      ...fields,
+      price: 400_000,
+      soldOut: [...fields.soldOut, { colourId: blue, sizeId: medium }],
+    }, actor)
+    expect(await run()).toBe(1)
+    expect(indexNow.sent).toEqual([JACKET_PAGES, JACKET_PAGES])
+  })
+})
+
+Deno.test(`two changes before the worker runs queue one IndexNow job (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const { catalog, item, fields } = await publishedJacket(sql, actor)
+    const first = await catalog.updateItem(item.id, item.version, { ...fields, price: 1 }, actor)
+    await catalog.updateItem(item.id, first.version, { ...fields, price: 2 }, actor)
+    expect(await runIndexNow(sql, item.id, { setup: null, log: () => {} })).toBe(1)
+  })
+})
+
+Deno.test(`with IndexNow off a published item sends nothing (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const catalog = new PostgresCatalog(sql)
+    const category = uuidV7()
+    await catalog.createCategory(category, { slug: `jackets`, name: { en: `Jackets` } }, actor)
+    const item = await catalog.createItem(uuidV7(), jacket({ categoryId: category }).fields, actor)
+    await catalog.setStatus(item.id, item.version, `published`, actor)
+    const indexNow = fakeIndexNow()
+    expect(await runIndexNow(sql, item.id, { setup: null, log: () => {}, fetch: indexNow.fetch }))
+      .toBe(1)
+    expect(indexNow.sent).toEqual([])
+  })
+})
+
+Deno.test(`a failing IndexNow is logged once without the key, and the item stays published (#898)`, async () => {
+  await withSchema(async (sql) => {
+    const actor = await operator(sql)
+    const { catalog, item, fields } = await publishedJacket(sql, actor)
+    let version = item.version
+    for (const [price, status] of [[1, 403], [2, null]] as const) {
+      version = (await catalog.updateItem(item.id, version, { ...fields, price }, actor)).version
+      const lines: string[] = []
+      const indexNow = fakeIndexNow(status)
+      await runIndexNow(sql, item.id, {
+        setup: INDEXNOW,
+        log: (line) => lines.push(line),
+        fetch: indexNow.fetch,
+      })
+      expect(indexNow.sent).toHaveLength(1)
+      expect(lines).toHaveLength(1)
+      expect(lines[0]).toContain(`IndexNow was not told about catalog item ${item.id}`)
+      expect(lines[0]).not.toContain(INDEXNOW.key)
+      expect((await catalog.getItem(item.id))!.status).toBe(`published`)
+    }
   })
 })

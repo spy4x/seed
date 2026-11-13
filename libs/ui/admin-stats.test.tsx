@@ -10,6 +10,8 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import type { WebsiteStatsDay, WebsiteStatsReport, WebsiteStatsResponse } from "@domain/identity"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import {
   AdminStatsScreen,
   type AdminStatsScreenProps,
@@ -194,6 +196,29 @@ describe("stats screen", () => {
     expect(kpis).toContain("5.0%")
     expect(kpis).toContain("−2.0 points vs previous 7 days")
     expect(kpis).toContain("a tap on a Telegram or Zalo order button")
+  })
+
+  it("groups the visits and their change in the operator's region format", async () => {
+    const response = ready({ visits: { current: 1234, previous: 100 } })
+    const kpis = () => find("[data-e2e=admin-stats-kpis]").textContent
+    const region = (locale: string) =>
+      createFormatters({ locale, timeZone: `UTC`, hourCycle: `h23` })
+
+    await mount(
+      <FormatContext.Provider value={region(`de-DE`)}>
+        <AdminStatsScreen {...props([], { response })} />
+      </FormatContext.Provider>,
+    )
+    expect(kpis()).toContain("1.234")
+    expect(kpis()).toContain("+1.134 vs previous 7 days")
+
+    await mount(
+      <FormatContext.Provider value={region(`en-US`)}>
+        <AdminStatsScreen {...props([], { response })} />
+      </FormatContext.Provider>,
+    )
+    expect(kpis()).toContain("1,234")
+    expect(kpis()).toContain("+1,134 vs previous 7 days")
   })
 
   it("ranks the sources as given, ends with No source and prints – for a thin sample", async () => {

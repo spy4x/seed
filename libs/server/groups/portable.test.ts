@@ -1,6 +1,8 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type postgres from "postgres"
+import { unzipSync } from "fflate"
+import { parseCsv } from "@spy4x/platform/universal/csv"
 import { PlanError } from "@domain/billing"
 import {
   GROUP_EXPORT_FORMAT,
@@ -13,12 +15,14 @@ import { TAG_MAX_PER_GROUP } from "@domain/tags"
 import { notePortable } from "@server/notes/note-portable.ts"
 import { tagPortable } from "@server/tags/tag-portable.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { translatorFor } from "../mail/mail.ts"
 import {
   groupFileParts,
   parseGroupFile,
   portable,
   type PortableAggregate,
   writeGroupFile,
+  writeGroupSpreadsheets,
 } from "./portable.ts"
 import { PostgresGroupPorter } from "./postgres-group-porter.ts"
 
@@ -293,6 +297,127 @@ describe("writeGroupFile", () => {
     )
       .toEqual(["One", "Two"])
     expect(parsed.entries.get("tags")?.length).toBe(1)
+  })
+})
+
+/** The registered aggregates, each reading `pages[kind]` instead of the database. */
+function reading(pages: Record<string, unknown[][]>): PortableAggregate[] {
+  return AGGREGATES.map((aggregate) => ({
+    ...aggregate,
+    async *read() {
+      for (const page of pages[aggregate.kind] ?? []) yield page as never
+    },
+  }))
+}
+
+/** Every piece of a spreadsheet ZIP, joined, unzipped into its files' text by name. */
+async function spreadsheets(
+  aggregates: readonly PortableAggregate[],
+  language: "en" | "de" = "en",
+): Promise<Record<string, string>> {
+  const pieces: Uint8Array[] = []
+  for await (
+    const piece of writeGroupSpreadsheets(
+      null as unknown as postgres.Sql,
+      uuidV7(),
+      aggregates,
+      translatorFor(language),
+      new Date(at),
+    )
+  ) {
+    pieces.push(piece)
+  }
+  const zip = new Uint8Array(await new Blob(pieces as BlobPart[]).arrayBuffer())
+  const decoder = new TextDecoder("utf-8", { ignoreBOM: true })
+  return Object.fromEntries(
+    Object.entries(unzipSync(zip)).map(([name, bytes]) => [name, decoder.decode(bytes)]),
+  )
+}
+
+/** The rows of a CSV file, as a spreadsheet reads them. */
+function cells(text: string): string[][] {
+  const parsed = parseCsv(text)
+  if (!parsed.ok) throw new Error(`Not a CSV file: ${JSON.stringify(parsed.error)}`)
+  return parsed.value
+}
+
+describe("writeGroupSpreadsheets", () => {
+  it("writes notes.csv with the person's headings, a byte order mark and accents intact", async () => {
+    const files = await spreadsheets(
+      reading({ notes: [[{ ...note("Café crème"), body: "Größe über ½" }]] }),
+      "de",
+    )
+    const text = files["notes.csv"]
+    expect(text.startsWith("\uFEFF")).toBe(true)
+    expect(text.endsWith("\r\n")).toBe(true)
+    expect(text.split("\r\n")[0]).toBe("\uFEFFID,Titel,Text,Tag-IDs,Erstellt,Zuletzt geändert")
+    expect(cells(text)[1].slice(1)).toEqual(["Café crème", "Größe über ½", "", at, at])
+  })
+
+  it("writes a note text that starts with =HYPERLINK( as a text cell, not a formula", async () => {
+    const payload = `=HYPERLINK("https://evil.example","Click")`
+    const files = await spreadsheets(reading({ notes: [[{ ...note(payload), body: payload }]] }))
+    const [, row] = cells(files["notes.csv"])
+    expect(row[1]).toBe(`'${payload}`)
+    expect(row[2]).toBe(`'${payload}`)
+  })
+
+  it("lists an aggregate with no spreadsheet in README.txt and leaves its file out", async () => {
+    const files = await spreadsheets(reading({ tags: [[tag("Blue")]], notes: [] }), "de")
+    expect(Object.keys(files).sort()).toEqual(["README.txt", "notes.csv"])
+    expect(files["README.txt"]).toContain("Nicht als Tabelle verfügbar")
+    expect(files["README.txt"]).toContain("\n- tags\n")
+  })
+
+  it("streams a 50,000-note group page by page, never reading it all before the first bytes", async () => {
+    const pages = 100
+    let read = 0
+    const notes: PortableAggregate = {
+      ...notePortable,
+      async *read() {
+        for (let page = 0; page < pages; page++) {
+          read++
+          yield Array.from({ length: 500 }, (_, index) => note(`Note ${page}-${index}`)) as never
+        }
+      },
+    }
+    const readAtPiece: number[] = []
+    const pieces: Uint8Array[] = []
+    for await (
+      const piece of writeGroupSpreadsheets(
+        null as unknown as postgres.Sql,
+        uuidV7(),
+        [notes],
+        translatorFor("en"),
+        new Date(at),
+      )
+    ) {
+      readAtPiece.push(read)
+      pieces.push(piece)
+    }
+    expect(readAtPiece[0]).toBeLessThan(pages)
+    expect(new Set(readAtPiece).size).toBeGreaterThan(pages / 2)
+    const zip = new Uint8Array(await new Blob(pieces as BlobPart[]).arrayBuffer())
+    const text = new TextDecoder().decode(unzipSync(zip)["notes.csv"])
+    expect(text.split("\r\n").length).toBe(1 + 50_000 + 1)
+  })
+
+  it("fails its first piece when the first page cannot be read", async () => {
+    const failing: PortableAggregate = {
+      ...notePortable,
+      // deno-lint-ignore require-yield
+      async *read() {
+        throw new Error("the database is down")
+      },
+    }
+    const pieces = writeGroupSpreadsheets(
+      null as unknown as postgres.Sql,
+      uuidV7(),
+      [failing],
+      translatorFor("en"),
+      new Date(at),
+    )
+    await expect(pieces.next()).rejects.toThrow("the database is down")
   })
 })
 

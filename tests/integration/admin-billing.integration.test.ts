@@ -22,6 +22,7 @@ import {
   releaseAdminBillingAction,
 } from "@server/billing/admin-billing.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
+import { TEST_PLANS } from "../../libs/domain/billing/test-plans.ts"
 
 /**
  * The operator area's billing module (#196) against a real Postgres built from schema.sql: the
@@ -74,7 +75,7 @@ Deno.test(`admin billing: monthly revenue and counts match a hand count of the s
   await withSchema(async (sql) => {
     const repository = new PostgresGroupRepository(sql)
     const owner = await insertUser(sql)
-    // Hand count, Pro at 900 cents per seat a month:
+    // Hand count, the test catalog's Pro at 900 cents per seat a month:
     //   Active ×3 seats, twice     5400  paying (two groups, same price and seats)
     //   Past due, no quantity       900  paying, past due (one seat)
     //   Trial ×5, ends in 3 days      0  trial ending soon
@@ -99,7 +100,7 @@ Deno.test(`admin billing: monthly revenue and counts match a hand count of the s
     }
     await sql`INSERT INTO billing_events (id, event_type, received_at) VALUES ('evt_1', 1, ${NOW})`
 
-    const figures = await readAdminBillingFigures(sql, NOW)
+    const figures = await readAdminBillingFigures(sql, NOW, TEST_PLANS)
 
     expect(figures).toEqual({
       monthlyRevenue: [{ amount: 8100, currency: `EUR` }],

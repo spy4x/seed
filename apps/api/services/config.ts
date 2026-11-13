@@ -2,6 +2,8 @@ import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
 import { OPERATION_BUDGET, type OperationBudget } from "../middlewares/operation-rate-limits.ts"
 import { processEnv } from "@spy4x/platform/server/process"
 import { isSpaOn, readApiEnv } from "./config-env.ts"
+import type { SignUpMode } from "./sign-up-gate.ts"
+import { readNotesSetup } from "@server/notes/setup.ts"
 
 const env = readApiEnv(processEnv)
 // loadConfig names a failing variable but not the rule it broke, so this one says it outright.
@@ -33,10 +35,17 @@ export class Config {
   }
   timeZone = env.TIMEZONE
   authSessionDurationMin = 60 * 24 * 30 * 2 // 2 months
-  /** "Try it now": one click into the app as a guest. On unless `GUEST_MODE=false`. */
+  /** Who may make an account: anyone, or only people a member invited (`SIGN_UP`). */
+  signUp: SignUpMode = env.SIGN_UP ?? `open`
+  /**
+   * "Try it now": one click into the app as a guest. On unless `GUEST_MODE=false`; `createSignIn`
+   * turns it off where sign-up is by invitation, since a guest is an account nobody invited.
+   */
   guestMode = env.GUEST_MODE !== "false"
   /** Whether the SPA runs (`isSpaOn`); `false` closes its account routes. */
   spa = isSpaOn(env)
+  /** The notes example: on unless `NOTES=false` (`readNotesSetup`); off, nothing serves notes. */
+  notes = readNotesSetup(processEnv)
   /** What one person may upload to note attachments per hour (docs/files.md, "Upload budget"). */
   attachmentUploadBudget = {
     files: wholeNumber(
