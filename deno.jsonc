@@ -450,9 +450,10 @@
     "@spy4x/email": "jsr:@spy4x/email@1.126.0",
     "@spy4x/net": "jsr:@spy4x/net@1.126.0",
     "@spy4x/billing": "jsr:@spy4x/billing@1.126.0",
-    // The version preact-components 14.4.0 imports, so one copy loads and the screens' `Formatters`
-    // match theirs: 1.126.0 adds `month`, which their formatters lack. It moves with
-    // preact-components.
+    // The version preact-components 14.4.0 imports, so Seed's own imports and theirs share one copy
+    // and the screens' `Formatters` match theirs: 1.126.0 adds `month`, which their formatters lack.
+    // The ts-libs packages above still load 1.126.0 (date.ts, tz.ts, formatter-cache.ts) through
+    // their `^1.116.0` range, so two copies load. It moves with preact-components.
     "@spy4x/time": "jsr:@spy4x/time@1.116.0",
 
     // apps/api
