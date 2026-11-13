@@ -450,7 +450,9 @@
     "@spy4x/email": "jsr:@spy4x/email@1.126.0",
     "@spy4x/net": "jsr:@spy4x/net@1.126.0",
     "@spy4x/billing": "jsr:@spy4x/billing@1.126.0",
-    "@spy4x/time": "jsr:@spy4x/time@1.126.0",
+    // 1.126.0 adds `month` to `Formatters`, which the formatters of preact-components 13.11.1
+    // (on time 1.95.0) lack, so the screens' types stop matching. It moves with preact-components.
+    "@spy4x/time": "jsr:@spy4x/time@1.125.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",
