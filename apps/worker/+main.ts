@@ -21,7 +21,7 @@ import { isDemoMode } from "@server/auth/demo-accounts.ts"
 import { AppDbBase } from "../api/services/db-base.ts"
 import { demoDataSeed, startDemoReset } from "./demo/reset.ts"
 import { isDemoSeeded, resetDemo } from "./demo/run.ts"
-import { DEMO_ADMIN_ENV_NAMES, type DemoAdmin, readDemoAdmin } from "./demo/options.ts"
+import { DEMO_ADMIN_ENV_NAMES, type DemoAdmins, readDemoAdmins } from "./demo/options.ts"
 import { seedWorkspace } from "./demo/seed.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
 import { readServerFilesSetup } from "@server/files/settings.ts"
@@ -123,11 +123,11 @@ if (!indexNow && processEnv.get("INDEXNOW_KEY")?.trim()) {
 
 // The public demo (docs/demo.md) gives every new account its own sample groups.
 const demo = isDemoMode(readEnvRecord([`DEMO_MODE`]))
-// The owner's private administrator on the demo, when `DEMO_ADMIN_PASSWORD` is set. A bad value
-// stops the worker here.
-let demoAdmin: DemoAdmin | null = null
+// The demo's administrators: the visitors' public one, and the owner's private one when
+// `DEMO_ADMIN_PASSWORD` is set. A bad value stops the worker here.
+let demoAdmins: DemoAdmins | null = null
 try {
-  demoAdmin = readDemoAdmin(readEnvRecord(DEMO_ADMIN_ENV_NAMES))
+  demoAdmins = readDemoAdmins(readEnvRecord(DEMO_ADMIN_ENV_NAMES))
 } catch (error) {
   // A SeedConfigError: it names the variable, never its value.
   console.error(`❌ ${(error as Error).message}`)
@@ -202,9 +202,13 @@ function reportSweepFailure(error: unknown): void {
 if (demo) {
   startDemoReset({
     signal,
-    isSeeded: () => isDemoSeeded(sql, new Date(), demoAdmin !== null),
+    isSeeded: () =>
+      isDemoSeeded(sql, new Date(), {
+        privateAdmin: demoAdmins?.privatePassword != null,
+        publicAdmin: demoAdmins !== null,
+      }),
     reset: async () => {
-      await resetDemo(sql, { subscribers: subscribersSetup, admin: demoAdmin })
+      await resetDemo(sql, { subscribers: subscribersSetup, admins: demoAdmins })
       console.log("Demo wiped and seeded again")
     },
     now: () => new Date(),
