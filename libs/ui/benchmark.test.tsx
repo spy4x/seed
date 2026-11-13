@@ -266,6 +266,17 @@ describe("BenchmarkScreen", () => {
     expect(steps).not.toContain("48.4 MB")
   })
 
+  it("heads Measurements and This device with the shared section heading, each naming its section", async () => {
+    await mount(screen())
+    const headings = [...document.querySelectorAll("h2.pc-h2")]
+    expect(headings.map((heading) => heading.textContent)).toEqual(["Measurements", "This device"])
+    for (const heading of headings) {
+      const section = heading.closest("section")!
+      expect(heading.id).not.toBe("")
+      expect(section.getAttribute("aria-labelledby")).toBe(heading.id)
+    }
+  })
+
   it("waits for every group's count before saying no group is large", async () => {
     await mount(screen({ groups: [groups[0], { ...groups[1], notes: null }] }))
     expect(count("[data-e2e=benchmark-no-large-group]")).toBe(0)
