@@ -1249,6 +1249,28 @@ describe("NoteEditorScreen in the browser", () => {
     expect(save.calls).toHaveLength(1)
   })
 
+  it("does not save on the Enter that confirms an input method's composition, in any browser", async () => {
+    const save = spy<[]>()
+    await mount(<NoteEditorScreen {...editorDefaults} onSave={save.fn} />)
+    await type("[data-e2e=note-title]", "東京")
+
+    // Chrome and Firefox mark the Enter as composing; Safari sends keyCode 229 instead.
+    for (const init of [{ isComposing: true }, { keyCode: 229 }]) {
+      const enter = new window.KeyboardEvent("keydown", {
+        key: "Enter",
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      })
+      await act(async () => {
+        find("[data-e2e=note-title]").dispatchEvent(enter as unknown as Event)
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+      expect(enter.defaultPrevented).toBe(false)
+    }
+    expect(save.calls).toHaveLength(0)
+  })
+
   it("asks before deleting from the page's menu, and deletes only when the person confirms", async () => {
     const remove = spy<[]>()
     await mount(<NoteEditorScreen {...editing} onDelete={remove.fn} />)
