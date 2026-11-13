@@ -4,7 +4,7 @@ import { useSignal } from "@preact/signals"
 import { matchRoute, useLocation, useRouter, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
 import { pictureUrl, shownPictureId } from "@domain/identity"
-import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
 import { type SearchChoice, SearchPalette } from "@ui/search-palette.tsx"
@@ -19,6 +19,7 @@ import { selectionStore } from "../state/selection.ts"
 import { newNoteStore } from "../state/new-note.ts"
 import { pageCommands, spaShortcutRows } from "./shortcuts.ts"
 import { SPA_ROUTE_PATHS } from "./spa-paths.ts"
+import { runChoice } from "./palette-choice.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
 import type { SessionUser } from "../state/session.ts"
 import {
@@ -248,26 +249,20 @@ export function AppShell(
     // An open note belongs to the group just left.
     if (location.startsWith(`${NOTE_PATHS.list}/`)) navigate(NOTE_PATHS.list)
   }
-  // Each choice runs through the same function as its button or shortcut.
-  const open = async (choice: SearchChoice) => {
-    if (choice.kind === "page") return navigate(choice.href)
-    if (choice.kind === "new-note") return newNoteStore.show()
-    if (choice.kind === "command") return runPageCommand(choice.id)
-    if (choice.kind === "switch-group") return switchGroup(choice.groupId)
-    if (choice.kind === "group-settings") return navigate(GROUP_PATHS.settings(choice.groupId))
-    if (choice.kind === "theme") {
+  const open = (choice: SearchChoice) =>
+    runChoice(choice, {
+      navigate,
+      currentGroupId: selectionStore.groupId.value,
+      selectGroup: (groupId) => selectionStore.select(groupId),
+      switchGroup,
+      newNote: newNoteStore.show,
+      runPageCommand,
       // The profile's Appearance section sets it the same way.
-      return themeStore.set(choice.theme as Parameters<typeof themeStore.set>[0])
-    }
-    if (choice.kind === "shortcuts") return shortcutsOpen.value = true
-    if (choice.kind === "sign-out") return onSignOut()
-    if (choice.kind === "install") return void install.install()
-    // Straight to the note: never the editor's "Note in another group" page in between.
-    if (choice.groupId !== selectionStore.groupId.value) {
-      await selectionStore.select(choice.groupId)
-    }
-    navigate(NOTE_PATHS.note(choice.noteId))
-  }
+      setTheme: (theme) => themeStore.set(theme as Parameters<typeof themeStore.set>[0]),
+      openShortcuts: () => shortcutsOpen.value = true,
+      signOut: onSignOut,
+      install: () => void install.install(),
+    })
   return (
     <AppFrame
       search={
