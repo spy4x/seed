@@ -1178,6 +1178,11 @@ export default {
   "AdminFrame.signInTitle": "Anmeldung für Operatoren",
   "AdminFrame.signInText":
     "Für alle, die dieses Produkt betreiben. Melde dich mit deinem Operator-Konto an.",
+  "AdminFrame.demoNote":
+    "Das ist die öffentliche Demo. Melde dich mit dem Admin-Konto der Demo an und sieh dich um. Jede Nacht wird alles zurückgesetzt.",
+  "AdminFrame.demoEmail": "E-Mail-Adresse",
+  "AdminFrame.demoPassword": "Passwort",
+  "AdminFrame.demoSignIn": "Als Demo-Admin anmelden",
   "AdminFrame.codeTitle": "Code eingeben",
   "AdminFrame.codeText":
     "Öffne deine Authenticator-App und gib die sechs Ziffern ein, die sie anzeigt.",

@@ -1220,6 +1220,11 @@ export default {
   "AdminFrame.signInTitle": "Connexion opérateur",
   "AdminFrame.signInText":
     "Pour les personnes qui gèrent ce produit. Connectez-vous avec votre compte opérateur.",
+  "AdminFrame.demoNote":
+    "Ceci est la démo publique. Connectez-vous avec le compte administrateur de la démo pour faire le tour. Tout est réinitialisé chaque nuit.",
+  "AdminFrame.demoEmail": "Adresse e-mail",
+  "AdminFrame.demoPassword": "Mot de passe",
+  "AdminFrame.demoSignIn": "Se connecter en admin de la démo",
   "AdminFrame.codeTitle": "Saisissez votre code",
   "AdminFrame.codeText":
     "Ouvrez votre application d’authentification et saisissez les six chiffres affichés.",

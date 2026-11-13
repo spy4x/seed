@@ -18,7 +18,14 @@ import {
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
 import { NotFoundScreen } from "@ui/not-found-screen.tsx"
-import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from "./state.ts"
+import {
+  type AdminStore,
+  type DemoAdminCredentials,
+  hasAdminAccess,
+  operatorName,
+  readDemoAdmin,
+  readOperatorEmail,
+} from "./state.ts"
 import { ADMIN_MODULES, adminPersonTabs, shownModules } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
@@ -170,6 +177,12 @@ function Operator(
     }
   }, [user?.id])
 
+  // The public demo's admin account, shown on the sign-in page; read once.
+  const [demoAdmin, setDemoAdmin] = useState<DemoAdminCredentials | null>(null)
+  useEffect(() => {
+    void readDemoAdmin(store.request).then(setDemoAdmin)
+  }, [])
+
   // One context per signed-in session, so a module's state starts empty for the next one.
   const context = useMemo<AdminContext | null>(
     () =>
@@ -221,6 +234,7 @@ function Operator(
           error={session.error}
           onSignIn={store.signIn}
           onOneTimeCode={store.oneTimeCode}
+          demoAdmin={demoAdmin}
         />
       </AdminFrame>
     )

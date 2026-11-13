@@ -1203,6 +1203,11 @@ export default {
   "AdminFrame.comingSoonBadge": "Em breve",
   "AdminFrame.signInTitle": "Entrada de operadores",
   "AdminFrame.signInText": "Para quem administra este produto. Entre com sua conta de operador.",
+  "AdminFrame.demoNote":
+    "Esta é a demo pública. Entre com a conta de administrador da demo para dar uma olhada. Tudo é zerado toda noite.",
+  "AdminFrame.demoEmail": "E-mail",
+  "AdminFrame.demoPassword": "Senha",
+  "AdminFrame.demoSignIn": "Entrar como administrador da demo",
   "AdminFrame.codeTitle": "Digite seu código",
   "AdminFrame.codeText": "Abra seu app autenticador e digite os seis dígitos que ele mostra.",
   "AdminFrame.login": "E-mail ou nome de usuário",

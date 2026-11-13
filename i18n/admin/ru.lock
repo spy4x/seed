@@ -854,6 +854,10 @@ AdminFrame.codeTitle	62fd9988e2dff052
 AdminFrame.comingSoon	a4ed4cab31b1d7ec
 AdminFrame.comingSoonBadge	4f7d64017689437e
 AdminFrame.continue	31fbef162594de01
+AdminFrame.demoEmail	969ccbd3cf6300ec
+AdminFrame.demoNote	847dd11f41e46a29
+AdminFrame.demoPassword	e7cf3ef4f17c3999
+AdminFrame.demoSignIn	b28fcc775b30f7ce
 AdminFrame.login	2a347f1933d48350
 AdminFrame.noAccess	9b1f0823459d06f7
 AdminFrame.noAccessDescription	f32a44c230cca297
