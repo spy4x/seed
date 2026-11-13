@@ -151,7 +151,7 @@ async function openMenu(index: number): Promise<string[]> {
 }
 
 describe("the contact links list", () => {
-  it("shows each link's label or value with its channel, in order", async () => {
+  it("shows each link's label, else its channel and value, with its channel under it, in order", async () => {
     await mount(<AdminContactLinksScreen {...listProps([])} />)
     const rows = [...document.querySelectorAll("[data-e2e=contact-link-row] > div:first-child")]
     expect(rows.map((text) => text.textContent)).toEqual([

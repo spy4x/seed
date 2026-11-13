@@ -352,7 +352,9 @@ export function AdminContactLinkEditorScreen(
       <PageHeader
         back={back}
         navigate={navigate}
-        title={link ? contactText(link.kind, link.value, link.label) : t.t(`AdminContactLinks.newLink`)}
+        title={link
+          ? contactText(link.kind, link.value, link.label)
+          : t.t(`AdminContactLinks.newLink`)}
         titleDataE2E="contact-link-title"
         menu={link && (
           <DropdownItem
