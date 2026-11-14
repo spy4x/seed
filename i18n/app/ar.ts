@@ -52,6 +52,7 @@ export default {
   "GroupActivity.loading": "جارٍ تحميل النشاط…",
   "GroupActivity.empty": "لا يوجد نشاط بعد.",
   "GroupActivity.emptyHint": "ستظهر هنا التغييرات على المجموعة وملاحظاتها.",
+  "GroupActivity.emptyHintGroupOnly": "ستظهر هنا التغييرات على المجموعة.",
   "GroupActivity.loadingMore": "جارٍ التحميل…",
   "GroupActivity.loadMore": "عرض المزيد",
   "GroupActivity.openNote": "فتح الملاحظة",

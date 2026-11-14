@@ -267,6 +267,7 @@ GroupActivity.deletedUser	152bc3aa4e147002
 GroupActivity.detailsUpdated	a232091043185e1f
 GroupActivity.empty	f279f39eb2e3a96e
 GroupActivity.emptyHint	66da3f4bd19d2255
+GroupActivity.emptyHintGroupOnly	27f811bb7e9dbbc0
 GroupActivity.exported	48a6d1496ab16385
 GroupActivity.fileAdded	15cb83305f754adf
 GroupActivity.fileAddedNoNote	5f094fd02fab3877
