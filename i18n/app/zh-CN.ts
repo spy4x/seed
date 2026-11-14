@@ -584,6 +584,7 @@ export default {
   "OnboardingCard.noteAction": "写笔记",
   "OnboardingCard.inviteTitle": "邀请他人加入你的群组",
   "OnboardingCard.inviteText": "对方会按你分配的角色，实时看到同样的笔记。",
+  "OnboardingCard.inviteTextPlain": "对方会按你分配的角色，实时看到群组里的变化。",
   "OnboardingCard.inviteAction": "邀请他人",
   "OnboardingCard.notificationsTitle": "开启通知",
   "OnboardingCard.notificationsText": "即使应用已关闭，也能收到变动通知。",
@@ -596,6 +597,7 @@ export default {
     "你和群组成员写下的内容。打开一条笔记即可编辑，大家会立即看到你的修改。",
   "OnboardingCard.tourGroupsTitle": "群组",
   "OnboardingCard.tourGroupsText": "笔记存放在群组中。在这里创建群组、邀请他人并分配角色。",
+  "OnboardingCard.tourGroupsTextPlain": "在这里创建群组、邀请他人并分配角色。",
   "OnboardingCard.tourNotificationsTitle": "通知",
   "OnboardingCard.tourNotificationsText": "你不在时发生的事，例如收到的邀请。",
   "OnboardingCard.tourProfileTitle": "个人资料",
@@ -1112,6 +1114,8 @@ export default {
   "ProfileExport.asking": "正在申请…",
   "ProfileExport.never":
     "一个 ZIP 文件，包含你的个人资料、群组和笔记（JSON 和 CSV 格式）。准备需要几分钟，完成后我们会发邮件通知你。",
+  "ProfileExport.neverPlain":
+    "一个 ZIP 文件，包含你的个人资料和群组（JSON 和 CSV 格式）。准备需要几分钟，完成后我们会发邮件通知你。",
   "ProfileExport.download": "下载我的数据",
   "ProfileExport.preparing": "正在准备你的文件。准备好后，我们会给你发邮件和通知。",
   "ProfileExport.ready": "<hidden>你的文件已准备好。</hidden>已就绪：{size}，有效期至<day></day>。",
@@ -1427,6 +1431,7 @@ export default {
   "Search.openProfile": "打开个人资料",
   "Search.downloadData": "下载我的数据",
   "Search.downloadDetail": "包含你的个人资料、群组和笔记的 ZIP 文件",
+  "Search.downloadDetailPlain": "包含你的个人资料和群组的 ZIP 文件",
   "Search.changePicture": "更换头像",
   "Shortcuts.general": "通用",
   "Shortcuts.goTo": "前往",

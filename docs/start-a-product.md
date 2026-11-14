@@ -219,9 +219,12 @@ links it. The tables and migrations stay, as the catalog's do. Unset or anything
 
 Set `SPA_NOTES=false` with it, for the app's screens: the rail, the palette and the keyboard
 shortcuts then offer no notes or tags, `/notes` and `/tags` show the not-found page, sign-in and an
-accepted invitation open the overview, and the overview shows no note widgets. The onboarding, the
-billing plan lines and the token screens still name notes for now
-([#1009](https://github.com/spy4x/seed/issues/1009)); so does the demo.
+accepted invitation open the overview, and the overview shows no note widgets. A new account's
+first steps sit on the overview instead, with no note step and no tour stop on the notes, and "Download
+my data" names the profile and groups only. The app's billing screen shows no plan lines, but the
+plans in `libs/domain/billing/+lib.ts` still list notes and files (`features`, `limits`), and the
+website's pricing page shows them: write your own. The token screens still name notes for now
+([#1015](https://github.com/spy4x/seed/issues/1015)); so does the demo.
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):

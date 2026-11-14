@@ -717,6 +717,8 @@ export default {
   "OnboardingCard.inviteTitle": "Lade jemanden in deine Gruppe ein",
   "OnboardingCard.inviteText":
     "Die Person sieht dieselben Notizen live, mit der Rolle, die du ihr gibst.",
+  "OnboardingCard.inviteTextPlain":
+    "Die Person sieht die Änderungen der Gruppe live, mit der Rolle, die du ihr gibst.",
   "OnboardingCard.inviteAction": "Jemanden einladen",
   "OnboardingCard.notificationsTitle": "Benachrichtigungen einschalten",
   "OnboardingCard.notificationsText": "Erfahre von Änderungen, auch wenn die App geschlossen ist.",
@@ -731,6 +733,8 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Gruppen",
   "OnboardingCard.tourGroupsText":
     "Notizen gehören zu Gruppen. Hier erstellst du Gruppen, lädst Leute ein und legst ihre Rollen fest.",
+  "OnboardingCard.tourGroupsTextPlain":
+    "Hier erstellst du Gruppen, lädst Leute ein und legst ihre Rollen fest.",
   "OnboardingCard.tourNotificationsTitle": "Benachrichtigungen",
   "OnboardingCard.tourNotificationsText":
     "Was passiert ist, während du weg warst – zum Beispiel eine Einladung.",
@@ -1332,6 +1336,8 @@ export default {
   "ProfileExport.asking": "Wird angefordert …",
   "ProfileExport.never":
     "Eine ZIP-Datei mit deinem Profil, deinen Gruppen und Notizen als JSON- und CSV-Dateien. Das dauert ein paar Minuten, und wir schicken dir eine E-Mail, sobald sie fertig ist.",
+  "ProfileExport.neverPlain":
+    "Eine ZIP-Datei mit deinem Profil und deinen Gruppen als JSON- und CSV-Dateien. Das dauert ein paar Minuten, und wir schicken dir eine E-Mail, sobald sie fertig ist.",
   "ProfileExport.download": "Meine Daten herunterladen",
   "ProfileExport.preparing":
     "Deine Datei wird vorbereitet. Sobald sie fertig ist, bekommst du eine E-Mail und eine Benachrichtigung.",
@@ -1713,6 +1719,7 @@ export default {
   "Search.openProfile": "Profil öffnen",
   "Search.downloadData": "Meine Daten herunterladen",
   "Search.downloadDetail": "Eine ZIP-Datei mit deinem Profil, deinen Gruppen und Notizen",
+  "Search.downloadDetailPlain": "Eine ZIP-Datei mit deinem Profil und deinen Gruppen",
   "Search.changePicture": "Profilbild ändern",
   "Shortcuts.general": "Allgemein",
   "Shortcuts.goTo": "Gehe zu",
