@@ -1,4 +1,5 @@
 import type { ComponentChildren, ComponentType } from "preact"
+import type { ReadonlySignal } from "@preact/signals"
 import type { IconProps } from "@spy4x/preact-icons"
 import type { ToastStore } from "@spy4x/preact-signals/toast"
 import type { User } from "@domain/identity"
@@ -27,6 +28,11 @@ export interface AdminContext {
   leaveGuard: LeaveGuard
   /** Every module's tabs for the person page, in registry order (`registry.ts`). */
   personTabs: readonly AdminPersonTab[]
+  /**
+   * The ids `GET /api/admin/modules` lists: the optional modules that are on, and `notes` while the
+   * notes are on (`NOTES`). `null` until read, once per session.
+   */
+  moduleIds: ReadonlySignal<ReadonlySet<string> | null>
   /** The operator's own formatter: their region format, time zone and clock. */
   format(): Formatters
 }

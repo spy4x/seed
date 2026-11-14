@@ -6,6 +6,7 @@ import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render } from "preact"
+import { signal } from "@preact/signals"
 import { act } from "preact/test-utils"
 import { Route, Router, Switch } from "wouter-preact"
 import { memoryLocation } from "wouter-preact/memory-location"
@@ -125,6 +126,7 @@ async function openEditor() {
     navigate,
     leaveGuard,
     personTabs: [],
+    moduleIds: signal(null),
     format: () => ({}) as Formatters,
   }
   root = document.createElement("div")

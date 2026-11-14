@@ -582,6 +582,25 @@ describe(`one group in the admin app`, () => {
     expect(activity.textContent).toContain(`By an operator`)
   })
 
+  it(`leaves the Files tab out with the notes off, and shows Members for a files address`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, notes: false })} />)
+
+    const tabs = [...document.querySelectorAll(`[role=tab]`)].map((tab) => tab.textContent)
+    expect(tabs.some((name) => name?.startsWith(`Files`))).toBe(false)
+    expect(tabs.some((name) => name?.startsWith(`Members`))).toBe(true)
+    expect(has(`[role=tabpanel] [data-e2e=admin-group-members]`)).toBe(true)
+    expect(has(`[data-e2e=admin-group-files]`)).toBe(false)
+  })
+
+  it(`shows the Files tab with the notes on or left out`, async () => {
+    for (const notes of [true, undefined]) {
+      await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, notes })} />)
+      const tabs = [...document.querySelectorAll(`[role=tab]`)].map((tab) => tab.textContent)
+      expect(tabs.some((name) => name?.startsWith(`Files`))).toBe(true)
+      expect(has(`[role=tabpanel] [data-e2e=admin-group-files]`)).toBe(true)
+    }
+  })
+
   it(`names each file with its kind, size, uploader, date and note, and a thumbnail for an image`, async () => {
     await mount(<AdminGroupScreen {...groupProps([], { tab: `files` })} />)
     const list = find(`[role=tabpanel] [data-e2e=admin-group-files] ul[aria-label=Files]`)

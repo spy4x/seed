@@ -106,7 +106,11 @@ One exception helps the operator remove abusive content. A group's Files tab sho
 and the title of its note. The operator can open or download the file through the admin API, since
 the admin host's `img-src 'self'` cannot load the file store.
 With the notes off (`NOTES=false`), the group's file and overview widget routes are not mounted
-and answer 404, since every file sits on a note and every widget counts notes.
+and answer 404, since every file sits on a note and every widget counts notes. `GET
+/api/admin/modules` lists the id `notes` only while they are on, so the admin app then asks for
+neither: the group page shows the member overview's empty card and no Files tab, and an address
+with `?tab=files` opens Members. Until that list is read, the page draws the note widgets as
+loading and asks for nothing of the notes.
 
 | Route under `/api/admin/groups/:id/files/:fileId` | Audit row |
 | ------------------------------------------------- | --------- |

@@ -41,12 +41,20 @@ export function enabledAdminModules(context: AdminModuleContext): AdminApiModule
 }
 
 /**
+ * The id `GET /modules` adds while the notes are on (`readNotesSetup`). The notes have no admin
+ * module of their own: the admin app reads it to hide the group page's note widgets and Files tab.
+ */
+const NOTES_FEATURE_ID = `notes`
+
+/**
  * The routes of every module that is on, built over `context`, and `GET /modules`: the ids of
- * those modules, so the admin app shows only them.
+ * those modules, so the admin app shows only them, and `notes` while the notes are on.
  */
 export function adminModuleRoutes(context: AdminModuleContext): Hono<APIContext>[] {
   const modules = enabledAdminModules(context)
   const ids = modules.map((module) => module.id)
+  // Left out, the notes are on (`AdminModuleContext.notes`).
+  if (context.notes?.on ?? true) ids.push(NOTES_FEATURE_ID)
   return [
     new Hono<APIContext>().get(`/modules`, context.limit, (c) => c.json({ ids })),
     ...modules.map((module) => module.routes(context)),

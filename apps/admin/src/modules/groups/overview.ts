@@ -25,14 +25,11 @@ export function adminWidgetPath(widgetId: string, request: AdminOverviewRequest)
 }
 
 /**
- * The admin group page's "Overview widgets": every `counts` widget of `widgets` in the default
+ * The admin group page's "Overview widgets": every `counts` widget `open` gets, in the default
  * layout, each read on its own; a members-only one is never asked for. An answer for a request the
  * page has moved on from is dropped.
  */
-export function createAdminOverviewState(
-  request: AdminFetch,
-  widgets: readonly WidgetDefinition[] = OVERVIEW_WIDGETS,
-) {
+export function createAdminOverviewState(request: AdminFetch) {
   const loads = signal<Readonly<Record<string, OverviewWidgetLoad>>>({})
   let current: AdminOverviewRequest | null = null
 
@@ -48,8 +45,14 @@ export function createAdminOverviewState(
     if (current === asked) loads.value = { ...loads.value, [widgetId]: next }
   }
 
-  /** Reads every widget the operator may see for `next`. */
-  function open(next: AdminOverviewRequest): void {
+  /**
+   * Reads every widget of `widgets` the operator may see for `next`. The page passes
+   * `overviewWidgets(notes)`, so with the notes off no note widget is asked for.
+   */
+  function open(
+    next: AdminOverviewRequest,
+    widgets: readonly WidgetDefinition[] = OVERVIEW_WIDGETS,
+  ): void {
     current = next
     loads.value = {}
     for (const widget of operatorWidgets(widgets)) void load(widget.id, next)

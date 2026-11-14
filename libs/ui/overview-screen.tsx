@@ -266,18 +266,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
             {t.t(`OverviewScreen.choosePlanText`)}
           </Notice>
         )}
-        {noWidgets
-          ? (
-            <Card data-e2e="overview-no-widgets">
-              <EmptyState
-                headingLevel={2}
-                inset
-                title={t.t(`OverviewScreen.noWidgets`)}
-                description={t.t(`OverviewScreen.noWidgetsText`, { group: isolate(group.name) })}
-              />
-            </Card>
-          )
-          : !group
+        {noWidgets ? <OverviewNoWidgets groupName={group.name} /> : !group
           ? (
             <Card>
               <EmptyState
@@ -384,6 +373,26 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
         )}
       </Stack>
     </div>
+  )
+}
+
+/**
+ * The one quiet card an overview shows when it has no widget at all, as with the notes off and no
+ * widget of a product's own: the member's Overview page and the admin group page draw the same.
+ */
+export function OverviewNoWidgets(
+  { groupName, headingLevel = 2 }: { groupName: string; headingLevel?: 2 | 3 },
+): JSX.Element {
+  const t = useOverviewText()
+  return (
+    <Card data-e2e="overview-no-widgets">
+      <EmptyState
+        headingLevel={headingLevel}
+        inset
+        title={t.t(`OverviewScreen.noWidgets`)}
+        description={t.t(`OverviewScreen.noWidgetsText`, { group: isolate(groupName) })}
+      />
+    </Card>
   )
 }
 

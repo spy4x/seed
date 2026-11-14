@@ -1,7 +1,12 @@
 import type { JSX } from "preact"
 import { operatorWidgets, type WidgetOperatorView } from "@domain/groups"
 import type { DateRangeChoice } from "@spy4x/preact-ui/date-range-search"
-import { OverviewGrid, OverviewRangeRow, type OverviewWidget } from "./overview-screen.tsx"
+import {
+  OverviewGrid,
+  OverviewNoWidgets,
+  OverviewRangeRow,
+  type OverviewWidget,
+} from "./overview-screen.tsx"
 import type { WidgetView } from "./note-widgets.tsx"
 import { useAdminText } from "./i18n.ts"
 
@@ -33,11 +38,27 @@ export interface AdminOverviewWidget extends OverviewWidget {
  * Overview page shows, in the default layout, with a range picker of its own. Nothing to hide or
  * reorder, and never a member's own layout. A widget that shows the group's own figures
  * (`operatorView: "never"`) is not drawn: a line under the cards says so, and when none is
- * left the section keeps only its title and that reason.
+ * left the section keeps only its title and that reason. With no widget at all (the notes off),
+ * it shows the member overview's empty card ({@link OverviewNoWidgets}).
  */
 export function AdminGroupOverview(props: AdminGroupOverviewProps): JSX.Element {
   const t = useAdminText()
   const shown = operatorWidgets(props.widgets)
+  // No widget at all, as with the notes off: the card a member's Overview page shows then.
+  if (props.widgets.length === 0) {
+    return (
+      <section
+        aria-labelledby="admin-group-overview-title"
+        class="flex flex-col gap-4"
+        data-e2e="admin-group-overview"
+      >
+        <h2 id="admin-group-overview-title" class="text-base font-semibold">
+          {t.t(`AdminGroupOverview.title`)}
+        </h2>
+        <OverviewNoWidgets groupName={props.groupName} headingLevel={3} />
+      </section>
+    )
+  }
   if (shown.length === 0) {
     return (
       <section
