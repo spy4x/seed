@@ -94,6 +94,17 @@ describe(`the palette's commands`, () => {
     }
   })
 
+  it(`offer no API tokens setting with the notes off, and every other section`, () => {
+    const settings = (notes?: boolean) =>
+      paletteCommands(context({ notes }), () => {})
+        .filter((option) => option.group === `Settings` && option.choice?.kind === `page`)
+        .map((option) => option.id)
+    const on = settings()
+
+    expect(on).toContain(`action-settings-api-tokens`)
+    expect(settings(false)).toEqual(on.filter((id) => id !== `action-settings-api-tokens`))
+  })
+
   it(`offer Activity only while the rail shows it, and opens that group's`, () => {
     expect(labels()).not.toContain(`Activity`)
     const activity = paletteCommands(context({ activityGroupId: HOME.id }), () => {})

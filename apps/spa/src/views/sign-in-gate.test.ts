@@ -32,8 +32,8 @@ describe("where a visit goes before sign-in is finished", () => {
     expect(signInRedirect("/notifications", "", signedOut)).toBe("/sign-in?next=%2Fnotifications")
   })
 
-  it("leaves a notes or tags address alone with the notes off, so it shows not-found", () => {
-    for (const path of ["/notes", "/notes/abc", "/tags", "/tags/t1"]) {
+  it("leaves a notes, tags or new token address alone with the notes off, so it shows not-found", () => {
+    for (const path of ["/notes", "/notes/abc", "/tags", "/tags/t1", "/tokens/new"]) {
       expect(signInRedirect(path, "", signedOut, false), path).toBe(null)
     }
     expect(signInRedirect("/groups", "", signedOut, false)).toBe("/sign-in?next=%2Fgroups")

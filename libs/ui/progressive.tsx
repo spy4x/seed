@@ -104,9 +104,17 @@ export const PROFILE_SECTIONS = [
 /** One section of the profile, the last part of its address. */
 export type ProfileSectionId = typeof PROFILE_SECTIONS[number]
 
-/** Whether `value` names a section of the profile. */
-export function isProfileSection(value: string): value is ProfileSectionId {
-  return (PROFILE_SECTIONS as readonly string[]).includes(value)
+/**
+ * The profile's sections the app shows: with the notes example off (`notes` false), no API tokens,
+ * since the personal-token API serves the notes only and is not mounted then.
+ */
+export function profileSections(notes = true): readonly ProfileSectionId[] {
+  return notes ? PROFILE_SECTIONS : PROFILE_SECTIONS.filter((id) => id !== `api-tokens`)
+}
+
+/** Whether `value` names a section of the profile the app shows, with the notes on or off. */
+export function isProfileSection(value: string, notes = true): value is ProfileSectionId {
+  return (profileSections(notes) as readonly string[]).includes(value)
 }
 
 /** Where each section of the profile lives: `/profile/<section>`. */

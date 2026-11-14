@@ -93,10 +93,10 @@ const network = createOnlineStatus()
  * Wires `ProfileScreen` to this app's session store, the auth calls, the e-mail store and the push
  * endpoints, for `/profile` and `/profile/<section>`. Holds what the user types, what is in flight
  * and what failed; the screen only draws it. An address with no such section goes back to
- * `/profile`.
+ * `/profile`, and so does `/profile/api-tokens` with the notes off.
  */
 export function ProfileView({ section }: { section?: string }) {
-  if (section !== undefined && !isProfileSection(section)) {
+  if (section !== undefined && !isProfileSection(section, notesOn())) {
     return <Redirect to={SCREEN_PATHS.profile} replace />
   }
   return <ProfileSections section={section} />
@@ -201,7 +201,8 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     })
     void loadDevices()
     void methods.load()
-    void tokens.load()
+    // With the notes off the personal-token API is not mounted: nothing to read.
+    if (notesOn()) void tokens.load()
     void dataExport.load()
     void telegram.load()
   }, [session.user?.id, session.isMfaRequired])
@@ -717,6 +718,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         onEnd: (id) => void endDevices(() => endSession(id), t.t(`ProfileView.deviceSignedOut`)),
         onEndOthers: () => void endDevices(endOtherSessions, t.t(`ProfileView.othersSignedOut`)),
       }}
+      notes={notesOn()}
       apiTokens={{
         tokens: tokens.tokens.value,
         savedAt: tokens.savedAt.value,

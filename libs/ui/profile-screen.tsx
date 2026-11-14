@@ -35,9 +35,9 @@ import { TelegramLink, type TelegramLinkProps } from "./profile-telegram.tsx"
 import { SecuritySection } from "./profile-security.tsx"
 import {
   type Navigate,
-  PROFILE_SECTIONS,
   profilePath,
   type ProfileSectionId,
+  profileSections,
   SCREEN_PATHS,
 } from "./progressive.tsx"
 import { type ProviderProof, providerProofOf } from "./provider-proof.tsx"
@@ -193,6 +193,11 @@ export interface ProfileScreenProps {
   devices?: SignedInDevicesProps
   /** The API tokens section's list. Without it the section is empty. */
   apiTokens?: ApiTokensProps
+  /**
+   * Whether the notes example is on; left out, it is. Off, the list has no API tokens section,
+   * since the personal-token API serves the notes only.
+   */
+  notes?: boolean
   /** The region and appearance settings. Without them those sections are empty. */
   preferences?: PreferencesProps
   /**
@@ -295,7 +300,7 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
     ? props.providerProof
     : providerProofOf(methods?.methods, props.providerProofFresh ?? false, methods?.emailLink)
   const twoFactorOn = user.mfa === UserMFAStatus.CONFIGURED
-  const sections: SettingsSection[] = PROFILE_SECTIONS.map((id) => ({
+  const sections: SettingsSection[] = profileSections(props.notes).map((id) => ({
     id,
     label: t.t(PROFILE_SECTION_TEXT[id].label),
     description: t.t(PROFILE_SECTION_TEXT[id].description),

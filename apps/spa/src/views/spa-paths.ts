@@ -71,11 +71,13 @@ export type SpaRoutePath = keyof typeof SPA_ROUTES
 export const SPA_ROUTE_PATHS = Object.keys(SPA_ROUTES) as SpaRoutePath[]
 
 /**
- * Whether `path` is a page of the notes example: the notes, the tags and a group's old notes links.
- * They are not routed when the product turns the notes off (`SPA_NOTES=false`).
+ * Whether `path` is a page of the notes example: the notes, the tags, a group's old notes links and
+ * the new API token page, since the personal-token API serves the notes only. They are not routed
+ * when the product turns the notes off (`SPA_NOTES=false`).
  */
 export function isNotesRoute(path: SpaRoutePath): boolean {
-  return [`notes`, `tags`].includes(section(path)) || path.startsWith(`/groups/:groupId/notes`)
+  return [`notes`, `tags`, `tokens`].includes(section(path)) ||
+    path.startsWith(`/groups/:groupId/notes`)
 }
 
 /** The routes the router tries, in order: with `notes` off, none of {@link isNotesRoute}. */
@@ -106,8 +108,8 @@ export function isSpaPath(pathname: string): boolean {
  * Whether `pathname` is a page only a signed-in person can use: its first part is the first part of
  * a route that is not open. Every address under such a part counts, so a mistyped note link still
  * asks for sign-in first. A part therefore holds open routes or members' routes, never both;
- * `spa-paths.test.ts` fails when one holds both. With `notes` off (`SPA_NOTES=false`) the notes'
- * and tags' addresses are not routed, so they show the not-found page instead of asking for sign-in.
+ * `spa-paths.test.ts` fails when one holds both. With `notes` off (`SPA_NOTES=false`) the notes',
+ * tags' and new token's addresses are not routed, so they show the not-found page instead of asking for sign-in.
  */
 export function isMembersOnlyPath(pathname: string, notes = true): boolean {
   return pathname.startsWith("/") &&

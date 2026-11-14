@@ -12,9 +12,9 @@ import {
   GROUP_PATHS,
   NOTE_PATHS,
   OVERVIEW_PATHS,
-  PROFILE_SECTIONS,
   profilePath,
   type ProfileSectionId,
+  profileSections,
   SCREEN_PATHS,
   TAG_PATHS,
 } from "./progressive.tsx"
@@ -92,7 +92,10 @@ export interface PaletteContext {
   benchmark: boolean
   /** Whether the browser offers to install the app now. */
   canInstall: boolean
-  /** Whether the notes example is on; left out, it is. Off, no command names notes or tags. */
+  /**
+   * Whether the notes example is on; left out, it is. Off, no command names notes or tags, and
+   * Settings has no API tokens, whose API serves the notes only.
+   */
   notes?: boolean
 }
 
@@ -233,7 +236,7 @@ export function shortcutKeys(keys: string | undefined): Pick<PaletteOption, "kbd
  * them: This page, Go to, Create, Settings, Account. Go to comes before Create, so a typo that
  * fits both ("notse") finds the page first. A command the person cannot take is left out
  * ("New note" without a group they may write to, Activity while the rail hides it, "Install app"
- * while the browser offers no install, Notes, Tags, New note and New tag with the notes off); one that needs the server stays listed offline, with why
+ * while the browser offers no install, Notes, Tags, New note, New tag and API tokens with the notes off); one that needs the server stays listed offline, with why
  * it cannot run. Each is found by its label, by its English label in every language, and by the
  * words a person would try, in English and Russian.
  *
@@ -349,7 +352,7 @@ export function paletteCommands(
 
   const settings: PaletteOption[] = [
     themeCommand(t, context.theme, heading.settings, (theme) => select({ kind: "theme", theme })),
-    ...PROFILE_SECTIONS.map((section) =>
+    ...profileSections(context.notes).map((section) =>
       command(
         `settings-${section}`,
         PROFILE_SECTION_TEXT[section].label,
