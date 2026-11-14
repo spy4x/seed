@@ -199,7 +199,8 @@ steps:
       <<: *image_env
       NAME: spa
     commands:
-      - executor --context "$$PWD" --dockerfile apps/spa/dockerfile.prod
+      # --skip-unused-stages: the `sourcemaps` stage uploads on a deploy only, never from here.
+      - executor --context "$$PWD" --dockerfile apps/spa/dockerfile.prod --skip-unused-stages
         --build-arg "BASE_IMAGE=$$IMAGE_PREFIX-base:$${CI_COMMIT_TAG}"
         --destination "$$IMAGE_PREFIX-$$NAME:$${CI_COMMIT_TAG}"
         --no-push --tar-path "$$PWD/$$NAME.tar"

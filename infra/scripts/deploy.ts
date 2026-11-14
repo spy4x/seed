@@ -33,7 +33,8 @@
  * or the web push keys); copy the chosen env file to
  * `infra/envs/.env` on the server, readable by its owner only; create `infra/configs/vapid.json`
  * on the server when it is missing (never sent from this machine, never overwritten, mode 600);
- * then run `deno task compose up -d --build` there. Compose's one-shot `migrate` service applies
+ * then run `deno task compose up -d --build` there, with `APP_COMMIT` set to this checkout's commit
+ * (the SPA's release, whose source maps the `sourcemaps` service uploads). Compose's one-shot `migrate` service applies
  * pending migrations before the API and the worker start, and a failed migration fails this step.
  * That task refuses a host port something else holds before it changes anything, and starts the
  * product before the optional services (compose-checks.ts).
@@ -162,11 +163,13 @@ export function refuseNonProductionEnv(values: Record<string, string>, envFilePa
  * Every deploy goes through here, so no step is planned for a refused file.
  *
  * @param read Reads one env file; replaced in tests.
+ * @param commit The deployed commit, for {@link planDeploy}.
  * @throws {Error} When the example file is missing, a secret is unsafe or a variable is missing.
  */
 export async function planFromEnvFile(
   envFilePath: string,
   read: (path: string) => Promise<Record<string, string>> = readEnvFile,
+  commit?: string,
 ): Promise<DeployStep[]> {
   const values = await read(envFilePath)
   let example: Record<string, string>
@@ -181,7 +184,7 @@ export async function planFromEnvFile(
   }
   refuseNonProductionEnv(values, envFilePath)
   refuseExampleSecrets(values, example, envFilePath)
-  return planDeploy(values, envFilePath)
+  return planDeploy(values, envFilePath, commit)
 }
 
 /** The flag that lets a deploy send a working tree with uncommitted changes. */
@@ -282,20 +285,53 @@ export interface DeployStep {
   args: string[]
 }
 
+/** A full commit id as `git rev-parse HEAD` prints it: the only form the deploy passes on. */
+const COMMIT = /^[0-9a-f]{40}$/
+
+/**
+ * The commit this checkout is at, or `undefined` when git cannot say (not installed, no commit
+ * yet). The deploy passes it to the server as `APP_COMMIT`, the SPA's release; without it the SPA
+ * reports no release and no source map is uploaded, and the deploy goes on.
+ *
+ * @param cwd The checkout to read; the current directory by default. A test passes its own.
+ */
+export async function readHeadCommit(cwd?: string): Promise<string | undefined> {
+  try {
+    const output = await new Deno.Command("git", {
+      args: ["rev-parse", "HEAD"],
+      cwd,
+      stdout: "piped",
+      stderr: "null",
+    }).output()
+    const commit = new TextDecoder().decode(output.stdout).trim()
+    return output.success && COMMIT.test(commit) ? commit : undefined
+  } catch (err) {
+    if (err instanceof Deno.errors.NotFound) return undefined
+    throw err
+  }
+}
+
 /**
  * Builds the deploy steps from the env file's values. Runs nothing.
  *
+ * @param commit The deployed commit ({@link readHeadCommit}). Compose builds it into the SPA as its
+ *   release (`APP_COMMIT`); anything but a full commit id is left out.
  * @throws {import("@spy4x/server/config").MissingEnvError} When a required variable is missing.
  */
-export function planDeploy(values: Record<string, string>, envFilePath: string): DeployStep[] {
+export function planDeploy(
+  values: Record<string, string>,
+  envFilePath: string,
+  commit?: string,
+): DeployStep[] {
   const env = createEnvReader(values)
   const server = readEnvVar(env, "SSH_TO_SERVER")
   const path = readEnvVar(env, "PATH_ON_SERVER").replace(/^~\//, "")
   const deno = values.DENO_ON_SERVER || "deno"
   const denoPath = `PATH="$HOME/.deno/bin:$PATH" ${deno}`
+  const release = commit && COMMIT.test(commit) ? `APP_COMMIT=${commit} ` : ""
   const remoteCommand = [
     `cd ${shellQuote(path)}`,
-    `${denoPath} task compose up -d --build`,
+    `${release}${denoPath} task compose up -d --build`,
   ].join(" && ")
   // An earlier start without the file leaves an empty directory there (Docker creates one for a
   // missing bind-mount source); `rmdir` removes only an empty one. A file that exists is kept.
@@ -369,9 +405,11 @@ async function main(): Promise<void> {
     Deno.exit(1)
   }
   const { envFilePath } = args
+  const commit = await readHeadCommit()
+  if (!commit) log(`No commit found, so the SPA reports no release and no source map is uploaded.`)
   let steps: DeployStep[]
   try {
-    steps = await planFromEnvFile(envFilePath)
+    steps = await planFromEnvFile(envFilePath, readEnvFile, commit)
   } catch (err) {
     error(describeEnvFileError(err, envFilePath))
     Deno.exit(1)

@@ -270,6 +270,8 @@ routes answer 404. Register `https://<DOMAIN>/api/auth/google/callback`, or `/gi
 | `GLITCHTIP_DB_PASS`, `GLITCHTIP_SECRET_KEY` | With the `errors` profile: the password of GlitchTip's database user, and its signing key. Secret; `deno task init` generates them. | [The stack](stack.md#error-tracking) |
 | `GLITCHTIP_ADMIN_PASSWORD`       | With the `errors` profile: the first password of GlitchTip's superuser, `DEV_EMAIL`. Secret; `deno task init` generates it. | [The stack](stack.md#error-tracking) |
 | `GLITCHTIP_CPU_LIMIT`, `GLITCHTIP_MEM_LIMIT` | GlitchTip's CPU and memory limit. Example: `1`, `1G`. |  |
+| `SOURCEMAPS_URL`, `SOURCEMAPS_TOKEN` | Production: the tracker's public address and an API token with the `project:releases` scope, for the upload of the SPA's source maps on each deploy. The token is secret. Either empty: nothing is uploaded. | [The stack](stack.md#error-tracking) |
+| `SOURCEMAPS_ORG`, `SOURCEMAPS_PROJECT` | The organization's slug and the SPA's project slug (empty: `spa`) the maps go to. | [The stack](stack.md#error-tracking) |
 | `SPA_REALTIME`                   | `false` or `0` turns the WebSocket off: the page uses HTTP and checks for changes every 30 seconds. | [Offline](offline.md)                |
 | `SPA_OFFLINE`                    | `false` or `0` turns the offline layer off: no device copy and no queue of writes.                  | [Offline](offline.md)                |
 | `SPA_NOTES`                      | `false` or `0` hides the notes example's screens, with the API's `NOTES=false`.                     | [Start a product](start-a-product.md#settings) |
