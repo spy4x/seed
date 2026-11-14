@@ -12,7 +12,7 @@ import { GroupRole } from "@domain/groups"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 import { OVERVIEW_WIDGETS, overviewWidgets } from "@ui/overview-widgets.ts"
 import { homePath, NOTE_PATHS, OVERVIEW_PATHS, readNext } from "@ui/progressive.tsx"
-import { configureModules, notesOn, offlineNotes } from "./modules.ts"
+import { configureModules, notesOn, offlineNotes, offlineTags } from "./modules.ts"
 import { loadRuntimeConfig } from "./runtime-config.ts"
 import { AppShell } from "./views/AppShell.tsx"
 import { type Landing, landingPath } from "./views/HomeView.tsx"
@@ -22,6 +22,7 @@ import { groupsStore } from "./state/groups.ts"
 import { selectionStore } from "./state/selection.ts"
 import { newNoteStore } from "./state/new-note.ts"
 import type { NotesDependencies } from "./state/notes.ts"
+import type { TagsDependencies } from "./state/tags.ts"
 
 /** An address of the notes example: the notes, the tags, or a group's old notes links. */
 const NOTES_ADDRESS = /^\/(notes|tags)(\/|$)|^\/groups\/[^/]+\/notes/
@@ -47,26 +48,36 @@ describe("the notes switch", () => {
     expect([await read(`{"notes":"false"}`), await read(`{"notes":"0"}`)]).toEqual([false, false])
   })
 
-  it("gives the notes store no device copy or queue while it is off", async () => {
+  it("gives the notes and tags stores no device copy or queue while it is off", async () => {
     let asked = 0
     let online = 0
     const current = () => {
       asked++
       return null
     }
-    const server = {
+    const notesServer = {
       fetchPage: () => {
         online++
         return Promise.resolve({ notes: [], nextCursor: null })
       },
     } as unknown as NotesDependencies
-    await offlineNotes(server, current).fetchPage(`g-1`, null)
+    const tagsServer = {
+      fetchList: () => {
+        online++
+        return Promise.resolve([])
+      },
+    } as unknown as TagsDependencies
+    const read = async () => {
+      await offlineNotes(notesServer, current).fetchPage(`g-1`, null)
+      await offlineTags(tagsServer, current).fetchList(`g-1`)
+    }
+    await read()
     const askedOn = asked
     configureModules({ notes: false })
 
-    await offlineNotes(server, current).fetchPage(`g-1`, null)
+    await read()
 
-    expect([askedOn, asked, online]).toEqual([1, 1, 2])
+    expect([askedOn, asked, online]).toEqual([2, 2, 4])
   })
 })
 
