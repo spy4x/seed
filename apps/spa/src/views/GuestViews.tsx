@@ -16,7 +16,7 @@ import {
   TryScreen,
   type TryState,
 } from "@ui/guest-screens.tsx"
-import { readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
+import { homePath, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
 import { OAUTH_NOTICE_KEYS, say } from "@ui/message.ts"
 import { useAppText } from "@ui/i18n.ts"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"
@@ -33,9 +33,10 @@ import {
 import { createSignInMethodsStore, listProviders } from "../state/sign-in-methods.ts"
 import { sessionState } from "../state/session.ts"
 import { rememberSentCode } from "../state/sign-in-code.ts"
+import { notesOn } from "../modules.ts"
 
-/** Where a new guest lands: the notes, where the starter note waits. */
-const GUEST_HOME = "/notes"
+/** Where a new guest lands: the notes, where the starter note waits, or the overview without them. */
+const guestHome = () => homePath(notesOn())
 
 /**
  * `/try`: starts a guest account with a `POST` as the page opens, then replaces itself
@@ -44,7 +45,7 @@ const GUEST_HOME = "/notes"
  */
 export function TryView() {
   const [, navigate] = useLocation()
-  const next = readNext(new URLSearchParams(useSearch()))
+  const next = readNext(new URLSearchParams(useSearch()), homePath(notesOn()))
   const [state, setState] = useState<TryState>({ kind: "working" })
   const started = useRef(false)
   const run = async () => {
@@ -53,7 +54,7 @@ export function TryView() {
     // A reload, as every sign-in does, so the app starts its modules for the new account; replacing
     // this page keeps Back from landing on `/try` again.
     if (answer.kind === "started" || answer.kind === "already-guest") {
-      location.replace(next ?? GUEST_HOME)
+      location.replace(next ?? guestHome())
       return
     }
     setState(answer.kind === "rate-limited" ? answer : { kind: answer.kind })
@@ -61,7 +62,7 @@ export function TryView() {
   useEffect(() => {
     const user = sessionState.value.user
     if (user && !isGuestSession(user)) return setState({ kind: "signed-in" })
-    if (user) return location.replace(next ?? GUEST_HOME)
+    if (user) return location.replace(next ?? guestHome())
     // Once, even when a development build runs effects twice.
     if (started.current) return
     started.current = true
@@ -88,7 +89,7 @@ export function KeepView() {
   const [, navigate] = useLocation()
   const t = useAppText()
   const query = new URLSearchParams(useSearch())
-  const next = readNext(query)
+  const next = readNext(query, homePath(notesOn()))
   const [store] = useState(() => createSignInMethodsStore())
   const [providers, setProviders] = useState<OAuthProviderId[]>([])
   const [busy, setBusy] = useState<KeepMethod | null>(null)

@@ -31,6 +31,7 @@ import {
   connectionDisplay,
   flushOutbox,
   forgetModules,
+  notesOn,
   recallUser,
   rememberUser,
   startModules,
@@ -72,10 +73,10 @@ import { signInRedirect } from "./views/sign-in-gate.ts"
 import {
   announcedPage,
   isProfilePath,
-  SPA_ROUTE_PATHS,
   type SpaRoutePath,
+  spaRoutePaths,
 } from "./views/spa-paths.ts"
-import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { homePath, NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { NotFoundScreen } from "@ui/not-found-screen.tsx"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
@@ -107,7 +108,7 @@ function OpenIfSelected({ groupId, noteId }: { groupId: string; noteId?: string 
 
 /**
  * `/benchmark`: the page's own module, loaded only where the page exists (`benchmarkOpen`); in any
- * other build the address opens the notes and the module is never fetched.
+ * other build the address opens the app's first page (`homePath`) and the module is never fetched.
  */
 function BenchmarkPage() {
   const t = useAppText()
@@ -118,7 +119,7 @@ function BenchmarkPage() {
       void import("./views/BenchmarkView.tsx").then((module) => setView(() => module.BenchmarkView))
     }
   }, [open])
-  if (!open) return <Redirect to={NOTE_PATHS.list} replace />
+  if (!open) return <Redirect to={homePath(notesOn())} replace />
   return View
     ? <View />
     : <LoadingSpinner size="lg" label={t.t(`Benchmark.opening`)} class="min-h-[50vh]" />
@@ -180,18 +181,23 @@ const PAGES: {
  * One `<Route>` per row of the route table, in its order, then the page for an address none of
  * them answers: `visitor` when nobody is signed in. Wouter's `Switch` draws the first child
  * whose `path` matches, and a child with no `path` matches every address, so the not-found screen
- * is a plain last child: no route, since it is no page of the table.
+ * is a plain last child: no route, since it is no page of the table. With the notes off, their
+ * routes are left out (`spaRoutePaths`), so their addresses show the not-found page.
  */
 function Routes({ visitor = false }: { visitor?: boolean }) {
   const [, navigate] = useLocation()
   return (
     <Switch>
-      {SPA_ROUTE_PATHS.map((path) => (
+      {spaRoutePaths(notesOn()).map((path) => (
         <Route key={path} path={path}>
           {PAGES[path] as (params: Record<string, string>) => ComponentChildren}
         </Route>
       ))}
-      <NotFoundScreen audience={visitor ? "visitor" : "member"} navigate={navigate} />
+      <NotFoundScreen
+        audience={visitor ? "visitor" : "member"}
+        navigate={navigate}
+        notes={notesOn()}
+      />
     </Switch>
   )
 }
@@ -205,7 +211,7 @@ function SignInGate() {
   const search = useSearch()
   const { user, isMfaRequired } = sessionState.value
   useEffect(() => {
-    const target = signInRedirect(location, search, { user, isMfaRequired })
+    const target = signInRedirect(location, search, { user, isMfaRequired }, notesOn())
     if (target) navigate(target, { replace: true })
   }, [location, search, user, isMfaRequired])
   return null

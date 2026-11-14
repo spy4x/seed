@@ -1,16 +1,18 @@
 import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { InvitationScreen, MyInvitationsSection } from "@ui/group-invitations.tsx"
-import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { homePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
 import { type InvitationRef, invitationsStore } from "../state/invitations.ts"
 import { selectionStore } from "../state/selection.ts"
+import { notesOn } from "../modules.ts"
 
 type InvitationsStore = typeof invitationsStore
 
 /**
  * After an accept: the server already selected the joined group, so the app reads the groups and
- * the selection again and opens the notes.
+ * the selection again and opens the app's first page: the notes, or with them off the overview,
+ * which opens the joined group now selected.
  */
 async function joined(
   store: InvitationsStore,
@@ -20,7 +22,7 @@ async function joined(
   const result = await store.accept(ref)
   if (!result) return false
   await Promise.all([groupsStore.refreshFromUser(), selectionStore.refresh().catch(() => {})])
-  navigate(NOTE_PATHS.list)
+  navigate(homePath(notesOn()))
   return true
 }
 

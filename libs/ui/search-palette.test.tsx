@@ -362,6 +362,37 @@ describe("SearchPalette", () => {
     expect(emptyLabel(EN, "  ab  ", false)).toBe("Nothing matches “ab”.")
   })
 
+  it("with the notes off, never asks for notes and lists no notes, tags or note commands", async () => {
+    const { asked } = await mount({ notes: false })
+
+    await open()
+    const before = listed()
+    await type("notes")
+    const notesQuery = listed()
+    await type("tag")
+
+    expect(asked).toEqual([])
+    expect(before.slice(0, 5)).toEqual([
+      "# Go to",
+      "Overview",
+      "Groups",
+      "Notifications",
+      "Profile",
+    ])
+    for (const row of [...before, ...notesQuery, ...listed()]) {
+      expect(row).not.toMatch(/^(# Notes|Notes|Tags|New note|New tag)\b/)
+    }
+  })
+
+  it("with the notes off, says nothing matches a one-character query instead of asking for notes", async () => {
+    await mount({ notes: false })
+    await open()
+
+    await type("7")
+
+    expect(status()).toBe("Nothing matches “7”.")
+  })
+
   it("does not search notes for a single character, but still matches groups", async () => {
     const { asked } = await mount()
     await open()

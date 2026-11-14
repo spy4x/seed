@@ -200,7 +200,7 @@ there.
 | Set    | Analytics ids ([Analytics](analytics.md)) | `MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID` in the env file |
 | Set    | Domains and the demo ([demo](demo.md))   | `MPA_DOMAIN`, `DOMAIN`, `DEMO_MODE` in the env file     |
 | Set    | A website with no customers              | `SPA=false` ([Without the SPA](apps.md#without-the-spa)) |
-| Set    | A product without the notes example      | `NOTES=false` (below)                                   |
+| Set    | A product without the notes example      | `NOTES=false` and `SPA_NOTES=false` (below)             |
 | Set    | Where release images go                  | `IMAGE_PREFIX` in `.woodpecker/release.yml`             |
 | Set    | The billing guide link                   | `ADMIN_BILLING_SETUP_URL` in `libs/ui/admin-billing-list.tsx` |
 | Set    | The Stats guide link                     | `ADMIN_STATS_SETUP_URL` in `libs/ui/admin-stats-screen.tsx` |
@@ -213,7 +213,13 @@ and the Telegram bot's `/notes` leave them out too; moving a group's data leaves
 where they are, and a new account gets no welcome note. A person's data export, a group's export
 file and spreadsheets leave them out, and a group import skips them (the worker reads `NOTES` too,
 for the data export). The tables and migrations stay, as the catalog's do. Unset or anything but
-`false` keeps the notes on. The app's screens and the demo still show notes for now.
+`false` keeps the notes on.
+
+Set `SPA_NOTES=false` with it, for the app's screens: the rail, the palette and the keyboard
+shortcuts then offer no notes or tags, `/notes` and `/tags` show the not-found page, sign-in and an
+accepted invitation open the overview, and the overview shows no note widgets. The onboarding, the
+billing plan lines and the token screens still name notes for now
+([#1009](https://github.com/spy4x/seed/issues/1009)); so does the demo.
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):

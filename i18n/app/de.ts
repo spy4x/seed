@@ -772,6 +772,8 @@ export default {
   "OverviewScreen.choosePlan": "Tarif wählen",
   "OverviewScreen.allHidden": "Alle Widgets sind ausgeblendet",
   "OverviewScreen.allHiddenText": "Wähle aus, welche du sehen willst.",
+  "OverviewScreen.noWidgets": "Noch nichts zu sehen",
+  "OverviewScreen.noWidgetsText": "Hier erscheinen die Widgets für {group}.",
   "OverviewScreen.gridLabel": "Übersicht von {group}",
   "OverviewScreen.customiseText":
     "Wähle, welche Widgets du siehst und in welcher Reihenfolge. Dein Layout gilt auch auf deinen anderen Geräten.",
@@ -1120,6 +1122,9 @@ export default {
   "NotFound.signedOut":
     "Unter dieser Adresse gibt es keine Seite. Melde dich an, um zu deinen Notizen zu kommen.",
   "NotFound.toNotes": "Zu deinen Notizen",
+  "NotFound.toOverview": "Zur Übersicht",
+  "NotFound.signedOutPlain":
+    "Unter dieser Adresse gibt es keine Seite. Melde dich an, um fortzufahren.",
   "NotFound.signIn": "Anmelden",
   "Notes.title": "Notizen",
   "Notes.new": "Neue Notiz",

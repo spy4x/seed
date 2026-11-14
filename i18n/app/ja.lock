@@ -783,8 +783,10 @@ NoGroup.title	d5b5c3a9272b6912
 NotFound.description	4c6af94bf2ad02b2
 NotFound.signIn	bfd402b2f6f38125
 NotFound.signedOut	5668f958176e3271
+NotFound.signedOutPlain	4bece2d5f88e86ee
 NotFound.title	a469ab4ca4e55bf5
 NotFound.toNotes	713d200133efbf1b
+NotFound.toOverview	257795dedb2c8802
 NoteAttachments.almostFull	6a89d7f682f03c77
 NoteAttachments.attach	e697cc1e45afa541
 NoteAttachments.cancel	19766ed6ccb2f4a3
@@ -1065,6 +1067,8 @@ OverviewScreen.lastMonth	b27e31d9ef70625c
 OverviewScreen.loading	923a5c5101fe3b09
 OverviewScreen.missing	d5b5c3a9272b6912
 OverviewScreen.newNote	76ea482f843e76e4
+OverviewScreen.noWidgets	343caea0a933c477
+OverviewScreen.noWidgetsText	7b9da32cccf2901b
 OverviewScreen.period	399ebd40772219c5
 OverviewScreen.rangeTooLong	524bd30029f6996d
 OverviewScreen.reset	2e2a17849c24f8e9

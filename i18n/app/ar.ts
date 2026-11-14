@@ -880,6 +880,8 @@ export default {
   "OverviewScreen.choosePlan": "اختيار خطة",
   "OverviewScreen.allHidden": "كل الأدوات مخفية",
   "OverviewScreen.allHiddenText": "اختر الأدوات التي تريد رؤيتها.",
+  "OverviewScreen.noWidgets": "لا شيء لعرضه بعد",
+  "OverviewScreen.noWidgetsText": "ستظهر هنا أدوات {group}.",
   "OverviewScreen.gridLabel": "نظرة عامة على {group}",
   "OverviewScreen.customiseText":
     "اختر الأدوات التي تظهر لك وترتيبها. يتبعك هذا التخطيط إلى أجهزتك الأخرى.",
@@ -1253,6 +1255,8 @@ export default {
     "لا يؤدي هذا العنوان إلى أي صفحة. ربما فيه خطأ في الكتابة، أو نُقلت الصفحة.",
   "NotFound.signedOut": "لا يؤدي هذا العنوان إلى أي صفحة. سجّل الدخول للوصول إلى ملاحظاتك.",
   "NotFound.toNotes": "انتقل إلى ملاحظاتك",
+  "NotFound.toOverview": "انتقل إلى النظرة العامة",
+  "NotFound.signedOutPlain": "لا يؤدي هذا العنوان إلى أي صفحة. سجّل الدخول للمتابعة.",
   "NotFound.signIn": "تسجيل الدخول",
   "Notes.title": "الملاحظات",
   "Notes.new": "ملاحظة جديدة",

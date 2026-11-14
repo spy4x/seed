@@ -788,6 +788,8 @@ export default {
   "OverviewScreen.choosePlan": "Escolher um plano",
   "OverviewScreen.allHidden": "Todos os widgets estão ocultos",
   "OverviewScreen.allHiddenText": "Escolha os que você quer ver.",
+  "OverviewScreen.noWidgets": "Nada para mostrar ainda",
+  "OverviewScreen.noWidgetsText": "Os widgets de {group} vão aparecer aqui.",
   "OverviewScreen.gridLabel": "Visão geral de {group}",
   "OverviewScreen.customiseText":
     "Escolha quais widgets aparecem e em que ordem. Seu layout vai junto para os seus outros dispositivos.",
@@ -1144,6 +1146,8 @@ export default {
     "Este endereço não leva a nenhuma página. Talvez tenha um erro de digitação, ou a página mudou de lugar.",
   "NotFound.signedOut": "Este endereço não leva a nenhuma página. Entre para acessar suas notas.",
   "NotFound.toNotes": "Ir para suas notas",
+  "NotFound.toOverview": "Ir para a visão geral",
+  "NotFound.signedOutPlain": "Este endereço não leva a nenhuma página. Entre para continuar.",
   "NotFound.signIn": "Entrar",
   "Notes.title": "Notas",
   "Notes.new": "Nova nota",

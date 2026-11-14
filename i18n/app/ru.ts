@@ -835,6 +835,8 @@ export default {
   "OverviewScreen.choosePlan": "Выбрать тариф",
   "OverviewScreen.allHidden": "Все виджеты скрыты",
   "OverviewScreen.allHiddenText": "Выберите, какие показывать.",
+  "OverviewScreen.noWidgets": "Пока нечего показать",
+  "OverviewScreen.noWidgetsText": "Здесь появятся виджеты группы {group}.",
   "OverviewScreen.gridLabel": "Обзор группы {group}",
   "OverviewScreen.customiseText":
     "Выберите, какие виджеты показывать и в каком порядке. Настройка сохранится и на других ваших устройствах.",
@@ -1205,6 +1207,8 @@ export default {
     "По этому адресу нет страницы. Возможно, в нём опечатка или страница переехала.",
   "NotFound.signedOut": "По этому адресу нет страницы. Войдите, чтобы открыть свои заметки.",
   "NotFound.toNotes": "Перейти к заметкам",
+  "NotFound.toOverview": "Перейти к обзору",
+  "NotFound.signedOutPlain": "По этому адресу нет страницы. Войдите, чтобы продолжить.",
   "NotFound.signIn": "Войти",
   "Notes.title": "Заметки",
   "Notes.new": "Новая заметка",

@@ -104,5 +104,8 @@ Deno.test("the SPA draws every route from the route table", async () => {
     .filter(([, count]) => count !== 0)
   expect(drawn).toEqual([["apps/spa/src/app.tsx", 1]])
   const app = await Deno.readTextFile(`${ROOT}apps/spa/src/app.tsx`)
-  expect(app).toMatch(/SPA_ROUTE_PATHS\.map\(\(path\) => \(\s*<Route key=\{path\} path=\{path\}>/)
+  // The table, less the notes example's routes when the product turns it off (`spaRoutePaths`).
+  expect(app).toMatch(
+    /spaRoutePaths\(notesOn\(\)\)\.map\(\(path\) => \(\s*<Route key=\{path\} path=\{path\}>/,
+  )
 })

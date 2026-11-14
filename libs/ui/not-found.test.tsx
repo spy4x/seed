@@ -31,12 +31,15 @@ afterEach(async () => {
 })
 
 /** Draws the page for `audience` and returns every `navigate` call it makes. */
-async function mount(audience: NotFoundAudience): Promise<string[]> {
+async function mount(audience: NotFoundAudience, notes?: boolean): Promise<string[]> {
   const heard: string[] = []
   root = document.createElement("div")
   document.body.append(root)
   await act(() =>
-    render(<NotFoundScreen audience={audience} navigate={(href) => heard.push(href)} />, root!)
+    render(
+      <NotFoundScreen audience={audience} navigate={(href) => heard.push(href)} notes={notes} />,
+      root!,
+    )
   )
   return heard
 }
@@ -72,6 +75,26 @@ describe("NotFoundScreen", () => {
     expect(find(`[data-e2e=not-found-link]`).getAttribute(`href`)).toBe(`/sign-in`)
     await clickLink()
     expect(heard).toEqual([`/sign-in`])
+  })
+
+  it("sends a signed-in person to the overview when the notes are off", async () => {
+    const heard = await mount(`member`, false)
+    expect(find(`[data-e2e=not-found]`).textContent).toContain(`the page has moved`)
+    const link = find(`[data-e2e=not-found-link]`)
+    expect([link.textContent, link.getAttribute(`href`)]).toEqual([
+      `Go to the overview`,
+      `/overview`,
+    ])
+    await clickLink()
+    expect(heard).toEqual([`/overview`])
+  })
+
+  it("names no notes to a signed-out visitor when the notes are off", async () => {
+    await mount(`visitor`, false)
+    const page = find(`[data-e2e=not-found]`).textContent
+    expect(page).toContain(`This address doesn't lead to a page. Sign in to continue.`)
+    expect(page).not.toContain(`notes`)
+    expect(find(`[data-e2e=not-found-link]`).getAttribute(`href`)).toBe(`/sign-in`)
   })
 
   it("sends an operator back to the admin dashboard", async () => {

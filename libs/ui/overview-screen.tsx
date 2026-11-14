@@ -192,9 +192,14 @@ function today(now: Date, timeZone: string): string {
  * and going empty on its own. The range picker sits in its own row with a line naming the exact
  * days and what they are compared with. Each person hides and reorders the widgets: from a card's
  * menu, or in the "Customise overview" dialog, which saves each change as it is made.
+ *
+ * With no widget for the person's role at all (an empty `layout`, as in a product that turns the
+ * notes off and adds none of its own), the page is one quiet card: no menu, no range row and no
+ * Customise dialog, since there is nothing to choose.
  */
 export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
   const { group, navigate } = props
+  const noWidgets = group !== null && props.layout.length === 0
   // After "Hide widget" the card is gone: focus moves to the card now in its place, the one before
   // it when it was the last, or the "Customise overview" button when none is left.
   const page = useRef<HTMLDivElement>(null)
@@ -222,7 +227,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
           subtitleDataE2E="overview-group"
           navigate={navigate}
           menuDataE2E="overview-menu"
-          menu={group && (
+          menu={group && !noWidgets && (
             <>
               <DropdownItem onClick={props.onCustomise} dataE2E="overview-customise">
                 {t.t(`OverviewScreen.customise`)}
@@ -255,7 +260,18 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
             {t.t(`OverviewScreen.choosePlanText`)}
           </Notice>
         )}
-        {!group
+        {noWidgets
+          ? (
+            <Card data-e2e="overview-no-widgets">
+              <EmptyState
+                headingLevel={2}
+                inset
+                title={t.t(`OverviewScreen.noWidgets`)}
+                description={t.t(`OverviewScreen.noWidgetsText`, { group: isolate(group.name) })}
+              />
+            </Card>
+          )
+          : !group
           ? (
             <Card>
               <EmptyState
@@ -343,18 +359,23 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                 )}
             </>
           )}
-        <LayoutCustomiser
-          open={props.customising}
-          onClose={props.onCloseCustomise}
-          title={t.t(`OverviewScreen.customise`)}
-          description={t.t(`OverviewScreen.customiseText`)}
-          items={props.layout.map(({ titleKey, ...entry }) => ({ ...entry, title: t.t(titleKey) }))}
-          onChange={props.onLayoutChange}
-          onReset={props.onResetLayout}
-          error={props.layoutError}
-          labels={{ list: t.t(`OverviewScreen.widgets`) }}
-          dataE2E="overview-customiser"
-        />
+        {!noWidgets && (
+          <LayoutCustomiser
+            open={props.customising}
+            onClose={props.onCloseCustomise}
+            title={t.t(`OverviewScreen.customise`)}
+            description={t.t(`OverviewScreen.customiseText`)}
+            items={props.layout.map(({ titleKey, ...entry }) => ({
+              ...entry,
+              title: t.t(titleKey),
+            }))}
+            onChange={props.onLayoutChange}
+            onReset={props.onResetLayout}
+            error={props.layoutError}
+            labels={{ list: t.t(`OverviewScreen.widgets`) }}
+            dataE2E="overview-customiser"
+          />
+        )}
       </Stack>
     </div>
   )

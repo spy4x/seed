@@ -403,6 +403,36 @@ describe("the group overview", () => {
     expect(action.querySelectorAll(".sr-only, [class*='sr-only']").length).toBe(0)
   })
 
+  it("shows one quiet card with no menu, range, keys' targets or note card when no widget is registered", async () => {
+    // A product with the notes off and no widget of its own: the role sees no widget at all.
+    // Customising open too, as a `c` pressed before the widgets were known would leave it.
+    await mount({}, { widgets: [], layout: [], emptyGroup: { canCreate: true }, customising: true })
+
+    const card = find("[data-e2e=overview-no-widgets]")
+    expect(card.querySelector("h2")?.textContent).toBe("Nothing to show yet")
+    expect(card.textContent).toContain("Widgets for ⁨Acme Studio⁩ will appear here.")
+    expect(card.querySelectorAll("a, button").length).toBe(0)
+    for (
+      const gone of [
+        "overview-menu",
+        "overview-range",
+        "overview-empty-group",
+        "overview-all-hidden",
+        "overview-customiser",
+      ]
+    ) {
+      expect([gone, document.querySelectorAll(`[data-e2e=${gone}]`).length]).toEqual([gone, 0])
+    }
+  })
+
+  it("keeps the All widgets are hidden card, with Customise, when every registered widget is hidden", async () => {
+    await mount(READY, { widgets: [] })
+
+    expect(document.querySelectorAll("[data-e2e=overview-no-widgets]").length).toBe(0)
+    expect(find("[data-e2e=overview-all-hidden]").textContent).toContain("All widgets are hidden")
+    expect(document.querySelectorAll("[data-e2e=overview-menu]").length).toBe(1)
+  })
+
   it("offers a viewer of an empty group no New note", async () => {
     await mount(READY, { emptyGroup: { canCreate: false } })
 
