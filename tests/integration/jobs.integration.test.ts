@@ -8,13 +8,14 @@ import {
   scheduleOutboxEvent,
 } from "@spy4x/server/outbox"
 import {
+  enqueueJob,
   JOB_AGGREGATE,
   JOB_AGGREGATE_ID,
   LEGACY_JOB_AGGREGATE_ID,
   OUTBOX_CLEANUP_JOB,
 } from "@server/jobs/jobs.ts"
-import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
-import { JOBS } from "@server/jobs/registry.ts"
+import { createOutboxProcessor, OUTBOX_LANES, startRepeatingJobs } from "@server/jobs/wiring.ts"
+import { defineJob, JOBS, SLOW_JOB_KINDS } from "@server/jobs/registry.ts"
 import { JOB_RETRY } from "@server/jobs/job-failures.ts"
 import { passwordResetExpiry, passwordResetRequests } from "@server/auth/password-reset.ts"
 import {
@@ -832,5 +833,84 @@ Deno.test("the worker's processor when a job keeps failing", async (t) => {
         expect(sender.sent.map((mail) => mail.to)).toEqual(["bob@example.com"])
       },
     )
+  })
+})
+
+/**
+ * Every kind of {@link JOBS} with a handler that records the kind it ran. A slow kind waits for
+ * `slow` before it returns, as an image does for `vips`.
+ */
+function recordingJobs(seen: string[], slow: Promise<void> = Promise.resolve()) {
+  return JOBS.map((job) =>
+    defineJob({
+      kind: job.kind,
+      label: job.label,
+      handler: () => async (event) => {
+        seen.push(event.eventKind)
+        if (SLOW_JOB_KINDS.includes(event.eventKind)) await slow
+      },
+    })
+  )
+}
+
+/** The worker's processor for one of {@link OUTBOX_LANES}, over `jobs`. */
+function lane(sql: postgres.Sql, jobs: ReturnType<typeof recordingJobs>, index: number) {
+  return createOutboxProcessor(
+    sql,
+    mailOff(sql),
+    null,
+    null,
+    0,
+    true,
+    null,
+    jobs,
+    ...[undefined, undefined, undefined, undefined, undefined] as const,
+    ...[undefined, undefined, undefined, undefined, undefined] as const,
+    OUTBOX_LANES[index],
+  )
+}
+
+Deno.test("the worker's lanes", async (t) => {
+  await withSchema(async (sql) => {
+    await t.step("every job kind is claimed by exactly one lane", async () => {
+      for (const job of JOBS) await enqueueJob(sql, job.kind, uuidV7(), { inMs: 0 })
+      const seen = OUTBOX_LANES.map(() => [] as string[])
+
+      for (const [index, kinds] of seen.entries()) {
+        await lane(sql, recordingJobs(kinds), index).drainOnce()
+      }
+
+      const all = JOBS.map((job) => job.kind).sort()
+      expect(seen.map((kinds) => [...kinds].sort())).toEqual([
+        [...SLOW_JOB_KINDS].sort(),
+        all.filter((kind) => !SLOW_JOB_KINDS.includes(kind)),
+      ])
+      await sql`DELETE FROM outbox_events`
+    })
+
+    await t.step("a mail queued after ten photos is sent while they are processing", async () => {
+      let release = () => {}
+      const slow = new Promise<void>((resolve) => release = resolve)
+      const seen: string[] = []
+      const jobs = recordingJobs(seen, slow)
+      for (let photo = 0; photo < 10; photo++) {
+        await enqueueJob(sql, SLOW_JOB_KINDS[0], uuidV7(), { inMs: 0 })
+      }
+      await enqueueJob(sql, PASSWORD_RESET_MAIL_JOB, uuidV7(), { inMs: 0 })
+      const stop = new AbortController()
+      const runs = OUTBOX_LANES.map((_, index) => lane(sql, jobs, index).run(stop.signal, 20))
+      try {
+        const deadline = Date.now() + 3_000
+        while (!seen.includes(PASSWORD_RESET_MAIL_JOB) && Date.now() < deadline) {
+          await new Promise((resolve) => setTimeout(resolve, 20))
+        }
+        // The first photo is still being processed, and the other nine wait behind it.
+        expect(seen).toEqual([SLOW_JOB_KINDS[0], PASSWORD_RESET_MAIL_JOB])
+      } finally {
+        release()
+        stop.abort()
+        await Promise.all(runs)
+      }
+    })
   })
 })

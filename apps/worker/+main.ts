@@ -3,7 +3,8 @@ import { createSqlFromEnv } from "@spy4x/server/db"
 import { postgresEnv } from "../api/services/db-direct.ts"
 import { exitProcess, processEnv, readEnvRecord } from "@spy4x/platform/server/process"
 import { runtimeFileSystem } from "@spy4x/platform/server/runtime-fs"
-import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
+import { createOutboxProcessor, OUTBOX_LANES, startRepeatingJobs } from "@server/jobs/wiring.ts"
+import type { OutboxKindFilter } from "@spy4x/server/outbox"
 import { TelegramClient } from "@spy4x/integrations/telegram"
 import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
@@ -191,45 +192,51 @@ try {
 // A committed group change is announced on a Postgres channel; the API process, which holds the
 // sockets, turns it into a hint for the group's members. The same table holds jobs: a row that
 // belongs to no group and runs when its time has come.
-const processor = createOutboxProcessor(
-  sql,
-  {
-    store: createPostgresAuthStore(sql),
-    sender: createMailSender(mailSetup, sql),
-    // The API's own rule (apps/api/services/config.ts): plain HTTP only in development.
-    brand: { webAppUrl: `http${processEnv.get("ENV") === "dev" ? "" : "s"}://${domain}` },
-    log: (line) => console.error(line),
-  },
-  billingSetup.provider,
-  subscribersSetup,
-  billingSetup.graceDays,
-  billingSetup.trialRequiresCard,
-  demo
-    ? (userId) =>
-      seedWorkspace(
-        new AppDbBase({ sql }),
-        sql,
-        userId,
-        demoDataSeed(new Date()),
-        new Date(),
-        files,
-        notes,
-      )
-    : null,
-  undefined,
-  files,
-  telegram,
-  imageScratch,
-  indexNow,
-  crosspost,
-  undefined,
-  shareResults,
-  autoPost,
-  catalogPages,
-  // The API reads the same switch: with the notes off, no import job creates a note, and a data
-  // export holds no notes.
-  readNotesSetup(processEnv),
-)
+const outboxLane = (kinds: OutboxKindFilter) =>
+  createOutboxProcessor(
+    sql,
+    {
+      store: createPostgresAuthStore(sql),
+      sender: createMailSender(mailSetup, sql),
+      // The API's own rule (apps/api/services/config.ts): plain HTTP only in development.
+      brand: { webAppUrl: `http${processEnv.get("ENV") === "dev" ? "" : "s"}://${domain}` },
+      log: (line) => console.error(line),
+    },
+    billingSetup.provider,
+    subscribersSetup,
+    billingSetup.graceDays,
+    billingSetup.trialRequiresCard,
+    demo
+      ? (userId) =>
+        seedWorkspace(
+          new AppDbBase({ sql }),
+          sql,
+          userId,
+          demoDataSeed(new Date()),
+          new Date(),
+          files,
+          notes,
+        )
+      : null,
+    undefined,
+    files,
+    telegram,
+    imageScratch,
+    indexNow,
+    crosspost,
+    undefined,
+    shareResults,
+    autoPost,
+    catalogPages,
+    // The API reads the same switch: with the notes off, no import job creates a note, and a data
+    // export holds no notes.
+    readNotesSetup(processEnv),
+    kinds,
+  )
+
+// Each lane runs one row at a time, so image processing (about ten seconds a photo) gets its own,
+// beside every other job and group change: a batch of photos never holds a sign-in code back.
+const lanes = OUTBOX_LANES.map(outboxLane)
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run
 // that is given up is closed by the processor, which writes the next night's run itself.
@@ -286,7 +293,7 @@ try {
     onError: reportSweepFailure,
     intervalMs: SWEEP_INTERVAL_MS,
   })
-  await processor.run(signal, OUTBOX_IDLE_MS)
+  await Promise.all(lanes.map((lane) => lane.run(signal, OUTBOX_IDLE_MS)))
 } finally {
   await sql.end({ timeout: 5 })
   const reason = signal.reason instanceof ShutdownSignalError ? ` on ${signal.reason.signal}` : ""
