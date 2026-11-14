@@ -46,6 +46,15 @@
 # traces of its failed tests, is kept in `results/` of its report folder, whatever the reporter.
 # With `E2E_SPA` set, every spec asked for runs in one pass against that server.
 #
+# `NOTES=false SPA_NOTES=false` runs the stack with the notes example off (docs/start-a-product.md).
+# The API, the worker and Playwright get the variables of this shell: the API mounts no note route,
+# and the specs' warm-up (`e2e/fixtures/stack.ts`) writes no note and opens no notes screen.
+# `SPA_NOTES` and the other variables of `apps/spa/public-env.allow` reach the SPA's `/config.json`
+# whatever serves it: the image and nginx write it with `apps/spa/runtime-config.sh`, and for the dev
+# server the proxy answers with what that script writes. `e2e/notes-off.e2e.ts` runs only then;
+# other specs expect the notes on.
+#   NOTES=false SPA_NOTES=false deno task e2e:local e2e/notes-off.e2e.ts
+#
 # CI runs this script too (.woodpecker/ci.yml), in a container that is thrown away afterwards and
 # has no container tool. Two variables stand in for the containers there:
 #   - `E2E_SERVICES=environment`: Postgres and Valkey are already running and named by `DB_HOST`,
@@ -368,9 +377,13 @@ build_image() { # <name> <arguments for `build`…>
 # server first, so the built SPA never has to make way.
 SPA_SERVER=""
 SPA_PID=""
+# The SPA's `/config.json` while the dev server serves it, which the proxy answers with: the dev
+# server has only the committed `apps/spa/public/config.json`. A built SPA writes its own.
+SPA_CONFIG="$SCRATCH/spa-config.json"
 start_spa() { # <dev|built>
   [ "$SPA_SERVER" = "$1" ] && return 0
   SPA_SERVER=$1
+  if [ "$1" = built ]; then find "$SPA_CONFIG" -delete 2>/dev/null || true; fi
   if [ "$1" = built ] && [ "$BUILT_SERVER" = nginx ]; then
     # What apps/spa/dockerfile.prod does, by hand, as `e2e/spa/run.sh` does: keep the three in
     # step.
@@ -411,8 +424,15 @@ start_spa() { # <dev|built>
     fi
     log "starting the built SPA on 127.0.0.1:$SPA_PORT"
     CONTAINERS+=("$SPA_NAME")
+    # Every other variable of the allow list goes in as this shell has it (`SPA_NOTES` and the
+    # rest), as the other two servers read them; a name without a value passes no unset one.
+    local spa_env=() name rest
+    while read -r name rest || [ -n "$name" ]; do
+      case "$name" in '' | '#'* | SPA_ENV) continue ;; esac
+      spa_env+=(--env "$name")
+    done <apps/spa/public-env.allow
     timeout 300 "$CONTAINER" run --detach --name "$SPA_NAME" --pids-limit=500 --memory=1g \
-      --env SPA_ENV=dev -p "127.0.0.1:$SPA_PORT:8080" "$SPA_IMAGE" >/dev/null
+      --env SPA_ENV=dev "${spa_env[@]}" -p "127.0.0.1:$SPA_PORT:8080" "$SPA_IMAGE" >/dev/null
     for _ in $(seq 1 120); do
       answers "http://127.0.0.1:$SPA_PORT/" 2>/dev/null && break
       sleep 0.5
@@ -423,6 +443,9 @@ start_spa() { # <dev|built>
       exit 1
     }
   else
+    # What the image's entrypoint writes, from the same allow list and variables.
+    SPA_ENV=dev ALLOW_FILE=apps/spa/public-env.allow OUT_FILE="$SPA_CONFIG" \
+      sh apps/spa/runtime-config.sh >/dev/null
     log "starting the dev server on 127.0.0.1:$SPA_PORT"
     start spa env VITE_ENV=dev deno task spa:dev --port "$SPA_PORT" --strictPort --host 127.0.0.1
     SPA_PID=${PIDS[-1]}
@@ -433,8 +456,9 @@ start_spa "${PASS_SERVER[0]}"
 
 log "starting the proxy on 127.0.0.1:$FRONT_PORT"
 start proxy env FRONT_PORT="$FRONT_PORT" API_PORT="$API_PORT" SPA_PORT="$SPA_PORT" \
-  FILES_PORT="$FILES_PORT" \
-  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT,FILES_PORT,S3_BUCKET \
+  FILES_PORT="$FILES_PORT" CONFIG_FILE="$SPA_CONFIG" \
+  deno run --allow-net=127.0.0.1 --allow-read="$SCRATCH" \
+  --allow-env=FRONT_PORT,API_PORT,SPA_PORT,FILES_PORT,S3_BUCKET,CONFIG_FILE \
   infra/scripts/e2e-local-proxy.ts
 wait_for proxy "${PIDS[-1]}" 30 answers "http://127.0.0.1:$FRONT_PORT/api/health"
 
@@ -444,7 +468,8 @@ start admin env VITE_ENV=dev deno task admin:dev --port "$ADMIN_PORT" --strictPo
 wait_for admin "${PIDS[-1]}" 120 answers "http://127.0.0.1:$ADMIN_PORT/"
 log "starting the admin proxy on 127.0.0.1:$ADMIN_FRONT_PORT"
 start admin-proxy env FRONT_PORT="$ADMIN_FRONT_PORT" API_PORT="$API_PORT" SPA_PORT="$ADMIN_PORT" \
-  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT,FILES_PORT,S3_BUCKET \
+  deno run --allow-net=127.0.0.1 \
+  --allow-env=FRONT_PORT,API_PORT,SPA_PORT,FILES_PORT,S3_BUCKET,CONFIG_FILE \
   infra/scripts/e2e-local-proxy.ts
 wait_for admin-proxy "${PIDS[-1]}" 30 answers "http://127.0.0.1:$ADMIN_FRONT_PORT/"
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Writes the SPA's /config.json when the container starts, from the variables listed in the allow
 # list (public-env.allow) and from nothing else. nginx's entrypoint runs it before nginx starts.
-# ALLOW_FILE and OUT_FILE are overridden by the tests only.
+# ALLOW_FILE and OUT_FILE are overridden by the tests and by `deno task e2e:local` only.
 set -eu
 
 ALLOW_FILE="${ALLOW_FILE:-/etc/spa/public-env.allow}"

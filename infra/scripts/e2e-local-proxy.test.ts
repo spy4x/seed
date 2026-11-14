@@ -1,6 +1,12 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { forwardedHead, parseHead, upstreamFor } from "./e2e-local-proxy.ts"
+import {
+  configResponse,
+  forwardedHead,
+  isConfigPath,
+  parseHead,
+  upstreamFor,
+} from "./e2e-local-proxy.ts"
 
 const head = (...lines: string[]): string => [...lines, "", ""].join("\r\n")
 
@@ -77,4 +83,22 @@ Deno.test("upstreamFor sends /api to the API, the bucket to the file store and t
   expect(upstreamFor("/e2e-filesystem", upstreams)).toBe(2)
   expect(upstreamFor("/profile/account", upstreams)).toBe(2)
   expect(upstreamFor("/e2e-files/a", { api: 1, spa: 2 })).toBe(2)
+})
+
+Deno.test("isConfigPath takes /config.json with or without a query and nothing else", () => {
+  expect(["/config.json", "/config.json?v=1"].map(isConfigPath)).toEqual([true, true])
+  expect(["/config.jsonx", "/a/config.json", "/"].map(isConfigPath)).toEqual([false, false, false])
+})
+
+Deno.test("configResponse sends the body as JSON a browser never reuses unchecked, with its byte length", () => {
+  const body = `{"env":"dev","notes":"false","site":"é"}\n`
+  const [headers, sent] = configResponse(body).split("\r\n\r\n")
+  expect(headers.split("\r\n")).toEqual([
+    "HTTP/1.1 200 OK",
+    "Content-Type: application/json",
+    "Cache-Control: no-cache",
+    `Content-Length: ${body.length + 1}`,
+    "Connection: close",
+  ])
+  expect(sent).toBe(body)
 })

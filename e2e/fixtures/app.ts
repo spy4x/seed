@@ -1,4 +1,5 @@
 import type { ConsoleMessage, Locator, Page, Request } from "@playwright/test"
+import process from "node:process"
 
 /**
  * What Chromium reports for a request that was in flight when the host's network interfaces
@@ -122,14 +123,41 @@ export async function submitAuthForm(page: Page, url: string, ready: Locator): P
  */
 export const SIGNED_IN_LANDING = /\/(notes|groups\/[0-9a-f-]{36}\/billing)$/
 
+/**
+ * Whether the API of this stack runs with the notes off: `NOTES=false`, which `deno task e2e:local`
+ * passes on to it and to Playwright, read as the API reads it (`readNotesSetup`).
+ */
+export function apiNotesOff(): boolean {
+  return process.env.NOTES?.trim() === `false`
+}
+
+/**
+ * Whether the SPA of this stack runs with the notes off: `SPA_NOTES` `false` or `0`, which
+ * `deno task e2e:local` writes into the SPA's `/config.json`, read as the SPA reads it
+ * (`apps/spa/src/runtime-config.ts`).
+ */
+export function spaNotesOff(): boolean {
+  return [`false`, `0`].includes(process.env.SPA_NOTES?.toLowerCase() ?? ``)
+}
+
+/** The page a signed-in person's home is: the notes, or the overview with the notes off. */
+export function signedInHome(): string {
+  return spaNotesOff() ? `/overview` : `/notes`
+}
+
+/** Where sign-in and sign-up land on this stack: {@link SIGNED_IN_LANDING}, or the overview. */
+export function signedInLanding(): RegExp {
+  return spaNotesOff() ? /\/(overview|groups\/[0-9a-f-]{36}\/billing)$/ : SIGNED_IN_LANDING
+}
+
 /** Signs `email` in through the form and waits until the app has booted where sign-in lands. */
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
   await page.locator("[data-e2e=auth-form-login]").fill(email)
   await page.locator("[data-e2e=auth-form-password]").fill(password)
-  await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"), async () => {
+  await gotoApp(page, signedInHome(), page.locator("[data-e2e=shell-ws-status]"), async () => {
     await page.locator("[data-e2e=auth-form-submit]").click()
-    await page.waitForURL(SIGNED_IN_LANDING)
+    await page.waitForURL(signedInLanding())
   })
 }
 
