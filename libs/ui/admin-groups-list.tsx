@@ -57,20 +57,27 @@ const STATUS_CHIPS: { value: Exclude<AdminGroupStatusFilter, "any">; label: stri
  *   cell names the owner instead, in full: a touch screen cannot open a tooltip.
  *
  * Positions follow `groupColumns`: 2 owner, 4 notes, 5 plan, 6 last activity, 7 created. With the
- * notes off the notes column is left out, so the ones after it move one place left.
+ * notes off the notes column is left out, so the plan is 4 and the creation date 6. Each class is
+ * written out whole, since Tailwind generates only the classes it finds in the source.
  */
-function tableClass(notes: boolean): string {
-  const at = (position: number) => notes ? position : position - 1
-  return [
-    `[&>div:first-child]:min-h-0`,
-    `[&_:is(th,td)]:px-4`,
-    `max-sm:[&_:is(th,td)]:px-3`,
-    ...(notes ? [`max-xl:[&_:is(th,td):nth-child(4)]:hidden`] : []),
-    `max-xl:[&_:is(th,td):nth-child(${at(5)})]:hidden`,
-    `max-xl:[&_:is(th,td):nth-child(${at(7)})]:hidden`,
-    `max-sm:[&_:is(th,td):nth-child(2)]:hidden`,
-    `max-sm:[&_:is(th,td):nth-child(n+4)]:hidden`,
-  ].join(` `)
+const TABLE_CLASS = [
+  `[&>div:first-child]:min-h-0`,
+  `[&_:is(th,td)]:px-4`,
+  `max-sm:[&_:is(th,td)]:px-3`,
+  `max-sm:[&_:is(th,td):nth-child(2)]:hidden`,
+  `max-sm:[&_:is(th,td):nth-child(n+4)]:hidden`,
+].join(` `)
+/** The columns hidden below 1280px, with the notes on and off. */
+const NARROW_HIDDEN = {
+  notes: [
+    `max-xl:[&_:is(th,td):nth-child(4)]:hidden`,
+    `max-xl:[&_:is(th,td):nth-child(5)]:hidden`,
+    `max-xl:[&_:is(th,td):nth-child(7)]:hidden`,
+  ].join(` `),
+  noNotes: [
+    `max-xl:[&_:is(th,td):nth-child(4)]:hidden`,
+    `max-xl:[&_:is(th,td):nth-child(6)]:hidden`,
+  ].join(` `),
 }
 
 /** A group role as a person reads it, in the operator's language: `Owner`. */
@@ -259,7 +266,7 @@ export function AdminGroupsListScreen(
           <div data-e2e="admin-groups-list">
             <DataTable
               mode="server"
-              class={tableClass(notes !== false)}
+              class={`${TABLE_CLASS} ${NARROW_HIDDEN[notes === false ? `noNotes` : `notes`]}`}
               columns={groupColumns(t, format, notes !== false, navigate)}
               rows={rows}
               sort={filter.sort}
