@@ -171,6 +171,14 @@ export const GROUPS: TestGroup[] = [
   },
   {
     flags: [
+      `--allow-read=apps/spa,tests,.woodpecker/release.yml`,
+      `--allow-write=tests`,
+      `--allow-run=sh`,
+    ],
+    paths: [`tests/spa-sourcemaps.test.ts`],
+  },
+  {
+    flags: [
       `--allow-read=.woodpecker/ci.yml,e2e,docs/browser-tests.md,docs/woodpecker-ci-setup.md`,
     ],
     paths: [`tests/ci-browser-tests.test.ts`],

@@ -77,6 +77,12 @@ Deno.test("SPA=false scales the SPA to no container on every up, and leaves othe
   ])
 })
 
+Deno.test("SPA=false in production also keeps the source map upload at no container", () => {
+  const plan = planCompose({ ENV: "prod", SPA: "false" }, ["up", "-d"], ENV_FILE)
+  expect(plan.off).toEqual(["spa", "sourcemaps"])
+  expect(plan.command).toContain("sourcemaps=0")
+})
+
 Deno.test("the SPA runs unless SPA is exactly false", () => {
   for (const value of [undefined, "", "true", "False", "0"]) {
     const env: Record<string, string> = value === undefined ? { ENV: "dev" } : { ENV: "dev", SPA: value }

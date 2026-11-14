@@ -57,12 +57,52 @@ services:
       - default
     build:
       dockerfile: apps/spa/dockerfile.prod
+      # Compose merges these with compose.shared.yml's arguments.
+      args:
+        # The same commit as the sourcemaps service below, so the bundle and its maps share it.
+        - APP_COMMIT=${APP_COMMIT:-}
     labels:
       # Overrides compose.shared.yml's spa-${PROJECT} router by name; see the api router above.
       - "traefik.docker.network=proxy"
       - "traefik.http.routers.spa-${PROJECT}.entrypoints=websecure"
       - "traefik.http.routers.spa-${PROJECT}.tls=true"
       - "traefik.http.routers.spa-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+
+  # Uploads the SPA's source maps to the error tracker once per deploy, then exits 0, also when it
+  # uploads nothing (apps/spa/upload-sourcemaps.sh; docs/stack.md, "Source maps"). Production only:
+  # the served SPA image holds no map, and this stage of its Dockerfile holds them. The tracker's
+  # address and token come at run time, so neither is in an image. Compose names its container
+  # after the project (`name: ${PROJECT}`), as every service defined only here.
+  sourcemaps:
+    build:
+      context: ../..
+      dockerfile: apps/spa/dockerfile.prod
+      target: sourcemaps
+      args:
+        - DENO_VERSION=${DENO_VERSION}
+        - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
+        # `deno task deploy` sets it to the deployed commit; the SPA reports it as its release.
+        - APP_COMMIT=${APP_COMMIT:-}
+    restart: "no"
+    environment:
+      - SOURCEMAPS_URL=${SOURCEMAPS_URL:-}
+      - SOURCEMAPS_TOKEN=${SOURCEMAPS_TOKEN:-}
+      - SOURCEMAPS_ORG=${SOURCEMAPS_ORG:-}
+      - SOURCEMAPS_PROJECT=${SOURCEMAPS_PROJECT:-spa}
+    user: "65534:65534"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '256M'
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
 
   # Only with COMPOSE_PROFILES=mpa. Overrides compose.shared.yml's mpa-${PROJECT} router by name.
   mpa:

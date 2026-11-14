@@ -58,4 +58,29 @@ describe("the SPA's error reporting", () => {
       expect(body).not.toContain("next=")
     }
   })
+
+  it("names the build's release in each report, so the tracker finds its source maps", async () => {
+    const { bodies, fetcher } = recorder()
+    const target = new EventTarget()
+    const dsn = "https://key@errors.example.com/3"
+    startErrorReporting({ ERROR_REPORT_DSN: dsn, RELEASE: "0123abc" }, target, () => "", fetcher)
+    reportCaughtError(new Error("render"))
+    await tick()
+
+    expect(JSON.parse(bodies[0].split("\n")[2]).release).toBe("0123abc")
+  })
+
+  it("sends no release when the build has none", async () => {
+    const { bodies, fetcher } = recorder()
+    const target = new EventTarget()
+    const dsn = "https://key@errors.example.com/3"
+    for (const release of [undefined, ""]) {
+      startErrorReporting({ ERROR_REPORT_DSN: dsn, RELEASE: release }, target, () => "", fetcher)
+      reportCaughtError(new Error("render"))
+      await tick()
+    }
+
+    expect(bodies).toHaveLength(2)
+    for (const body of bodies) expect(JSON.parse(body.split("\n")[2])).not.toHaveProperty("release")
+  })
 })

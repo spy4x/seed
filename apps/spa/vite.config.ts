@@ -156,6 +156,11 @@ export default defineConfig({
       replacement: fromFileUrl(new URL("../../i18n/", import.meta.url)),
     }],
   },
+  build: {
+    // Maps for the error tracker, which turns a minified stack trace back into source lines. Hidden:
+    // no bundle names its map, and dockerfile.prod uploads the maps and keeps them out of nginx.
+    sourcemap: `hidden`,
+  },
   optimizeDeps: {
     // These come in through the Deno plugin's resolver, which the dev server's dependency scan
     // does not follow: tailwind-merge (through the JSR package @spy4x/preact-cn) and

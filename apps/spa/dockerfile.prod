@@ -11,9 +11,27 @@ USER 1000:1000
 
 ARG VITE_ENV=prod
 ENV VITE_ENV=${VITE_ENV}
-RUN deno task spa:build
+# The commit this image is built from, which the bundle reports as its release (docs/stack.md,
+# "Source maps"). `deno task deploy` passes it; empty, the bundle reports no release.
+ARG APP_COMMIT=
+ENV VITE_RELEASE=${APP_COMMIT}
+# The source maps go to the `sourcemaps` stage only: a copy of the built files keeps them, and the
+# files nginx serves lose them in the same step, so no layer of the served image holds one.
+RUN deno task spa:build \
+  && cp -R apps/spa/dist apps/spa/sourcemaps \
+  && find apps/spa/dist -name '*.map' -delete
 
-# Production stage with nginx
+# Source map upload stage: the `sourcemaps` service (infra/compose/compose.prod.yml) runs it once
+# per deploy, with the tracker's address and token from the env file at run time, never at build.
+# The release pipeline skips it (--skip-unused-stages): a published image uploads nothing.
+FROM docker.io/getsentry/sentry-cli:3.8.2@sha256:633122f5fbd774716a0ebbcd7ece9c0584aa781cc61a84e7ce57964c635d6559 AS sourcemaps
+ARG APP_COMMIT=
+ENV APP_COMMIT=${APP_COMMIT}
+COPY --from=build /app/apps/spa/sourcemaps /sourcemaps
+COPY --from=build --chmod=755 /app/apps/spa/upload-sourcemaps.sh /usr/local/bin/upload-sourcemaps.sh
+ENTRYPOINT ["/usr/local/bin/upload-sourcemaps.sh"]
+
+# Production stage with nginx, the default target: the last stage
 # The registry is named: podman refuses a short name when it has no terminal to ask on.
 FROM docker.io/nginxinc/nginx-unprivileged:stable-alpine
 WORKDIR /app

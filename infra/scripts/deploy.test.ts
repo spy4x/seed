@@ -9,6 +9,7 @@ import {
   parseDeployArgs,
   planDeploy,
   planFromEnvFile,
+  readHeadCommit,
   refuseDirtyTree,
   refuseExampleSecrets,
   refuseUncommittedChanges,
@@ -103,6 +104,24 @@ Deno.test("planDeploy starts the app in the quoted path with the configured Deno
       `cd '/srv/my app' && PATH="$HOME/.deno/bin:$PATH" /opt/deno/deno task compose up -d --build`,
     ],
   })
+})
+
+Deno.test("planDeploy builds the app with the deployed commit as APP_COMMIT", () => {
+  const commit = "0123456789abcdef0123456789abcdef01234567"
+  const [, , , start] = planDeploy({ SSH_TO_SERVER: "h", PATH_ON_SERVER: "/srv/app" }, ENV_FILE, commit)
+  expect(start.args[1]).toBe(
+    `cd '/srv/app' && APP_COMMIT=${commit} PATH="$HOME/.deno/bin:$PATH" deno task compose up -d --build`,
+  )
+})
+
+Deno.test("planDeploy starts the app without APP_COMMIT when there is no full commit id", () => {
+  for (const commit of [undefined, "", "0123abc", "0123456789abcdef0123456789abcdef0123456; x"]) {
+    const [, , , start] = planDeploy({ SSH_TO_SERVER: "h", PATH_ON_SERVER: "/srv/app" }, ENV_FILE, commit)
+    expect({ commit, command: start.args[1] }).toEqual({
+      commit,
+      command: `cd '/srv/app' && PATH="$HOME/.deno/bin:$PATH" deno task compose up -d --build`,
+    })
+  }
 })
 
 Deno.test("planDeploy reads a leading ~/ in PATH_ON_SERVER as the home directory", () => {
@@ -490,6 +509,25 @@ Deno.test("a deploy from a checkout with a modified file stops and names it", as
     await expect(refuseUncommittedChanges(false, dir)).rejects.toThrow("tracked.txt")
     await refuseUncommittedChanges(true, dir)
   })
+})
+
+Deno.test("the deploy reads the checkout's commit, and none from a repository without one", async () => {
+  await inGitRepository(async (dir) => {
+    expect(await readHeadCommit(dir)).toMatch(/^[0-9a-f]{40}$/)
+  })
+  const empty = await Deno.makeTempDir({ dir: "tests", prefix: ".scratch-deploy-git-" })
+  try {
+    const init = await new Deno.Command("git", {
+      args: ["init", "--quiet"],
+      cwd: empty,
+      clearEnv: true,
+      env: { HOME: empty, GIT_CONFIG_NOSYSTEM: "1" },
+    }).output()
+    expect(init.success).toBe(true)
+    expect(await readHeadCommit(empty)).toBeUndefined()
+  } finally {
+    await Deno.remove(empty, { recursive: true })
+  }
 })
 
 Deno.test("a deploy from a checkout with an untracked file stops and names it", async () => {

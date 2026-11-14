@@ -36,8 +36,9 @@ export function appRuntime(envVars: Record<string, string>): AppRuntime {
  * and `APP_RUNTIME=node` or `bun` adds a third that runs the API, the worker, the migration and the
  * website on that runtime ({@link appRuntime}).
  *
- * `SPA=false` keeps the SPA off: every `up` scales it to no container, which also stops and removes
- * one that runs, so Traefik has no router for its host. Scaling, not a profile, so a hand-typed
+ * `SPA=false` keeps the SPA off, and in production its `sourcemaps` service: every `up` scales them
+ * to no container, which also stops and removes one that runs, so Traefik has no router for its
+ * host and no map is uploaded. Scaling, not a profile, so a hand-typed
  * `docker compose up` and every product that never sets `SPA` start the SPA as before.
  */
 export function planCompose(
@@ -57,7 +58,9 @@ export function planCompose(
     envFilePath,
   ]
   const up = args.includes("up")
-  const off = envVars["SPA"] === "false" ? ["spa"] : []
+  // Production's `sourcemaps` service uploads the SPA's maps, so it stays off with the SPA.
+  const spaServices = envVars["ENV"] === "prod" ? ["spa", "sourcemaps"] : ["spa"]
+  const off = envVars["SPA"] === "false" ? spaServices : []
   const scale = up ? off.flatMap((service) => ["--scale", `${service}=0`]) : []
   const at = args.indexOf("up") + 1
   return {

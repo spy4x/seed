@@ -22,6 +22,8 @@ const OVERRIDES = [
 ]
 
 const MUST_HAVES = [`api`, `db`, `kv`, `migrate`, `pgbouncer`, `spa`, `worker`]
+// Production also uploads the SPA's source maps once per deploy (compose.prod.yml).
+const PROD_MUST_HAVES = [...MUST_HAVES, `sourcemaps`]
 const SHIPPERS = [`postgres-prometheus-exporter`, `socket-proxy`, `vector`, `vmagent`]
 const BACKENDS = [`alertmanager`, `grafana`, `victorialogs`, `victoriametrics`, `vmalert`]
 const HOST_EXPORTERS = [`cadvisor`, `nodeexporter`]
@@ -69,7 +71,8 @@ for (const overrides of OVERRIDES) {
   const files = overrides.join(` + `)
 
   Deno.test(`${files}: with no profile only the must-haves start`, async () => {
-    expect(started(await stack(overrides), [])).toEqual(MUST_HAVES)
+    const expected = overrides.includes(`compose.prod.yml`) ? PROD_MUST_HAVES : MUST_HAVES
+    expect(started(await stack(overrides), [])).toEqual([...expected].sort())
   })
 
   Deno.test(`${files}: no must-have waits for a service in a profile`, async () => {
@@ -88,24 +91,24 @@ for (const overrides of OVERRIDES) {
 
 Deno.test("the telemetry profile starts the shippers and no monitoring backend", async () => {
   expect(started(await stack([`compose.prod.yml`]), [`telemetry`]))
-    .toEqual([...MUST_HAVES, ...SHIPPERS].sort())
+    .toEqual([...PROD_MUST_HAVES, ...SHIPPERS].sort())
 })
 
 Deno.test("the monitoring profile starts the shippers and the backends", async () => {
   const services = await stack([`compose.prod.yml`])
-  const bundled = [...MUST_HAVES, ...SHIPPERS, ...BACKENDS].sort()
+  const bundled = [...PROD_MUST_HAVES, ...SHIPPERS, ...BACKENDS].sort()
   expect(started(services, [`monitoring`])).toEqual(bundled)
   expect(started(services, [`monitoring`, `telemetry`])).toEqual(bundled)
 })
 
 Deno.test("the host-monitoring profile starts the host exporters and no shipper", async () => {
   expect(started(await stack([`compose.prod.yml`]), [`host-monitoring`]))
-    .toEqual([...MUST_HAVES, ...HOST_EXPORTERS].sort())
+    .toEqual([...PROD_MUST_HAVES, ...HOST_EXPORTERS].sort())
 })
 
 Deno.test("the errors profile starts GlitchTip and its database setup, and nothing else", async () => {
   expect(started(await stack([`compose.prod.yml`]), [`errors`]))
-    .toEqual([...MUST_HAVES, `errors`, `errors-db`].sort())
+    .toEqual([...PROD_MUST_HAVES, `errors`, `errors-db`].sort())
 })
 
 Deno.test("a service in a profile reads no variable bare that no must-have reads", async () => {
