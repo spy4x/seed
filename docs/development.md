@@ -88,6 +88,14 @@ pictures and videos.
 - `groups-pages.e2e.ts`
 - `url-filters.e2e.ts`
 
+## Browser tests with the notes off
+
+`NOTES=false SPA_NOTES=false deno task e2e:local e2e/notes-off.e2e.ts` runs the stack with the notes
+example off, as a product that turns it off does ([start a product](start-a-product.md)). The API
+and the worker read `NOTES`, the warm-up writes no note, and the SPA's `/config.json` carries
+`SPA_NOTES` from the dev server, the image and nginx alike. `notes-off.e2e.ts` skips, saying why,
+on a stack with the notes on, and the other specs expect them on.
+
 ## Env files
 
 Seed's own env files are committed encrypted, one value at a time, as `infra/envs/*.age`.
