@@ -19,7 +19,15 @@ describe("readMpaConfig", () => {
       apiUrl: "http://api:8000",
       webAppOrigin: "https://www.example.com",
       apiOrigin: "https://app.example.com",
+      notes: true,
     })
+  })
+
+  it("keeps the notes on unless NOTES is false, as the API reads it", () => {
+    expect(readMpaConfig(env(prod)).notes).toBe(true)
+    expect(readMpaConfig(env({ ...prod, NOTES: "" })).notes).toBe(true)
+    expect(readMpaConfig(env({ ...prod, NOTES: "0" })).notes).toBe(true)
+    expect(readMpaConfig(env({ ...prod, NOTES: "false" })).notes).toBe(false)
   })
 
   it("knows the admin app's origin only while the public demo is on", () => {
