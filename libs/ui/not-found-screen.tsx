@@ -6,7 +6,7 @@ import { IconSearch } from "@spy4x/preact-icons"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { AuthCard } from "./auth-screen.tsx"
 import { useAdminText, useAppText } from "./i18n.ts"
-import { type Navigate, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import { type Navigate, NOTE_PATHS, OVERVIEW_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 
 /** Who meets the address: a signed-in person, a signed-out visitor of the SPA, or an operator. */
 export type NotFoundAudience = "member" | "visitor" | "operator"
@@ -15,6 +15,11 @@ export interface NotFoundScreenProps {
   audience: NotFoundAudience
   /** Follows the link without a page load: the app's router. Left out, the link loads the page. */
   navigate?: Navigate
+  /**
+   * Whether the product keeps the notes example. Off, a signed-in person is sent to the overview
+   * and a visitor's line names no notes. Defaults to on.
+   */
+  notes?: boolean
 }
 
 /**
@@ -22,7 +27,9 @@ export interface NotFoundScreenProps {
  * one sentence and one link back. The apps draw it from their router's last, pathless route. A
  * signed-out visitor gets it in the card of the sign-in pages, with a link to sign in.
  */
-export function NotFoundScreen({ audience, navigate }: NotFoundScreenProps): JSX.Element {
+export function NotFoundScreen(
+  { audience, navigate, notes = true }: NotFoundScreenProps,
+): JSX.Element {
   const app = useAppText()
   const admin = useAdminText()
   const { title, description, label, href } = audience === "operator"
@@ -35,15 +42,15 @@ export function NotFoundScreen({ audience, navigate }: NotFoundScreenProps): JSX
     : audience === "visitor"
     ? {
       title: app.t(`NotFound.title`),
-      description: app.t(`NotFound.signedOut`),
+      description: app.t(notes ? `NotFound.signedOut` : `NotFound.signedOutPlain`),
       label: app.t(`NotFound.signIn`),
       href: SCREEN_PATHS.signIn,
     }
     : {
       title: app.t(`NotFound.title`),
       description: app.t(`NotFound.description`),
-      label: app.t(`NotFound.toNotes`),
-      href: NOTE_PATHS.list,
+      label: app.t(notes ? `NotFound.toNotes` : `NotFound.toOverview`),
+      href: notes ? NOTE_PATHS.list : OVERVIEW_PATHS.root,
     }
   // 44 px tall on a phone, a touch target; the button's own 36 px from `sm`.
   const link = (width: string) => (

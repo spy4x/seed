@@ -59,7 +59,8 @@ export const SPA_ROUTES = {
   "/benchmark": { open: false },
   // The profile: the list of its sections, and one section (`/profile/security`).
   "/profile/:section?": { open: false },
-  // The home page (`HomeView`) opens the notes, or a new owner's plan; signed out, sign-in.
+  // The home page (`HomeView`) opens the notes (the overview with them off), or a new owner's plan;
+  // signed out, sign-in.
   "/": { open: true },
 } as const satisfies Record<string, { open: boolean }>
 
@@ -68,6 +69,19 @@ export type SpaRoutePath = keyof typeof SPA_ROUTES
 
 /** The routes' patterns, in the order the router tries them. */
 export const SPA_ROUTE_PATHS = Object.keys(SPA_ROUTES) as SpaRoutePath[]
+
+/**
+ * Whether `path` is a page of the notes example: the notes, the tags and a group's old notes links.
+ * They are not routed when the product turns the notes off (`SPA_NOTES=false`).
+ */
+export function isNotesRoute(path: SpaRoutePath): boolean {
+  return [`notes`, `tags`].includes(section(path)) || path.startsWith(`/groups/:groupId/notes`)
+}
+
+/** The routes the router tries, in order: with `notes` off, none of {@link isNotesRoute}. */
+export function spaRoutePaths(notes: boolean): SpaRoutePath[] {
+  return notes ? SPA_ROUTE_PATHS : SPA_ROUTE_PATHS.filter((path) => !isNotesRoute(path))
+}
 
 /** The first part of a path or pattern: `notes` of `/notes/:noteId`, and `""` of `/`. */
 function section(path: string): string {

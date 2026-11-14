@@ -92,6 +92,8 @@ export interface PaletteContext {
   benchmark: boolean
   /** Whether the browser offers to install the app now. */
   canInstall: boolean
+  /** Whether the notes example is on; left out, it is. Off, no command names notes or tags. */
+  notes?: boolean
 }
 
 /** The Go to commands: the rail's and the shortcuts' destinations, with the words that find them. */
@@ -114,13 +116,13 @@ const GO_TO: readonly {
   {
     id: "notes",
     key: `Frame.notes`,
-    href: () => NOTE_PATHS.list,
+    href: (context) => context.notes === false ? null : NOTE_PATHS.list,
     aliases: [`notes list`, `all notes`, `заметки`, `список заметок`],
   },
   {
     id: "tags",
     key: `Frame.tags`,
-    href: () => TAG_PATHS.list,
+    href: (context) => context.notes === false ? null : TAG_PATHS.list,
     aliases: [`labels`, `categories`, `метки`, `теги`, `ярлыки`],
   },
   {
@@ -231,7 +233,7 @@ export function shortcutKeys(keys: string | undefined): Pick<PaletteOption, "kbd
  * them: This page, Go to, Create, Settings, Account. Go to comes before Create, so a typo that
  * fits both ("notse") finds the page first. A command the person cannot take is left out
  * ("New note" without a group they may write to, Activity while the rail hides it, "Install app"
- * while the browser offers no install); one that needs the server stays listed offline, with why
+ * while the browser offers no install, Notes, Tags, New note and New tag with the notes off); one that needs the server stays listed offline, with why
  * it cannot run. Each is found by its label, by its English label in every language, and by the
  * words a person would try, in English and Russian.
  *
@@ -276,7 +278,8 @@ export function paletteCommands(
     choice,
   })
   const page = (href: string) => ({ kind: "page", href }) as const
-  const inGroup: KeyedMessage | null = currentGroup?.canWrite
+  // New note and New tag need a group the person may write to, and the notes on.
+  const inGroup: KeyedMessage | null = currentGroup?.canWrite && context.notes !== false
     ? { key: `Search.inGroup`, values: { group: currentGroup.name } }
     : null
 

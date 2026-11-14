@@ -9,7 +9,7 @@ import { canMutateNotes, type CountWidgetResult, GroupRole, groupTimeZone } from
 import { freePlanAllowsNothing, needsFirstPlan } from "@domain/billing"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 import { OVERVIEW_DEFAULT_PRESET, OVERVIEW_PRESETS, OverviewScreen } from "@ui/overview-screen.tsx"
-import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "@ui/overview-widgets.ts"
+import { OVERVIEW_VIEWS, overviewWidgets } from "@ui/overview-widgets.ts"
 import { GROUP_PATHS, OVERVIEW_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { useAppText } from "@ui/i18n.ts"
 import { billingStore } from "../state/billing.ts"
@@ -19,6 +19,7 @@ import { overviewStore } from "../state/overview.ts"
 import { preferencesState } from "../state/preferences.ts"
 import { selectionStore } from "../state/selection.ts"
 import { toasts } from "../state/toasts.ts"
+import { notesOn } from "../modules.ts"
 
 /** The page's own keys, `d` and `c`, while the overview is open; `null` on every other page. */
 export const overviewPageActions = signal<{ openRange(): void; openCustomise(): void } | null>(
@@ -69,9 +70,12 @@ export function OverviewView({ groupId }: { groupId: string }) {
     presets: OVERVIEW_PRESETS.map((option) => option.preset),
   })
 
+  // With the notes off their widgets are not registered (`overviewWidgets`): none is asked for.
   const available = membership
-    ? OVERVIEW_WIDGETS.filter((widget) => widget.canView(membership.role))
+    ? overviewWidgets(notesOn()).filter((widget) => widget.canView(membership.role))
     : []
+  // With no widget at all the page has no range, no Customise and so no keys of its own.
+  const hasWidgets = available.length > 0
   const layout = mergeLayout(
     preferencesState.value.value.overview,
     available.map((widget) => widget.id),
@@ -98,13 +102,14 @@ export function OverviewView({ groupId }: { groupId: string }) {
   const choosePlan = asksForPlan && billing?.groupId === groupId && needsFirstPlan(billing.billing)
 
   useEffect(() => {
+    if (!hasWidgets) return
     overviewPageActions.value = {
       openRange: () =>
         document.querySelector<HTMLButtonElement>(`[data-e2e="${RANGE_E2E}"]`)?.click(),
       openCustomise: () => setCustomising(true),
     }
     return () => overviewPageActions.value = null
-  }, [])
+  }, [hasWidgets])
 
   /** Saves `next` as the layout; a failure stays under the Customise list until the next save. */
   async function saveLayout(next: LayoutEntry[]): Promise<boolean> {

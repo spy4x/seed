@@ -821,6 +821,8 @@ export default {
   "OverviewScreen.choosePlan": "Choisir un forfait",
   "OverviewScreen.allHidden": "Tous les widgets sont masqués",
   "OverviewScreen.allHiddenText": "Choisissez ceux que vous voulez voir.",
+  "OverviewScreen.noWidgets": "Rien à afficher pour l’instant",
+  "OverviewScreen.noWidgetsText": "Les widgets de {group} apparaîtront ici.",
   "OverviewScreen.gridLabel": "Vue d’ensemble de {group}",
   "OverviewScreen.customiseText":
     "Choisissez les widgets à afficher et leur ordre. Votre disposition vous suit sur vos autres appareils.",
@@ -1188,6 +1190,8 @@ export default {
   "NotFound.signedOut":
     "Cette adresse ne mène à aucune page. Connectez-vous pour accéder à vos notes.",
   "NotFound.toNotes": "Accéder à vos notes",
+  "NotFound.toOverview": "Aller à la vue d’ensemble",
+  "NotFound.signedOutPlain": "Cette adresse ne mène à aucune page. Connectez-vous pour continuer.",
   "NotFound.signIn": "Se connecter",
   "Notes.title": "Notes",
   "Notes.new": "Nouvelle note",

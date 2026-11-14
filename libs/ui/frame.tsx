@@ -40,11 +40,13 @@ import { useAppText } from "./i18n.ts"
  * The daily destinations, in the order the rail and the phone tab bar show them. Four at most, so
  * the phone bar keeps its last slot for the Account sheet. Activity belongs to the selected group and
  * shows only while there is one whose log the person may read. Profile and Tags are in the account
- * menu; Tags is in Notes' "More actions" too. Labels come from `t`, the app's translator.
+ * menu; Tags is in Notes' "More actions" too. With `notes` off, neither Notes nor Tags shows. Labels
+ * come from `t`, the app's translator.
  */
 export function navItems(
   activityGroupId: string | null,
   t: Translator<string>,
+  notes = true,
 ): AppShellItem[] {
   return [
     {
@@ -53,7 +55,9 @@ export function navItems(
       href: OVERVIEW_PATHS.root,
       Icon: IconChartPie,
     },
-    { key: "notes", label: t.t("Frame.notes"), href: NOTE_PATHS.list, Icon: IconDocumentText },
+    ...(notes
+      ? [{ key: "notes", label: t.t("Frame.notes"), href: NOTE_PATHS.list, Icon: IconDocumentText }]
+      : []),
     ...(activityGroupId === null ? [] : [{
       key: "activity",
       label: t.t("Frame.activity"),
@@ -221,6 +225,7 @@ export function AppFrame(
     shortcuts,
     language,
     wide = false,
+    notes = true,
     children,
   }: {
     user: FrameUser
@@ -241,6 +246,8 @@ export function AppFrame(
     language?: AccountMenuLanguage
     /** Gives the page the wider column (64 rem), for a data table that needs it. */
     wide?: boolean
+    /** Whether the product keeps the notes example; off, no Notes or Tags entry shows. */
+    notes?: boolean
     children: ComponentChildren
   },
 ): JSX.Element {
@@ -254,7 +261,7 @@ export function AppFrame(
   const searchEntries = useSearchEntries(shortcuts?.singleKeys ?? true, t.t("Frame.search"))
   return (
     <AppShell
-      items={navItems(activityGroupId, t)}
+      items={navItems(activityGroupId, t, notes)}
       currentPath={currentPath}
       navigate={navigate}
       switcher={groupPicker || hasSearch
@@ -280,7 +287,7 @@ export function AppFrame(
         user: { name, email, avatarUrl: user.avatarUrl },
         headerHref: SCREEN_PATHS.profile,
         items: [
-          { label: t.t("Frame.tags"), href: TAG_PATHS.list },
+          ...(notes ? [{ label: t.t("Frame.tags"), href: TAG_PATHS.list }] : []),
           ...shortcutsMenuItems(shortcuts, t.t("Frame.shortcuts")),
         ],
         signOut: { label: t.t("Frame.signOut"), onClick: onSignOut },

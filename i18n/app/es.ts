@@ -793,6 +793,8 @@ export default {
   "OverviewScreen.choosePlan": "Elegir un plan",
   "OverviewScreen.allHidden": "Todos los widgets están ocultos",
   "OverviewScreen.allHiddenText": "Elige los que quieras ver.",
+  "OverviewScreen.noWidgets": "Aún no hay nada que mostrar",
+  "OverviewScreen.noWidgetsText": "Aquí aparecerán los widgets de {group}.",
   "OverviewScreen.gridLabel": "Resumen de {group}",
   "OverviewScreen.customiseText":
     "Elige qué widgets ves y en qué orden. Tu diseño te acompaña en tus otros dispositivos.",
@@ -1149,6 +1151,9 @@ export default {
   "NotFound.signedOut":
     "Esta dirección no lleva a ninguna página. Inicia sesión para ver tus notas.",
   "NotFound.toNotes": "Ir a tus notas",
+  "NotFound.toOverview": "Ir al resumen",
+  "NotFound.signedOutPlain":
+    "Esta dirección no lleva a ninguna página. Inicia sesión para continuar.",
   "NotFound.signIn": "Iniciar sesión",
   "Notes.title": "Notas",
   "Notes.new": "Nueva nota",

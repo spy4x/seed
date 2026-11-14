@@ -692,6 +692,8 @@ export default {
   "OverviewScreen.choosePlan": "プランを選ぶ",
   "OverviewScreen.allHidden": "すべてのウィジェットが非表示です",
   "OverviewScreen.allHiddenText": "表示したいウィジェットを選んでください。",
+  "OverviewScreen.noWidgets": "まだ表示するものはありません",
+  "OverviewScreen.noWidgetsText": "{group}のウィジェットがここに表示されます。",
   "OverviewScreen.gridLabel": "{group}の概要",
   "OverviewScreen.customiseText":
     "表示するウィジェットとその順番を選べます。レイアウトは他のデバイスにも反映されます。",
@@ -1015,6 +1017,8 @@ export default {
     "このアドレスのページはありません。入力ミスか、ページが移動した可能性があります。",
   "NotFound.signedOut": "このアドレスのページはありません。ログインしてメモを開いてください。",
   "NotFound.toNotes": "メモ一覧へ",
+  "NotFound.toOverview": "概要へ",
+  "NotFound.signedOutPlain": "このアドレスのページはありません。ログインして続けてください。",
   "NotFound.signIn": "ログイン",
   "Notes.title": "メモ",
   "Notes.new": "新しいメモ",

@@ -21,6 +21,11 @@ export interface SpaShortcutPorts {
   overviewPage?: { openRange(): void; openCustomise(): void } | null
   /** The benchmark page's keys while it is open; `null` or left out on every other page. */
   benchmarkPage?: { run(): void; copy(): void } | null
+  /**
+   * Whether the notes example is on (`SPA_NOTES`); left out, it is. Off, no row names notes or
+   * tags: no `n`, Undo, `g n`, `g t` or the New note dialog's keys.
+   */
+  notes?: boolean
 }
 
 /**
@@ -38,16 +43,22 @@ export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
     run: () => ports.navigate(href),
   })
   const [show, close] = generalRows(ports.openShortcuts)
+  const notes = ports.notes ?? true
   return [
     show,
     { keys: "mod+k", description: `Shortcuts.search`, group: general },
     { keys: "/", description: `Shortcuts.search`, group: general },
-    { keys: "n", description: `Shortcuts.newNoteRow`, group: general, run: ports.openNewNote },
-    { keys: "mod+z", description: `Shortcuts.undo`, group: general },
+    ...(notes
+      ? [
+        { keys: "n", description: `Shortcuts.newNoteRow`, group: general, run: ports.openNewNote },
+        { keys: "mod+z", description: `Shortcuts.undo`, group: general },
+      ]
+      : []),
     close,
     go("g o", `Frame.overview`, OVERVIEW_PATHS.root),
-    go("g n", `Frame.notes`, NOTE_PATHS.list),
-    go("g t", `Frame.tags`, TAG_PATHS.list),
+    ...(notes
+      ? [go("g n", `Frame.notes`, NOTE_PATHS.list), go("g t", `Frame.tags`, TAG_PATHS.list)]
+      : []),
     ...(ports.activityGroupId === null
       ? []
       : [go("g a", `Frame.activity`, GROUP_PATHS.activity(ports.activityGroupId))]),
@@ -86,8 +97,12 @@ export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
         },
       ]
       : []),
-    { keys: "enter", description: `Shortcuts.addNote`, group: newNote },
-    { keys: "mod+enter", description: `Shortcuts.addAndOpen`, group: newNote },
+    ...(notes
+      ? [
+        { keys: "enter", description: `Shortcuts.addNote`, group: newNote },
+        { keys: "mod+enter", description: `Shortcuts.addAndOpen`, group: newNote },
+      ]
+      : []),
   ]
 }
 

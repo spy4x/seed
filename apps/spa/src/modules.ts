@@ -71,12 +71,26 @@ export interface ModuleSwitches {
 const switches: ModuleSwitches = { realtime: true, offline: true }
 
 /**
+ * Whether the product keeps the notes example (`SPA_NOTES`, with the API's `NOTES`). Off, the app
+ * shows no notes or tags anywhere and its stores keep nothing of them on the device.
+ */
+let notes = true
+
+/**
  * Reads the switches from the runtime configuration. Called once, before the first render. A
  * switch is off only when the configuration says so (`runtime-config.ts` reads the file's text).
  */
-export function configureModules(config: Pick<RuntimeConfig, "realtime" | "offline">): void {
+export function configureModules(
+  config: Pick<RuntimeConfig, "realtime" | "offline" | "notes">,
+): void {
   switches.realtime = config.realtime !== false
   switches.offline = config.offline !== false
+  notes = config.notes !== false
+}
+
+/** Whether the notes example is on: the one read of `SPA_NOTES` for the views. */
+export function notesOn(): boolean {
+  return notes
 }
 
 /** The switches as they are now. */
@@ -608,11 +622,16 @@ export const noLocalReads: LocalReads = createLocalReads(() => undefined)
  */
 export const localReads: LocalReads = createLocalReads(() => offlineLayer()?.reads)
 
-/** The notes store's server dependencies with the device copy and the queue in front of them. */
-export const offlineNotes = notesOverLayer
+/**
+ * The notes store's server dependencies with the device copy and the queue in front of them. With
+ * the notes off, the store gets no layer: nothing of the notes is read from or kept on the device.
+ */
+export const offlineNotes: typeof notesOverLayer = (online, current) =>
+  notesOverLayer(online, () => notes ? current() : null)
 
-/** The tags store's server dependencies with the device copy and the queue in front of them. */
-export const offlineTags = tagsOverLayer
+/** The tags store's dependencies, as {@link offlineNotes}: no layer with the notes off. */
+export const offlineTags: typeof tagsOverLayer = (online, current) =>
+  tagsOverLayer(online, () => notes ? current() : null)
 
 /** The offline status line and the conflict screen. */
 export const OfflineStatus = OfflineStatusLine

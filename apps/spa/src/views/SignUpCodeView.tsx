@@ -10,7 +10,7 @@ import {
   SIGN_UP_OFFLINE,
   SignUpCodeScreen,
 } from "@ui/sign-up-code-screen.tsx"
-import { afterSignIn, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
+import { afterSignIn, homePath, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
 import {
   cancelPasswordSignUp,
   readWaitingSignUp,
@@ -29,6 +29,7 @@ import {
 import { readyAtOf } from "./SignInCodeView.tsx"
 import { sessionState } from "../state/session.ts"
 import { isGuestSession } from "../state/guest.ts"
+import { notesOn } from "../modules.ts"
 import { GUEST_PATHS } from "@ui/guest-screens.tsx"
 import { useAppText } from "@ui/i18n.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
@@ -50,7 +51,7 @@ function failure(t: Translator<string>, answer: SignUpStepAnswer, fallback: stri
  */
 export function SignUpCodeView() {
   const [, navigate] = useLocation()
-  const next = readNext(new URLSearchParams(useSearch()))
+  const next = readNext(new URLSearchParams(useSearch()), homePath(notesOn()))
   const t = useAppText()
   const [pending, setPending] = useState<WaitingPasswordSignUp | null | undefined>(undefined)
   const [exists, setExists] = useState<ExistingAccountAnswer | null>(null)

@@ -4,7 +4,7 @@ import { useSignal } from "@preact/signals"
 import { matchRoute, useLocation, useRouter, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
 import { pictureUrl, shownPictureId } from "@domain/identity"
-import { NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { homePath, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
 import { type SearchChoice, SearchPalette } from "@ui/search-palette.tsx"
@@ -18,7 +18,7 @@ import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
 import { newNoteStore } from "../state/new-note.ts"
 import { pageCommands, runNoteCommand, spaShortcutRows } from "./shortcuts.ts"
-import { SPA_ROUTE_PATHS } from "./spa-paths.ts"
+import { spaRoutePaths } from "./spa-paths.ts"
 import { runChoice } from "./palette-choice.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
 import type { SessionUser } from "../state/session.ts"
@@ -26,6 +26,7 @@ import {
   callQuery,
   canCall,
   currentLayer,
+  notesOn,
   reviewConflicts,
   type UnsentWait,
   watchUnsentChanges,
@@ -149,12 +150,12 @@ function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentC
           onReview={(groupId) => {
             close()
             // The notes page of that group shows the conflicts with their choices; focus lands on
-            // them.
+            // them. With the notes off there is no such page: the app's first page opens.
             if (groupId) {
               reviewConflicts(groupId)
               void selectionStore.select(groupId)
             }
-            navigate(NOTE_PATHS.list)
+            navigate(homePath(notesOn()))
           }}
         />
       )
@@ -212,7 +213,8 @@ function NewNoteLayer({ navigate }: { navigate: (href: string) => void }) {
 /**
  * Wires the signed-in `AppFrame` to this app's router, stores and `signOut`: the groups and the
  * selected one for the switcher and the Activity entry, the name and address for the account menu,
- * and the keyboard shortcuts with the New note dialog.
+ * and the keyboard shortcuts with the New note dialog. With the notes off (`notesOn`), nothing
+ * here offers notes or tags, and the New note dialog is not mounted.
  */
 export function AppShell(
   { user, wsStatus, children }: {
@@ -225,7 +227,8 @@ export function AppShell(
   // An address no route answers shows the not-found page, which belongs to no section, so the rail
   // marks no entry there (`/notes/x/y` is not inside the notes).
   const { parser } = useRouter()
-  const routed = SPA_ROUTE_PATHS.some((path) => matchRoute(parser, path, location)[0])
+  const notes = notesOn()
+  const routed = spaRoutePaths(notes).some((path) => matchRoute(parser, path, location)[0])
   const t = useAppText()
   const guest = isGuestSession(user)
   const { onSignOut, dialog } = useSignOut(guest)
@@ -242,6 +245,7 @@ export function AppShell(
     activityGroupId,
     overviewPage: overviewPageActions.value,
     benchmarkPage: benchmarkPageActions.value,
+    notes,
   })
   useShortcuts(rows, singleKeys.on.value)
   const switchGroup = (groupId: string) => {
@@ -276,7 +280,7 @@ export function AppShell(
           pageCommands={pageCommands(t, {
             overview: Boolean(overviewPageActions.value),
             benchmark: Boolean(benchmarkPageActions.value),
-            noteEditor: noteEditorPageActions.value,
+            noteEditor: notes ? noteEditorPageActions.value : null,
           }, rows)}
           onSelect={(choice) => void open(choice)}
           theme={themeStore.preference.value}
@@ -286,6 +290,7 @@ export function AppShell(
           slashKey={singleKeys.on.value}
           guest={guest}
           benchmark={benchmarkOpen()}
+          notes={notes}
         />
       }
       shortcuts={{
@@ -333,6 +338,7 @@ export function AppShell(
       navigate={navigate}
       onSignOut={onSignOut}
       language={languageChoice()}
+      notes={notes}
     >
       {children}
       {dialog}
@@ -343,7 +349,7 @@ export function AppShell(
           onClose={() => guestRefusal.value = null}
         />
       )}
-      <NewNoteLayer navigate={navigate} />
+      {notes && <NewNoteLayer navigate={navigate} />}
     </AppFrame>
   )
 }
