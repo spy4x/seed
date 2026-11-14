@@ -47,7 +47,7 @@ export const handler = define.handlers({
   GET(ctx) {
     const slug = ctx.params.slug ?? ``
     const localize = (path: string) => localePath(ctx.state.language, path)
-    const doc = readDoc(slug, localize)
+    const doc = readDoc(slug, localize, ctx.state.notes)
     if (!doc) return renderNotFound(ctx)
     const path = `${DOCS_PATH}/${slug}`
     return ctx.render(

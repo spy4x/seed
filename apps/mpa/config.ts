@@ -1,6 +1,7 @@
 import { FORM_ACTIONS } from "@ui/progressive.tsx"
 import { readIndexNowKey } from "@domain/blog"
 import { isDemoMode } from "@server/auth/demo-accounts.ts"
+import { readNotesSetup } from "@server/notes/setup.ts"
 
 /** What the MPA needs to know about its surroundings. */
 export interface MpaConfig {
@@ -34,6 +35,12 @@ export interface MpaConfig {
    * account (docs/demo.md). `undefined` outside the demo.
    */
   demoAdminOrigin?: string
+  /**
+   * Whether the notes example is on, from `NOTES` as the API reads it (`readNotesSetup`). The API
+   * reference (`/docs/api`) documents the notes endpoints, so `false` takes that page off the
+   * site. Missing counts as on.
+   */
+  notes?: boolean
 }
 
 /**
@@ -70,7 +77,7 @@ export const ROBOTS_POLICY: RobotsPolicy = {
 /**
  * Reads the configuration from the environment: `ENV`, `DOMAIN` (as the API reads them), `API_URL`
  * and `MPA_DOMAIN`, the optional pair `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID`, and the
- * optional `INDEXNOW_KEY` and `DEMO_ORIGIN`, and `DEMO_MODE` with `ADMIN_DOMAIN`. Throws when a
+ * optional `INDEXNOW_KEY` and `DEMO_ORIGIN`, `DEMO_MODE` with `ADMIN_DOMAIN`, and `NOTES`. Throws when a
  * required one is missing, when `MPA_DOMAIN` carries a scheme (it would become the host `https`),
  * when only one of the Umami pair is set, when the IndexNow key is malformed, or when `DEMO_ORIGIN`
  * is not a bare `https:` origin, so a misconfigured MPA refuses to start.
@@ -96,6 +103,7 @@ export function readMpaConfig(env: { get(name: string): string | undefined }): M
       ? new URL(`${scheme}://${env.get("ADMIN_DOMAIN")}`).origin
       : undefined,
     demoOrigin: readDemoOrigin(env.get("DEMO_ORIGIN")),
+    notes: readNotesSetup(env).on,
   }
 }
 

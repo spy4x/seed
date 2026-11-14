@@ -24,6 +24,11 @@ export interface State {
   /** Whether the API takes newsletter subscriptions; `false` hides every newsletter form. */
   newsletter: boolean
   /**
+   * Whether the notes example is on, as `MpaConfig.notes`; `false` takes the API reference, which
+   * documents the notes endpoints, off the site and out of every link, list and guide.
+   */
+  notes: boolean
+  /**
    * Whether the blog has a live post (`blogLinkMiddleware`); `false` hides the Blog link and the
    * RSS link from every page.
    */

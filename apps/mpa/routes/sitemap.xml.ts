@@ -1,5 +1,6 @@
 import { FORM_ACTIONS } from "@ui/progressive.tsx"
 import { sitemapXml } from "@spy4x/platform/universal/seo"
+import { API_DOCS_PATH } from "../api-docs.ts"
 import { blogPages } from "../blog.ts"
 import { catalogPages } from "../catalog.ts"
 import { SITE_PAGES } from "../pages.ts"
@@ -13,7 +14,7 @@ import { localePath, SITE_LANGUAGES } from "../languages.ts"
  * `/de/pricing`, …), except one that is English at every address: the legal pages and the API
  * reference, the docs and the changelog are listed at their English address only; every other page
  * names its language versions (`hreflang`), as its own head does. The newsletter page is left out while
- * subscriptions are off. The blog's index in each language with a live post follows, then each
+ * subscriptions are off, and the API reference while the notes are off. The blog's index in each language with a live post follows, then each
  * post at its own language's address, with the day it was published or last significantly
  * updated; with no live post, or while the API cannot answer, the blog is left out. The catalog's
  * page, each category's and each item's follow, in every language both the site and the catalog
@@ -28,6 +29,7 @@ export const handler = define.handlers({
     const body = sitemapXml([
       ...SITE_PAGES
         .filter(({ path }) => ctx.state.newsletter || path !== FORM_ACTIONS.subscribe)
+        .filter(({ path }) => ctx.state.notes || path !== API_DOCS_PATH)
         .flatMap(({ path, updated, oneLanguage }) => {
           const alternates = languageAlternates(origin, path, { oneLanguage })
             .map(({ hreflang, href }) => ({ lang: hreflang, url: href }))

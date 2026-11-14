@@ -1,11 +1,20 @@
 // deno-lint-ignore-file ui-text/no-literal
 // This page is English at every language's address: a translated reference could say something the
 // English does not, so it is not translated. The frame around it is.
+import { HttpError } from "@spy4x/preact-server"
 import { Prose, PROSE_LABELS } from "@spy4x/preact-ui/prose"
 import CodeCopy from "../../../islands/code-copy.tsx"
 import { API_DOCS_HEAD, API_DOCS_PATH, API_DOCS_SOURCE, renderApiDocs } from "../../../api-docs.ts"
 import { LegalPage, REPOSITORY_URL } from "../../../site.tsx"
 import { define } from "../../../utils.ts"
+
+/** With the notes off (`NOTES=false`) the tokens reach no endpoint, so the page is the site's 404. */
+export const handler = define.handlers({
+  GET(ctx) {
+    if (!ctx.state.notes) throw new HttpError(404)
+    return { data: undefined }
+  },
+})
 
 /**
  * The API reference: how a personal API token reaches a group's notes. Its text is

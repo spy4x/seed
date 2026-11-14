@@ -34,6 +34,18 @@ describe(`rewriteDocLinks`, () => {
     expect(rewrite(`token-api.md#quick-start`)).toBe(`<p><a href="/docs/api#quick-start">x</a></p>`)
   })
 
+  it(`points the API reference's file at GitHub while the notes are off, as the site has no page`, () => {
+    const html = rewriteDocLinks(
+      `<p><a href="token-api.md#quick-start">x</a></p>`,
+      german,
+      undefined,
+      undefined,
+      false,
+    )
+    expect(html).toContain(`href="${REPOSITORY_URL}/blob/main/docs/token-api.md#quick-start"`)
+    expect(html).not.toContain(`/docs/api`)
+  })
+
   it(`points an internal doc and any other file at GitHub, marked as leaving the site`, () => {
     const handoff = rewrite(`handoff.md#traps`)
     expect(handoff).toContain(`href="${REPOSITORY_URL}/blob/main/docs/handoff.md#traps"`)

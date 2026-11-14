@@ -1116,6 +1116,8 @@ services:
       - ADMIN_DOMAIN=${ADMIN_DOMAIN:-}
       # A demo on its own host (docs/demo.md): the try links go to its /try. Empty: the app's.
       - DEMO_ORIGIN=${DEMO_ORIGIN:-}
+      # The notes example (docs/start-a-product.md): `false` takes the token API's reference away.
+      - NOTES=${NOTES:-}
       # Not `http://api`: on the shared `proxy` network that name is any project's API.
       - API_URL=http://${PROJECT}-api:${API_PORT}
       - DENO_LOG=${DENO_LOG}

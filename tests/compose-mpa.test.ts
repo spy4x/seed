@@ -61,6 +61,11 @@ Deno.test("the MPA gets the Umami pair from the env file, empty by default so no
   expect(mpa?.environment).toContain("MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}")
 })
 
+Deno.test("the MPA reads the notes' switch the API reads, so the API reference goes with the notes", async () => {
+  const { mpa } = await services()
+  expect(mpa?.environment).toContain("NOTES=${NOTES:-}")
+})
+
 Deno.test("in production the MPA is served over HTTPS on the port its image listens on", async () => {
   const { mpa } = await services(COMPOSE_PROD)
   const router = "traefik.http.routers.mpa-${PROJECT}"

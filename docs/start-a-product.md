@@ -90,7 +90,7 @@ shared ones. Delete those of pages the product deleted, and point the rest at th
 - `/features/sign-in`, `/features/realtime` and `/features/shortcuts`: the product's own feature
   slugs from `features-data.tsx`;
 - `/docs/api`, `/docs/get-started` and `/docs/capacity`: guides listed in the product's
-  `docs-list.ts`.
+  `docs-list.ts`. With `NOTES=false`, `/docs/api` answers 404, so delete it.
 
 A pull request measures only `QUICK_PATHS` in `lighthouse/quick.ts` (the home page, `/pricing`,
 the fixture blog post and `/docs`); each must stay in `lighthouserc.json`, or the check fails.
@@ -212,7 +212,9 @@ socket and `/api/call` as unknown ones. The changes pull, the admin app's group 
 and the Telegram bot's `/notes` leave them out too; moving a group's data leaves notes and tags
 where they are, and a new account gets no welcome note. A person's data export, a group's export
 file and spreadsheets leave them out, and a group import skips them (the worker reads `NOTES` too,
-for the data export). The tables and migrations stay, as the catalog's do. Unset or anything but
+for the data export). The website reads it as well: `/docs/api`, the personal-token API's
+reference, answers 404 in every language, and no footer, docs card, guide, sitemap or `llms.txt`
+links it. The tables and migrations stay, as the catalog's do. Unset or anything but
 `false` keeps the notes on.
 
 Set `SPA_NOTES=false` with it, for the app's screens: the rail, the palette and the keyboard

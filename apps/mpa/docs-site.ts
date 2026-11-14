@@ -79,15 +79,17 @@ const EXTERNAL_MARK =
 /**
  * `html` with each link of the published guide `self` pointed at its place on the website. A
  * relative link resolves against the folder of `self`'s file (`docs/` without `self`); a link to
- * a file of `groups` goes to `localize("/docs/<slug>")`, the API reference to its page, an anchor
- * in the page stays, and any other file of the repository goes to that file on GitHub at `main`,
- * marked as leaving the site. Links to other sites are left alone.
+ * a file of `groups` goes to `localize("/docs/<slug>")`, the API reference to its page while
+ * `apiDocs` is on (the notes are, `State.notes`), an anchor in the page stays, and any other file
+ * of the repository goes to that file on GitHub at `main`, marked as leaving the site. Links to
+ * other sites are left alone.
  */
 export function rewriteDocLinks(
   html: string,
   localize: (path: string) => string,
   self?: string,
   groups: readonly PublishedDocGroup[] = PUBLISHED_DOCS,
+  apiDocs = true,
 ): string {
   const guides = groups.flatMap(({ docs }) => docs)
   const own = guides.find(({ slug }) => slug === self)
@@ -106,7 +108,7 @@ export function rewriteDocLinks(
         const hash = siteAnchor(doc, target.hash)
         return `<a href="${localize(`${DOCS_PATH}/${doc.slug}`)}${hash}"${rest}>${text}</a>`
       }
-      if (path === `docs/token-api.md`) {
+      if (apiDocs && path === `docs/token-api.md`) {
         return `<a href="${localize(API_DOCS_PATH)}${target.hash}"${rest}>${text}</a>`
       }
       const kind = path.endsWith(`/`) ? `tree` : `blob`
@@ -160,11 +162,16 @@ const CACHE = new Map<string, SiteDoc>()
 
 /**
  * The published guide `slug`, rendered for the page in the language `localize` writes addresses
- * in, or `undefined` for any other name: an internal doc answers 404 like an unknown one.
+ * in, or `undefined` for any other name: an internal doc answers 404 like an unknown one. With
+ * `notes` off, a link to the API reference goes to its file on GitHub, as the site has no page.
  */
-export function readDoc(slug: string, localize: (path: string) => string): SiteDoc | undefined {
+export function readDoc(
+  slug: string,
+  localize: (path: string) => string,
+  notes = true,
+): SiteDoc | undefined {
   if (!isPublishedDoc(slug)) return undefined
-  const key = `${localize(``)}:${slug}`
+  const key = `${localize(``)}:${slug}:${notes}`
   const cached = CACHE.get(key)
   if (cached) return cached
   const group = PUBLISHED_DOCS.find((entry) => entry.docs.some((doc) => doc.slug === slug))!
@@ -178,7 +185,7 @@ export function readDoc(slug: string, localize: (path: string) => string): SiteD
     group: group.title,
     summary,
     description: firstSentence(body) ?? `${title}: how it works in Seed, and how to set it up.`,
-    html: rewriteDocLinks(html, localize, slug),
+    html: rewriteDocLinks(html, localize, slug, PUBLISHED_DOCS, notes),
     headings,
     minutes: readingMinutes(body),
     source: file,
