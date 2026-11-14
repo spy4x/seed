@@ -8,7 +8,8 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
  * The interface language: a browser's languages pick the first frame's language, a choice
  * kept on the device before sign-up becomes the account's, the account's language follows the
  * person to a new device and into the admin app, and an operator sees it on the person's screen.
- * The preferences' Language row and the operator's menu switch the page at once.
+ * The preferences' Language row and the operator's menu switch the page at once. An empty
+ * required field's message comes in the app's language, not the browser's.
  * The screens' own switching at once is covered by `libs/ui/i18n.test.tsx`.
  */
 
@@ -36,6 +37,24 @@ test.describe("the interface language", () => {
     } finally {
       await russian.close()
       await arabic.close()
+    }
+  })
+
+  test("an empty required field says so in the app's language, not the browser's", async ({ browser }) => {
+    const english = await browser.newContext({ locale: "en-GB" })
+    try {
+      await english.addInitScript(() => localStorage.setItem("language", "es"))
+      const page = await english.newPage()
+      await page.goto(`${appBase}/forgot-password`)
+      await expect(page.locator("html")).toHaveAttribute("lang", "es")
+      const email = page.locator("[data-e2e=forgot-password-email]")
+      await page.locator("[data-e2e=forgot-password-submit]").click()
+      // preact-ui's Spanish `EnhancedForm.requiredField`, where the browser would say "Please fill
+      // out this field."
+      await expect.poll(() => email.evaluate((input: HTMLInputElement) => input.validationMessage))
+        .toBe("Completa este campo.")
+    } finally {
+      await english.close()
     }
   })
 
