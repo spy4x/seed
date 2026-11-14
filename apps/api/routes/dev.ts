@@ -74,9 +74,9 @@ export interface DevRouteDeps {
  * sign-in, sign-up and password-reset codes this way.
  *
  * `POST /starter-data` with `{ login }` answers `{ done }`: whether the worker has handled every
- * starter data request of that user (the welcome note), or 404 when the user does not exist. The
- * e2e sign-up fixture waits for it before it pays for a new group, so the welcome note never
- * depends on which of the two came first.
+ * starter data request of that user, with the notes on or off, or 404 when the user does not
+ * exist. The e2e sign-up fixture waits for it before it pays for a new group, so the welcome note
+ * never depends on which of the two came first.
  *
  * `GET /free-plan` answers `{ allowsNothing }`: whether billing is on and the free plan allows
  * nothing. The e2e sign-up fixture then puts each new group on the paid plan, so the specs run on

@@ -503,15 +503,13 @@ export class AppDbBase extends DbServiceBase {
    * access, like `group`: `queue` belongs inside the sign-up's `begin()`.
    */
   get starterData() {
-    const { sql, notes } = this
+    const sql = this.sql
     return {
       /**
-       * Writes the marker row and queues the worker job that creates the welcome note. With the
-       * notes off it does nothing: the worker does not read `NOTES`.
+       * Writes the marker row and queues the worker job that writes the starter data, with the
+       * notes on or off: the job reads `NOTES` itself and skips only the welcome note.
        */
-      queue: async (userId: number): Promise<void> => {
-        if (notes.on) await scheduleStarterData(sql, userId)
-      },
+      queue: (userId: number): Promise<void> => scheduleStarterData(sql, userId),
     }
   }
 
