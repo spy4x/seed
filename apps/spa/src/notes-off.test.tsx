@@ -27,6 +27,15 @@ import { createOnboardingStore } from "./state/onboarding.ts"
 import { onboardingSteps, tourSteps } from "@ui/onboarding-card.tsx"
 import { ENGLISH } from "@ui/i18n-testing.ts"
 import { paletteCommands } from "@ui/palette-commands.ts"
+import { GroupBillingPanel } from "@ui/billing-screen.tsx"
+import {
+  BillingPeriod,
+  BillingStatus,
+  FREE_PLAN_ID,
+  type GroupBilling,
+  PLANS,
+  PRO_PLAN_ID,
+} from "@domain/billing"
 import { OverviewView } from "./views/OverviewView.tsx"
 
 /** An address of the notes example: the notes, the tags, or a group's old notes links. */
@@ -256,5 +265,57 @@ describe("the data export with the notes off", () => {
 
     expect(detail()).toBe(`A ZIP of your profile, groups and notes`)
     expect(detail(false)).toBe(`A ZIP of your profile and groups`)
+  })
+})
+
+describe("the billing screen with the notes off", () => {
+  it("shows no plan line about notes, tags, files or attachments, though the plans list them", () => {
+    const free: GroupBilling = {
+      enabled: true,
+      planId: FREE_PLAN_ID,
+      status: null,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      trialEnd: null,
+      notice: null,
+      canManage: true,
+      subscribed: false,
+      hasCustomer: false,
+      seatPrice: null,
+      period: null,
+    }
+    const pro: GroupBilling = {
+      ...free,
+      planId: PRO_PLAN_ID,
+      status: BillingStatus.Active,
+      currentPeriodEnd: new Date(`2026-11-04T00:00:00Z`),
+      subscribed: true,
+      hasCustomer: true,
+      seatPrice: { seats: 2, amount: 900, currency: `EUR`, period: BillingPeriod.Monthly },
+      period: BillingPeriod.Monthly,
+    }
+    const names = /\bnotes?\b|\btags?\b|\bfiles?\b|\battachments?\b/i
+    const text = (billing: GroupBilling) =>
+      renderToString(
+        <GroupBillingPanel
+          groupId="g"
+          groupName="Home"
+          billing={billing}
+          memberCount={2}
+          ownerName="Ada"
+          trial={{ enabled: true, used: false, groupId: null, days: 14 }}
+          now={new Date(`2026-10-21T12:00:00Z`)}
+        />,
+      ).replace(/<[^>]*>/g, ` `)
+    configureModules({ notes: false })
+
+    // The catalog's own lines name them, so a screen that showed them would fail here.
+    expect(PLANS.flatMap((plan) => plan.features).some((line) => names.test(line))).toBe(true)
+    for (
+      const billing of [free, pro, { ...free, canManage: false }, { ...pro, canManage: false }]
+    ) {
+      expect(text(billing)).toContain(`Home`)
+      expect(text(billing)).not.toMatch(names)
+    }
   })
 })
