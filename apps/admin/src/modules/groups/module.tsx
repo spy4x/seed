@@ -58,6 +58,9 @@ function GroupsView({ context }: { context: AdminContext }): JSX.Element {
     state.loadList(filter)
   }, [filter])
   const list = state.list.value
+  // `null` until `GET /api/admin/modules` is read: drawn as with the notes on, like the group page.
+  const moduleIds = context.moduleIds.value
+  const notes = moduleIds === null || moduleIds.has(`notes`)
   const go = (next: AdminGroupFilter) => {
     const query = adminGroupFilterQuery(next)
     context.navigate(query ? `${ADMIN_GROUP_PATHS.list}?${query}` : ADMIN_GROUP_PATHS.list)
@@ -70,6 +73,7 @@ function GroupsView({ context }: { context: AdminContext }): JSX.Element {
       error={list.error}
       onSearch={go}
       onPage={(page) => go({ ...filter, page })}
+      notes={notes}
       navigate={context.navigate}
     />
   )

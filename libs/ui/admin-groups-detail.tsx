@@ -179,8 +179,9 @@ export interface AdminGroupScreenProps {
   /** The read-only "Overview widgets" section (`AdminGroupOverview`), under the header card. */
   overview?: ComponentChildren
   /**
-   * Whether the notes are on (`NOTES`). Off, the Files tab is left out, since every file sits on a
-   * note, and `tab: "files"` shows the Members tab. Left out: on.
+   * Whether the notes are on (`NOTES`). Off, the Files tab and the notes, tags and files counts are
+   * left out, since every file sits on a note, and `tab: "files"` shows the Members tab. Left out:
+   * on.
    */
   notes?: boolean
   navigate?: Navigate
@@ -298,23 +299,29 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         {/* The counts are facts like the dates: no card inside the header card. */}
         <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4" data-e2e="admin-group-counts">
           <Fact label={t.t(`AdminGroup.members`)}>{format.number(detail.members.length)}</Fact>
-          <Fact label={t.t(`AdminGroup.notes`)}>
-            {format.number(counts.notes)}
-            <span class="font-normal text-muted">
-              {` · `}
-              {t.t(`AdminGroup.notesInTrash`, { count: counts.deletedNotes })}
-            </span>
-          </Fact>
-          <Fact label={t.t(`AdminGroup.tags`)}>{format.number(counts.tags)}</Fact>
+          {props.notes !== false && (
+            <Fact label={t.t(`AdminGroup.notes`)}>
+              {format.number(counts.notes)}
+              <span class="font-normal text-muted">
+                {` · `}
+                {t.t(`AdminGroup.notesInTrash`, { count: counts.deletedNotes })}
+              </span>
+            </Fact>
+          )}
+          {props.notes !== false && (
+            <Fact label={t.t(`AdminGroup.tags`)}>{format.number(counts.tags)}</Fact>
+          )}
           <Fact label={t.t(`AdminGroup.openInvitations`)}>
             {format.number(counts.pendingInvitations)}
           </Fact>
-          <Fact label={t.t(`AdminGroup.files`)}>
-            {format.number(counts.files)}
-            <span class="font-normal text-muted">
-              {` · ${formatBytes(counts.fileBytes, format.locale)}`}
-            </span>
-          </Fact>
+          {props.notes !== false && (
+            <Fact label={t.t(`AdminGroup.files`)}>
+              {format.number(counts.files)}
+              <span class="font-normal text-muted">
+                {` · ${formatBytes(counts.fileBytes, format.locale)}`}
+              </span>
+            </Fact>
+          )}
           <Fact label={t.t(`AdminGroup.owner`)}>
             <Link
               href={ADMIN_PATHS.user(group.owner.id)}

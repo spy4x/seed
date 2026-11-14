@@ -56,18 +56,22 @@ const STATUS_CHIPS: { value: Exclude<AdminGroupStatusFilter, "any">; label: stri
  *   activity and the owner, which leaves the group and its member count. On a phone the group's
  *   cell names the owner instead, in full: a touch screen cannot open a tooltip.
  *
- * Positions follow `groupColumns`: 2 owner, 4 notes, 5 plan, 6 last activity, 7 created.
+ * Positions follow `groupColumns`: 2 owner, 4 notes, 5 plan, 6 last activity, 7 created. With the
+ * notes off the notes column is left out, so the ones after it move one place left.
  */
-const TABLE_CLASS = [
-  `[&>div:first-child]:min-h-0`,
-  `[&_:is(th,td)]:px-4`,
-  `max-sm:[&_:is(th,td)]:px-3`,
-  `max-xl:[&_:is(th,td):nth-child(4)]:hidden`,
-  `max-xl:[&_:is(th,td):nth-child(5)]:hidden`,
-  `max-xl:[&_:is(th,td):nth-child(7)]:hidden`,
-  `max-sm:[&_:is(th,td):nth-child(2)]:hidden`,
-  `max-sm:[&_:is(th,td):nth-child(n+4)]:hidden`,
-].join(` `)
+function tableClass(notes: boolean): string {
+  const at = (position: number) => notes ? position : position - 1
+  return [
+    `[&>div:first-child]:min-h-0`,
+    `[&_:is(th,td)]:px-4`,
+    `max-sm:[&_:is(th,td)]:px-3`,
+    ...(notes ? [`max-xl:[&_:is(th,td):nth-child(4)]:hidden`] : []),
+    `max-xl:[&_:is(th,td):nth-child(${at(5)})]:hidden`,
+    `max-xl:[&_:is(th,td):nth-child(${at(7)})]:hidden`,
+    `max-sm:[&_:is(th,td):nth-child(2)]:hidden`,
+    `max-sm:[&_:is(th,td):nth-child(n+4)]:hidden`,
+  ].join(` `)
+}
 
 /** A group role as a person reads it, in the operator's language: `Owner`. */
 export function groupRoleLabel(t: Translator<string>, role: GroupRole): string {
@@ -120,6 +124,8 @@ export interface AdminGroupsListScreenProps {
   /** The operator searched, sorted or changed a filter: the app reads page 1 of that. */
   onSearch: (filter: AdminGroupFilter) => void
   onPage: (page: number) => void
+  /** Whether the notes are on (`NOTES`). Off, the Notes column is left out. Left out: on. */
+  notes?: boolean
   navigate?: Navigate
 }
 
@@ -129,7 +135,7 @@ export interface AdminGroupsListScreenProps {
  * opens the group. Counts only: nothing written inside a group shows here.
  */
 export function AdminGroupsListScreen(
-  { filter, list, pending, error, onSearch, onPage, navigate }: AdminGroupsListScreenProps,
+  { filter, list, pending, error, onSearch, onPage, notes, navigate }: AdminGroupsListScreenProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
   // The search field is not rebuilt when the query changes, since that would drop focus out of it
@@ -253,8 +259,8 @@ export function AdminGroupsListScreen(
           <div data-e2e="admin-groups-list">
             <DataTable
               mode="server"
-              class={TABLE_CLASS}
-              columns={groupColumns(t, format, navigate)}
+              class={tableClass(notes !== false)}
+              columns={groupColumns(t, format, notes !== false, navigate)}
               rows={rows}
               sort={filter.sort}
               onSortChange={(sort) =>
@@ -291,6 +297,7 @@ export function AdminGroupsListScreen(
 function groupColumns(
   t: Translator<string>,
   format: Pick<Formatters, "number">,
+  notes: boolean,
   navigate?: Navigate,
 ): DataTableColumn<GroupTableRow, AdminGroupSortKey>[] {
   return [
@@ -332,13 +339,15 @@ function groupColumns(
       sortable: true,
       render: ({ memberCount }) => <span class="tabular-nums">{format.number(memberCount)}</span>,
     },
-    {
-      id: `notes`,
-      header: t.t(`AdminGroups.notes`),
-      render: ({ group }) => (
-        <span class="tabular-nums text-muted">{format.number(group.noteCount)}</span>
-      ),
-    },
+    ...(notes
+      ? [{
+        id: `notes`,
+        header: t.t(`AdminGroups.notes`),
+        render: ({ group }: GroupTableRow) => (
+          <span class="tabular-nums text-muted">{format.number(group.noteCount)}</span>
+        ),
+      }]
+      : []),
     {
       id: `plan`,
       header: t.t(`AdminGroups.plan`),

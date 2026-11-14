@@ -884,6 +884,26 @@ describe("the admin dashboard", () => {
   })
 })
 
+describe("the admin dashboard with the notes switched", () => {
+  it("shows the Notes card with the notes on or left out", async () => {
+    for (const notes of [true, undefined]) {
+      await mount(
+        <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} notes={notes} />,
+      )
+      expect(find("[data-e2e=admin-dashboard-stats]").textContent).toContain("Notes")
+    }
+  })
+
+  it("leaves the Notes card out with the notes off, and no card names notes", async () => {
+    await mount(
+      <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} notes={false} />,
+    )
+    const cards = find("[data-e2e=admin-dashboard-stats]").textContent ?? ""
+    expect(cards).not.toMatch(/\b(notes?|tags?|files?)\b/i)
+    expect(cards).toContain("Groups")
+  })
+})
+
 describe("the admin sign-in", () => {
   it("sends the login and password, with no sign-up and no provider", async () => {
     const calls: unknown[][] = []

@@ -190,6 +190,38 @@ describe(`the admin group list`, () => {
     expect(table()).toContain(`5,678`)
   })
 
+  it(`shows the Notes column with the notes on or left out`, async () => {
+    for (const notes of [true, undefined]) {
+      await mount(<AdminGroupsListScreen {...listProps([], { notes })} />)
+      const headers = [...document.querySelectorAll(`[data-e2e=admin-groups-list] th`)]
+        .map((header) => header.textContent)
+      expect(headers).toContain(`Notes`)
+    }
+  })
+
+  it(`leaves the Notes column out with the notes off, and no header names notes`, async () => {
+    await mount(<AdminGroupsListScreen {...listProps([], { notes: false })} />)
+    const headers = [...document.querySelectorAll(`[data-e2e=admin-groups-list] th`)]
+      .map((header) => header.textContent ?? ``)
+    expect(headers.length).toBeGreaterThan(0)
+    expect(headers.some((header) => /\b(notes?|tags?|files?)\b/i.test(header))).toBe(false)
+    expect(document.querySelectorAll(`[data-e2e=admin-groups-list] tbody tr:first-child td`).length)
+      .toBe(headers.length)
+  })
+
+  it(`hides the plan and creation date below 1280px by their place, with or without notes`, async () => {
+    // The Notes column is 4th; without it the plan is 4th and the creation date 6th.
+    const hidden = (place: number) => `max-xl:[&_:is(th,td):nth-child(${place})]:hidden`
+    const tableClass = () =>
+      find(`[data-e2e=admin-groups-list]`).querySelector(`[class*="min-h-0"]`)?.className ?? ``
+    await mount(<AdminGroupsListScreen {...listProps([], { notes: true })} />)
+    for (const place of [4, 5, 7]) expect(tableClass()).toContain(hidden(place))
+    expect(tableClass()).not.toContain(hidden(6))
+    await mount(<AdminGroupsListScreen {...listProps([], { notes: false })} />)
+    for (const place of [4, 6]) expect(tableClass()).toContain(hidden(place))
+    for (const place of [5, 7]) expect(tableClass()).not.toContain(hidden(place))
+  })
+
   it(`filters by a pressed status chip at once and drops it when pressed again`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupsListScreen {...listProps(calls)} />)
@@ -495,6 +527,23 @@ describe(`one group in the admin app`, () => {
     expect(counts).toContain(`12`)
     expect(counts).toContain(`2 in trash`)
     expect(find(`[data-e2e=admin-group-status]`).textContent).toBe(`Active`)
+  })
+
+  it(`counts notes, tags and files with the notes on or left out`, async () => {
+    for (const notes of [true, undefined]) {
+      await mount(<AdminGroupScreen {...groupProps([], { notes })} />)
+      const terms = [...find(`[data-e2e=admin-group-counts]`).querySelectorAll(`dt`)]
+        .map((term) => term.textContent?.trim())
+      expect(terms).toEqual(expect.arrayContaining([`Notes`, `Tags`, `Files`]))
+    }
+  })
+
+  it(`leaves the notes, tags and files counts out with the notes off`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([], { notes: false })} />)
+    const counts = find(`[data-e2e=admin-group-counts]`)
+    expect(counts.textContent).not.toMatch(/\b(notes?|tags?|files?|in trash)\b/i)
+    const terms = [...counts.querySelectorAll(`dt`)].map((term) => term.textContent?.trim())
+    expect(terms).toEqual(expect.arrayContaining([`Members`, `Open invitations`]))
   })
 
   it(`shows the group's time zone as a fact after Created`, async () => {
