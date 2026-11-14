@@ -4,7 +4,9 @@
  * `/api` goes to the API, everything else to what serves the SPA at `SPA_PORT` (the Vite dev server
  * or the built SPA). Reads `FRONT_PORT`, `API_PORT` and `SPA_PORT` and listens on 127.0.0.1. With
  * `FILES_PORT` and `S3_BUCKET` set, `/<bucket>/…` goes to the file store, as the store's own route
- * on the app's host does in the compose stack.
+ * on the app's host does in the compose stack. With `CONFIG_FILE` set, it answers `/config.json`
+ * itself with that file while the file is there, and passes the request on while it is not: the
+ * Vite dev server would serve the committed `apps/spa/public/config.json`, which no variable changes.
  *
  * It joins the two TCP connections instead of making a request of its own: it reads the head of
  * the first request to choose the upstream, rewrites that head (`forwardedHead`) and then copies
@@ -85,6 +87,37 @@ export function upstreamFor(path: string, upstreams: Upstreams): number {
   return upstreams.spa
 }
 
+/** Whether `path` asks for the SPA's runtime settings, `/config.json`, with or without a query. */
+export function isConfigPath(path: string): boolean {
+  return path === `/config.json` || path.startsWith(`/config.json?`)
+}
+
+/**
+ * The whole HTTP response that answers `/config.json` with `body`: `no-cache`, as nginx serves the
+ * file in the image (`apps/spa/nginx.conf`), so a browser never uses a stale copy.
+ */
+export function configResponse(body: string): string {
+  return [
+    `HTTP/1.1 200 OK`,
+    `Content-Type: application/json`,
+    `Cache-Control: no-cache`,
+    `Content-Length: ${encoder.encode(body).length}`,
+    `Connection: close`,
+    ``,
+    body,
+  ].join(`\r\n`)
+}
+
+/** The file at `path`, or null when there is none. */
+async function readIfThere(path: string): Promise<string | null> {
+  try {
+    return await Deno.readTextFile(path)
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) return null
+    throw error
+  }
+}
+
 /** Where the headers end in `bytes` (after the blank line), or -1 when they are not complete. */
 function headEnd(bytes: Uint8Array): number {
   for (let i = 0; i + 3 < bytes.length; i++) {
@@ -129,7 +162,15 @@ async function copy(from: Deno.Conn, to: Deno.Conn): Promise<void> {
   }
 }
 
-async function handle(conn: Deno.TcpConn, upstreams: Upstreams): Promise<void> {
+/**
+ * Answers one connection: `/config.json` from `configFile` while that file is there, every other
+ * request by its upstream.
+ */
+async function handle(
+  conn: Deno.TcpConn,
+  upstreams: Upstreams,
+  configFile: string | undefined,
+): Promise<void> {
   const read = await readThroughHead(conn)
   if (read === null) return conn.close()
   const end = headEnd(read)
@@ -137,6 +178,16 @@ async function handle(conn: Deno.TcpConn, upstreams: Upstreams): Promise<void> {
   const { path } = parseHead(head)
   const forwarded = forwardedHead(head, conn.remoteAddr.hostname)
   if (forwarded === null) return conn.close()
+  const config = configFile && isConfigPath(path) ? await readIfThere(configFile) : null
+  if (config !== null) {
+    let bytes = encoder.encode(configResponse(config))
+    try {
+      while (bytes.length > 0) bytes = bytes.subarray(await conn.write(bytes))
+    } catch {
+      // The browser went away first.
+    }
+    return conn.close()
+  }
   let upstream: Deno.Conn
   try {
     upstream = await Deno.connect({ hostname: "127.0.0.1", port: upstreamFor(path, upstreams) })
@@ -168,9 +219,10 @@ if (import.meta.main) {
       ? { files: { port: port("FILES_PORT"), bucket } }
       : {}),
   }
+  const configFile = Deno.env.get("CONFIG_FILE") || undefined
   const listener = Deno.listen({ hostname: "127.0.0.1", port: port("FRONT_PORT") })
   for await (const conn of listener) {
-    handle(conn, upstreams).catch(() => {
+    handle(conn, upstreams, configFile).catch(() => {
       try {
         conn.close()
       } catch {
