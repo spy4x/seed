@@ -541,7 +541,12 @@ describe(`one group in the admin app`, () => {
   it(`leaves the notes, tags and files counts out with the notes off`, async () => {
     await mount(<AdminGroupScreen {...groupProps([], { notes: false })} />)
     const counts = find(`[data-e2e=admin-group-counts]`)
-    expect(counts.textContent).not.toMatch(/\b(notes?|tags?|files?|in trash)\b/i)
+    // Each element on its own: the list's whole text runs a count into the next label.
+    const texts = [...counts.querySelectorAll(`*`)].filter((element) =>
+      element.children.length === 0
+    )
+      .map((element) => element.textContent ?? ``)
+    expect(texts.filter((text) => /\b(notes?|tags?|files?|in trash)\b/i.test(text))).toEqual([])
     const terms = [...counts.querySelectorAll(`dt`)].map((term) => term.textContent?.trim())
     expect(terms).toEqual(expect.arrayContaining([`Members`, `Open invitations`]))
   })

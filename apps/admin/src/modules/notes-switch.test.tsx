@@ -136,6 +136,10 @@ const ON = new Set([`notes`])
 const OFF = new Set([`groups`])
 const NAMES_NOTES = /\b(notes?|tags?|files?)\b/i
 const text = (selector: string) => document.querySelector(selector)?.textContent ?? ``
+/** The text of each element with no child element: a parent's text runs its children together. */
+const leafTexts = (scope: Element) =>
+  [...scope.querySelectorAll(`*`)].filter((element) => element.children.length === 0)
+    .map((element) => element.textContent ?? ``)
 const headers = () =>
   [...document.querySelectorAll(`[data-e2e=admin-groups-list] th`)].map((th) => th.textContent)
 const eventValues = () =>
@@ -153,8 +157,9 @@ describe(`the admin pages with the notes on, off and not known yet`, () => {
 
   it(`leaves the dashboard's Notes card out with the notes off`, async () => {
     await open(dashboardModule, `/`, OFF)
-    expect(text(`[data-e2e=admin-dashboard-stats]`)).toContain(`Groups`)
-    expect(text(`[data-e2e=admin-dashboard-stats]`)).not.toMatch(NAMES_NOTES)
+    const cards = leafTexts(document.querySelector(`[data-e2e=admin-dashboard-stats]`)!)
+    expect(cards).toContain(`Groups`)
+    expect(cards.filter((card) => NAMES_NOTES.test(card))).toEqual([])
   })
 
   it(`shows the group list's Notes column with the notes on or not known yet`, async () => {

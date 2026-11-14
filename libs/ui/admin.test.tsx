@@ -885,6 +885,11 @@ describe("the admin dashboard", () => {
 })
 
 describe("the admin dashboard with the notes switched", () => {
+  /** The text of each element with no child element: a parent's text runs its children together. */
+  const leafTexts = (scope: Element) =>
+    [...scope.querySelectorAll(`*`)].filter((element) => element.children.length === 0)
+      .map((element) => element.textContent ?? ``)
+
   it("shows the Notes card with the notes on or left out", async () => {
     for (const notes of [true, undefined]) {
       await mount(
@@ -898,8 +903,8 @@ describe("the admin dashboard with the notes switched", () => {
     await mount(
       <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} notes={false} />,
     )
-    const cards = find("[data-e2e=admin-dashboard-stats]").textContent ?? ""
-    expect(cards).not.toMatch(/\b(notes?|tags?|files?)\b/i)
+    const cards = leafTexts(find("[data-e2e=admin-dashboard-stats]"))
+    expect(cards.filter((text) => /\b(notes?|tags?|files?)\b/i.test(text))).toEqual([])
     expect(cards).toContain("Groups")
   })
 })
