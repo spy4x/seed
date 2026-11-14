@@ -96,7 +96,46 @@ Deno.test("the API environment refuses a file store endpoint that is not a URL",
     .toThrow(`S3_ENDPOINT`)
   expect(() => readApiEnv(createEnvReader({ ...withKv, S3_PUBLIC_ENDPOINT: `localhost` })))
     .toThrow(`S3_PUBLIC_ENDPOINT`)
-  expect(readApiEnv(createEnvReader(withKv)).S3_BUCKET).toBe(`app-files`)
+  expect(readApiEnv(createEnvReader(withKv)).files?.bucket).toBe(`app-files`)
+})
+
+Deno.test("the API environment carries the six file store settings through as files", () => {
+  const env = readApiEnv(createEnvReader({ ...REQUIRED_ENV, KV_PASSWORD: `kv-secret` }))
+  expect(env.files).toEqual({
+    endpoint: `http://app-garage:3900`,
+    publicEndpoint: `http://app.localhost`,
+    region: `garage`,
+    bucket: `app-files`,
+    accessKeyId: `GK000000000000000000000000`,
+    secretAccessKey: `test-only-secret`,
+  })
+})
+
+Deno.test("with FILES=false the API starts without any file store setting, and files is null", () => {
+  const withKv: Record<string, string> = { ...REQUIRED_ENV, KV_PASSWORD: `kv-secret` }
+  const none = Object.fromEntries(
+    Object.entries(withKv).filter(([name]) => !S3_NAMES.includes(name)),
+  )
+
+  expect(readApiEnv(createEnvReader({ ...none, FILES: `false` })).files).toBeNull()
+  const blank = Object.fromEntries(S3_NAMES.map((name) => [name, ``]))
+  expect(readApiEnv(createEnvReader({ ...none, ...blank, FILES: `false` })).files).toBeNull()
+  // Off, a setting left over from before is not read, so a bad one cannot stop the start.
+  expect(readApiEnv(createEnvReader({ ...withKv, S3_ENDPOINT: `garage`, FILES: `false` })).files)
+    .toBeNull()
+})
+
+Deno.test("without FILES=false a missing file store setting still stops the API, naming each", () => {
+  const withKv: Record<string, string> = { ...REQUIRED_ENV, KV_PASSWORD: `kv-secret` }
+  const none = Object.fromEntries(
+    Object.entries(withKv).filter(([name]) => !S3_NAMES.includes(name)),
+  )
+  for (const files of [undefined, ``, `true`, `no`]) {
+    const env = files === undefined ? none : { ...none, FILES: files }
+    expect(() => readApiEnv(createEnvReader(env)), String(files)).toThrow(
+      [...S3_NAMES].sort().join(`, `),
+    )
+  }
 })
 
 Deno.test("the SPA is off only when the environment sets SPA=false", () => {

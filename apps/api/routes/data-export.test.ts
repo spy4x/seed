@@ -15,6 +15,7 @@ import {
 } from "../_testing/mutation-requests.ts"
 import { createDataExportRoute, DATA_EXPORT_TOO_SOON } from "./data-export.ts"
 import { apiError } from "../_testing/api-error.ts"
+import { FILES_OFF_MESSAGE } from "@server/files/files.ts"
 
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()
 
@@ -33,6 +34,7 @@ function buildApp(
     result?: DataExportRequestResult
     ready?: boolean
     auth?: APIContext["Variables"]["auth"]
+    filesOn?: boolean
   } = {},
 ) {
   const calls: unknown[][] = []
@@ -55,6 +57,7 @@ function buildApp(
       calls.push(["sign", key, file])
       return Promise.resolve(`https://app.example.com/files/${key}?X-Amz-Signature=abc`)
     },
+    filesOn: options.filesOn ?? true,
   })
   const auth = options.auth === undefined ? buildAuthData({ user: { id: 7 } }) : options.auth
   return { app: mountRoute("/account/data-export", route, auth), calls }
@@ -125,5 +128,28 @@ describe("data export route", () => {
     const response = await app.request(`${URL_}/download`, { headers: { ...crossSiteHeaders } })
     expect(response.status).toBe(403)
     expect(calls).toEqual([])
+  })
+
+  it("with files off, refuses a new export and a download with 409 FILES_OFF, touching nothing", async () => {
+    const { app, calls } = buildApp({ filesOn: false, ready: true })
+    const asked = await app.request(URL_, { method: "POST", headers: { ...sameOriginHeaders } })
+    const download = await app.request(`${URL_}/download`, { headers: { ...sameOriginHeaders } })
+
+    for (const response of [asked, download]) {
+      expect(response.status).toBe(409)
+      expect(await apiError(response)).toMatchObject({
+        code: "conflict",
+        reason: "FILES_OFF",
+        message: FILES_OFF_MESSAGE,
+      })
+    }
+    expect(calls).toEqual([])
+  })
+
+  it("with files off, still answers the newest export", async () => {
+    const { app } = buildApp({ filesOn: false })
+    const response = await app.request(URL_)
+    expect(response.status).toBe(200)
+    expect((await response.json()).export.status).toBe(DataExportStatus.Preparing)
   })
 })

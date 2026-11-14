@@ -203,6 +203,8 @@ export default {
   "Reason.TOO_MANY_LINKS": "There's no room for more links. Remove one first.",
   "Reason.TOO_MANY_TOKENS": "There's no room for more tokens. Revoke one first.",
   "Reason.TOO_SOON": "You asked for this less than a day ago. Try again tomorrow.",
+  "Reason.FILES_OFF":
+    "Files aren't set up on this server, so nothing can be uploaded or downloaded.",
   "Reason.TRACKING_OFF": "Tracking links need the website's address.",
   "Reason.UNKNOWN_PLAN": "This plan doesn't exist.",
   "Reason.UPLOADS_PENDING": "Wait for the current uploads to finish first.",

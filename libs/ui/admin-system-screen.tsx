@@ -184,14 +184,20 @@ function SystemBody(
             value: reachable(cache.latencyMs, cache.reachable),
           }]}
         />
+        {
+          /* Files off (`FILES=false`): no badge, since nothing is broken, and no store to reach. */
+        }
         <StatusCard
           title={t.t(`AdminSystem.fileStore`)}
-          health={fileStore.health}
+          health={fileStore?.health}
           dataE2E="admin-system-files"
-          facts={[{
-            label: t.t(`AdminSystem.reachable`),
-            value: reachable(fileStore.latencyMs, fileStore.reachable),
-          }]}
+          facts={fileStore
+            ? [{
+              label: t.t(`AdminSystem.reachable`),
+              value: reachable(fileStore.latencyMs, fileStore.reachable),
+            }]
+            : []}
+          hint={fileStore ? undefined : t.t(`AdminSystem.filesOff`)}
         />
         <StatusCard
           title={t.t(`AdminSystem.queue`)}

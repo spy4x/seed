@@ -104,15 +104,8 @@ export class Config {
   /** The release this process was built from, for the operator area's System page. */
   build = { version: env.APP_VERSION || null, commit: env.APP_COMMIT || null }
 
-  /** The file store's address, bucket and key (docs/files.md). */
-  files = {
-    endpoint: env.S3_ENDPOINT,
-    publicEndpoint: env.S3_PUBLIC_ENDPOINT,
-    region: env.S3_REGION,
-    bucket: env.S3_BUCKET,
-    accessKeyId: env.S3_ACCESS_KEY_ID,
-    secretAccessKey: env.S3_SECRET_ACCESS_KEY,
-  }
+  /** The file store's address, bucket and key (docs/files.md); `null` with `FILES=false`. */
+  files = env.files
 
   kv = {
     hostname: env.KV_HOSTNAME,

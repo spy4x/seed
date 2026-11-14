@@ -112,7 +112,8 @@ export interface AdminSystemSnapshot {
   checkedAt: string
   database: AdminSystemDatabase
   cache: AdminSystemCache
-  fileStore: AdminSystemFileStore
+  /** `null` while files are off (`FILES=false`, docs/files.md): there is no store to reach. */
+  fileStore: AdminSystemFileStore | null
   queue: AdminSystemQueue
   backup: AdminSystemBackup
   migrations: AdminSystemMigrations

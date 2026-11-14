@@ -86,6 +86,10 @@ export const GROUPS: TestGroup[] = [
     ],
   },
   {
+    flags: [`--allow-read=apps/api,apps/worker`],
+    paths: [`tests/api-files-switch.test.ts`],
+  },
+  {
     flags: [
       `--allow-read=deno.jsonc,Dockerfile.base,apps/api/dockerfile.node,apps/api/dockerfile.bun,apps/mpa/dockerfile.node,apps/mpa/dockerfile.bun`,
     ],

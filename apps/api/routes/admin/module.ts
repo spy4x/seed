@@ -44,8 +44,8 @@ export interface AdminModuleContext {
   cursorSecret: string
   /** Whether the cache (Valkey) answers, for the System page. */
   cacheConnected(): Promise<boolean>
-  /** Whether the file store answers, for the System page. */
-  fileStoreReachable(): Promise<boolean>
+  /** Whether the file store answers, for the System page; `null` while files are off. */
+  fileStoreReachable: (() => Promise<boolean>) | null
   /** Reads a small file from the file store (`FileStore.read`). */
   readFile: FileStore["read"]
   /** The release tag and commit the API was built from, or `null` each for a local build. */

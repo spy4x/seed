@@ -2060,6 +2060,7 @@ export default {
   "AdminSystem.upSince": "En service depuis",
   "AdminSystem.cache": "Cache (Valkey)",
   "AdminSystem.fileStore": "Stockage de fichiers (S3)",
+  "AdminSystem.filesOff": "Désactivé : ce serveur fonctionne sans fichiers (FILES=false).",
   "AdminSystem.queue": "File de tâches",
   "AdminSystem.queueHint": {
     "one": "Avertit quand une tâche attend plus de {count} minute ou qu’une tâche a échoué.",

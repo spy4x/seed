@@ -220,6 +220,8 @@ export default {
   "Reason.TOO_MANY_TOKENS": "Mehr Tokens passen nicht. Widerrufe zuerst eines.",
   "Reason.TOO_SOON":
     "Das hast du vor weniger als einem Tag schon angefordert. Versuche es morgen noch einmal.",
+  "Reason.FILES_OFF":
+    "Dateien sind auf diesem Server nicht eingerichtet, daher lässt sich nichts hoch- oder herunterladen.",
   "Reason.TRACKING_OFF": "Für Tracking-Links braucht es die Adresse der Website.",
   "Reason.UNKNOWN_PLAN": "Diesen Tarif gibt es nicht.",
   "Reason.UPLOADS_PENDING": "Warte, bis die laufenden Uploads fertig sind.",

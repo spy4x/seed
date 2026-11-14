@@ -5,6 +5,8 @@ import type { APIContext } from "../_types.ts"
 import { apiError } from "../_testing/api-error.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
 import { API_URL, mountRoute, testSessionGuards } from "../_testing/mutation-requests.ts"
+import { FILES_OFF_MESSAGE, FILES_OFF_STORE } from "@server/files/files.ts"
+import { unhandledErrorResponse } from "../services/error-response.ts"
 import { createPictureRoute, PICTURE_NOT_FOUND, PICTURE_REDIRECT_SECONDS } from "./pictures.ts"
 
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()
@@ -68,5 +70,26 @@ describe(`GET /api/pictures/:pictureId`, () => {
     const { app, calls } = buildApp(null)
     expect((await app.request(`${API_URL}/pictures/${MINE}`)).status).toBe(401)
     expect(calls).toEqual([])
+  })
+
+  it(`with files off, answers 409 FILES_OFF through the API's error handler instead of a redirect`, async () => {
+    const route = createPictureRoute({
+      auth: testSessionGuards(),
+      limit: passThrough,
+      readable: () =>
+        Promise.resolve({ id: MINE, contentType: `image/webp`, objectKey: `pictures/a.webp` }),
+      signDownload: FILES_OFF_STORE.signDownload,
+    })
+    const app = mountRoute(`/pictures`, route, buildAuthData({ user: { id: 7 } }))
+    app.onError((error, c) => unhandledErrorResponse(c, error))
+
+    const response = await app.request(`${API_URL}/pictures/${MINE}`)
+
+    expect(response.status).toBe(409)
+    expect(await apiError(response)).toMatchObject({
+      code: `conflict`,
+      reason: `FILES_OFF`,
+      message: FILES_OFF_MESSAGE,
+    })
   })
 })

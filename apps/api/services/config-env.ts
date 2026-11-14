@@ -1,5 +1,7 @@
-import { type EnvReader, loadConfig } from "@spy4x/server/config"
+import { type EnvReader, loadConfig, systemEnv } from "@spy4x/server/config"
 import { type } from "arktype"
+import type { FileStoreSettings } from "@server/files/files.ts"
+import { isFilesOn } from "@server/files/settings.ts"
 
 /** An http:// or https:// address with a host, such as `http://app-garage:3900`. */
 const HTTP_URL = /^https?:\/\/\S+$/
@@ -30,9 +32,11 @@ export const envSchema = type({
   KV_HOSTNAME: "string > 0",
   KV_PORT: "string.integer.parse",
   KV_PASSWORD: "string > 0",
+  /** The files (docs/files.md, "Without files"): on unless `false`, which drops every `S3_*`. */
+  "FILES?": "string",
   /**
    * The file store (docs/files.md). The API reaches it at S3_ENDPOINT; browsers at
-   * S3_PUBLIC_ENDPOINT, the address the URLs it signs for them name.
+   * S3_PUBLIC_ENDPOINT, the address the URLs it signs for them name. Required while files are on.
    */
   S3_ENDPOINT: HTTP_URL,
   S3_PUBLIC_ENDPOINT: HTTP_URL,
@@ -75,9 +79,44 @@ export const envSchema = type({
   "GITHUB_CLIENT_SECRET?": "string",
 })
 
-/** Reads and checks the API's environment. Throws a `ConfigError` naming every bad variable. */
-export function readApiEnv(reader?: EnvReader) {
-  return loadConfig(envSchema, reader)
+/** The file store's settings, which `FILES=false` leaves out. */
+const S3_KEYS = [
+  `S3_ENDPOINT`,
+  `S3_PUBLIC_ENDPOINT`,
+  `S3_REGION`,
+  `S3_BUCKET`,
+  `S3_ACCESS_KEY_ID`,
+  `S3_SECRET_ACCESS_KEY`,
+] as const
+
+/** {@link envSchema} of a server whose files are off: no `S3_*` is read or checked. */
+const filesOffEnvSchema = envSchema.omit(...S3_KEYS)
+
+/**
+ * Reads and checks the API's environment. Throws a `ConfigError` naming every bad variable.
+ * `files` is the file store's settings, or `null` with `FILES=false` (`isFilesOn`): then no
+ * `S3_*` is needed, and none is read.
+ */
+export function readApiEnv(reader: EnvReader = systemEnv) {
+  if (!isFilesOn(reader)) return { ...loadConfig(filesOffEnvSchema, reader), files: null }
+  const {
+    S3_ENDPOINT,
+    S3_PUBLIC_ENDPOINT,
+    S3_REGION,
+    S3_BUCKET,
+    S3_ACCESS_KEY_ID,
+    S3_SECRET_ACCESS_KEY,
+    ...env
+  } = loadConfig(envSchema, reader)
+  const files: FileStoreSettings = {
+    endpoint: S3_ENDPOINT,
+    publicEndpoint: S3_PUBLIC_ENDPOINT,
+    region: S3_REGION,
+    bucket: S3_BUCKET,
+    accessKeyId: S3_ACCESS_KEY_ID,
+    secretAccessKey: S3_SECRET_ACCESS_KEY,
+  }
+  return { ...env, files }
 }
 
 /**

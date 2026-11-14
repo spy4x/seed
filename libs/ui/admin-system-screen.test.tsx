@@ -143,6 +143,17 @@ describe("system screen", () => {
     expect(find("[data-e2e=admin-system-summary]").textContent).toContain("Something is broken")
   })
 
+  it("shows the file store as off, with no badge and no reachability, while files are off", async () => {
+    await mount(
+      <AdminSystemScreen {...props([], { snapshot: { ...snapshot, fileStore: null } })} />,
+    )
+
+    const card = find("[data-e2e=admin-system-files]")
+    expect(state("admin-system-files")).toBeUndefined()
+    expect(card.textContent).toContain("Off: this server runs without files (FILES=false).")
+    expect(card.textContent).not.toContain("Reachable")
+  })
+
   it("writes the database's size in the operator's region format", async () => {
     const russian = createFormatters({ locale: `ru-RU`, timeZone: `UTC` })
     await mount(

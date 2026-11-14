@@ -35,6 +35,7 @@ const REASONS: Record<ErrorReason, true> = {
   FILE_MISSING: true,
   FILE_TOO_LARGE: true,
   FILE_TYPE: true,
+  FILES_OFF: true,
   GROUP_NOT_FOUND: true,
   GROUP_SUBSCRIBED: true,
   GUEST_NEEDS_SIGN_IN_METHOD: true,
