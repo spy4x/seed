@@ -5,7 +5,7 @@ import {
   type Locator,
   type Page,
 } from "@playwright/test"
-import { gotoApp } from "./app.ts"
+import { gotoApp, signedInHome } from "./app.ts"
 import { BILLING_WEBHOOK_PATH, stripeSignature, subscriptionEvent } from "./billing.ts"
 
 /**
@@ -124,7 +124,7 @@ export async function signUpWithCode(
  * Signs up through the form, as a new person does: the address and the password, then
  * the code the worker mails, read from the development route. The app then loads its home page
  * itself; waits for `ready` there. When the stack's free plan allows nothing, the app lands on the
- * group's Billing tab instead: the group is put on the paid plan and the notes opened.
+ * group's Billing tab instead: the group is put on the paid plan and the home page opened.
  */
 export async function signUpInPage(
   page: Page,
@@ -144,17 +144,17 @@ export async function signUpInPage(
   await field.pressSequentially(await nextCode(page.request, lastMailUrl, email, before))
   if (await freePlanAllowsNothing(page.request, origin)) {
     // The app sends the owner of a group that never paid to its Billing tab; pay, then go on.
-    await gotoApp(page, `/notes`, page.locator(`[data-e2e=shell-ws-status]`), async () => {
+    await gotoApp(page, signedInHome(), page.locator(`[data-e2e=shell-ws-status]`), async () => {
       await field.press(`Enter`)
       await page.waitForURL(BILLING_LANDING)
     })
     await payForSelectedGroup(page.request, origin, email)
-    await gotoApp(page, `/notes`, ready)
+    await gotoApp(page, signedInHome(), ready)
     return
   }
-  await gotoApp(page, `/notes`, ready, async () => {
+  await gotoApp(page, signedInHome(), ready, async () => {
     await field.press(`Enter`)
-    await page.waitForURL(`/notes`)
+    await page.waitForURL(signedInHome())
   })
 }
 

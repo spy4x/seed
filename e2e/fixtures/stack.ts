@@ -5,7 +5,7 @@ import {
   expect,
   test as base,
 } from "@playwright/test"
-import { gotoApp, signIn } from "./app.ts"
+import { apiNotesOff, gotoApp, signIn } from "./app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./sign-up.ts"
 
@@ -14,7 +14,8 @@ const WARM_ATTEMPTS = 3
 
 /**
  * Signs in and loads every screen of the signed-in app once, in `context`. One note in the
- * personal group opens the editor; each call adds one.
+ * personal group opens the editor; each call adds one. With the notes off (`apiNotesOff`), the
+ * API has no note route and the SPA no notes screen, so the note and its two screens are left out.
  */
 async function browseApp(context: BrowserContext, email: string, headers: Record<string, string>) {
   const page = await context.newPage()
@@ -23,19 +24,23 @@ async function browseApp(context: BrowserContext, email: string, headers: Record
   const selected = await page.request.get("/api/groups/selected")
   const { groupId } = await selected.json()
   if (!groupId) throw new Error(`warm-up found no selected group: ${selected.status()}`)
-  const noteId = uuidV7()
-  // Sign-up put the group on the paid plan when the free plan holds no note.
-  const note = await page.request.post(`/api/groups/${groupId}/notes`, {
-    headers,
-    data: { id: noteId, title: "Warm-up", body: "" },
-  })
-  if (note.status() !== 201) {
-    throw new Error(`warm-up note failed: ${note.status()} ${await note.text()}`)
+  const noteId = apiNotesOff() ? null : uuidV7()
+  if (noteId) {
+    // Sign-up put the group on the paid plan when the free plan holds no note.
+    const note = await page.request.post(`/api/groups/${groupId}/notes`, {
+      headers,
+      data: { id: noteId, title: "Warm-up", body: "" },
+    })
+    if (note.status() !== 201) {
+      throw new Error(`warm-up note failed: ${note.status()} ${await note.text()}`)
+    }
   }
   await gotoApp(page, "/groups", page.locator("[data-e2e=shell-ws-status]"))
   await gotoApp(page, `/groups/${groupId}`, page.locator("[data-e2e=group-general-name]"))
-  await gotoApp(page, "/notes", page.locator("[data-e2e=note-new]"))
-  await gotoApp(page, `/notes/${noteId}`, page.locator("[data-e2e=note-title]"))
+  if (noteId) {
+    await gotoApp(page, "/notes", page.locator("[data-e2e=note-new]"))
+    await gotoApp(page, `/notes/${noteId}`, page.locator("[data-e2e=note-title]"))
+  }
   await gotoApp(page, "/profile/account", page.locator("[data-e2e=email-current]"))
   await page.waitForLoadState("networkidle")
 }
