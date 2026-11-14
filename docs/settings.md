@@ -21,7 +21,7 @@ default, never a value to keep for a secret.
 | `DEV_EMAIL`            | The contact address sent with web push messages. The API refuses to start without it.                        | `dev@example.com`  |                                                |
 | `DENO_LOG`             | How much the API and the worker log: `info`, or `debug`, which logs every request.                           | `info`             | [Load tests](load-tests.md)                    |
 | `COMPOSE_BAKE`         | Docker Compose's own setting: build the images with Bake.                                                    | `true`             |                                                |
-| `COMPOSE_PROFILES`     | The optional parts Compose starts, comma-separated. The profiles are below.                                  | `monitoring,files` |                                                |
+| `COMPOSE_PROFILES`     | The optional parts Compose starts, comma-separated; empty starts only the must-haves. Profiles below. | `monitoring,files` |                                                |
 | `MPA_DOMAIN`           | The website's host, with the `mpa` profile. The API and the worker link to it; empty without the website.    | empty              | [The three apps](apps.md#deploy-the-website)   |
 | `MPA_REDIRECT_RULE`    | Production only: a Traefik rule for hosts redirected to `MPA_DOMAIN`. Empty matches nothing.                 | empty              | [Certificates](certificates.md)                |
 | `MPA_UMAMI_ORIGIN`     | The website's self-hosted Umami. Set both Umami values or neither.                                           | empty              | [Analytics](analytics.md)                      |
@@ -44,6 +44,7 @@ default, never a value to keep for a secret.
 | Profile           | What it starts                                                                   | Guide                                   |
 | ----------------- | -------------------------------------------------------------------------------- | --------------------------------------- |
 | `monitoring`      | This project's VictoriaMetrics, VictoriaLogs, Grafana, vmalert and Alertmanager. | [The stack](stack.md#monitoring)        |
+| `telemetry`       | Only the senders (vmagent, Vector, the socket proxy, the Postgres exporter), for another server. | [The stack](stack.md#monitoring) |
 | `host-monitoring` | node-exporter and cAdvisor, which watch the whole host. One project per server.  | [Several projects](several-projects.md) |
 | `mpa`             | The public website at `MPA_DOMAIN`.                                              | [The three apps](apps.md)               |
 | `admin`           | The admin app at `ADMIN_DOMAIN`.                                                 | [The three apps](apps.md)               |
@@ -126,10 +127,10 @@ rules.
 | `ALERT_NTFY_TOPIC`         | The ntfy topic.                                                                          | `alerts` | [The stack](stack.md#alerts)     |
 | `ALERT_NTFY_TOKEN`         | An ntfy access token. Empty for a topic anyone may post to.                              | empty    | [The stack](stack.md#alerts)     |
 
-To send to another server, take `monitoring` out of `COMPOSE_PROFILES` and set the two addresses.
+To send to another server, put `telemetry` in `COMPOSE_PROFILES` instead of `monitoring` and set the
+two addresses. Without either profile nothing is sent and none of the senders runs.
 
-The first six pairs below are optional: the values shown are Compose's defaults. The last four have
-no default, so keep them in the env file.
+Every pair below is optional: the values shown are Compose's defaults.
 
 | Containers (CPU, memory limit)                               | Value         |
 | ------------------------------------------------------------ | ------------- |
