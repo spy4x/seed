@@ -7,7 +7,7 @@ import {
 } from "@ui/sign-in-code-screen.tsx"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"
 import { GUEST_PATHS } from "@ui/guest-screens.tsx"
-import { afterSignIn, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
+import { afterSignIn, homePath, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
 import {
   cancelSignInCode,
   type CodeRequestAnswer,
@@ -29,6 +29,7 @@ import { lastSignIn } from "../state/last-sign-in.ts"
 import { sessionState } from "../state/session.ts"
 import { isGuestSession } from "../state/guest.ts"
 import { emailStore } from "../state/email.ts"
+import { notesOn } from "../modules.ts"
 import { useAppText } from "@ui/i18n.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 
@@ -72,7 +73,7 @@ export function isProofReturn(next: string): boolean {
  */
 export function SignInCodeView() {
   const [, navigate] = useLocation()
-  const next = readNext(new URLSearchParams(useSearch()))
+  const next = readNext(new URLSearchParams(useSearch()), homePath(notesOn()))
   const t = useAppText()
   const [sent, setSent] = useState(readSentCode)
   const [email, setEmail] = useState(() => takeHandedOffAddress() ?? sent?.email ?? "")

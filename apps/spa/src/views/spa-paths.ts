@@ -59,7 +59,8 @@ export const SPA_ROUTES = {
   "/benchmark": { open: false },
   // The profile: the list of its sections, and one section (`/profile/security`).
   "/profile/:section?": { open: false },
-  // The home page (`HomeView`) opens the notes, or a new owner's plan; signed out, sign-in.
+  // The home page (`HomeView`) opens the notes (the overview with them off), or a new owner's plan;
+  // signed out, sign-in.
   "/": { open: true },
 } as const satisfies Record<string, { open: boolean }>
 
@@ -69,15 +70,29 @@ export type SpaRoutePath = keyof typeof SPA_ROUTES
 /** The routes' patterns, in the order the router tries them. */
 export const SPA_ROUTE_PATHS = Object.keys(SPA_ROUTES) as SpaRoutePath[]
 
+/**
+ * Whether `path` is a page of the notes example: the notes, the tags and a group's old notes links.
+ * They are not routed when the product turns the notes off (`SPA_NOTES=false`).
+ */
+export function isNotesRoute(path: SpaRoutePath): boolean {
+  return [`notes`, `tags`].includes(section(path)) || path.startsWith(`/groups/:groupId/notes`)
+}
+
+/** The routes the router tries, in order: with `notes` off, none of {@link isNotesRoute}. */
+export function spaRoutePaths(notes: boolean): SpaRoutePath[] {
+  return notes ? SPA_ROUTE_PATHS : SPA_ROUTE_PATHS.filter((path) => !isNotesRoute(path))
+}
+
 /** The first part of a path or pattern: `notes` of `/notes/:noteId`, and `""` of `/`. */
 function section(path: string): string {
   return path.split("/")[1] ?? ""
 }
 
 const SECTIONS = new Set(SPA_ROUTE_PATHS.map(section))
-const MEMBER_SECTIONS = new Set(
-  SPA_ROUTE_PATHS.filter((path) => !SPA_ROUTES[path].open).map(section),
-)
+/** The first parts of the routes that are not open, with and without the notes' routes. */
+const memberSections = (notes: boolean) =>
+  new Set(spaRoutePaths(notes).filter((path) => !SPA_ROUTES[path].open).map(section))
+const MEMBER_SECTIONS = { on: memberSections(true), off: memberSections(false) }
 
 /**
  * Whether the SPA's router owns `pathname`: its first part is the first part of a route. Anything
@@ -91,10 +106,12 @@ export function isSpaPath(pathname: string): boolean {
  * Whether `pathname` is a page only a signed-in person can use: its first part is the first part of
  * a route that is not open. Every address under such a part counts, so a mistyped note link still
  * asks for sign-in first. A part therefore holds open routes or members' routes, never both;
- * `spa-paths.test.ts` fails when one holds both.
+ * `spa-paths.test.ts` fails when one holds both. With `notes` off (`SPA_NOTES=false`) the notes'
+ * and tags' addresses are not routed, so they show the not-found page instead of asking for sign-in.
  */
-export function isMembersOnlyPath(pathname: string): boolean {
-  return pathname.startsWith("/") && MEMBER_SECTIONS.has(section(pathname))
+export function isMembersOnlyPath(pathname: string, notes = true): boolean {
+  return pathname.startsWith("/") &&
+    MEMBER_SECTIONS[notes ? "on" : "off"].has(section(pathname))
 }
 
 /** The tab part of a group page's address: `/groups/:groupId/members` and its siblings. */

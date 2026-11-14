@@ -9,13 +9,14 @@ import {
   PLANS,
 } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
-import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { GROUP_PATHS, homePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { useAppText } from "@ui/i18n.ts"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { selectionStore } from "../state/selection.ts"
 import { sessionState } from "../state/session.ts"
 import { isGuestSession } from "../state/guest.ts"
+import { notesOn } from "../modules.ts"
 
 /** What {@link landingPath} decides from. */
 export interface Landing {
@@ -33,30 +34,34 @@ export interface Landing {
   billing: GroupBilling | null | undefined
   /** The plan catalog, `PLANS` unless a test passes its own. */
   plans?: readonly Plan[]
+  /** Whether the notes example is on (`SPA_NOTES`); left out, it is. Off, home is the overview. */
+  notes?: boolean
 }
 
 /**
  * Where the app's home sends a person, or `null` while it cannot tell yet. Without a `next`, every
  * sign-in lands here. When the free plan allows nothing, the owner of a group that never paid opens
  * its Billing tab, so their first screen is not a row of refusals; anyone else, and everyone under
- * a free plan that allows something, opens the notes.
+ * a free plan that allows something, opens the app's first page ({@link homePath}): the notes, or
+ * the overview when the product turns the notes off.
  *
  * A person in any group they do not own came for that group, so they never meet the plan, even
  * though sign-up gave them an empty first group of their own. A guest cannot pay. A billing that
- * could not be read opens the notes rather than leave the person on a spinner.
+ * could not be read opens the first page rather than leave the person on a spinner.
  */
 export function landingPath(landing: Landing): string | null {
   const plans = landing.plans ?? PLANS
+  const home = homePath(landing.notes)
   if (!landing.signedIn) return SCREEN_PATHS.signIn
-  if (!freePlanAllowsNothing(plans) || landing.guest) return NOTE_PATHS.list
+  if (!freePlanAllowsNothing(plans) || landing.guest) return home
   if (landing.groups === null) return null
-  if (landing.groups.some((group) => group.role !== GroupRole.OWNER)) return NOTE_PATHS.list
-  if (landing.groups.length === 0) return NOTE_PATHS.list
+  if (landing.groups.some((group) => group.role !== GroupRole.OWNER)) return home
+  if (landing.groups.length === 0) return home
   if (landing.selectedGroupId === null) return null
   if (landing.billing === undefined) return null
   return landing.billing !== null && needsFirstPlan(landing.billing, plans)
     ? GROUP_PATHS.billing(landing.selectedGroupId)
-    : NOTE_PATHS.list
+    : home
 }
 
 /**
@@ -80,6 +85,7 @@ export function HomeView() {
     guest: isGuestSession(),
     groups: groupsStore.loading.value ? null : groupsStore.groups.value,
     selectedGroupId: groupId,
+    notes: notesOn(),
     billing: current?.groupId === groupId
       ? current.billing
       : failure?.groupId === groupId

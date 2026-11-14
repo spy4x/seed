@@ -265,6 +265,7 @@ routes answer 404. Register `https://<DOMAIN>/api/auth/google/callback`, or `/gi
 | `SPA_ERROR_REPORT_DSN`           | The same for the browser. Public; the SPA container reads it on start, so a restart applies it.     | [The stack](stack.md#error-tracking) |
 | `SPA_REALTIME`                   | `false` or `0` turns the WebSocket off: the page uses HTTP and checks for changes every 30 seconds. | [Offline](offline.md)                |
 | `SPA_OFFLINE`                    | `false` or `0` turns the offline layer off: no device copy and no queue of writes.                  | [Offline](offline.md)                |
+| `SPA_NOTES`                      | `false` or `0` hides the notes example's screens, with the API's `NOTES=false`.                     | [Start a product](start-a-product.md#settings) |
 | `SPA_CPU_LIMIT`, `SPA_MEM_LIMIT` | The SPA container's limits. Example: `4`, `4G`, which the development Vite server needs.            |                                      |
 | `ADMIN_DEV_MEM_LIMIT` | The development admin container's memory limit, for its Vite server. `1G` when empty. |  |
 

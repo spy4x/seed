@@ -121,7 +121,8 @@ export function profilePath(section: ProfileSectionId): string {
 export const NEXT_PARAM = "next"
 
 /**
- * The checked `next` value: `value` when it is a page of this app, the notes list otherwise. The
+ * The checked `next` value: `value` when it is a page of this app, `fallback` otherwise (the notes
+ * list unless the app passes its {@link homePath}). The
  * rules are `safeRedirectPath`'s (one leading `/`, no `//`, backslash, scheme or control
  * character, encoded or not), and every `/api` path is refused.
  *
@@ -131,14 +132,20 @@ export const NEXT_PARAM = "next"
  * result in the flow state (`OAuthPendingFlow`) and redirects to that stored value after the
  * callback, never to a value read from the callback's query.
  */
-export function checkedNext(value: string): string {
-  return safeRedirectPath(value, { fallback: NOTE_PATHS.list, refuse: ["/api"] })
+export function checkedNext(value: string, fallback: string = NOTE_PATHS.list): string {
+  return safeRedirectPath(value, { fallback, refuse: ["/api"] })
 }
 
-/** The checked `next` of a query or a form, or `null` when it carries none. */
-export function readNext(source: { get(name: string): unknown }): string | null {
+/**
+ * The checked `next` of a query or a form, or `null` when it carries none; a refused one gives
+ * `fallback`, as {@link checkedNext}.
+ */
+export function readNext(
+  source: { get(name: string): unknown },
+  fallback: string = NOTE_PATHS.list,
+): string | null {
   const value = source.get(NEXT_PARAM)
-  return typeof value === "string" && value !== "" ? checkedNext(value) : null
+  return typeof value === "string" && value !== "" ? checkedNext(value, fallback) : null
 }
 
 /** Whether `path` (a checked `next`) is an invitation's page, `/invite/<token>`. */
@@ -164,6 +171,14 @@ export const OVERVIEW_PATHS = {
   root: "/overview",
   group: (groupId: string) => `/overview/${encodeURIComponent(groupId)}`,
 } as const
+
+/**
+ * The app's first page: the notes list while the product keeps the notes example, the overview
+ * when it turns them off (`SPA_NOTES=false`).
+ */
+export function homePath(notes = true): string {
+  return notes ? NOTE_PATHS.list : OVERVIEW_PATHS.root
+}
 
 /** Where a group's own pages live. */
 export const GROUP_PATHS = {

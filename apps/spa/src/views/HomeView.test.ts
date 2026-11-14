@@ -85,6 +85,10 @@ describe("landingPath", () => {
     expect(landingPath(owner({ billing: null }))).toBe(NOTE_PATHS.list)
   })
 
+  it("still sends a new owner to the plan when the notes are off", () => {
+    expect(landingPath(owner({ notes: false }))).toBe(GROUP_PATHS.billing("g"))
+  })
+
   it("waits for the groups, the selection and the billing", () => {
     expect(landingPath(owner({ groups: null }))).toBeNull()
     expect(landingPath(owner({ selectedGroupId: null }))).toBeNull()

@@ -32,6 +32,13 @@ describe("where a visit goes before sign-in is finished", () => {
     expect(signInRedirect("/notifications", "", signedOut)).toBe("/sign-in?next=%2Fnotifications")
   })
 
+  it("leaves a notes or tags address alone with the notes off, so it shows not-found", () => {
+    for (const path of ["/notes", "/notes/abc", "/tags", "/tags/t1"]) {
+      expect(signInRedirect(path, "", signedOut, false), path).toBe(null)
+    }
+    expect(signInRedirect("/groups", "", signedOut, false)).toBe("/sign-in?next=%2Fgroups")
+  })
+
   it("sends every route that is not open to sign-in, and leaves every open one", () => {
     for (const pattern of SPA_ROUTE_PATHS) {
       const path = pattern.replace(/:\w+/g, "abc")

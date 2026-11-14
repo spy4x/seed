@@ -5,7 +5,7 @@ import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import { AUTH_PATHS, authFailureKey, AuthScreen, type AuthScreenKind } from "@ui/auth-screen.tsx"
 import { OAUTH_NOTICE_KEYS } from "@ui/message.ts"
 import { useAppText } from "@ui/i18n.ts"
-import { afterSignIn, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
+import { afterSignIn, homePath, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"
 import { OAUTH_NOTICE_PARAM, oauthNotice, type OAuthProviderId } from "@domain/identity"
 import {
@@ -23,6 +23,7 @@ import { lastSignIn, lastSignInHint } from "../state/last-sign-in.ts"
 import { takeHandedOffAddress } from "../state/address-handoff.ts"
 import { sessionState } from "../state/session.ts"
 import { demoMode, guestMode, siteOrigin } from "../state/demo.ts"
+import { notesOn } from "../modules.ts"
 
 /** How long an autofill passkey request waits before it starts again with a fresh challenge. */
 const PASSKEY_AUTOFILL_RENEW_MS = 4.5 * 60_000
@@ -35,7 +36,7 @@ const PASSKEY_AUTOFILL_RENEW_MS = 4.5 * 60_000
 export function AuthView({ screen }: { screen: AuthScreenKind }) {
   const [, navigate] = useLocation()
   const query = new URLSearchParams(useSearch())
-  const next = readNext(query)
+  const next = readNext(query, homePath(notesOn()))
   const t = useAppText()
   const failed = () => t.t(authFailureKey(screen))
   // A provider sign-in that failed comes back here with `?oauth=`, and the page says so.

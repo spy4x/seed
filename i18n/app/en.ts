@@ -729,6 +729,8 @@ export default {
   "OverviewScreen.choosePlan": "Choose a plan",
   "OverviewScreen.allHidden": "All widgets are hidden",
   "OverviewScreen.allHiddenText": "Choose the ones you want to see.",
+  "OverviewScreen.noWidgets": "Nothing to show yet",
+  "OverviewScreen.noWidgetsText": "Widgets for {group} will appear here.",
   "OverviewScreen.gridLabel": "Overview of {group}",
   "OverviewScreen.customiseText":
     "Choose which widgets you see and in what order. Your layout follows you to your other devices.",
@@ -1057,6 +1059,8 @@ export default {
     "This address doesn't lead to a page. It may be mistyped, or the page has moved.",
   "NotFound.signedOut": "This address doesn't lead to a page. Sign in to get to your notes.",
   "NotFound.toNotes": "Go to your notes",
+  "NotFound.toOverview": "Go to the overview",
+  "NotFound.signedOutPlain": "This address doesn't lead to a page. Sign in to continue.",
   "NotFound.signIn": "Sign in",
   "Notes.title": "Notes",
   "Notes.new": "New note",

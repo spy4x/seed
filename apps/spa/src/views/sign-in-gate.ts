@@ -8,14 +8,15 @@ import { isMembersOnlyPath } from "./spa-paths.ts"
  * so sign-in returns there. An invitation goes to sign-up instead: most invited people have no
  * account yet, and sign-up links to sign-in for those who do. `null` when the page stays: the session is signed in, or the page is
  * open to anyone, which the route table says (`spa-paths.ts`). The MPA's pages answer the same way
- * on the server (`signInPath`).
+ * on the server (`signInPath`). With `notes` off, a notes or tags address stays: it is not routed.
  */
 export function signInRedirect(
   path: string,
   search: string,
   session: Pick<SessionState, "user" | "isMfaRequired">,
+  notes = true,
 ): string | null {
-  if ((session.user && !session.isMfaRequired) || !isMembersOnlyPath(path)) return null
+  if ((session.user && !session.isMfaRequired) || !isMembersOnlyPath(path, notes)) return null
   const page = search ? `${path}?${search}` : path
   const target = session.isMfaRequired
     ? SCREEN_PATHS.oneTimeCode

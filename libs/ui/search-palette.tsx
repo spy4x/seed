@@ -88,6 +88,11 @@ export interface SearchPaletteProps {
   guest?: boolean
   /** Whether "Open benchmark" is listed: development builds and the public demo only. */
   benchmark?: boolean
+  /**
+   * Whether the notes example is on; left out, it is. Off, `searchNotes` is never called and no
+   * row or command names notes or tags.
+   */
+  notes?: boolean
 }
 
 /**
@@ -185,7 +190,8 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     const { groups, currentGroup } = latest.current
     const t = words.current
     const text = query.trim()
-    const asksNotes = text === "" || Array.from(text).length >= NOTE_QUERY_MIN
+    const notesOn = latest.current.notes ?? true
+    const asksNotes = notesOn && (text === "" || Array.from(text).length >= NOTE_QUERY_MIN)
     const answer = asksNotes
       ? await latest.current.searchNotes(text, signal)
       : { notes: [], onDevice: false }
@@ -213,7 +219,9 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     const matched = matchOptions(rows, text, rows.length)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
-      setEmpty(asksNotes ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t))
+      setEmpty(
+        asksNotes || !notesOn ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t),
+      )
     }
     return [...notes, ...matched]
   }
@@ -234,6 +242,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       guest: props.guest ?? false,
       benchmark: props.benchmark ?? false,
       canInstall: props.canInstall ?? false,
+      notes: props.notes ?? true,
     }
   }
 

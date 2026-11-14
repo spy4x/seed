@@ -79,8 +79,10 @@ screens were redesigned against these rules in October 2026.
 12. **The rail's middle holds the daily destinations,** at most four so the phone bar keeps its
     last slot: Overview, Notes, Activity, Groups. Overview opens the selected group's overview.
     Activity is the selected group's log and is left out when there is no selected group or the
-    person may not read its log. The profile opens from the account menu's name and address only.
-    Tags lives in the account menu, in Notes' "More actions", on `g t` and in the search palette.
+    person may not read its log. Notes is left out when the product turns the notes off
+    (`SPA_NOTES=false`). The profile opens from the account menu's name and address only. When
+    notes are on, Tags lives in the account menu, in Notes' "More actions", on `g t` and in the
+    search palette.
     Below `md` the rail becomes a tab bar; its last tab is "Account" ("Admin" in the admin), the
     avatar with the unread count, opening a sheet with the groups, the destinations that did not
     fit, Notifications and the account, every row at least 44 px tall. Because the switcher is in
