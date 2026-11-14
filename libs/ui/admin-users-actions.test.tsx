@@ -20,10 +20,14 @@ import {
   UserRole,
 } from "@domain/identity"
 import { AdminUsersScreen, type AdminUsersScreenProps } from "./admin-users-screen.tsx"
-import { AdminUserScreen, type AdminUserScreenProps } from "./admin-user-screen.tsx"
+import {
+  adminUserPageCommands,
+  AdminUserScreen,
+  type AdminUserScreenProps,
+} from "./admin-user-screen.tsx"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
   document: globalThis.document,
@@ -473,5 +477,95 @@ describe("the person's actions in en-XA", () => {
     expect(
       englishLeft(document.body, [`Ada Lovelace`, `AL`, `ada@example.com`, `Firefox on Linux`]),
     ).toEqual([])
+  })
+})
+
+describe("the person page's palette commands", () => {
+  const DATA_EXPORTS = { id: `data-exports`, key: `AdminPersonTab.dataExports` }
+
+  /** The commands for `page`, with every tab and dialog they ask for recorded in `calls`. */
+  function commands(
+    page: Partial<Parameters<typeof adminUserPageCommands>[1]>,
+    calls: unknown[][] = [],
+  ) {
+    return adminUserPageCommands(ADMIN_ENGLISH, {
+      detail,
+      operator,
+      extraTabs: [DATA_EXPORTS],
+      ...page,
+    }, {
+      onTab: (tab) => void calls.push([`tab`, tab]),
+      onOpenDialog: (action) => void calls.push([`open`, action]),
+    })
+  }
+  const actionIds = (page: Partial<Parameters<typeof adminUserPageCommands>[1]>) =>
+    commands(page).map((command) => command.id).filter((id) => !id.startsWith(`user-tab-`))
+
+  it("lists a command per tab, the modules' tabs included, before the menu's actions", () => {
+    expect(commands({ operator: administrator }).map((command) => command.label)).toEqual([
+      "Overview",
+      "Sign-in methods",
+      "Sessions",
+      "Groups",
+      "Activity",
+      "Data exports",
+      "Block",
+      "End all sessions",
+      "Change role",
+      "Send password-reset email",
+    ])
+  })
+
+  it("offers nothing while the person is not shown", () => {
+    expect(commands({ detail: null })).toEqual([])
+  })
+
+  it("offers no action on the operator themselves, nor on a role at or above theirs", () => {
+    expect(actionIds({ detail: { ...detail, user: { ...ada, id: operator.id } } })).toEqual([])
+    expect(actionIds({ detail: { ...detail, user: { ...ada, role: UserRole.OPERATOR } } }))
+      .toEqual([])
+    expect(actionIds({ detail: { ...detail, user: { ...ada, role: UserRole.ADMIN } } }))
+      .toEqual([])
+  })
+
+  it("offers Unblock and not Block for a blocked person", () => {
+    const blocked = { ...detail, user: { ...ada, blockedAt: "2026-10-10T10:00:00.000Z" } }
+    expect(actionIds({ detail: blocked })).toEqual([
+      `user-unblock`,
+      `user-end-sessions`,
+      `user-password-reset`,
+    ])
+  })
+
+  it("offers Change role to an administrator only", () => {
+    expect(actionIds({ operator })).not.toContain(`user-change-role`)
+    expect(actionIds({ operator: administrator })).toContain(`user-change-role`)
+  })
+
+  it("offers no password reset without an address to send it to", () => {
+    expect(actionIds({ detail: { ...detail, methods: [] } })).not.toContain(`user-password-reset`)
+  })
+
+  it("only opens the confirmation of Block, End all sessions and Change role, as the menu does", () => {
+    const calls: unknown[][] = []
+    for (const command of commands({ operator: administrator }, calls)) command.run()
+    expect(calls).toEqual([
+      [`tab`, `overview`],
+      [`tab`, `methods`],
+      [`tab`, `sessions`],
+      [`tab`, `groups`],
+      [`tab`, `activity`],
+      [`tab`, `data-exports`],
+      [`open`, `block`],
+      [`open`, `end-sessions`],
+      [`open`, `change-role`],
+      [`open`, `password-reset`],
+    ])
+  })
+
+  it("finds Block by its English name and by Russian words", () => {
+    const block = commands({}).find((command) => command.id === `user-block`)!
+    expect(block.aliases).toContain(`Block`)
+    expect(block.aliases).toContain(`заблокировать`)
   })
 })

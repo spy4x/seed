@@ -15,6 +15,7 @@ import admin from "@i18n/admin/en.ts"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { ADMIN_GROUP_PATHS } from "./admin-groups-list.tsx"
 import {
+  type PageCommand,
   SETTINGS_ALIASES,
   shortcutKeys,
   SHORTCUTS_ALIASES,
@@ -25,6 +26,8 @@ import { quoted } from "./search-palette.tsx"
 
 /** What a picked command asks the admin app to do. */
 export type AdminSearchChoice =
+  /** Run one of the open page's own commands, by its id. */
+  | { kind: "command"; id: string }
   /** Go to a page of the admin app. */
   | { kind: "page"; href: string }
   /** Paint the app in this theme, as the account menu's Theme does. */
@@ -59,6 +62,28 @@ export interface AdminGoTo {
   keys: string
 }
 
+/**
+ * A command of the open page, such as Block on a person's page: what the palette lists, and what
+ * picking it runs, the same handler as the page's own button, tab or menu entry.
+ */
+export interface AdminPageCommand extends PageCommand {
+  run: () => void
+}
+
+/**
+ * One of the open page's commands, named by the catalog key `key` as its button, tab or menu entry
+ * is named, and found by its English name and `aliases` too.
+ */
+export function adminPageCommand(
+  t: Translator<string>,
+  id: string,
+  key: string,
+  run: () => void,
+  aliases: readonly string[] = [],
+): AdminPageCommand {
+  return { id, label: t.t(key), aliases: [englishText(key), ...aliases], run }
+}
+
 /** What the registry reads of the admin app's state. */
 export interface AdminPaletteContext {
   t: Translator<string>
@@ -70,6 +95,8 @@ export interface AdminPaletteContext {
   theme: () => ThemePreference
   /** Whether the single-key shortcuts are on now; read each time the row is drawn. */
   singleKeys: () => boolean
+  /** The open page's own commands; none on a page without any. */
+  page?: readonly PageCommand[]
 }
 
 /** Extra words for each destination, beyond its name in the operator's language and English. */
@@ -111,10 +138,11 @@ function englishText(key: string, values?: Record<string, string>): string {
 
 /**
  * Every command the operator can take now, under their headings in the order the palette lists
- * them: Go to, Settings, Account. A destination is listed only while its module is shown, and
- * "Search this list" only on a list whose search field `/` focuses. Each is found by its label,
- * by its English label in every language, and by the words an operator would try, in English and
- * Russian.
+ * them: This page, Go to, Settings, Account. This page lists the open page's own commands, which
+ * the page hands over already gated as its buttons are. A destination is listed only while its
+ * module is shown, and "Search this list" only on a list whose search field `/` focuses. Each is
+ * found by its label, by its English label in every language, and by the words an operator would
+ * try, in English and Russian.
  *
  * @param context The admin app's state.
  * @param select Runs a choice made with the palette still open: a theme, or the single keys.
@@ -125,6 +153,7 @@ export function adminPaletteCommands(
 ): AdminPaletteOption[] {
   const { t } = context
   const heading = {
+    page: t.t(`Shortcuts.page`),
     goTo: t.t(`Shortcuts.goTo`),
     settings: t.t(`Search.settings`),
     account: t.t(`Search.account`),
@@ -143,6 +172,15 @@ export function adminPaletteCommands(
     group,
     choice,
   })
+
+  const page = (context.page ?? []).map((pageCommand): AdminPaletteOption => ({
+    id: `command-${pageCommand.id}`,
+    label: pageCommand.label,
+    aliases: pageCommand.aliases,
+    ...shortcutKeys(pageCommand.kbd),
+    group: heading.page,
+    choice: { kind: "command", id: pageCommand.id },
+  }))
 
   const goTo = context.goTo.map((entry) =>
     command(`go-${entry.id}`, entry.key, heading.goTo, { kind: "page", href: entry.href }, {
@@ -186,7 +224,7 @@ export function adminPaletteCommands(
     }),
   ]
 
-  return [...goTo, ...settings, ...account]
+  return [...page, ...goTo, ...settings, ...account]
 }
 
 /**

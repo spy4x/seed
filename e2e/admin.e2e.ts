@@ -158,7 +158,7 @@ test.describe("the admin app", () => {
     }
   })
 
-  test("an operator finds a person from the Ctrl K palette by part of their address", async ({ browser, request }) => {
+  test("an operator finds a person from the Ctrl K palette, then opens Block's confirmation from This page", async ({ browser, request }) => {
     const operatorEmail = address("ops")
     const targetEmail = address("eve")
     let admin: BrowserContext | null = null
@@ -202,6 +202,25 @@ test.describe("the admin app", () => {
       const row = ops.locator("[data-e2e=admin-users-list] a")
       await expect(row).toHaveCount(1)
       await expect(row).toContainText(targetEmail)
+
+      // On the person's page, This page offers Block, which opens the same confirmation as the
+      // menu's Block and blocks no one until it is confirmed.
+      await row.click()
+      await expect(ops.locator("[data-e2e=admin-user-title]")).toBeVisible()
+      await ops.keyboard.press("ControlOrMeta+k")
+      await expect(palette).toBeVisible()
+      await expect(palette.getByText("This page", { exact: true })).toBeVisible()
+      await palette.getByRole("combobox").fill("block")
+      await palette.getByRole("option", { name: "Block", exact: true }).click()
+      await expect(palette).toBeHidden()
+      const confirm = ops.locator("[data-e2e=admin-action-dialog]")
+      await expect(confirm).toBeVisible()
+      await expect(confirm.locator(":focus")).toHaveCount(1)
+      await ops.keyboard.press("Escape")
+      await expect(confirm).toBeHidden()
+      // Escape hands focus to the "More actions" button, as when Block is picked from that menu.
+      await expect(ops.locator("[data-e2e=admin-user-menu]")).toBeFocused()
+      await expect(ops.locator("[data-e2e=admin-user-status]")).toContainText("Active")
     } finally {
       await admin?.close()
       await cleanup(request, targetEmail)

@@ -10,10 +10,10 @@ import {
   type AdminPaletteOption,
   type AdminSearchChoice,
 } from "./admin-palette-commands.ts"
-import { paletteLabels } from "./search-palette.tsx"
+import { type PageCommand, paletteLabels } from "./search-palette.tsx"
 import { useAdminText } from "./i18n.ts"
 
-export type { AdminGoTo, AdminSearchChoice } from "./admin-palette-commands.ts"
+export type { AdminGoTo, AdminPageCommand, AdminSearchChoice } from "./admin-palette-commands.ts"
 
 /** Props of {@link AdminSearchPalette}. */
 export interface AdminSearchPaletteProps {
@@ -25,6 +25,8 @@ export interface AdminSearchPaletteProps {
   theme: ThemePreference
   /** Whether the single-key shortcuts are on on this device. */
   singleKeys: boolean
+  /** The open page's own commands, listed under "This page"; a pick names one by its id. */
+  page?: readonly PageCommand[]
   /**
    * Called with what the operator picked: after the palette has closed, or with it still open for
    * a theme or the single keys.
@@ -41,8 +43,9 @@ const ADMIN_SEARCH_HOTKEYS: readonly string[] = [`mod+k`]
  * "Search" entries open it by clicking its hidden one (`openSearch`), and it binds Ctrl K itself,
  * with its always-drawn root as what has to be on screen.
  *
- * It lists the commands of {@link adminPaletteCommands}, ranked as the product's palette ranks them
- * (`matchOptions`: aliases, word order, one typo, the other keyboard layout and alphabet). A query
+ * It lists the commands of {@link adminPaletteCommands}, the open page's own first, ranked as the
+ * product's palette ranks them (`matchOptions`: aliases, word order, one typo, the other keyboard
+ * layout and alphabet). A query
  * adds "Find user …" and "Find group …" after them ({@link adminFindCommands}). Theme opens a
  * submenu whose rows change the theme at once, and Single-key shortcuts switches at once; both
  * keep the palette open.
@@ -65,6 +68,7 @@ export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element 
     listFilter: props.listFilter,
     theme: () => latest.current.theme,
     singleKeys: () => latest.current.singleKeys,
+    page: props.page,
   }, select)
   const shown = new Set(props.goTo.map((entry) => entry.id))
   const filter = (rows: readonly AdminPaletteOption[], query: string) => [

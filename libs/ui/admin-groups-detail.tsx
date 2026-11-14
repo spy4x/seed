@@ -57,6 +57,7 @@ import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
 import { isolate, Isolated } from "@spy4x/preact-ui/bdi"
 import { zoneLabel } from "@spy4x/time/tz"
+import { type AdminPageCommand, adminPageCommand } from "./admin-palette-commands.ts"
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminGroupOperatorView {
@@ -80,6 +81,30 @@ export type AdminGroupAction =
 
 /** The group page's tabs, in order. */
 export const ADMIN_GROUP_TABS = [`members`, `invitations`, `files`, `activity`] as const
+
+/** The catalog key of each tab, as the tab row names it. */
+const GROUP_TAB_KEYS: Record<typeof ADMIN_GROUP_TABS[number], string> = {
+  members: `AdminGroup.members`,
+  invitations: `AdminGroup.invitations`,
+  files: `AdminGroup.files`,
+  activity: `AdminGroup.activity`,
+}
+
+/**
+ * The group page's commands for the admin palette: one per tab the page shows, each running what
+ * clicking the tab runs. No Files while the notes are off, as the page draws no Files tab then, and
+ * none while the group is not shown.
+ */
+export function adminGroupPageCommands(
+  t: Translator<string>,
+  page: { shown: boolean; notes: boolean },
+  onTab: (tab: string) => void,
+): AdminPageCommand[] {
+  if (!page.shown) return []
+  return ADMIN_GROUP_TABS.filter((id) => id !== `files` || page.notes).map((id) =>
+    adminPageCommand(t, `group-tab-${id}`, GROUP_TAB_KEYS[id], () => onTab(id), [`tab`, `вкладка`])
+  )
+}
 
 /** Each subscription state's word, by catalog key. */
 const BILLING_STATUS: Record<number, string> = {

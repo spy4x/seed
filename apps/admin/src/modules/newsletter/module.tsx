@@ -8,6 +8,10 @@ import {
   parseAdminSubscriberFilter,
 } from "@domain/subscribers"
 import { AdminNewsletterScreen, type AdminNewsletterTab } from "@ui/admin-newsletter-screen.tsx"
+import { type AdminPageCommand, adminPageCommand } from "@ui/admin-palette-commands.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "@ui/i18n.ts"
+import { usePageCommands } from "../../page-commands.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { createNewsletterState, type NewsletterState } from "./state.ts"
 
@@ -37,6 +41,26 @@ export function newsletterHref(filter: AdminSubscriberFilter, tab: AdminNewslett
 }
 
 /**
+ * The page's palette commands: Export, which runs what the Export button runs. None while an
+ * export runs, as the button is disabled then.
+ */
+export function newsletterPageCommands(
+  t: Translator<string>,
+  exporting: boolean,
+  exportCsv: () => void,
+): AdminPageCommand[] {
+  if (exporting) return []
+  return [
+    adminPageCommand(t, `newsletter-export`, `AdminNewsletter.export`, exportCsv, [
+      `csv`,
+      `download subscribers`,
+      `экспорт`,
+      `выгрузить подписчиков`,
+    ]),
+  ]
+}
+
+/**
  * The page. Its status, page number and open tab live in the address, so back and forward step
  * through them; the search text lives in the module's state only, for the session.
  */
@@ -57,6 +81,8 @@ function NewsletterView({ context }: { context: AdminContext }): JSX.Element {
   }, [filter])
   const list = state.list.value
   const dialog = state.dialog.value
+  const t = useAdminText()
+  usePageCommands(newsletterPageCommands(t, state.exporting.value, () => state.exportCsv()))
   const go = (next: AdminSubscriberFilter) => {
     state.query.value = next.query
     // A new search alone leaves the address as it is: no history entry that only repeats it.

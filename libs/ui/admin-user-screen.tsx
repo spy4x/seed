@@ -46,6 +46,7 @@ import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
+import { type AdminPageCommand, adminPageCommand } from "./admin-palette-commands.ts"
 
 /** What an operator can do to a person; each is confirmed in a dialog first. */
 export type AdminAction =
@@ -244,6 +245,74 @@ export const ADMIN_USER_TABS = ["overview", "methods", "sessions", "groups", "ac
 
 /** One of {@link ADMIN_USER_TABS}. */
 export type AdminUserTab = typeof ADMIN_USER_TABS[number]
+
+/** The catalog key of each of the page's own tabs, as the tab row names it. */
+const TAB_KEYS: Record<AdminUserTab, string> = {
+  overview: `AdminUser.overview`,
+  methods: `AdminUser.methods`,
+  sessions: `AdminUser.sessions`,
+  groups: `AdminUser.groups`,
+  activity: `AdminUser.activity`,
+}
+
+/** Extra words for the person page's commands, in English and Russian. */
+const USER_COMMAND_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  block: [`ban`, `suspend`, `lock`, `заблокировать`, `забанить`],
+  unblock: [`unban`, `restore access`, `unlock`, `разблокировать`],
+  "end-sessions": [`sign out everywhere`, `log out`, `revoke sessions`, `завершить сеансы`],
+  "change-role": [`role`, `promote`, `make admin`, `роль`, `сменить роль`],
+  "password-reset": [`reset password`, `forgot password`, `сбросить пароль`],
+}
+
+/**
+ * The person page's commands for the admin palette: one per tab, the page's own and then the
+ * modules' (`extraTabs`, each named by its catalog key), and the "More actions" menu's Block or
+ * Unblock, End all sessions, Change role and Send password reset. Each runs what its tab or menu
+ * entry runs, so an action only opens its confirmation dialog. The tabs come first, so an empty
+ * query preselects a tab and Enter opens no confirmation. The actions follow the menu's own
+ * rules: none for the operator themselves or a role at or above theirs, Change role for an
+ * administrator only, and Send password reset only with an address to send it to. None while the
+ * person is not shown.
+ */
+export function adminUserPageCommands(
+  t: Translator<string>,
+  page: {
+    detail: AdminUserDetail | null
+    operator: AdminOperator
+    extraTabs: readonly { id: string; key: string }[]
+  },
+  ports: { onTab: (tab: string) => void; onOpenDialog: (action: AdminAction) => void },
+): AdminPageCommand[] {
+  const { detail, operator } = page
+  if (!detail) return []
+  const tabs = [
+    ...ADMIN_USER_TABS.map((id) => ({ id, key: TAB_KEYS[id] })),
+    ...page.extraTabs,
+  ].map((tab) =>
+    adminPageCommand(t, `user-tab-${tab.id}`, tab.key, () => ports.onTab(tab.id), [
+      `tab`,
+      `вкладка`,
+    ])
+  )
+  const action = (id: AdminAction, key: string) =>
+    adminPageCommand(
+      t,
+      `user-${id}`,
+      key,
+      () => ports.onOpenDialog(id),
+      USER_COMMAND_ALIASES[id],
+    )
+  const { user } = detail
+  const actions = canActOn(operator, user)
+    ? [
+      user.blockedAt ? action(`unblock`, `AdminUser.unblock`) : action(`block`, `AdminUser.block`),
+      action(`end-sessions`, `AdminUser.endAllSessions`),
+      ...(canChangeRoles(operator.role) ? [action(`change-role`, `AdminUser.changeRole`)] : []),
+      ...(resetAddress(detail) === null ? [] : [action(`password-reset`, `AdminUser.sendReset`)]),
+    ]
+    : []
+  return [...tabs, ...actions]
+}
 
 /** A tab a module adds to the person page (`apps/admin/src/modules/`): its id, name and content. */
 export interface AdminExtraTab {

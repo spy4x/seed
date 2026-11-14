@@ -10,9 +10,10 @@ import {
 } from "@domain/identity"
 import { ADMIN_PATHS } from "@ui/admin-frame.tsx"
 import { AdminUsersScreen } from "@ui/admin-users-screen.tsx"
-import { AdminUserScreen } from "@ui/admin-user-screen.tsx"
+import { type AdminAction, adminUserPageCommands, AdminUserScreen } from "@ui/admin-user-screen.tsx"
 import { AdminPersonDataExportsPanel } from "@ui/admin-person-data-exports.tsx"
 import { operatorOf } from "../../state.ts"
+import { usePageCommands } from "../../page-commands.ts"
 import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { createUsersState, type UsersState } from "./state.ts"
@@ -80,16 +81,32 @@ function UserView(
     label: t.t(extra.label),
     content: extra.render({ context, userId }),
   }))
+  const detail = current ? person.detail : null
+  const operator = operatorOf(context.operator)
+  const onTab = (next: string) =>
+    context.navigate(next === `overview` ? path : `${path}?tab=${encodeURIComponent(next)}`, {
+      replace: true,
+    })
+  // The closed palette hands focus back to what had it before, often the page's body, and the
+  // dialog returns focus on close to whatever had it as it opened. Focusing the "More actions"
+  // button first sends it back there, as when the action is picked from that menu.
+  const openFromPalette = (action: AdminAction) => {
+    document.querySelector<HTMLElement>(`[data-e2e="admin-user-menu"]`)?.focus()
+    state.openDialog(action)
+  }
+  // The palette's "This page": the tabs, and the menu's actions, each opening its dialog.
+  usePageCommands(adminUserPageCommands(t, {
+    detail,
+    operator,
+    extraTabs: context.personTabs.map((extra) => ({ id: extra.id, key: extra.label })),
+  }, { onTab, onOpenDialog: openFromPalette }))
   return (
     <AdminUserScreen
-      detail={current ? person.detail : null}
+      detail={detail}
       error={userId === null ? t.t(`AdminUser.notFound`) : current ? person.error : null}
-      operator={operatorOf(context.operator)}
+      operator={operator}
       tab={tab}
-      onTab={(next) =>
-        context.navigate(next === `overview` ? path : `${path}?tab=${encodeURIComponent(next)}`, {
-          replace: true,
-        })}
+      onTab={onTab}
       extraTabs={extraTabs}
       dialog={dialog.action}
       dialogSessionId={dialog.sessionId}

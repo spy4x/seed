@@ -12,7 +12,7 @@ import {
   parseAdminGroupFilter,
 } from "@domain/groups"
 import { ADMIN_GROUP_PATHS, AdminGroupsListScreen } from "@ui/admin-groups-list.tsx"
-import { AdminGroupScreen } from "@ui/admin-groups-detail.tsx"
+import { adminGroupPageCommands, AdminGroupScreen } from "@ui/admin-groups-detail.tsx"
 import { AdminGroupOverview } from "@ui/admin-group-overview.tsx"
 import { OVERVIEW_DEFAULT_PRESET } from "@ui/overview-screen.tsx"
 import { OVERVIEW_VIEWS, overviewWidgets } from "@ui/overview-widgets.ts"
@@ -21,6 +21,7 @@ import { rangeForPreset } from "@spy4x/preact-ui/date-range"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { createAdminOverviewState } from "./overview.ts"
 import { operatorOf } from "../../state.ts"
+import { usePageCommands } from "../../page-commands.ts"
 import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { createGroupsState, type GroupsState } from "./state.ts"
@@ -153,6 +154,18 @@ function GroupView(
     }
   }, [groupId, range.range.from, range.range.to, timeZone, notes])
   const loads = overview.loads.value
+  const onTab = (next: string) =>
+    context.navigate(next === `members` ? path : `${path}?tab=${encodeURIComponent(next)}`, {
+      replace: true,
+    })
+  // The palette's "This page": one command per tab the page shows.
+  usePageCommands(
+    adminGroupPageCommands(
+      t,
+      { shown: current && group.detail !== null, notes: notes !== false },
+      onTab,
+    ),
+  )
   return (
     <AdminGroupScreen
       detail={current ? group.detail : null}
@@ -170,10 +183,7 @@ function GroupView(
       }}
       fileNotice={shownFiles?.notice ?? null}
       tab={tab}
-      onTab={(next) =>
-        context.navigate(next === `members` ? path : `${path}?tab=${encodeURIComponent(next)}`, {
-          replace: true,
-        })}
+      onTab={onTab}
       dialog={dialog.dialog}
       onOpenDialog={state.openDialog}
       onCloseDialog={state.closeDialog}

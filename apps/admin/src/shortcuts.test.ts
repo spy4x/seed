@@ -1,10 +1,15 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { adminPaletteCommands, type AdminPaletteOption } from "@ui/admin-palette-commands.ts"
-import { SHORTCUT_GROUPS } from "@ui/shortcuts.tsx"
 import { ADMIN_MODULES, shownModules } from "./modules/registry.ts"
 import type { AdminModule } from "./modules/types.ts"
-import { ADMIN_PAGE_ACTIONS, adminGoTo, adminShortcutRows, onListPage } from "./shortcuts.ts"
+import {
+  ADMIN_PAGE_ACTIONS,
+  adminGoTo,
+  adminPageActionCommands,
+  adminShortcutRows,
+  onListPage,
+} from "./shortcuts.ts"
 import { adminText } from "./i18n.ts"
 
 /** The blog's own pages' `g` sequences, next to the modules'. */
@@ -133,33 +138,43 @@ describe("admin keyboard shortcuts", () => {
 /** The palette's commands, with every submenu's rows, for the shortcut rows of one page. */
 function commandsFor(path: string, modules: readonly AdminModule[] = ADMIN_MODULES) {
   const { list, seen } = rows(path, modules)
+  const page = adminPageActionCommands(adminText(), path, (href) => void seen.navigated.push(href))
   const commands = adminPaletteCommands({
     t: adminText(),
     goTo: adminGoTo(modules),
     listFilter: onListPage(modules, path),
     theme: () => `system`,
     singleKeys: () => true,
+    page,
   }, () => {})
   const flat = (options: readonly AdminPaletteOption[]): AdminPaletteOption[] =>
     options.flatMap((option) => [option, ...flat(option.children ?? [])])
-  return { list, seen, commands: flat(commands) }
+  return { list, seen, page, commands: flat(commands) }
 }
 
 describe("the admin palette and the keyboard shortcuts", () => {
-  // The open page's own actions (`c`: New post, Add link…) get their commands in spy4x/seed#1000.
-  const pageActions = new Set(
-    Object.values(ADMIN_PAGE_ACTIONS).flat().map((action) => adminText().t(action.description)),
-  )
-  for (const path of ["/", "/users", "/blog", "/blog/channels", "/catalog", "/users/7"]) {
+  const pages = ["/", "/users", "/users/7", ...Object.keys(ADMIN_PAGE_ACTIONS)]
+  for (const path of pages) {
     it(`has a command for the keys of every shortcut that acts (page: ${path})`, () => {
       const { list, commands } = commandsFor(path)
       const missing = list.filter((row) => row.run)
-        .filter((row) => !(row.group === SHORTCUT_GROUPS.page && pageActions.has(row.description)))
         .filter((row) => !commands.some((command) => command.shortcut === row.keys))
         .map((row) => `${row.keys} (${row.description})`)
       expect(missing).toEqual([])
     })
   }
+
+  it("opens the same page from each page's c command as from its c key", () => {
+    for (const path of Object.keys(ADMIN_PAGE_ACTIONS)) {
+      const { list, seen, page, commands } = commandsFor(path)
+      list.find((row) => row.keys === "c")!.run!()
+      const command = commands.find((command) => command.shortcut === "c")!
+      expect(command.choice?.kind, path).toBe("command")
+      page.find((entry) => `command-${entry.id}` === command.id)!.run()
+      const href = ADMIN_PAGE_ACTIONS[path]![0]!.href
+      expect(seen.navigated, path).toEqual([href, href])
+    }
+  })
 
   it("opens the same page from each Go to command as from its g shortcut", () => {
     const { list, seen, commands } = commandsFor("/")
