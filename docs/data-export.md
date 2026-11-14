@@ -10,6 +10,8 @@ data". The file is built in the background and kept for a few days
 ([#229](https://github.com/spy4x/seed/issues/229)).
 
 **You need:** the file store running, with its settings in the env file ([files.md](files.md)).
+With files off (`FILES=false`, [files.md](files.md#without-files)), asking for an export or
+downloading one answers 409 with the reason `FILES_OFF`; the newest export still reads.
 
 ## What happens
 
@@ -97,8 +99,8 @@ A new table that holds a person's data adds a section to the export.
 ## When it fails
 
 The worker needs the file store's settings: `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`,
-`S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`. Without them it warns at start. The export job then
-fails and is retried, so the request reads as failed after a day.
+`S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`. Without them, and without `FILES=false`, it warns at
+start. The export job then fails and is retried, so the request reads as failed after a day.
 
 ## In the admin panel
 
