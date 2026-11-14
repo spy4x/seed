@@ -47,3 +47,8 @@ it("shows the catalog only once the API lists it among the modules that are on",
   expect(ids([])).toContain("blog")
   expect(ids(["catalog"])).toContain("catalog")
 })
+
+it("ignores an id the API lists that names no module, such as the notes", () => {
+  const ids = (on: string[]) => shownModules(ADMIN_MODULES, new Set(on)).map((module) => module.id)
+  expect(ids(["notes"])).toEqual(ids([]))
+})
