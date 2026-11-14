@@ -215,8 +215,11 @@ test.describe("the admin app", () => {
       await expect(palette).toBeHidden()
       const confirm = ops.locator("[data-e2e=admin-action-dialog]")
       await expect(confirm).toBeVisible()
+      await expect(confirm.locator(":focus")).toHaveCount(1)
       await ops.keyboard.press("Escape")
       await expect(confirm).toBeHidden()
+      // Escape hands focus to the "More actions" button, as when Block is picked from that menu.
+      await expect(ops.locator("[data-e2e=admin-user-menu]")).toBeFocused()
       await expect(ops.locator("[data-e2e=admin-user-status]")).toContainText("Active")
     } finally {
       await admin?.close()
