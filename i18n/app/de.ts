@@ -53,6 +53,7 @@ export default {
   "GroupActivity.loading": "Aktivität wird geladen …",
   "GroupActivity.empty": "Hier ist noch nichts passiert.",
   "GroupActivity.emptyHint": "Änderungen an der Gruppe und ihren Notizen erscheinen hier.",
+  "GroupActivity.emptyHintGroupOnly": "Änderungen an der Gruppe erscheinen hier.",
   "GroupActivity.loadingMore": "Wird geladen …",
   "GroupActivity.loadMore": "Mehr laden",
   "GroupActivity.openNote": "Notiz öffnen",

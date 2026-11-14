@@ -22,7 +22,10 @@ function DashboardView({ context }: { context: AdminContext }): JSX.Element {
     load()
   }, [context])
 
-  return <AdminDashboardScreen stats={stats} error={error} onRetry={load} />
+  // `null` until `GET /api/admin/modules` is read: drawn as with the notes on, like the group page.
+  const moduleIds = context.moduleIds.value
+  const notes = moduleIds === null || moduleIds.has(`notes`)
+  return <AdminDashboardScreen stats={stats} error={error} onRetry={load} notes={notes} />
 }
 
 /** The operator area's first page: stat cards and two 30-day charts. */

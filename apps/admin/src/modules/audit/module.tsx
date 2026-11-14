@@ -41,6 +41,9 @@ function AuditView({ context }: { context: AdminContext }): JSX.Element {
     state.load(filter)
   }, [scope])
   const log = state.log.value
+  // `null` until `GET /api/admin/modules` is read: drawn as with the notes on, like the group page.
+  const moduleIds = context.moduleIds.value
+  const notes = moduleIds === null || moduleIds.has(`notes`)
   const go = (next: AdminAuditFilter, nextView: AdminAuditView = view) => {
     const query = new URLSearchParams(adminAuditFilterQuery(next))
     if (nextView === `timeline`) query.set(`view`, `timeline`)
@@ -61,6 +64,7 @@ function AuditView({ context }: { context: AdminContext }): JSX.Element {
       onFilter={(next) => go(next)}
       onView={(next) => go(filter, next)}
       onMore={() => state.more()}
+      notes={notes}
       navigate={context.navigate}
     />
   )

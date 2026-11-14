@@ -6,6 +6,15 @@ as the change that needs it, so a crash never loses one and a rollback never sen
 (`apps/worker`) claims rows whose time has come and runs their handler. Operators see every run in
 the admin's Jobs module.
 
+## Lanes
+
+The worker runs two outbox processors side by side, and each runs one row at a time. Image
+processing, about ten seconds a phone photo, has a lane of its own; every other job and every group
+change shares the other lane. So a batch of photos never holds a sign-in code or a reset mail back.
+The slow kinds are listed in `SLOW_JOB_KINDS` (`libs/server/jobs/registry.ts`), and
+`OUTBOX_LANES` (`libs/server/jobs/wiring.ts`) gives each kind to exactly one lane. A new job that
+takes seconds belongs in `SLOW_JOB_KINDS`.
+
 ## Add a job
 
 1. Write the handler in `libs/server/jobs/<name>.ts`. It gets the row's `aggregateId`, the id of
@@ -26,7 +35,8 @@ the admin's Jobs module.
    `about` names a table whose `id` is the job's `aggregateId` and that has a `user_id` column, or
    `{ group: true }` when the `aggregateId` is a group's id. `cannotCancel` (why, and what to do
    instead) hides Cancel for a kind whose own page stops it. The worker refuses to start with two
-   jobs of one kind or an invalid definition.
+   jobs of one kind or an invalid definition. A job that takes seconds also goes in
+   `SLOW_JOB_KINDS` ([Lanes](#lanes)).
 3. Queue it with `enqueueJob` where the change happens (below).
 4. Test the handler next to it, and add the kind to `libs/server/jobs/registry.test.ts` if the test
    lists kinds.

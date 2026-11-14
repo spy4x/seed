@@ -149,11 +149,13 @@ const widgetIds = (paths: string[]) =>
 const NOTE_WIDGET_IDS = [`notes.added`, `notes.over-time`, `notes.total`]
 const tabNames = () => [...document.querySelectorAll(`[role=tab]`)].map((tab) => tab.textContent)
 const hasFilesTab = () => tabNames().some((name) => name?.startsWith(`Files`))
+const countTerms = () =>
+  [...document.querySelectorAll(`[data-e2e=admin-group-counts] dt`)].map((term) => term.textContent)
 const noWidgetsCard = () =>
   document.querySelector(`[data-e2e=admin-group-overview] [data-e2e=overview-no-widgets]`)
 
 describe(`one group's page in the admin app`, () => {
-  it(`asks for no widget and no files with the notes off, and shows the empty overview and no Files tab`, async () => {
+  it(`asks for no widget and no files with the notes off, and shows the empty overview, no Files tab and no note counts`, async () => {
     const { paths } = await openGroup(new Set([`groups`]))
 
     expect(paths).toEqual([`/api/admin/groups/${GROUP_ID}`])
@@ -161,15 +163,18 @@ describe(`one group's page in the admin app`, () => {
     expect(document.querySelectorAll(`[data-widget-status]`)).toHaveLength(0)
     expect(hasFilesTab()).toBe(false)
     expect(document.querySelector(`[role=tabpanel] [data-e2e=admin-group-members]`)).not.toBe(null)
+    expect(countTerms()).toContain(`Members`)
+    expect(countTerms().some((term) => /\b(notes?|tags?|files?)\b/i.test(term ?? ``))).toBe(false)
   })
 
-  it(`asks for every note widget and the files with the notes on`, async () => {
+  it(`asks for every note widget and the files with the notes on, and counts notes, tags and files`, async () => {
     const { paths } = await openGroup(new Set([`groups`, `notes`]))
 
     expect(widgetIds(paths)).toEqual(NOTE_WIDGET_IDS)
     expect(asked(paths, `/files`)).toHaveLength(1)
     expect(noWidgetsCard()).toBe(null)
     expect(hasFilesTab()).toBe(true)
+    expect(countTerms()).toEqual(expect.arrayContaining([`Notes`, `Tags`, `Files`]))
   })
 
   it(`asks for nothing of the notes until the module list is read, drawing them as loading`, async () => {
@@ -178,6 +183,7 @@ describe(`one group's page in the admin app`, () => {
     expect(paths).toEqual([`/api/admin/groups/${GROUP_ID}`])
     expect(document.querySelectorAll(`[data-widget-status=loading]`)).toHaveLength(3)
     expect(hasFilesTab()).toBe(true)
+    expect(countTerms()).toEqual(expect.arrayContaining([`Notes`, `Tags`, `Files`]))
 
     await act(() => {
       modules.value = new Set([`groups`, `notes`])

@@ -3,8 +3,10 @@ import { expect } from "@std/expect"
 import postgres from "postgres"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
+import { type JobDeps, JOBS } from "@server/jobs/registry.ts"
 import {
   scheduleStarterData,
+  STARTER_DATA_JOB,
   starterDataJob,
   WELCOME_NOTE_TITLE,
 } from "@server/jobs/starter-data.ts"
@@ -283,18 +285,44 @@ Deno.test("the welcome note is written after the sample data, so the page hears 
   })
 })
 
-Deno.test("with the notes off, sign-up queues no starter data, so no welcome note is made", async () => {
+Deno.test("with the notes off, sign-up still queues the starter data, and the job writes the sample data and no note", async () => {
+  // A product without the notes example (NOTES=false) writes its own starter data in this job.
   await withSchema(async (sql) => {
     const { userId, groupId } = await signedUpPerson(sql)
+    const sampled: number[] = []
+    const sampleData = async (id: number) => {
+      sampled.push(id)
+    }
 
     await new AppDbBase({ sql, notes: NOTES_OFF }).begin((tx) => tx.starterData.queue(userId))
-    const result = await createOutboxProcessor(sql, mailOff(sql)).drainOnce()
-
-    expect(result.failed).toBe(0)
-    expect(await sql`SELECT 1 FROM starter_data_requests`).toHaveLength(0)
+    expect(await sql`SELECT 1 FROM starter_data_requests WHERE user_id = ${userId}`)
+      .toHaveLength(1)
     expect(await sql`SELECT 1 FROM outbox_events WHERE aggregate_type = ${JOB_AGGREGATE}`)
-      .toHaveLength(0)
+      .toHaveLength(1)
+
+    const [request] = await sql<{ id: string }[]>`SELECT id FROM starter_data_requests`
+    // The registry's handler, as the worker builds it, reads the notes switch from its deps.
+    const job = JOBS.find((definition) => definition.kind === STARTER_DATA_JOB)!
+    const deps = { sql, provider: null, graceDays: 0, notes: NOTES_OFF, sampleData }
+    await job.handler(deps as unknown as JobDeps)(eventOf(request.id))
+
+    expect(sampled).toEqual([userId])
     expect(await notesOf(sql, groupId)).toEqual([])
+    expect(await sql`SELECT 1 FROM tags`).toHaveLength(0)
+    expect(await sql`SELECT 1 FROM note_attachments`).toHaveLength(0)
+    expect(await sql`SELECT 1 FROM starter_data_requests WHERE done_at IS NULL`).toHaveLength(0)
+  })
+})
+
+Deno.test("with the notes off and no sample data, the job closes the request and writes nothing", async () => {
+  await withSchema(async (sql) => {
+    const { userId, groupId } = await signedUpPerson(sql)
+    const requestId = await requestFor(sql, userId)
+
+    await starterDataJob(sql, { notes: NOTES_OFF })(eventOf(requestId))
+
+    expect(await notesOf(sql, groupId)).toEqual([])
+    expect(await sql`SELECT 1 FROM starter_data_requests WHERE done_at IS NULL`).toHaveLength(0)
   })
 })
 

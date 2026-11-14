@@ -3,6 +3,7 @@ import { effectivePlanId, entitlementsOf, type Plan, PlanError } from "@domain/b
 import { NoteError } from "@domain/notes"
 import { PostgresBillingRepository } from "../billing/postgres-billing-repository.ts"
 import { PostgresNoteRepository } from "../notes/postgres-note-repository.ts"
+import { NOTES_ON, type NotesSetup } from "../notes/setup.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -48,16 +49,18 @@ export interface StarterDataPlan {
    * allows no note gives a new group nothing, so it starts empty.
    */
   plans?: readonly Plan[]
+  /** The notes example's switch (`readNotesSetup`), left out on. Off, there is no welcome note. */
+  notes?: NotesSetup
 }
 
 /**
  * Writes `plan.sampleData`, if any, and creates the welcome note in the person's first group, then
- * sets `done_at`. The note's id is the
- * request's id, so a job that runs twice (a forced retry, a crash between the note and the marker)
- * adds one note: the second insert finds the first and does nothing. Once `done_at` is set the job
- * does not look at the notes again, so a note the person deleted stays deleted. A person with no
- * active group left, or whose group is at its plan's note cap, gets nothing, and the request is
- * closed.
+ * sets `done_at`. With the notes off it writes `plan.sampleData` and sets `done_at`, no note. The
+ * note's id is the request's id, so a job that runs twice (a forced retry, a crash between the
+ * note and the marker) adds one note: the second insert finds the first and does nothing. Once
+ * `done_at` is set the job does not look at the notes again, so a note the person deleted stays
+ * deleted. A person with no active group left, or whose group is at its plan's note cap, gets
+ * nothing, and the request is closed.
  */
 export function starterDataJob(sql: postgres.Sql, plan: StarterDataPlan = {}): JobHandler {
   const billing = new PostgresBillingRepository(sql)
@@ -69,7 +72,9 @@ export function starterDataJob(sql: postgres.Sql, plan: StarterDataPlan = {}): J
     `
     if (!request || request.doneAt) return
     await plan.sampleData?.(request.userId)
-    const [group] = await sql<{ id: string }[]>`
+    // With the notes off there is no welcome note, so no group is looked up.
+    const [group] = (plan.notes ?? NOTES_ON).on
+      ? await sql<{ id: string }[]>`
       SELECT groups.id
       FROM group_members
       INNER JOIN groups ON groups.id = group_members.group_id AND groups.deleted_at IS NULL
@@ -78,6 +83,7 @@ export function starterDataJob(sql: postgres.Sql, plan: StarterDataPlan = {}): J
       ORDER BY groups.created_at, groups.id
       LIMIT 1
     `
+      : []
     if (group) {
       try {
         // The cap the API's gate would apply: none while billing is off.

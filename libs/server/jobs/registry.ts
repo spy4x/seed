@@ -128,7 +128,7 @@ export interface JobDeps {
   plans?: readonly Plan[]
   /**
    * The notes example's switch (`readNotesSetup`), left out on. Off, a data export holds no notes,
-   * and the imports offer no notes kind.
+   * the imports offer no notes kind, and a new account gets no welcome note.
    */
   notes?: NotesSetup
 }
@@ -353,8 +353,8 @@ export const JOBS: readonly JobDefinition[] = [
     kind: STARTER_DATA_JOB,
     label: `Starter data for a new account`,
     about: { userIn: `starter_data_requests` },
-    handler: ({ sql, provider, graceDays, sampleData }) =>
-      starterDataJob(sql, { billingEnabled: provider !== null, graceDays, sampleData }),
+    handler: ({ sql, provider, graceDays, sampleData, notes = NOTES_ON }) =>
+      starterDataJob(sql, { billingEnabled: provider !== null, graceDays, sampleData, notes }),
   }),
   defineJob({
     kind: TELEGRAM_NOTIFICATION_JOB,
@@ -481,6 +481,13 @@ export const JOBS: readonly JobDefinition[] = [
       }),
   }),
 ]
+
+/**
+ * The slow job kinds, which the worker runs in a lane of their own beside every other row
+ * (docs/jobs.md, "Lanes"): an image takes about ten seconds, and a batch of them would hold up a
+ * sign-in code queued after it. A new job that takes seconds belongs here.
+ */
+export const SLOW_JOB_KINDS: readonly string[] = [IMAGE_PROCESS_JOB, IMAGE_WIDTHS_JOB]
 
 /** The job of `kind`, or `undefined` for a kind no entry has (an old row, a group change). */
 export function jobDefinition(

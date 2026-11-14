@@ -4,6 +4,7 @@ import { canViewActivity } from "@domain/groups"
 import { GroupActivityPanel } from "@ui/group-activity-panel.tsx"
 import { activityStore } from "../state/activity.ts"
 import { groupsStore } from "../state/groups.ts"
+import { notesOn } from "../modules.ts"
 
 /**
  * Wires the group page's Activity tab to the activity store. The log is read only for an admin or
@@ -28,6 +29,7 @@ export function GroupActivityView({ groupId }: { groupId: string }) {
       onLoadMore={() => void store.loadMore()}
       error={ours ? store.error.value : null}
       forbidden={membership !== undefined && !allowed}
+      notes={notesOn()}
       navigate={navigate}
     />
   )

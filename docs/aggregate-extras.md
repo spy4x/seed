@@ -152,10 +152,11 @@ sentence, in the person's language.
 
 A new account should not open onto an empty app. Sign-up queues one worker job per account with
 `tx.starterData.queue(user.id)`. The job, `starterDataJob` in `libs/server/jobs/starter-data.ts`,
-creates one welcome note. Sign-up never waits for it and never fails because of it.
+creates one welcome note. Sign-up never waits for it and never fails because of it. With the notes
+off (`NOTES=false`) the job still runs and skips only the welcome note.
 
-1. Add your data inside `starterDataJob`, after the welcome note. Use your repository's own create,
-   with the person as the actor.
+1. Add your data inside `starterDataJob`, after the welcome note and outside its notes check, so it
+   runs with the notes off too. Use your repository's own create, with the person as the actor.
 2. Make the write repeatable. Derive each row's id from the request id, or use
    `ON CONFLICT DO NOTHING`. The welcome note's id is the request's id, so a retry adds none.
 3. Skip quietly when the group is gone: that means "nothing to seed", not a failure to retry.

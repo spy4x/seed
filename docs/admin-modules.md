@@ -108,9 +108,10 @@ the admin host's `img-src 'self'` cannot load the file store.
 With the notes off (`NOTES=false`), the group's file and overview widget routes are not mounted
 and answer 404, since every file sits on a note and every widget counts notes. `GET
 /api/admin/modules` lists the id `notes` only while they are on, so the admin app then asks for
-neither: the group page shows the member overview's empty card and no Files tab, and an address
-with `?tab=files` opens Members. Until that list is read, the page draws the note widgets as
-loading and asks for nothing of the notes.
+neither: the group page shows the member overview's empty card, no Files tab and no note, tag or
+file counts, and an address with `?tab=files` opens Members. The dashboard, the group list and the
+audit log's event filter leave the notes out too. Until that list is read, the group page draws the note widgets as
+loading and asks for nothing of the notes, and every page draws as with the notes on.
 
 | Route under `/api/admin/groups/:id/files/:fileId` | Audit row |
 | ------------------------------------------------- | --------- |

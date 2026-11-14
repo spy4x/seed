@@ -40,6 +40,7 @@ export default {
   "GroupActivity.loading": "正在加载动态…",
   "GroupActivity.empty": "还没有任何动态。",
   "GroupActivity.emptyHint": "群组及其笔记的变动会显示在这里。",
+  "GroupActivity.emptyHintGroupOnly": "群组的变动会显示在这里。",
   "GroupActivity.loadingMore": "正在加载…",
   "GroupActivity.loadMore": "加载更多",
   "GroupActivity.openNote": "打开笔记",

@@ -57,6 +57,7 @@ export default {
   "GroupActivity.loading": "Chargement de l’activité…",
   "GroupActivity.empty": "Il ne s’est encore rien passé.",
   "GroupActivity.emptyHint": "Les modifications du groupe et de ses notes apparaissent ici.",
+  "GroupActivity.emptyHintGroupOnly": "Les modifications du groupe apparaissent ici.",
   "GroupActivity.loadingMore": "Chargement…",
   "GroupActivity.loadMore": "Afficher plus",
   "GroupActivity.openNote": "Ouvrir la note",

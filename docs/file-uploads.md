@@ -103,7 +103,9 @@ Each copy is turned upright, with no EXIF, XMP, GPS or colour profile left. They
 The first job makes only the 480 width, then queues `files.image-widths` for the others. The second
 job marks the image processed and only then deletes the original, so no copy that says where it was
 taken stays. On the worker's half a CPU, the 480 width of a phone photo takes about a second and the
-rest about nine. So the admin app shows every photo of a batch before any wide copy is made.
+rest about nine. So the admin app shows every photo of a batch before any wide copy is made. Both
+jobs run in a lane of their own ([jobs.md](jobs.md#lanes)), so a batch of photos never delays a
+sign-in code.
 
 - **When it shows.** The admin app shows a photo once one copy exists; the website once it is
   processed.

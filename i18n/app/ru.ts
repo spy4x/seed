@@ -50,6 +50,7 @@ export default {
   "GroupActivity.loading": "Загружаем историю…",
   "GroupActivity.empty": "Пока ничего не происходило.",
   "GroupActivity.emptyHint": "Здесь появятся изменения в группе и её заметках.",
+  "GroupActivity.emptyHintGroupOnly": "Здесь появятся изменения в группе.",
   "GroupActivity.loadingMore": "Загрузка…",
   "GroupActivity.loadMore": "Показать ещё",
   "GroupActivity.openNote": "Открыть заметку",
