@@ -1,6 +1,6 @@
 /**
  * The SPA with the notes example off (`SPA_NOTES=false`, docs/start-a-product.md): every piece that
- * could lead a person to the notes or tags is checked here, so one coming back fails this file.
+ * could lead a person to the notes, tags or API tokens is checked here, so one coming back fails this file.
  * The screens' own tests check what each draws with `notes={false}` (`libs/ui`).
  */
 import { expect } from "@std/expect"
@@ -11,13 +11,19 @@ import type { User } from "@domain/identity"
 import { GroupRole } from "@domain/groups"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 import { OVERVIEW_WIDGETS, overviewWidgets } from "@ui/overview-widgets.ts"
-import { homePath, NOTE_PATHS, OVERVIEW_PATHS, readNext } from "@ui/progressive.tsx"
+import {
+  homePath,
+  isProfileSection,
+  NOTE_PATHS,
+  OVERVIEW_PATHS,
+  readNext,
+} from "@ui/progressive.tsx"
 import { configureModules, notesOn, offlineNotes, offlineTags } from "./modules.ts"
 import { loadRuntimeConfig } from "./runtime-config.ts"
 import { AppShell } from "./views/AppShell.tsx"
 import { type Landing, landingPath } from "./views/HomeView.tsx"
 import { spaShortcutRows } from "./views/shortcuts.ts"
-import { SPA_ROUTE_PATHS, spaRoutePaths } from "./views/spa-paths.ts"
+import { isMembersOnlyPath, SPA_ROUTE_PATHS, spaRoutePaths } from "./views/spa-paths.ts"
 import { groupsStore } from "./state/groups.ts"
 import { selectionStore } from "./state/selection.ts"
 import { newNoteStore } from "./state/new-note.ts"
@@ -101,6 +107,33 @@ describe("the SPA with the notes off", () => {
     expect(SPA_ROUTE_PATHS.filter((path) => NOTES_ADDRESS.test(path)).length).toBe(8)
     expect(spaRoutePaths(false).filter((path) => NOTES_ADDRESS.test(path))).toEqual([])
     expect(spaRoutePaths(false)).toContain(`/overview`)
+  })
+
+  it("offers no API token page, profile section or palette command, as with the notes on", () => {
+    const settings = (notes?: boolean) =>
+      paletteCommands({
+        t: ENGLISH,
+        locale: `en`,
+        currentGroup: null,
+        online: true,
+        theme: () => `system`,
+        shortcuts: [],
+        activityGroupId: null,
+        pageCommands: [],
+        guest: false,
+        benchmark: false,
+        canInstall: false,
+        notes,
+      }, () => {}).map((option) => option.id).filter((id) => id.includes(`api-tokens`))
+    const offers = (notes: boolean) => ({
+      route: spaRoutePaths(notes).includes(`/tokens/new`),
+      signIn: isMembersOnlyPath(`/tokens/new`, notes),
+      section: isProfileSection(`api-tokens`, notes),
+      palette: settings(notes ? undefined : false).length > 0,
+    })
+
+    expect(offers(true)).toEqual({ route: true, signIn: true, section: true, palette: true })
+    expect(offers(false)).toEqual({ route: false, signIn: false, section: false, palette: false })
   })
 
   it("lands every signed-in person on the overview, never the notes", () => {

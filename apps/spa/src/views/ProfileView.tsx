@@ -93,10 +93,10 @@ const network = createOnlineStatus()
  * Wires `ProfileScreen` to this app's session store, the auth calls, the e-mail store and the push
  * endpoints, for `/profile` and `/profile/<section>`. Holds what the user types, what is in flight
  * and what failed; the screen only draws it. An address with no such section goes back to
- * `/profile`.
+ * `/profile`, and so does `/profile/api-tokens` with the notes off.
  */
 export function ProfileView({ section }: { section?: string }) {
-  if (section !== undefined && !isProfileSection(section)) {
+  if (section !== undefined && !isProfileSection(section, notesOn())) {
     return <Redirect to={SCREEN_PATHS.profile} replace />
   }
   return <ProfileSections section={section} />
@@ -201,7 +201,8 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     })
     void loadDevices()
     void methods.load()
-    void tokens.load()
+    // With the notes off the personal-token API is not mounted: nothing to read.
+    if (notesOn()) void tokens.load()
     void dataExport.load()
     void telegram.load()
   }, [session.user?.id, session.isMfaRequired])
@@ -362,7 +363,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     // The change ends this device's session too and opens a new one: the list changes either way.
     void loadDevices()
     // The change revoked every API token of the person: the list is read again.
-    if (result.revokedTokens) void tokens.load()
+    if (result.revokedTokens && notesOn()) void tokens.load()
     toasts.success({
       title: t.t(`ProfileView.passwordChanged`),
       body: passwordChangedMessage(t, signOutOthers, result.revokedTokens ?? 0),
@@ -717,26 +718,29 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         onEnd: (id) => void endDevices(() => endSession(id), t.t(`ProfileView.deviceSignedOut`)),
         onEndOthers: () => void endDevices(endOtherSessions, t.t(`ProfileView.othersSignedOut`)),
       }}
-      apiTokens={{
-        tokens: tokens.tokens.value,
-        savedAt: tokens.savedAt.value,
-        // While the groups are read the opener shows: the create page says when there is none.
-        canCreate: groups.length > 0 || groupsStore.loading.value,
-        error: tokens.errors.value.list,
-        revoking: tokens.pending.value.revoke,
-        navigate,
-        docsHref: apiDocsHref(siteOrigin.value),
-        onRevoke: (id) =>
-          void tokens.revoke(id).then((revoked) => {
-            if (revoked) {
-              toasts.success({
-                title: t.t(`ProfileView.tokenRevoked`),
-                body: t.t(`ProfileView.tokenRevokedBody`),
-                dataE2E: "api-token-revoked",
-              })
-            }
-          }),
-      }}
+      notes={notesOn()}
+      apiTokens={notesOn()
+        ? {
+          tokens: tokens.tokens.value,
+          savedAt: tokens.savedAt.value,
+          // While the groups are read the opener shows: the create page says when there is none.
+          canCreate: groups.length > 0 || groupsStore.loading.value,
+          error: tokens.errors.value.list,
+          revoking: tokens.pending.value.revoke,
+          navigate,
+          docsHref: apiDocsHref(siteOrigin.value),
+          onRevoke: (id) =>
+            void tokens.revoke(id).then((revoked) => {
+              if (revoked) {
+                toasts.success({
+                  title: t.t(`ProfileView.tokenRevoked`),
+                  body: t.t(`ProfileView.tokenRevokedBody`),
+                  dataE2E: "api-token-revoked",
+                })
+              }
+            }),
+        }
+        : undefined}
       onStartTotp={startTotp}
       onCancelStartTotp={() => {
         setTotpError(null)

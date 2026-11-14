@@ -484,6 +484,42 @@ describe("ProfileView", () => {
     expect(history.at(-1)).toBe("/profile")
   })
 
+  it("hides the API tokens section, its link and its read with the notes off, and keeps them on", async () => {
+    const reads: string[] = []
+    const refuse = globalThis.fetch
+    globalThis.fetch = (input, init) => {
+      reads.push(String(input))
+      return refuse(input, init)
+    }
+    const visit = async () => {
+      reads.length = 0
+      const { history } = await open("/profile/api-tokens", ROUTED)
+      await settle()
+      const seen = {
+        at: history.at(-1),
+        link: root!.querySelector(`[data-e2e=settings-nav] a[href="/profile/api-tokens"]`) !== null,
+        section: root!.querySelector("[data-e2e=api-tokens]") !== null,
+        read: reads.some((url) => url.endsWith("/api/tokens")),
+      }
+      await act(() => render(null, root!))
+      root!.remove()
+      root = null
+      return seen
+    }
+
+    try {
+      const on = await visit()
+      configureModules({ notes: false })
+      const off = await visit()
+
+      expect(on).toEqual({ at: "/profile/api-tokens", link: true, section: true, read: true })
+      expect(off).toEqual({ at: "/profile", link: false, section: false, read: false })
+    } finally {
+      globalThis.fetch = refuse
+      configureModules({})
+    }
+  })
+
   it("says the data file holds the profile and groups, without notes, with the notes off", async () => {
     const state = () => root!.querySelector("[data-e2e=data-export-state]")?.textContent ?? ""
     await open("/profile/account", <ProfileView section="account" />)

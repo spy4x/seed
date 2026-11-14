@@ -899,6 +899,19 @@ describe("ProfileScreen", () => {
     expect(find("[data-e2e=settings-heading]").textContent).toBe("Sign-in and security")
   })
 
+  it("lists no API tokens section with the notes off, and every other section", async () => {
+    const hrefs = () =>
+      [...document.querySelectorAll<HTMLAnchorElement>("[data-e2e=settings-nav] a")]
+        .map((link) => link.getAttribute("href"))
+    await mount(<ProfileScreen {...profileDefaults} section={null} notes />)
+    const on = hrefs()
+
+    await rerender(<ProfileScreen {...profileDefaults} section={null} notes={false} />)
+
+    expect(on).toContain("/profile/api-tokens")
+    expect(hrefs()).toEqual(on.filter((href) => href !== "/profile/api-tokens"))
+  })
+
   it("shows only the open section, and on the list's own address Account, headed, where a phone hides it", async () => {
     const has = (selector: string) => document.querySelector(selector) !== null
     await mount(<ProfileScreen {...profileDefaults} section="security" emailChange={emailChange} />)
