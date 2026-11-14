@@ -8,6 +8,7 @@ import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { Link } from "@spy4x/preact-ui/link"
+import { Notice } from "@spy4x/preact-ui/notice"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { AuthCard } from "./auth-screen.tsx"
@@ -298,17 +299,22 @@ export function AdminFrame(
  * is no sign-up, no password reset and no Google or GitHub here; those stay in the product.
  */
 export function AdminSignInScreen(
-  { step, busy, error, onSignIn, onOneTimeCode }: {
+  { step, busy, error, onSignIn, onOneTimeCode, demoAdmin = null }: {
     step: "credentials" | "one-time-code"
     busy: boolean
     error: string | null
     onSignIn: (credentials: AuthCredentials) => void
     onOneTimeCode: (code: string) => void
+    /**
+     * The public demo's admin account (docs/demo.md), or `null` outside the demo: a notice above
+     * the form shows its address and password and signs in with them in one click.
+     */
+    demoAdmin?: { email: string; password: string } | null
   },
 ): JSX.Element {
   const credentials = step === "credentials"
   const t = useAdminText()
-  return (
+  const card = (
     <AuthCard
       title={t.t(credentials ? "AdminFrame.signInTitle" : "AdminFrame.codeTitle")}
       description={t.t(credentials ? "AdminFrame.signInText" : "AdminFrame.codeText")}
@@ -329,6 +335,38 @@ export function AdminSignInScreen(
         onOneTimeCode={onOneTimeCode}
       />
     </AuthCard>
+  )
+  if (!demoAdmin || !credentials) return card
+  return (
+    <div class="flex w-full flex-col gap-6">
+      {/* Standing information, read before the form: no live region announces it. */}
+      <Notice live={false} data-e2e="admin-demo-notice">
+        <Stack gap="sm">
+          <p>{t.t("AdminFrame.demoNote")}</p>
+          <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            <dt class="text-muted">{t.t("AdminFrame.demoEmail")}</dt>
+            <dd>
+              <code data-e2e="admin-demo-email">{demoAdmin.email}</code>
+            </dd>
+            <dt class="text-muted">{t.t("AdminFrame.demoPassword")}</dt>
+            <dd>
+              <code data-e2e="admin-demo-password">{demoAdmin.password}</code>
+            </dd>
+          </dl>
+          <div>
+            <Button
+              variant="secondary"
+              disabled={busy}
+              onClick={() => onSignIn({ login: demoAdmin.email, password: demoAdmin.password })}
+              data-e2e="admin-demo-sign-in"
+            >
+              {t.t("AdminFrame.demoSignIn")}
+            </Button>
+          </div>
+        </Stack>
+      </Notice>
+      {card}
+    </div>
   )
 }
 

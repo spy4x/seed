@@ -113,6 +113,10 @@ export default {
   "Reason.CATEGORY_REQUIRED":
     "A published item needs a category. Pick one, or hide the item first.",
   "Reason.CHANNEL_NOT_FOUND": "This channel no longer exists.",
+  "Reason.DEMO_ADMIN_ELSEWHERE":
+    "This is the demo's admin account. Sign in with it in the admin panel instead.",
+  "Reason.DEMO_REFUSED":
+    "Not available in the public demo: this would change the real website or email real people.",
   "Reason.FILE_CONTENT": "This file's contents don't match its type.",
   "Reason.FILE_MISSING": "No file came through. Choose a file and try again.",
   "Reason.FILE_TOO_LARGE": "This file is too large.",

@@ -2,6 +2,7 @@ import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
 import { OPERATION_BUDGET, type OperationBudget } from "../middlewares/operation-rate-limits.ts"
 import { processEnv } from "@spy4x/platform/server/process"
 import { isSpaOn, readApiEnv } from "./config-env.ts"
+import { isDemoMode } from "@server/auth/demo-accounts.ts"
 import type { SignUpMode } from "./sign-up-gate.ts"
 import { readNotesSetup } from "@server/notes/setup.ts"
 
@@ -95,6 +96,8 @@ export class Config {
   webAppUrl = `http${this.isDev ? "" : "s"}://${this.domain}`
   /** The admin app's host, or `null` when it is not deployed and the operator area is off. */
   adminDomain = env.ADMIN_DOMAIN || null
+  /** Whether the public demo is on (docs/demo.md): its public admin account then works. */
+  demo = isDemoMode({ DEMO_MODE: env.DEMO_MODE })
   adminAppUrl = this.adminDomain ? `http${this.isDev ? "" : "s"}://${this.adminDomain}` : null
   /** The proxies allowed to name the client in `X-Real-IP` (`@spy4x/server/http/trusted-proxy`). */
   proxyHosts = (env.PROXY_HOSTS ?? "").split(",").map((host) => host.trim()).filter(Boolean)

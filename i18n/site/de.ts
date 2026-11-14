@@ -758,7 +758,13 @@ export default {
   "AdminTour.download": "Video herunterladen (MP4, {size})",
   "AdminTour.ctaTitle": "Lies den Code und mach ihn zu deinem",
   "AdminTour.ctaLead":
-    "Die Admin-App liegt im selben Repository wie das Produkt, läuft auf einem eigenen Host und ist kostenlos unter der MIT-Lizenz. Zur öffentlichen Demo gehört sie nicht, weil Operatoren dort echte Registrierungen sehen würden.",
+    "Die Admin-App liegt im selben Repository wie das Produkt, läuft auf einem eigenen Host und ist kostenlos unter der MIT-Lizenz.",
+  "AdminTour.tryTitle": "Probier den Adminbereich selbst aus",
+  "AdminTour.tryLead":
+    "Melde dich mit diesem Konto im Adminbereich der Live-Demo an. Du siehst die erfundenen Personen und alle, die sich in der Demo registriert haben, mit ihren Adressen und IP-Adressen. Jede Nacht wird alles zurückgesetzt. Änderungen an der Website und E-Mails an echte Abonnenten sind ausgeschaltet.",
+  "AdminTour.tryEmail": "E-Mail-Adresse",
+  "AdminTour.tryPassword": "Passwort",
+  "AdminTour.tryOpen": "Adminbereich öffnen",
   "AdminVideo.soundLine": "Musik, kein Sprecher",
   "AdminVideo.soundLabel": "mit Musik und ohne Sprecher",
   "AdminVideo.soundTranscript": "Unter dem Video läuft Musik. Es wird nicht gesprochen.",

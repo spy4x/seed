@@ -22,6 +22,14 @@ describe("readMpaConfig", () => {
     })
   })
 
+  it("knows the admin app's origin only while the public demo is on", () => {
+    const demo = { ...prod, DEMO_MODE: "true", ADMIN_DOMAIN: "admin.example.com" }
+    expect(readMpaConfig(env(demo)).demoAdminOrigin).toBe("https://admin.example.com")
+    expect(readMpaConfig(env({ ...demo, DEMO_MODE: "1" })).demoAdminOrigin).toBeUndefined()
+    const { ADMIN_DOMAIN: _, ...noAdmin } = demo
+    expect(readMpaConfig(env(noAdmin)).demoAdminOrigin).toBeUndefined()
+  })
+
   it("expects the browser at plain http in development", () => {
     const config = readMpaConfig(
       env({ ...prod, ENV: "dev", DOMAIN: "app.localhost:8080", MPA_DOMAIN: "www.localhost:8080" }),

@@ -43,10 +43,12 @@ export async function createApiApp(
     adminHost?: string | null
     /** Whether the SPA runs (`SPA`); `false` closes its account routes. */
     spa?: boolean
+    /** On the public demo only: whether the user is its shared admin account (docs/demo.md). */
+    isPublicDemoAdmin?: (userId: number) => Promise<boolean>
     isProxyPeer: IsProxyPeer
   },
 ): Promise<Hono<APIContext>> {
-  const { adminHost = null, spa = true, isProxyPeer, ...base } = options
+  const { adminHost = null, spa = true, isPublicDemoAdmin, isProxyPeer, ...base } = options
   const app = new Hono<APIContext>().basePath("/api")
   app.use("*", await securityHeaders())
   app.use("*", libraryRefusals)
@@ -58,7 +60,7 @@ export async function createApiApp(
     "*",
     requireProxyForForwardedHeaders<APIContext>(isProxyPeer, { remoteAddr: serveRemoteAddr }),
   )
-  app.use("*", createAdminHostGate(adminHost, { spa }))
+  app.use("*", createAdminHostGate(adminHost, { spa, isPublicDemoAdmin }))
   app.use("*", requireBoundUser)
   return app
 }

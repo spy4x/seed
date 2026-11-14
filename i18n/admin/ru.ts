@@ -1547,6 +1547,11 @@ export default {
   "AdminFrame.signInTitle": "Вход для операторов",
   "AdminFrame.signInText":
     "Для тех, кто управляет этим продуктом. Войдите под аккаунтом оператора.",
+  "AdminFrame.demoNote":
+    "Это публичное демо. Войдите под демо-аккаунтом оператора и осмотритесь. Каждую ночь всё сбрасывается.",
+  "AdminFrame.demoEmail": "E-mail",
+  "AdminFrame.demoPassword": "Пароль",
+  "AdminFrame.demoSignIn": "Войти как демо-оператор",
   "AdminFrame.codeTitle": "Введите код",
   "AdminFrame.codeText": "Откройте приложение-аутентификатор и введите шесть цифр оттуда.",
   "AdminFrame.login": "E-mail или логин",

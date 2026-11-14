@@ -667,7 +667,13 @@ export default {
   "AdminTour.download": "下载视频（MP4，{size}）",
   "AdminTour.ctaTitle": "读一读代码，然后把它变成你的",
   "AdminTour.ctaLead":
-    "管理后台与产品放在同一个仓库中，运行在独立的域名上，基于 MIT 许可证免费提供。它不包含在公开演示中，因为那里的运营人员会看到真实的注册信息。",
+    "管理后台与产品放在同一个仓库中，运行在独立的域名上，基于 MIT 许可证免费提供。",
+  "AdminTour.tryTitle": "亲自试试管理后台",
+  "AdminTour.tryLead":
+    "用这个账号登录在线演示的管理后台。你会看到虚构的用户，以及所有在演示中注册过的人，包括他们的邮箱和 IP 地址。所有内容每晚都会重置。修改网站和给真实订阅者发邮件的功能已关闭。",
+  "AdminTour.tryEmail": "邮箱",
+  "AdminTour.tryPassword": "密码",
+  "AdminTour.tryOpen": "打开管理后台",
   "AdminVideo.soundLine": "背景音乐，无旁白",
   "AdminVideo.soundLabel": "配有背景音乐，无旁白",
   "AdminVideo.soundTranscript": "视频配有背景音乐，没有旁白。",

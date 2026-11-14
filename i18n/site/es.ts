@@ -759,7 +759,13 @@ export default {
   "AdminTour.download": "Descargar el video (MP4, {size})",
   "AdminTour.ctaTitle": "Lee el código y hazlo tuyo",
   "AdminTour.ctaLead":
-    "La app de administración vive en el mismo repositorio que el producto, funciona en su propio host y es gratis con licencia MIT. No forma parte de la demo pública, porque ahí los operadores verían registros reales.",
+    "La app de administración vive en el mismo repositorio que el producto, funciona en su propio host y es gratis con licencia MIT.",
+  "AdminTour.tryTitle": "Prueba el panel de administración por tu cuenta",
+  "AdminTour.tryLead":
+    "Inicia sesión en el panel de administración de la demo en vivo con esta cuenta. Verás a las personas inventadas y a todos los que se registraron en la demo, con sus correos y direcciones IP. Todo se restablece cada noche. Los cambios en el sitio web y los correos a suscriptores reales están desactivados.",
+  "AdminTour.tryEmail": "Correo electrónico",
+  "AdminTour.tryPassword": "Contraseña",
+  "AdminTour.tryOpen": "Abrir el panel de administración",
   "AdminVideo.soundLine": "Música, sin voz",
   "AdminVideo.soundLabel": "con música y sin voz",
   "AdminVideo.soundTranscript": "Suena música de fondo. No hay voz.",

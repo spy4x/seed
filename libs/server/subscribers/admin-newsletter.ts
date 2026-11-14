@@ -75,15 +75,28 @@ function addresses(sql: postgres.Sql, list: SubscriberList) {
   `
 }
 
-/** One page of `list`'s addresses matching `filter`, newest first, and how many match in all. */
+/**
+ * An address on a domain RFC 2606 reserves for examples, as `isExampleAddress` from
+ * `@spy4x/email/address` tells one: `example.com`, `.net`, `.org` or a subdomain of one, or the
+ * `.example` top-level domain. The public demo's fake subscribers have such addresses.
+ */
+const EXAMPLE_ADDRESS = String.raw`@([^@]+\.)?example\.(com|net|org)\.?$|\.example\.?$`
+
+/**
+ * One page of `list`'s addresses matching `filter`, newest first, and how many match in all. With
+ * `examplesOnly`, only {@link EXAMPLE_ADDRESS}es: the public demo's admin account sees the fake
+ * subscribers, never the real people who subscribed on the website (docs/demo.md).
+ */
 export async function listAdminSubscribers(
   sql: postgres.Sql,
   list: SubscriberList,
   filter: AdminSubscriberFilter,
   pageSize: number,
+  examplesOnly = false,
 ): Promise<{ subscribers: AdminSubscriberRow[]; total: number }> {
   const where = sql`
-    WHERE (${filter.query} = '' OR a.email ILIKE ${likeContains(filter.query)})
+    WHERE (${!examplesOnly} OR a.email ~* ${EXAMPLE_ADDRESS})
+      AND (${filter.query} = '' OR a.email ILIKE ${likeContains(filter.query)})
       AND (${filter.status} = 'any' OR a.status = ${filter.status})
       AND (${filter.language} = 'any' OR a.language = ${filter.language})
   `
@@ -99,14 +112,16 @@ export async function listAdminSubscribers(
   return { subscribers: rows.map(toRow), total }
 }
 
-/** Every address of `list`, newest first: what the CSV holds. */
+/** Every address of `list`, newest first: what the CSV holds. `examplesOnly` as in the list. */
 export async function allAdminSubscribers(
   sql: postgres.Sql,
   list: SubscriberList,
+  examplesOnly = false,
 ): Promise<AdminSubscriberRow[]> {
   const rows = await sql<SubscriberDbRow[]>`
     SELECT a.email, a.status, a.requested_at, a.confirmed_at, a.language
     FROM (${addresses(sql, list)}) a
+    WHERE ${!examplesOnly} OR a.email ~* ${EXAMPLE_ADDRESS}
     ORDER BY a.at DESC, a.email
   `
   return rows.map(toRow)

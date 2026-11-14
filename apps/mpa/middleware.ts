@@ -129,6 +129,7 @@ export function pageMiddleware(
     ctx.state.language = pathLanguage(pathname).language
     ctx.state.webAppOrigin = config.webAppOrigin
     ctx.state.spaOrigin = config.apiOrigin
+    ctx.state.demoAdminOrigin = config.demoAdminOrigin
     ctx.state.demoOrigin = config.demoOrigin
     ctx.state.api = createApi({
       apiUrl: config.apiUrl,

@@ -8,5 +8,10 @@ export interface APIContext {
      * session. Behind `isAuthenticated1FA` or `isAuthenticated2FA` it is never `null`.
      */
     auth: AppAuthState | null
+    /**
+     * `true` on a request of the public demo's admin account to the operator area
+     * (`routes/admin/demo-guard.ts`); unset otherwise.
+     */
+    publicDemoAdmin?: boolean
   }
 }

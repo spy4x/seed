@@ -798,6 +798,8 @@ services:
       - DB_NAME=${DB_NAME}
       - AUTH_COOKIE_SECRET=${AUTH_COOKIE_SECRET}
       - AUTH_PEPPER=${AUTH_PEPPER}
+      # The public demo (docs/demo.md): its public admin account signs in on the admin host only.
+      - DEMO_MODE=${DEMO_MODE:-}
       - DEV_EMAIL=${DEV_EMAIL}
       - DOMAIN=${DOMAIN}
       - TIMEZONE=${TIMEZONE}
@@ -1099,6 +1101,10 @@ services:
       - MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}
       # IndexNow (docs/blog.md): served at /<key>.txt, the same key the worker pings with.
       - INDEXNOW_KEY=${INDEXNOW_KEY:-}
+      # The public demo (docs/demo.md): the `/admin` page publishes the demo's admin account and
+      # links to the admin app's host.
+      - DEMO_MODE=${DEMO_MODE:-}
+      - ADMIN_DOMAIN=${ADMIN_DOMAIN:-}
       # A demo on its own host (docs/demo.md): the try links go to its /try. Empty: the app's.
       - DEMO_ORIGIN=${DEMO_ORIGIN:-}
       # Not `http://api`: on the shared `proxy` network that name is any project's API.

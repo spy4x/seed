@@ -732,7 +732,13 @@ export default {
   "AdminTour.download": "Download the video (MP4, {size})",
   "AdminTour.ctaTitle": "Read the code, then make it yours",
   "AdminTour.ctaLead":
-    "The admin app lives in the same repository as the product, runs on its own host, and is free under the MIT licence. It is not part of the public demo, because operators there would see real sign-ups.",
+    "The admin app lives in the same repository as the product, runs on its own host, and is free under the MIT licence.",
+  "AdminTour.tryTitle": "Try the admin panel yourself",
+  "AdminTour.tryLead":
+    "Sign in to the live demo's admin panel with this account. You will see the made-up people and everyone who signed up to the demo, with their addresses and IP addresses. Everything resets every night. Changes to the website and emails to real subscribers are switched off.",
+  "AdminTour.tryEmail": "Email",
+  "AdminTour.tryPassword": "Password",
+  "AdminTour.tryOpen": "Open the admin panel",
   "AdminVideo.soundLine": "Music, no speech",
   "AdminVideo.soundLabel": "with music and no speech",
   "AdminVideo.soundTranscript": "Music plays under the video. There is no speech.",

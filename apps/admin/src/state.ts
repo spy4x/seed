@@ -102,6 +102,23 @@ export async function readOperatorEmail(request: AdminFetch): Promise<string | n
   return answer.ok ? answer.data.email : null
 }
 
+/** The public demo's admin account (docs/demo.md): published on the sign-in page. */
+export interface DemoAdminCredentials {
+  email: string
+  password: string
+}
+
+/**
+ * The public demo's admin account, or `null` outside the demo or when the API cannot be reached:
+ * the sign-in page then shows no demo notice.
+ */
+export async function readDemoAdmin(request: AdminFetch): Promise<DemoAdminCredentials | null> {
+  const answer = await attempt(() =>
+    request<{ admin: DemoAdminCredentials | null }>(`/api/auth/demo`)
+  )
+  return answer.ok ? answer.data.admin : null
+}
+
 /** Runs `call`, turning a thrown error (the network is down) into a failed answer. */
 export async function attempt<T>(
   call: () => Promise<AdminApiResult<T>>,

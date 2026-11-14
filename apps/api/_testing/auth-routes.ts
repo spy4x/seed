@@ -214,7 +214,10 @@ export function buildApp(
     passwordLockedForMs,
     passwordFailures,
     signIn: overrides = {},
+    demo,
   }: {
+    /** The public demo's setting, as `index.ts` passes it; left out means the demo is off. */
+    demo?: { adminHost: string | null } | null
     rateLimits?: AuthRateLimits
     /** How long the failure counter says the user is locked; 0 or left out means not locked. */
     lockedForMs?: number
@@ -264,6 +267,7 @@ export function buildApp(
       fakeTotpFailures(passwordFailureCalls, passwordLockedForMs),
     emailCodeFailures: fakeTotpFailures(codeFailureCalls, codeLockedForMs),
     requestEmailCode: (_userId, email) => (mailed.push(email), Promise.resolve()),
+    demo,
   })
   return {
     app: mountRoute("/auth", route, auth),

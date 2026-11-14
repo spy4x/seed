@@ -12,7 +12,7 @@ AdminTour.code	e68993c0b659df6f
 AdminTour.contactLinks	aab8164626d26778
 AdminTour.contactLinksText	5aaee52c2af93bef
 AdminTour.crumb	638343fec7c02a4a
-AdminTour.ctaLead	cc6392c448043875
+AdminTour.ctaLead	1f64c4dba021b29f
 AdminTour.ctaTitle	15cbea48466282e0
 AdminTour.dashboard	67b696468610b879
 AdminTour.dashboardText	f9a7d1d1b2c851b1
@@ -53,6 +53,11 @@ AdminTour.tokensText	d5c75d80d224599e
 AdminTour.transcriptEnglish	e0499ba0c745261e
 AdminTour.transcriptJump	f9c432d465c01a31
 AdminTour.transcriptTitle	e8a9d2dc6405499c
+AdminTour.tryEmail	969ccbd3cf6300ec
+AdminTour.tryLead	b67e3bf96f0cbf21
+AdminTour.tryOpen	9440f52ba62d80ba
+AdminTour.tryPassword	e7cf3ef4f17c3999
+AdminTour.tryTitle	defcacda2570d86a
 AdminTour.users	6b0cc904d081a8c1
 AdminTour.usersText	d072546fbd264cbf
 AdminVideo.label	87e9f6e8daabbe65

@@ -107,7 +107,7 @@ in the global `design` skill. The pages it measures are listed in
 
 ## The public demo
 
-The template's server runs a public demo of the product (not the admin panel) with fake data,
+The template's server runs a public demo of the product and its admin panel with fake data,
 sample data for every new account and a nightly wipe, turned on by `DEMO_MODE=true`:
 [docs/demo.md](docs/demo.md).
 A change that adds, edits or removes a table, a column or anything else in the database structure

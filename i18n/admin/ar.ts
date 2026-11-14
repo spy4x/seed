@@ -1614,6 +1614,11 @@ export default {
   "AdminFrame.comingSoonBadge": "قريبًا",
   "AdminFrame.signInTitle": "تسجيل دخول المشغّلين",
   "AdminFrame.signInText": "للأشخاص الذين يديرون هذا المنتج. سجّل الدخول بحساب المشغّل الخاص بك.",
+  "AdminFrame.demoNote":
+    "هذا هو العرض التجريبي العام. سجّل الدخول بحساب المسؤول الخاص بالعرض لتستكشف اللوحة. يُعاد ضبط كل شيء كل ليلة.",
+  "AdminFrame.demoEmail": "البريد الإلكتروني",
+  "AdminFrame.demoPassword": "كلمة المرور",
+  "AdminFrame.demoSignIn": "سجّل الدخول بصفتك مسؤول العرض",
   "AdminFrame.codeTitle": "أدخل الرمز",
   "AdminFrame.codeText": "افتح تطبيق المصادقة وأدخل الأرقام الستة التي يعرضها.",
   "AdminFrame.login": "البريد الإلكتروني أو اسم المستخدم",

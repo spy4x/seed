@@ -4,6 +4,8 @@ import { Hono } from "hono"
 import type { APIContext } from "../_types.ts"
 import { createAdminHostGate } from "./admin-host.ts"
 import { createMutationGuards } from "./mutation-guards.ts"
+import { buildAuthData } from "../_testing/fake-auth.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const ADMIN_HOST = "admin.example.com"
 
@@ -20,7 +22,7 @@ async function statusOf(app: Hono<APIContext>, url: string, method = "GET") {
 }
 
 describe("admin host gate", () => {
-  it("lets the admin host reach the operator area, sign-in, sign-out, session and address", async () => {
+  it("lets the admin host reach the operator area, sign-in, sign-out, session, address and demo account", async () => {
     const app = buildApp()
     for (
       const path of [
@@ -31,6 +33,7 @@ describe("admin host gate", () => {
         "/api/auth/password/check",
         "/api/auth/totp/check",
         "/api/auth/sign-out",
+        "/api/auth/demo",
       ]
     ) {
       expect({ path, status: await statusOf(app, `http://${ADMIN_HOST}${path}`) })
@@ -141,6 +144,54 @@ describe("admin host gate without the SPA", () => {
     const app = buildApp()
     expect(await statusOf(app, "http://app.example.com/api/auth/password/sign-up", "POST"))
       .toBe(200)
+  })
+})
+
+describe("admin host gate on the public demo (docs/demo.md)", () => {
+  const DEMO_ADMIN_ID = 42
+  /** The gate as `index.ts` builds it on the demo, behind a session of user `userId`. */
+  function buildDemoApp(userId: number, demo = true) {
+    const app = new Hono<APIContext>()
+    app.use("*", async (c, next) => {
+      c.set("auth", buildAuthData({ user: { id: userId } }))
+      await next()
+    })
+    app.use(
+      "*",
+      createAdminHostGate(ADMIN_HOST, {
+        isPublicDemoAdmin: demo ? (id) => Promise.resolve(id === DEMO_ADMIN_ID) : undefined,
+      }),
+    )
+    app.all("*", (c) => c.text("reached"))
+    return app
+  }
+  const TAKEOVER = [
+    "/api/auth/password/change",
+    "/api/auth/totp/connect/start",
+    "/api/auth/account/delete",
+  ]
+
+  it("answers the shared admin account's session 401 on the web app's host", async () => {
+    const app = buildDemoApp(DEMO_ADMIN_ID)
+    for (const path of [...TAKEOVER, "/api/auth/me", "/api/groups", "/api/ws"]) {
+      const response = await app.request(`http://app.example.com${path}`, { method: "POST" })
+      expect({ path, status: response.status, error: await apiError(response) }).toEqual({
+        path,
+        status: 401,
+        error: expect.objectContaining({ reason: "DEMO_ADMIN_ELSEWHERE" }),
+      })
+    }
+    expect(await statusOf(app, `http://${ADMIN_HOST}/api/admin/users`)).toBe(200)
+    expect(await statusOf(app, `http://${ADMIN_HOST}/api/auth/me`)).toBe(200)
+  })
+
+  it("leaves every other session, and the account off the demo, as before", async () => {
+    for (const app of [buildDemoApp(7), buildDemoApp(DEMO_ADMIN_ID, false)]) {
+      for (const path of TAKEOVER) {
+        expect({ path, status: await statusOf(app, `http://app.example.com${path}`, "POST") })
+          .toEqual({ path, status: 200 })
+      }
+    }
   })
 })
 

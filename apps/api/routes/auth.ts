@@ -18,6 +18,8 @@ import { readApiJson } from "@api/services/json-body.ts"
 import { passwordFailureSubject } from "@api/services/password-failures.ts"
 import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
 import { errorResponse, validationResponse } from "../services/error-response.ts"
+import { DEMO_ADMIN_ELSEWHERE, isAdminHost } from "../middlewares/admin-host.ts"
+import { isPublicDemoAdminLogin, PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 import { authSignInSchema } from "@domain/identity"
 import { signInAnswer, signUpClosed, tooMany } from "./auth-answers.ts"
 import { SignUpClosedError } from "@api/services/sign-up-gate.ts"
@@ -49,11 +51,26 @@ export interface AuthRouteDependencies {
   emailCodeFailures: Lockout
   /** Queues a mail with a new code for `email`, the address the user's account must prove. */
   requestEmailCode(userId: number, email: string): Promise<void>
+  /**
+   * The public demo (docs/demo.md), or `null` when it is off: the admin app's host, where the
+   * public admin account ({@link PUBLIC_DEMO_ADMIN}) signs in. Elsewhere its sign-in is refused,
+   * and the admin host gate (`createAdminHostGate`) answers its session 401 on any other host.
+   */
+  demo?: { adminHost: string | null } | null
+}
+
+/** The answer to a wrong password. */
+const INVALID_CREDENTIALS = "Invalid e-mail, username or password"
+
+/** What `GET /auth/demo` publishes on the demo: the public admin account's address and password. */
+const DEMO_ADMIN_CREDENTIALS = {
+  email: PUBLIC_DEMO_ADMIN.email,
+  password: PUBLIC_DEMO_ADMIN.password,
 }
 
 /** The `/auth` routes of the password sign-in, each flow mounted in the order its gate needs. */
 export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
-  const { signIn, emit, mutationGuards, rateLimits, passwordFailures } = deps
+  const { signIn, emit, mutationGuards, rateLimits, passwordFailures, demo = null } = deps
   const { isAuthenticated1FA, isAuthenticated2FA } = signIn.auth
   return new Hono<APIContext>()
     // A password check of a signed-in step while the account is locked, and a step that would
@@ -63,6 +80,8 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
       if (!(error instanceof PasswordLockedError)) throw error
       return tooMany(c, error.retryAfterMs, passwordLockedMessage(error.retryAfterMs))
     })
+    // The public demo's admin account, for the admin app's sign-in page: published, no secret.
+    .get(`/demo`, rateLimits.normal, (c) => c.json({ admin: demo ? DEMO_ADMIN_CREDENTIALS : null }))
     .post(`/sign-out`, mutationGuards.anonymous, rateLimits.normal, async (c) => {
       const authData = c.get("auth")
       await signIn.signOut(c)
@@ -93,6 +112,21 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
         return validationResponse(c, validationResult.error.details)
       }
       const { login, password } = validationResult.data
+      if (demo && isPublicDemoAdminLogin(login)) {
+        if (!isAdminHost(c.req.url, demo.adminHost)) {
+          return errorResponse(c, `forbidden`, {
+            message: DEMO_ADMIN_ELSEWHERE,
+            reason: `DEMO_ADMIN_ELSEWHERE`,
+          })
+        }
+        // Its password is published, so no lock: a visitor's wrong guesses must not lock the
+        // others out. The route's limit per network address still holds.
+        const signedIn = await signIn.signIn(c, login, password)
+        if (!signedIn) {
+          return errorResponse(c, `unauthorized`, { message: INVALID_CREDENTIALS })
+        }
+        return signInAnswer(c, signedIn)
+      }
       // Counted per name and before the password is looked at, whatever address the request comes
       // from and whether or not an account uses the name. While the name is locked not even the
       // right password is checked.
@@ -102,7 +136,7 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
       const signedIn = await signIn.signIn(c, login, password)
       if (!signedIn) {
         await passwordFailures.fail(subject)
-        return errorResponse(c, `unauthorized`, { message: "Invalid e-mail, username or password" })
+        return errorResponse(c, `unauthorized`, { message: INVALID_CREDENTIALS })
       }
       await passwordFailures.refund(subject)
       return signInAnswer(c, signedIn)

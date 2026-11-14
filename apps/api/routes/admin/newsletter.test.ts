@@ -81,23 +81,28 @@ const operator = () => buildAuthData({ user: { id: 7, role: UserRole.OPERATOR } 
 /** The operator area with the newsletter module over a fake service that records every call. */
 function buildApp(
   auth: APIContext["Variables"]["auth"] = operator(),
-  { enabled = true, rows = [confirmed, pending], removeFails = false } = {},
+  { enabled = true, rows = [confirmed, pending], removeFails = false, publicDemoAdmin = false } =
+    {},
 ) {
   const calls: unknown[][] = []
+  /** What the list and the export were asked, in order: only the example addresses or all. */
+  const examplesOnly: boolean[] = []
   const audits: AuthAuditBase[] = []
   const newsletter: AdminNewsletterService = {
     enabled,
     stats: () => (calls.push([`stats`]), Promise.resolve(stats)),
     list: (
       filter,
+      examples,
     ) => (calls.push([`list`, filter]),
+      examplesOnly.push(examples),
       Promise.resolve({ subscribers: rows, total: rows.length, page: filter.page, pageSize: 25 })),
     sends: () => (calls.push([`sends`]), Promise.resolve({ sends: [send] })),
     find: (
       email,
     ) => (calls.push([`find`, email]),
       Promise.resolve(rows.find((row) => row.email === email) ?? null)),
-    all: () => (calls.push([`all`]), Promise.resolve(rows)),
+    all: (examples) => (calls.push([`all`]), examplesOnly.push(examples), Promise.resolve(rows)),
     remove: (
       email,
     ) => (calls.push([`remove`, email]),
@@ -116,8 +121,9 @@ function buildApp(
         now: () => new Date(stats.generatedAt),
       }),
     ],
+    isPublicDemoAdmin: () => Promise.resolve(publicDemoAdmin),
   })
-  return { app: mountRoute(`/admin`, route, auth), calls, audits }
+  return { app: mountRoute(`/admin`, route, auth), calls, audits, examplesOnly }
 }
 
 const ACTION_BODY = JSON.stringify({ email: pending.email })
@@ -367,5 +373,31 @@ describe(`operator area: newsletter routes`, () => {
     expect(audits.map((row) => [row.userId, row.eventType, row.identifier])).toEqual([
       [7, AuthAuditEventType.NEWSLETTER_SUBSCRIBERS_EXPORTED, `news:2`],
     ])
+  })
+
+  it(`answers the public demo's admin account the same for a listed and an unlisted address`, async () => {
+    for (const action of [`remove`, `resend`]) {
+      const answers: unknown[] = []
+      for (const email of [pending.email, confirmed.email, `stranger@example.net`]) {
+        const { app, calls, audits } = buildApp(operator(), { publicDemoAdmin: true })
+        const response = await post(app, action, { email })
+        answers.push({ status: response.status, body: await response.json() })
+        // The guard answers before the address is looked up, so nothing can tell them apart.
+        expect(calls, `${action} ${email}`).toEqual([])
+        expect(audits, `${action} ${email}`).toEqual([])
+      }
+      expect(answers[0]).toMatchObject({ status: 403, body: { error: { reason: `DEMO_REFUSED` } } })
+      expect(answers[1], action).toEqual(answers[0])
+      expect(answers[2], action).toEqual(answers[0])
+    }
+  })
+
+  it(`lists and exports only the example addresses to the public demo's admin account`, async () => {
+    for (const publicDemoAdmin of [false, true]) {
+      const { app, examplesOnly } = buildApp(operator(), { publicDemoAdmin })
+      expect((await request(app, ROUTES[1])).status).toBe(200)
+      expect((await request(app, ROUTES[5])).status).toBe(200)
+      expect(examplesOnly).toEqual([publicDemoAdmin, publicDemoAdmin])
+    }
   })
 })

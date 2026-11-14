@@ -756,7 +756,13 @@ export default {
   "AdminTour.download": "Baixar o vídeo (MP4, {size})",
   "AdminTour.ctaTitle": "Leia o código e deixe com a sua cara",
   "AdminTour.ctaLead":
-    "O painel de administração fica no mesmo repositório do produto, roda num host próprio e é gratuito sob a licença MIT. Ele não faz parte da demo pública, porque os operadores veriam cadastros reais.",
+    "O painel de administração fica no mesmo repositório do produto, roda num host próprio e é gratuito sob a licença MIT.",
+  "AdminTour.tryTitle": "Experimente o painel de administração",
+  "AdminTour.tryLead":
+    "Entre no painel de administração da demo com esta conta. Você vai ver as pessoas inventadas e todo mundo que se cadastrou na demo, com seus e-mails e endereços IP. Tudo é zerado toda noite. Não dá para mudar o site nem mandar e-mails para inscritos de verdade.",
+  "AdminTour.tryEmail": "E-mail",
+  "AdminTour.tryPassword": "Senha",
+  "AdminTour.tryOpen": "Abrir o painel de administração",
   "AdminVideo.soundLine": "Música, sem narração",
   "AdminVideo.soundLabel": "com música e sem narração",
   "AdminVideo.soundTranscript": "Uma música toca durante o vídeo. Não há narração.",

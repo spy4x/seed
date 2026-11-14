@@ -44,6 +44,8 @@ export const envSchema = type({
   "ERROR_REPORT_DSN?": "string",
   /** Guest accounts (docs/guests.md): on unless `false`, and off whenever `SIGN_UP=invite`. */
   "GUEST_MODE?": "string",
+  /** The public demo (docs/demo.md): on only when `true`. */
+  "DEMO_MODE?": "string",
   /**
    * Who may make an account (docs/deploy.md, "Who may sign up"): `open`, anyone, or `invite`, only
    * people a member invited. Unset or empty: `open`. Anything else stops the API at start.

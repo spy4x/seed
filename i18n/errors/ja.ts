@@ -108,6 +108,10 @@ export default {
   "Reason.CATEGORY_REQUIRED":
     "公開するアイテムにはカテゴリーが必要です。カテゴリーを選ぶか、先にアイテムを非公開にしてください。",
   "Reason.CHANNEL_NOT_FOUND": "このチャンネルはもう存在しません。",
+  "Reason.DEMO_ADMIN_ELSEWHERE":
+    "これはデモ用の管理者アカウントです。管理画面からログインしてください。",
+  "Reason.DEMO_REFUSED":
+    "公開デモでは使えません。実際のWebサイトが変わったり、実在の人にメールが届いたりするためです。",
   "Reason.FILE_CONTENT": "ファイルの中身が種類と一致しません。",
   "Reason.FILE_MISSING": "ファイルが届きませんでした。ファイルを選んで、もう一度お試しください。",
   "Reason.FILE_TOO_LARGE": "ファイルが大きすぎます。",

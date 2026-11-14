@@ -1404,6 +1404,11 @@ export default {
   "AdminFrame.signInTitle": "Operator sign-in",
   "AdminFrame.signInText":
     "For the people who run this product. Sign in with your operator account.",
+  "AdminFrame.demoNote":
+    "This is the public demo. Sign in with the demo's admin account to look around. Everything resets every night.",
+  "AdminFrame.demoEmail": "Email",
+  "AdminFrame.demoPassword": "Password",
+  "AdminFrame.demoSignIn": "Sign in as the demo admin",
   "AdminFrame.codeTitle": "Enter your code",
   "AdminFrame.codeText": "Open your authenticator app and enter the six digits it shows.",
   "AdminFrame.login": "Email or username",

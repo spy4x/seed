@@ -65,6 +65,10 @@ export const API_ERROR_REASONS = [
   `REQUEST_ORIGIN_INVALID`,
   /** A data export was asked for again before a day passed; `details.export` is the last one. */
   `TOO_SOON`,
+  /** The public demo's admin account asked for an action that reaches past the demo's data. */
+  `DEMO_REFUSED`,
+  /** The public demo's admin account tried to sign in anywhere but the admin app. */
+  `DEMO_ADMIN_ELSEWHERE`,
 ] as const
 
 /** Every `reason` an error may carry. Closed: the compiler refuses one that is not listed. */

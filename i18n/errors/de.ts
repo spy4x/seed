@@ -119,6 +119,10 @@ export default {
   "Reason.CATEGORY_REQUIRED":
     "Ein veröffentlichter Artikel braucht eine Kategorie. Wähle eine aus oder blende den Artikel vorher aus.",
   "Reason.CHANNEL_NOT_FOUND": "Diesen Kanal gibt es nicht mehr.",
+  "Reason.DEMO_ADMIN_ELSEWHERE":
+    "Das ist das Admin-Konto der Demo. Melde dich damit stattdessen im Adminbereich an.",
+  "Reason.DEMO_REFUSED":
+    "In der öffentlichen Demo nicht verfügbar: Das würde die echte Website ändern oder echten Menschen E-Mails schicken.",
   "Reason.FILE_CONTENT": "Der Inhalt dieser Datei passt nicht zu ihrem Dateityp.",
   "Reason.FILE_MISSING":
     "Es ist keine Datei angekommen. Wähle eine aus und versuche es noch einmal.",

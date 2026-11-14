@@ -124,6 +124,10 @@ export default {
   "Reason.CATEGORY_REQUIRED":
     "Un article publié doit avoir une catégorie. Choisissez-en une, ou masquez d’abord l’article.",
   "Reason.CHANNEL_NOT_FOUND": "Ce canal n’existe plus.",
+  "Reason.DEMO_ADMIN_ELSEWHERE":
+    "C’est le compte administrateur de la démo. Connectez-vous plutôt avec lui dans le panneau d’administration.",
+  "Reason.DEMO_REFUSED":
+    "Indisponible dans la démo publique : cette action modifierait le vrai site web ou enverrait des e-mails à de vraies personnes.",
   "Reason.FILE_CONTENT": "Le contenu de ce fichier ne correspond pas à son type.",
   "Reason.FILE_MISSING": "Aucun fichier n’est arrivé. Choisissez un fichier et réessayez.",
   "Reason.FILE_TOO_LARGE": "Ce fichier est trop volumineux.",

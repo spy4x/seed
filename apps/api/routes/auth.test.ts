@@ -20,6 +20,8 @@ import { PASSWORD_LOCK_POLICY } from "../services/password-failures.ts"
 import { PasswordLockedError } from "../services/password-locked.ts"
 import type { RateLimitStore } from "@spy4x/platform/rate-limit"
 import { createAuthRoute } from "./auth.ts"
+import { DEMO_ADMIN_ELSEWHERE } from "../middlewares/admin-host.ts"
+import { PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 import { apiError } from "../_testing/api-error.ts"
 import {
   anonymousRoutes,
@@ -674,5 +676,71 @@ describe("auth routes lock a sign-in name after repeated wrong passwords", () =>
     await send(app, signInRoute, sameOriginWithoutCookieHeaders)
 
     expect(passwordFailureCalls).toEqual(["begin", "fail"])
+  })
+})
+
+describe("auth routes on the public demo (docs/demo.md)", () => {
+  /** The request's own host, so the test's same-origin headers still pass the mutation guard. */
+  const HERE = new URL(API_URL).host
+  const demoLogin = { login: ` Demo-Admin@Example.com `, password: PUBLIC_DEMO_ADMIN.password }
+  const checkPassword = (app: ReturnType<typeof buildApp>["app"], body: unknown) =>
+    app.request(`${API_URL}/auth/password/check`, {
+      method: "POST",
+      headers: { ...sameOriginWithoutCookieHeaders, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    })
+
+  it("publishes the public admin account only while the demo is on", async () => {
+    const off = buildApp(null).app
+    const on = buildApp(null, { demo: { adminHost: HERE } }).app
+
+    expect(await (await off.request(`${API_URL}/auth/demo`)).json()).toEqual({ admin: null })
+    expect(await (await on.request(`${API_URL}/auth/demo`)).json()).toEqual({
+      admin: { email: PUBLIC_DEMO_ADMIN.email, password: PUBLIC_DEMO_ADMIN.password },
+    })
+  })
+
+  it("refuses the public admin account's sign-in outside the admin host, password unchecked", async () => {
+    for (const adminHost of [`admin.example.com`, null]) {
+      const { app, calls } = buildApp(null, { demo: { adminHost } })
+      const response = await checkPassword(app, demoLogin)
+
+      expect(response.status).toBe(403)
+      expect(await apiError(response)).toMatchObject({
+        message: DEMO_ADMIN_ELSEWHERE,
+        reason: "DEMO_ADMIN_ELSEWHERE",
+      })
+      expect(calls).toEqual([])
+    }
+  })
+
+  it("signs the public admin account in on the admin host, with no lock on its name", async () => {
+    const { app, passwordFailureCalls } = buildApp(null, {
+      demo: { adminHost: HERE },
+      passwordLockedForMs: 60_000,
+    })
+
+    expect((await checkPassword(app, demoLogin)).status).toBe(200)
+    expect(passwordFailureCalls).toEqual([])
+  })
+
+  it("answers a wrong password for the public admin account with 401 and counts nothing", async () => {
+    const { app, passwordFailureCalls } = buildApp(null, {
+      demo: { adminHost: HERE },
+      succeed: false,
+    })
+
+    expect((await checkPassword(app, demoLogin)).status).toBe(401)
+    expect(passwordFailureCalls).toEqual([])
+  })
+
+  it("treats the address as any other outside the demo, and other names as usual on it", async () => {
+    const off = buildApp(null)
+    expect((await checkPassword(off.app, demoLogin)).status).toBe(200)
+    expect(off.passwordFailureCalls).toEqual([`begin`, `refund`])
+
+    const other = buildApp(null, { demo: { adminHost: `admin.example.com` } })
+    expect((await checkPassword(other.app, credentials)).status).toBe(200)
+    expect(other.passwordFailureCalls).toEqual([`begin`, `refund`])
   })
 })

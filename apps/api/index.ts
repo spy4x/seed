@@ -33,6 +33,8 @@ import {
   requestDataExport,
 } from "@server/auth/data-export.ts"
 import { createAdminRoute } from "./routes/admin/+routes.ts"
+import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
+import { PUBLIC_DEMO_ADMIN } from "@server/auth/demo-accounts.ts"
 import { adminModuleRoutes } from "./routes/admin/registry.ts"
 import { createAdminOwnPreferencesRoute } from "./routes/admin/own-preferences.ts"
 import { preferencesDefinition } from "@domain/identity"
@@ -130,6 +132,12 @@ const errorReporter = createErrorReporter({
   maxPerSession: 100,
   windowMs: 60 * 60 * 1000,
 })
+// The public demo's admin account (docs/demo.md) is found by its address on each request: the
+// nightly reset gives it a new id. Off the demo nothing is looked up.
+const isPublicDemoAdmin = config.demo
+  ? async (userId: number) =>
+    (await db.authStore.findKey(PASSWORD_METHOD, PUBLIC_DEMO_ADMIN.email))?.userId === userId
+  : undefined
 // Every route stands behind the security headers, the base middleware and the page-user check
 // (`./app.ts`).
 const app = await createApiApp({
@@ -139,6 +147,7 @@ const app = await createApiApp({
   reportError: (error, context) => void errorReporter.report(error, context),
   adminHost: config.adminDomain,
   spa: config.spa,
+  isPublicDemoAdmin,
   isProxyPeer: createProxyPeers({
     hosts: config.proxyHosts.length > 0 ? config.proxyHosts : DEFAULT_PROXY_HOSTS,
     onError: (host, error) => log(`error: could not look up the proxy ${host}`, error),
@@ -199,6 +208,7 @@ app.route(
     passwordFailures: createPasswordFailures({ sql }),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
+    demo: config.demo ? { adminHost: config.adminDomain } : null,
   }),
 )
 app.route(
@@ -311,6 +321,7 @@ app.route(
           preferencesDefinition.resolve(await db.preferences.store.read(String(userId))),
       }),
     ),
+    isPublicDemoAdmin,
   }),
 )
 // Awaited here so a missing VAPID keys file stops the API at start-up, not at the first push call.

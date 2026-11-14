@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import type { MiddlewareHandler } from "hono"
+import { Hono, type MiddlewareHandler } from "hono"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import {
   ADMIN_DEFAULT_SORT,
@@ -31,6 +31,7 @@ import { ADMIN_API_MODULES } from "./registry.ts"
 import { CATALOG_DEFAULT_SETTINGS } from "@domain/catalog"
 import type { AdminModuleContext } from "./module.ts"
 import { apiError } from "../../_testing/api-error.ts"
+import { DEMO_REFUSED } from "./demo-guard.ts"
 
 const target: AdminUserRow = {
   id: 42,
@@ -383,5 +384,52 @@ describe("operator area routes", () => {
     const { app, emitted } = buildApp(operator(), { outcome: AdminActOutcome.Unchanged })
     expect((await send(app, ROUTES[3])).status).toBe(409)
     expect(emitted).toEqual([])
+  })
+})
+
+describe("the public demo's admin account", () => {
+  /** An area whose one module answers whether the request came from the public account. */
+  function demoApp(publicId: number) {
+    const reached: string[] = []
+    const module = new Hono<APIContext>()
+      .get(`/blog/posts`, (c) => c.json({ demo: c.get("publicDemoAdmin") === true }))
+      .post(`/blog/posts`, (c) => (reached.push(`post`), c.json({})))
+      .post(`/users/:id/block`, (c) => (reached.push(`block`), c.json({})))
+    const route = createAdminRoute({
+      auth: testSessionGuards(),
+      mutationGuards: testMutationGuards,
+      modules: [module],
+      isPublicDemoAdmin: (userId) => Promise.resolve(userId === publicId),
+    })
+    return { app: mountRoute("/admin", route, operator()), reached }
+  }
+  const POST = { method: "POST", headers: sameOriginHeaders, body: "{}" }
+
+  it("is refused a website change with 403, and the module never runs", async () => {
+    const { app, reached } = demoApp(7)
+    const response = await app.request(`${API_URL}/admin/blog/posts`, POST)
+
+    expect(response.status).toBe(403)
+    expect(await apiError(response)).toMatchObject({
+      message: DEMO_REFUSED,
+      reason: "DEMO_REFUSED",
+    })
+    expect(reached).toEqual([])
+  })
+
+  it("acts on the demo's own data, marked as the public account", async () => {
+    const { app, reached } = demoApp(7)
+    expect((await app.request(`${API_URL}/admin/users/42/block`, POST)).status).toBe(200)
+    expect(reached).toEqual([`block`])
+    const read = await app.request(`${API_URL}/admin/blog/posts`, { headers: sameOriginHeaders })
+    expect(await read.json()).toEqual({ demo: true })
+  })
+
+  it("leaves every other operator unlimited and unmarked", async () => {
+    const { app, reached } = demoApp(8)
+    expect((await app.request(`${API_URL}/admin/blog/posts`, POST)).status).toBe(200)
+    expect(reached).toEqual([`post`])
+    const read = await app.request(`${API_URL}/admin/blog/posts`, { headers: sameOriginHeaders })
+    expect(await read.json()).toEqual({ demo: false })
   })
 })

@@ -922,6 +922,53 @@ describe("the admin sign-in", () => {
 
     expect(calls).toEqual([["code", "123456"]])
   })
+
+  it("shows the public demo's account and signs in with it in one press", async () => {
+    const calls: unknown[][] = []
+    const demoAdmin = { email: "demo-admin@example.com", password: "try-the-admin-panel" }
+    await mount(
+      <AdminSignInScreen
+        step="credentials"
+        busy={false}
+        error={null}
+        onSignIn={(credentials) => void calls.push(["sign-in", credentials])}
+        onOneTimeCode={() => {}}
+        demoAdmin={demoAdmin}
+      />,
+    )
+    expect(find("[data-e2e=admin-demo-email]").textContent).toBe(demoAdmin.email)
+    expect(find("[data-e2e=admin-demo-password]").textContent).toBe(demoAdmin.password)
+    await press("[data-e2e=admin-demo-notice]", "Sign in as the demo admin")
+
+    expect(calls).toEqual([["sign-in", { login: demoAdmin.email, password: demoAdmin.password }]])
+  })
+
+  it("shows no demo account outside the demo, on the code step, or a second press while busy", async () => {
+    const demoAdmin = { email: "demo-admin@example.com", password: "try-the-admin-panel" }
+    const screen = (props: { step: "credentials" | "one-time-code"; busy: boolean }) => (
+      <AdminSignInScreen
+        {...props}
+        error={null}
+        onSignIn={() => {}}
+        onOneTimeCode={() => {}}
+        demoAdmin={demoAdmin}
+      />
+    )
+    await mount(
+      <AdminSignInScreen
+        step="credentials"
+        busy={false}
+        error={null}
+        onSignIn={() => {}}
+        onOneTimeCode={() => {}}
+      />,
+    )
+    expect(has("[data-e2e=admin-demo-notice]")).toBe(false)
+    await mount(screen({ step: "one-time-code", busy: false }))
+    expect(has("[data-e2e=admin-demo-notice]")).toBe(false)
+    await mount(screen({ step: "credentials", busy: true }))
+    expect(find<HTMLButtonElement>("[data-e2e=admin-demo-sign-in]").disabled).toBe(true)
+  })
 })
 
 describe("the dashboard and the people in en-XA", () => {

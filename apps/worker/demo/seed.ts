@@ -217,10 +217,20 @@ async function ensureAdmin(
   return { id: key.userId, created: false }
 }
 
+/** An administrator the seed creates: its address and name. */
+export interface SeedAdmin {
+  email: string
+  firstName: string
+  lastName: string
+}
+
+/** The development administrator, and the owner's private one on the public demo. */
+const DEV_ADMIN: SeedAdmin = { email: DEV_ADMIN_EMAIL, firstName: `Emma`, lastName: `Walsh` }
+
 /**
- * Signs {@link DEV_ADMIN_EMAIL} up, names, proves and makes it an admin. Answers its user id. The
- * public demo's reset calls it right after the wipe. An account that holds the address already is
- * refused, never promoted.
+ * Signs `admin` up ({@link DEV_ADMIN_EMAIL} unless named), names, proves and makes it an admin.
+ * Answers its user id. The public demo's reset calls it right after the wipe, for each of its
+ * administrators. An account that holds the address already is refused, never promoted.
  *
  * @throws {SeedRefusedError} When the address has an account already.
  */
@@ -229,11 +239,12 @@ export async function createAdmin(
   sql: postgres.Sql,
   pepper: string,
   password: string,
+  admin: SeedAdmin = DEV_ADMIN,
 ): Promise<number> {
-  const id = await signUp(db, pepper, DEV_ADMIN_EMAIL, password)
-  await setName(sql, id, `Emma`, `Walsh`)
-  await prove(db, DEV_ADMIN_EMAIL)
-  await db.admin.setRoleByAddress(DEV_ADMIN_EMAIL, UserRole.ADMIN, SEED_ACTOR)
+  const id = await signUp(db, pepper, admin.email, password)
+  await setName(sql, id, admin.firstName, admin.lastName)
+  await prove(db, admin.email)
+  await db.admin.setRoleByAddress(admin.email, UserRole.ADMIN, SEED_ACTOR)
   return id
 }
 

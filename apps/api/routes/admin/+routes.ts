@@ -5,6 +5,7 @@ import type { MutationGuards } from "../../middlewares/mutation-guards.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
 import { ADMIN_NOT_FOUND } from "./module.ts"
 import { errorResponse } from "../../services/error-response.ts"
+import { createDemoGuard } from "./demo-guard.ts"
 
 export { ADMIN_NOT_FOUND } from "./module.ts"
 
@@ -14,6 +15,11 @@ export interface AdminRouteDependencies {
   mutationGuards: MutationGuards
   /** Every module's routes (`adminModuleRoutes` in `registry.ts`), mounted behind the gate. */
   modules: readonly Hono<APIContext>[]
+  /**
+   * On the public demo (docs/demo.md): whether the user is its public admin account, which
+   * `createDemoGuard` limits. Unset elsewhere.
+   */
+  isPublicDemoAdmin?: (userId: number) => Promise<boolean>
 }
 
 /**
@@ -34,6 +40,7 @@ export function createAdminRoute(dependencies: AdminRouteDependencies): Hono<API
       await next()
     })
     .use(dependencies.mutationGuards.signedIn)
+  if (dependencies.isPublicDemoAdmin) route.use(createDemoGuard(dependencies.isPublicDemoAdmin))
   for (const module of dependencies.modules) route.route(`/`, module)
   // Every other path under the area, for operators too: the same 404 as below operator.
   route.all(`*`, (c) => errorResponse(c, `not_found`, { message: ADMIN_NOT_FOUND }))

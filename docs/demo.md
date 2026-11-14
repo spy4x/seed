@@ -5,8 +5,8 @@ guest ([guest accounts](guests.md)), or signs up with their own address, by pass
 Google or GitHub, and starts in a workspace full of sample data: a
 group they own, and two groups of made-up people where they are an editor and a viewer. The
 database is wiped and seeded again every night at midnight Pacific time, so whatever visitors do
-lasts a day at most. There is no shared account and no demo-only rule in the API: each visitor
-works in groups nobody else can see.
+lasts a day at most. Each visitor works in groups nobody else can see. The one shared account is
+the admin panel's public administrator, which the API limits ("Visitors try the admin panel too" below).
 
 It is off unless `DEMO_MODE=true`. A product started from the template never turns it on: its
 server holds real people's data.
@@ -14,7 +14,8 @@ server holds real people's data.
 ## Turning it on
 
 Set `DEMO_MODE=true` in the server's env file (`infra/envs/.env.prod`, which `deno task deploy`
-copies). The worker and the SPA read it (`infra/compose/compose.shared.yml`); the API does not.
+copies). The worker, the SPA, the API and the website read it (`infra/compose/compose.shared.yml`);
+the API and the website need it only for the admin panel's public administrator.
 
 ## A demo on its own host
 
@@ -38,7 +39,7 @@ start. Sign-in and sign-up links stay on the production app.
 | Get-started checklist | `apps/spa/src/views/OnboardingView.tsx` | The Notes page's "Get started" checklist starts with "Invite someone to your group" already done, because every sample group already has members. |
 | Sign-in and sign-up pages | `libs/ui/auth-screen.tsx` (`DEMO_NOTE`, `DEMO_GUEST_NOTE`), `apps/spa/src/state/demo.ts` | One line above the form: the demo is public, wiped every night, and every new account, guest or not, starts with sample data. A guest's banner gives the wipe's time in the visitor's own time zone. The SPA reads `demo` from its `/config.json` (`SPA_DEMO` in `apps/spa/public-env.allow`, which compose sets from `DEMO_MODE`). |
 | Wipe | `apps/worker/demo/wipe.ts` | Empties every table except `KEPT_TABLES` (the migration history, the backup status, the blog's posts and where they were shared, the contact links, the newsletter's subscribers, unsubscribes and send log, and the queue of file deletions) in one transaction. It first queues every attached file's object and every profile picture, which the worker's nightly clean-up then deletes from the file store. Ids are not restarted, so nothing cached under an old id describes a new row. |
-| Nightly reset | `apps/worker/demo/reset.ts`, `run.ts`, started in `apps/worker/+main.ts` | Checks every minute. When the date in `America/Los_Angeles` changes, it wipes, seeds the population and schedules the nightly cleanup again. After a deploy it seeds at once only when the day's population is missing, an operator account other than the private administrator exists, or `DEMO_ADMIN_PASSWORD` is set and that administrator is missing. A visitor cannot make it fail by taking a seeded address between the wipe and the seed: every way to claim an address (a password sign-up, a sign-in code, an address change, Google or GitHub) waits for a code mailed there, or for the provider to vouch for it, and `example.com` takes no mail. A failed reset is tried again a minute later; a worker that restarts in between keeps the half-seeded demo until the next midnight. |
+| Nightly reset | `apps/worker/demo/reset.ts`, `run.ts`, started in `apps/worker/+main.ts` | Checks every minute. When the date in `America/Los_Angeles` changes, it wipes, seeds the population and schedules the nightly cleanup again. After a deploy it seeds at once only when the day's population is missing, the public administrator (`demo-admin@example.com`) is missing or no longer an administrator, an operator account other than the public and the private administrator exists, or `DEMO_ADMIN_PASSWORD` is set and the private administrator is missing. A visitor cannot make it fail by taking a seeded address between the wipe and the seed: every way to claim an address (a password sign-up, a sign-in code, an address change, Google or GitHub) waits for a code mailed there, or for the provider to vouch for it, and `example.com` takes no mail. A failed reset is tried again a minute later; a worker that restarts in between keeps the half-seeded demo until the next midnight. |
 
 **A product without notes.** With `NOTES=false` ([Start a product](start-a-product.md#settings)),
 the population and the sample groups get no notes, tags or attachments: no group's notes, nobody's
@@ -53,22 +54,53 @@ delays or fails a sign-up, and a failed job is retried. An account that is in an
 its first one has its sample groups already and gets nothing more, so a retry or a second sign-in
 adds nothing. The population's fake people get none.
 
-**The admin panel is not part of the demo.** Its host still runs, but the demo gives visitors no
-operator account, so nobody outside can sign in to it. A public operator account would show every
-visitor's address, IP address and devices to anyone, and each admin action would need its own demo
-rule. The admin panel is shown in a video on the website instead. The owner decided this on
-2026-10-20: "My decision is admin panel, not for a demo, but we need a good video about it."
+**Visitors try the admin panel too.** Every reset creates a public administrator,
+`demo-admin@example.com` with the password `try-the-admin-panel` (`PUBLIC_DEMO_ADMIN` in
+`libs/server/auth/demo-accounts.ts`). The admin app's sign-in page shows both and signs in with
+them in one click; the website's `/admin` page publishes them with a link to the admin host. The
+API learns of the demo from `DEMO_MODE`, and the admin app asks it through `GET /api/auth/demo`,
+which answers the account only while the demo is on. Visitors see everything an administrator
+sees, other visitors' addresses, IP addresses and devices included. The owner decided this on
+2026-11-04, reversing the decision of 2026-10-20: "Previously, we thought that people can see what
+other people do in the app, like IP addresses and email addresses, but I don't care anymore. Let
+them see everything."
 
-The owner keeps a private administrator there: set `DEMO_ADMIN_PASSWORD` (8 to 50 characters) in
-the server's env file, which is encrypted, and deploy. Every reset then creates `admin@example.com`
-with that password first, hashed with the API's `AUTH_PEPPER` (the worker receives both), and it
-signs in to the admin app. A changed password takes effect at the next reset. The worker refuses
-to start when the password breaks the rule or the pepper is missing. This administrator is the one
-operator the reset tolerates: any other makes the worker wipe and seed again within a minute, and
-so does the administrator missing while the setting is on. The reset seeds no operator history
-or backup for it, so the admin panel shows the demo as it is. Unset, the demo has no operator.
+The account is shared, so the API keeps visitors from taking it over or reaching past the demo:
 
-Its Stats page says "Stats are off" and names `UMAMI_API_URL` and `UMAMI_API_TOKEN`: the demo's
+- It works on the admin host only. The SPA's host refuses its sign-in, and the admin host has no
+  route that changes an account. A browser keeps its session cookie to the admin host, but a
+  script can send that cookie anywhere, so the API's admin host gate
+  (`apps/api/middlewares/admin-host.ts`) answers 401 and `DEMO_ADMIN_ELSEWHERE` to its session on
+  every other host. Nobody can change its password, address or second factor, or delete it.
+- A wrong password never locks it, so one visitor cannot lock the others out. The sign-in's
+  limit per network address still holds.
+- `apps/api/routes/admin/demo-guard.ts` refuses it the actions that outlive the nightly wipe or
+  reach real people or services, with 403 and `DEMO_REFUSED`: the blog (posts, sharing channels
+  and shares) and contact links (seedsaas.com's own content, which the wipe keeps), the catalog
+  (its published items and tracking links show on the website), billing's refund, free time and
+  cancel (a production server's provider is Stripe or off, never the fake one), the newsletter's
+  remove and resend, background jobs, role changes and password-reset mail. Blocking people,
+  ending sessions, removing devices and tokens, and the groups' actions work on the demo's fake
+  data.
+- The newsletter's list and export show it only the subscribers on example domains (RFC 2606),
+  so the real subscribers of seedsaas.com stay hidden.
+- It cannot act on the owner's private administrator below, and the reverse: the admin panel
+  refuses an action on an equal or higher role.
+
+The worker treats a missing or demoted public administrator like any other surprise and wipes and
+seeds again within a minute.
+
+The owner also keeps a private administrator there: set `DEMO_ADMIN_PASSWORD` (8 to 50 characters)
+in the server's env file, which is encrypted, and deploy. Every reset then creates
+`admin@example.com` with that password after the public one, both hashed with the API's
+`AUTH_PEPPER` (the worker receives it), and it signs in to the admin app with no demo limits. A
+changed password takes effect at the next reset. The worker refuses to start when the password
+breaks the rule or the pepper is missing. These two administrators are the only operators the
+reset tolerates: any other makes the worker wipe and seed again within a minute, and so does the
+private one missing while the setting is on. The reset seeds no operator history or backup, so
+the admin panel shows the demo as it is.
+
+The admin panel's Stats page says "Stats are off" and names `UMAMI_API_URL` and `UMAMI_API_TOKEN`: the demo's
 server sets only the website's tracker (`MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID`), and the demo
 has no fake Umami to read ([analytics.md](analytics.md#stats-in-the-admin-app)). For the same
 reason, an item's "Share links" card says "Turn on stats to see visits per link." Stats adds no
