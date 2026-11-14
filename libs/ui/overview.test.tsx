@@ -546,6 +546,19 @@ describe("the admin group page's overview widgets", () => {
       "Every widget on this group's Overview page shows the group's own figures, so only its members can see them.",
     )
   })
+
+  it("shows a member overview's empty card under the title when there is no widget at all, as with the notes off", async () => {
+    await mountAdmin([])
+
+    expect(text("[data-e2e=admin-group-overview] h2")).toBe("Overview widgets")
+    const card = document.querySelector(
+      "[data-e2e=admin-group-overview] [data-e2e=overview-no-widgets]",
+    )
+    expect(card?.querySelector("h3")?.textContent).toBe("Nothing to show yet")
+    expect(card?.textContent).toContain("Widgets for \u2068Acme Studio\u2069 will appear here.")
+    expect(document.querySelector("[data-e2e=admin-group-overview-range]")).toBe(null)
+    expect(membersOnly()).toBe(null)
+  })
 })
 
 describe("the group overview in another language", () => {

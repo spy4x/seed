@@ -15,7 +15,7 @@ import { ADMIN_GROUP_PATHS, AdminGroupsListScreen } from "@ui/admin-groups-list.
 import { AdminGroupScreen } from "@ui/admin-groups-detail.tsx"
 import { AdminGroupOverview } from "@ui/admin-group-overview.tsx"
 import { OVERVIEW_DEFAULT_PRESET } from "@ui/overview-screen.tsx"
-import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "@ui/overview-widgets.ts"
+import { OVERVIEW_VIEWS, overviewWidgets } from "@ui/overview-widgets.ts"
 import type { DateRangeChoice } from "@spy4x/preact-ui/date-range-search"
 import { rangeForPreset } from "@spy4x/preact-ui/date-range"
 import { useFormat } from "@spy4x/preact-ui/format"
@@ -99,9 +99,16 @@ function GroupView(
     () => parseAdminGroupFileFilter(new URLSearchParams(fileQuery)),
     [fileQuery],
   )
+  // Whether the notes are on (`GET /api/admin/modules` lists `notes`), `null` until that list is
+  // read. Off, the API mounts no widget or file route, so none is asked for. Until it is read the
+  // page draws as with the notes on but asks for nothing, so neither setting sees a failed request
+  // and the notes-on page does not change shape when the list arrives.
+  const moduleIds = context.moduleIds.value
+  const notes = moduleIds === null ? null : moduleIds.has(`notes`)
+  const widgets = overviewWidgets(notes !== false)
   useEffect(() => {
-    if (groupId !== null) state.loadFiles(groupId, fileFilter)
-  }, [groupId, fileFilter])
+    if (groupId !== null && notes === true) state.loadFiles(groupId, fileFilter)
+  }, [groupId, fileFilter, notes])
   const group = state.group.value
   const dialog = state.dialog.value
   const files = state.files.value
@@ -137,8 +144,10 @@ function GroupView(
     )
   }, [timeZone])
   useEffect(() => {
-    if (groupId !== null) overview.open({ groupId, range: range.range, timeZone })
-  }, [groupId, range.range.from, range.range.to, timeZone])
+    if (groupId !== null && notes !== null) {
+      overview.open({ groupId, range: range.range, timeZone }, widgets)
+    }
+  }, [groupId, range.range.from, range.range.to, timeZone, notes])
   const loads = overview.loads.value
   return (
     <AdminGroupScreen
@@ -175,7 +184,7 @@ function GroupView(
           viewerTimeZone={viewerTimeZone}
           now={now}
           onRangeChange={setRange}
-          widgets={OVERVIEW_WIDGETS.map((widget) => ({
+          widgets={widgets.map((widget) => ({
             id: widget.id,
             titleKey: widget.titleKey,
             size: widget.size,
@@ -186,6 +195,7 @@ function GroupView(
           onRetry={overview.retry}
         />
       )}
+      notes={notes !== false}
       navigate={context.navigate}
     />
   )

@@ -178,6 +178,11 @@ export interface AdminGroupScreenProps {
   fileNotice: string | null
   /** The read-only "Overview widgets" section (`AdminGroupOverview`), under the header card. */
   overview?: ComponentChildren
+  /**
+   * Whether the notes are on (`NOTES`). Off, the Files tab is left out, since every file sits on a
+   * note, and `tab: "files"` shows the Members tab. Left out: on.
+   */
+  notes?: boolean
   navigate?: Navigate
 }
 
@@ -238,11 +243,11 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
       label: <TabLabel text={t.t(`AdminGroup.invitations`)} count={pending.length} />,
       content: <Invitations {...props} detail={detail} deleted={deleted} />,
     },
-    {
+    ...(props.notes === false ? [] : [{
       id: `files`,
       label: <TabLabel text={t.t(`AdminGroup.files`)} count={counts.files} />,
       content: <Files {...props} detail={detail} deleted={deleted} />,
-    },
+    }]),
     {
       id: `activity`,
       label: t.t(`AdminGroup.activity`),

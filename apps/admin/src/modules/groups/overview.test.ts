@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
 import { NOTE_WIDGETS } from "@domain/notes"
+import { overviewWidgets } from "@ui/overview-widgets.ts"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { createAdminOverviewState } from "./overview.ts"
 
@@ -35,6 +36,21 @@ it(`reads every widget of the default layout for the group, the days and the zon
     data: { current: 1, previous: null },
     savedAt: null,
   })
+})
+
+it(`asks for no note widget with the notes off`, async () => {
+  const paths: string[] = []
+  const request = ((path: string) => {
+    paths.push(path)
+    return Promise.resolve({ ok: true, status: 200, data: { current: 1, previous: null } })
+  }) as AdminFetch
+  const state = createAdminOverviewState(request)
+
+  state.open(october, overviewWidgets(false))
+  await settle()
+
+  expect(paths).toEqual([])
+  expect(state.loads.value).toEqual({})
 })
 
 it(`shows a refused widget as failed and reads it again on retry`, async () => {
@@ -88,9 +104,9 @@ it(`never asks for a members-only widget`, async () => {
     return Promise.resolve({ ok: true, status: 200, data: { current: 1, previous: null } })
   }) as AdminFetch
   const [total, added] = NOTE_WIDGETS
-  const state = createAdminOverviewState(request, [total, { ...added, operatorView: `never` }])
+  const state = createAdminOverviewState(request)
 
-  state.open(october)
+  state.open(october, [total, { ...added, operatorView: `never` }])
   await settle()
 
   expect(paths).toEqual([

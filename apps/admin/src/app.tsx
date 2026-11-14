@@ -1,6 +1,7 @@
 import "./app.css"
 import type { JSX } from "preact"
 import { useEffect, useMemo, useState } from "preact/hooks"
+import { signal } from "@preact/signals"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Toastr } from "@spy4x/preact-ui/toastr"
 import { createLeaveGuard } from "@spy4x/preact-ui/unsaved-guard"
@@ -101,14 +102,16 @@ function Operator(
   const leave = useMemo(() => guardNavigate(leaveGuard, navigate), [leaveGuard, navigate])
   const user = session.step === "signed-in" ? session.user : null
   // The optional modules the API has on (`GET /api/admin/modules`), read once per session; `null`
-  // until read. The rail shows an optional module only once it is listed.
-  const [moduleIds, setModuleIds] = useState<ReadonlySet<string> | null>(null)
+  // until read. The rail shows an optional module only once it is listed. A signal, so the modules
+  // read it through the context (`AdminContext.moduleIds`), which is built before it arrives.
+  const moduleList = useMemo(() => signal<ReadonlySet<string> | null>(null), [])
+  const moduleIds = moduleList.value
   useEffect(() => {
-    setModuleIds(null)
+    moduleList.value = null
     if (!user || !hasAdminAccess(user)) return
     let current = true
     void store.request<{ ids: string[] }>("/api/admin/modules").then((result) => {
-      if (current) setModuleIds(new Set(result.ok ? result.data.ids : []))
+      if (current) moduleList.value = new Set(result.ok ? result.data.ids : [])
     })
     return () => {
       current = false
@@ -201,6 +204,7 @@ function Operator(
         leaveGuard,
         // An optional module adds no person tabs, so the context need not wait for the list.
         personTabs: adminPersonTabs(allModules.filter((module) => !module.optional)),
+        moduleIds: moduleList,
         format: () => own.format.value,
       },
     [user?.id, allModules],
