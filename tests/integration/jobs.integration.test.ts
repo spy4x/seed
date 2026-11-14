@@ -16,6 +16,7 @@ import {
 } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, OUTBOX_LANES, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { defineJob, JOBS, SLOW_JOB_KINDS } from "@server/jobs/registry.ts"
+import { IMAGE_PROCESS_JOB, IMAGE_WIDTHS_JOB } from "@server/files/images.ts"
 import { JOB_RETRY } from "@server/jobs/job-failures.ts"
 import { passwordResetExpiry, passwordResetRequests } from "@server/auth/password-reset.ts"
 import {
@@ -872,21 +873,24 @@ function lane(sql: postgres.Sql, jobs: ReturnType<typeof recordingJobs>, index: 
 
 Deno.test("the worker's lanes", async (t) => {
   await withSchema(async (sql) => {
-    await t.step("every job kind is claimed by exactly one lane", async () => {
-      for (const job of JOBS) await enqueueJob(sql, job.kind, uuidV7(), { inMs: 0 })
-      const seen = OUTBOX_LANES.map(() => [] as string[])
+    await t.step(
+      "the image lane runs both image jobs, the other lane every other job, none both",
+      async () => {
+        const seen = OUTBOX_LANES.map(() => [] as string[])
+        // Each lane gets a full table of its own, so one lane cannot hide what the other claims.
+        for (const [index, kinds] of seen.entries()) {
+          for (const job of JOBS) await enqueueJob(sql, job.kind, uuidV7(), { inMs: 0 })
+          await lane(sql, recordingJobs(kinds), index).drainOnce()
+          await sql`DELETE FROM outbox_events`
+        }
 
-      for (const [index, kinds] of seen.entries()) {
-        await lane(sql, recordingJobs(kinds), index).drainOnce()
-      }
-
-      const all = JOBS.map((job) => job.kind).sort()
-      expect(seen.map((kinds) => [...kinds].sort())).toEqual([
-        [...SLOW_JOB_KINDS].sort(),
-        all.filter((kind) => !SLOW_JOB_KINDS.includes(kind)),
-      ])
-      await sql`DELETE FROM outbox_events`
-    })
+        const images = [IMAGE_PROCESS_JOB, IMAGE_WIDTHS_JOB]
+        expect(seen.map((kinds) => [...kinds].sort())).toEqual([
+          images,
+          JOBS.map((job) => job.kind).filter((kind) => !images.includes(kind)).sort(),
+        ])
+      },
+    )
 
     await t.step("a mail queued after ten photos is sent while they are processing", async () => {
       let release = () => {}
