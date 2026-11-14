@@ -778,6 +778,8 @@ export default {
   "OnboardingCard.inviteTitle": "Пригласите кого-нибудь в группу",
   "OnboardingCard.inviteText":
     "Приглашённые будут видеть те же заметки в реальном времени — с той ролью, которую вы им дадите.",
+  "OnboardingCard.inviteTextPlain":
+    "Приглашённые будут видеть изменения в группе в реальном времени — с той ролью, которую вы им дадите.",
   "OnboardingCard.inviteAction": "Пригласить",
   "OnboardingCard.notificationsTitle": "Включите уведомления",
   "OnboardingCard.notificationsText": "Узнавайте об изменениях, даже когда приложение закрыто.",
@@ -792,6 +794,8 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Группы",
   "OnboardingCard.tourGroupsText":
     "Заметки живут в группах. Здесь можно создавать группы, приглашать людей и назначать им роли.",
+  "OnboardingCard.tourGroupsTextPlain":
+    "Здесь можно создавать группы, приглашать людей и назначать им роли.",
   "OnboardingCard.tourNotificationsTitle": "Уведомления",
   "OnboardingCard.tourNotificationsText":
     "Что произошло, пока вас не было, — например, новые приглашения.",

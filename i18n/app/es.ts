@@ -738,6 +738,8 @@ export default {
   "OnboardingCard.noteAction": "Escribir una nota",
   "OnboardingCard.inviteTitle": "Invita a alguien a tu grupo",
   "OnboardingCard.inviteText": "Verá las mismas notas en tiempo real, con el rol que le des.",
+  "OnboardingCard.inviteTextPlain":
+    "Verá los cambios del grupo en tiempo real, con el rol que le des.",
   "OnboardingCard.inviteAction": "Invitar a alguien",
   "OnboardingCard.notificationsTitle": "Activa las notificaciones",
   "OnboardingCard.notificationsText": "Entérate de los cambios, incluso con la app cerrada.",
@@ -752,6 +754,7 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Grupos",
   "OnboardingCard.tourGroupsText":
     "Las notas viven en grupos. Crea grupos aquí, invita a personas y elige sus roles.",
+  "OnboardingCard.tourGroupsTextPlain": "Crea grupos aquí, invita a personas y elige sus roles.",
   "OnboardingCard.tourNotificationsTitle": "Notificaciones",
   "OnboardingCard.tourNotificationsText": "Lo que pasó mientras no estabas, como una invitación.",
   "OnboardingCard.tourProfileTitle": "Perfil",

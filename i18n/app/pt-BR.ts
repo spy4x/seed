@@ -732,6 +732,8 @@ export default {
   "OnboardingCard.inviteTitle": "Convide alguém para o seu grupo",
   "OnboardingCard.inviteText":
     "A pessoa vê as mesmas notas em tempo real, com a função que você der a ela.",
+  "OnboardingCard.inviteTextPlain":
+    "A pessoa vê as mudanças do grupo em tempo real, com a função que você der a ela.",
   "OnboardingCard.inviteAction": "Convidar alguém",
   "OnboardingCard.notificationsTitle": "Ative as notificações",
   "OnboardingCard.notificationsText": "Fique sabendo das mudanças, mesmo com o app fechado.",
@@ -746,6 +748,8 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Grupos",
   "OnboardingCard.tourGroupsText":
     "As notas ficam dentro de grupos. Crie grupos aqui, convide pessoas e escolha a função de cada uma.",
+  "OnboardingCard.tourGroupsTextPlain":
+    "Crie grupos aqui, convide pessoas e escolha a função de cada uma.",
   "OnboardingCard.tourNotificationsTitle": "Notificações",
   "OnboardingCard.tourNotificationsText":
     "O que aconteceu enquanto você estava fora, como um convite.",

@@ -641,6 +641,8 @@ export default {
   "OnboardingCard.inviteTitle": "グループに誰かを招待する",
   "OnboardingCard.inviteText":
     "招待した人は、割り当てたロールで同じメモをリアルタイムに見られます。",
+  "OnboardingCard.inviteTextPlain":
+    "招待した人は、割り当てたロールでグループの変更をリアルタイムに見られます。",
   "OnboardingCard.inviteAction": "招待する",
   "OnboardingCard.notificationsTitle": "通知をオンにする",
   "OnboardingCard.notificationsText": "アプリを閉じていても、変更があれば通知が届きます。",
@@ -654,6 +656,8 @@ export default {
   "OnboardingCard.tourGroupsTitle": "グループ",
   "OnboardingCard.tourGroupsText":
     "メモはグループの中にあります。ここでグループを作成し、メンバーを招待してロールを選べます。",
+  "OnboardingCard.tourGroupsTextPlain":
+    "ここでグループを作成し、メンバーを招待してロールを選べます。",
   "OnboardingCard.tourNotificationsTitle": "通知",
   "OnboardingCard.tourNotificationsText": "招待など、離れている間に起きたこと。",
   "OnboardingCard.tourProfileTitle": "プロフィール",

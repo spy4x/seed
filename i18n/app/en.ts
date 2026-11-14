@@ -676,6 +676,8 @@ export default {
   "OnboardingCard.noteAction": "Write a note",
   "OnboardingCard.inviteTitle": "Invite someone to your group",
   "OnboardingCard.inviteText": "They'll see the same notes live, with the role you give them.",
+  "OnboardingCard.inviteTextPlain":
+    "They'll see the group's changes live, with the role you give them.",
   "OnboardingCard.inviteAction": "Invite someone",
   "OnboardingCard.notificationsTitle": "Turn on notifications",
   "OnboardingCard.notificationsText": "Get notified about changes, even when the app is closed.",
@@ -690,6 +692,7 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Groups",
   "OnboardingCard.tourGroupsText":
     "Notes live in groups. Create groups here, invite people and choose their roles.",
+  "OnboardingCard.tourGroupsTextPlain": "Create groups here, invite people and choose their roles.",
   "OnboardingCard.tourNotificationsTitle": "Notifications",
   "OnboardingCard.tourNotificationsText":
     "What happened while you were away, such as an invitation.",

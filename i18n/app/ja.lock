@@ -1020,6 +1020,7 @@ OnboardingCard.goTo	2745d2702385bcbb
 OnboardingCard.goToHighlighted	dd4e9b3b30b69a80
 OnboardingCard.inviteAction	9b7639e8de286c00
 OnboardingCard.inviteText	a64a504ccf41a164
+OnboardingCard.inviteTextPlain	33f4394774d15a4a
 OnboardingCard.inviteTitle	0a46f5a639ca5571
 OnboardingCard.keep	125f55ebeeef85ad
 OnboardingCard.keepText	83776173b40175a0
@@ -1031,6 +1032,7 @@ OnboardingCard.notificationsText	adb691a79cf26ee0
 OnboardingCard.notificationsTitle	92dfd3632baeb6d4
 OnboardingCard.title	61e8d44ad423a4a0
 OnboardingCard.tourGroupsText	9c45c2c5941bbb4c
+OnboardingCard.tourGroupsTextPlain	42555dcc24ab1c0f
 OnboardingCard.tourGroupsTitle	39bbb719fa2b9d22
 OnboardingCard.tourNotesText	3c06ef90f52237db
 OnboardingCard.tourNotesTitle	8a7525b1492fb848

@@ -825,6 +825,7 @@ export default {
   "OnboardingCard.noteAction": "كتابة ملاحظة",
   "OnboardingCard.inviteTitle": "ادعُ شخصًا إلى مجموعتك",
   "OnboardingCard.inviteText": "سيرى الملاحظات نفسها مباشرة، بالدور الذي تمنحه إياه.",
+  "OnboardingCard.inviteTextPlain": "سيرى تغييرات المجموعة مباشرة، بالدور الذي تمنحه إياه.",
   "OnboardingCard.inviteAction": "دعوة شخص",
   "OnboardingCard.notificationsTitle": "فعّل الإشعارات",
   "OnboardingCard.notificationsText": "اعرف بالتغييرات فور حدوثها، حتى والتطبيق مغلق.",
@@ -838,6 +839,7 @@ export default {
   "OnboardingCard.tourGroupsTitle": "المجموعات",
   "OnboardingCard.tourGroupsText":
     "الملاحظات تعيش داخل المجموعات. أنشئ المجموعات من هنا، وادعُ الآخرين واختر أدوارهم.",
+  "OnboardingCard.tourGroupsTextPlain": "أنشئ المجموعات من هنا، وادعُ الآخرين واختر أدوارهم.",
   "OnboardingCard.tourNotificationsTitle": "الإشعارات",
   "OnboardingCard.tourNotificationsText": "ما حدث في غيابك، كدعوة جديدة مثلًا.",
   "OnboardingCard.tourProfileTitle": "الملف الشخصي",

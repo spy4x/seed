@@ -717,6 +717,8 @@ export default {
   "OnboardingCard.inviteTitle": "Lade jemanden in deine Gruppe ein",
   "OnboardingCard.inviteText":
     "Die Person sieht dieselben Notizen live, mit der Rolle, die du ihr gibst.",
+  "OnboardingCard.inviteTextPlain":
+    "Die Person sieht die Änderungen der Gruppe live, mit der Rolle, die du ihr gibst.",
   "OnboardingCard.inviteAction": "Jemanden einladen",
   "OnboardingCard.notificationsTitle": "Benachrichtigungen einschalten",
   "OnboardingCard.notificationsText": "Erfahre von Änderungen, auch wenn die App geschlossen ist.",
@@ -731,6 +733,8 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Gruppen",
   "OnboardingCard.tourGroupsText":
     "Notizen gehören zu Gruppen. Hier erstellst du Gruppen, lädst Leute ein und legst ihre Rollen fest.",
+  "OnboardingCard.tourGroupsTextPlain":
+    "Hier erstellst du Gruppen, lädst Leute ein und legst ihre Rollen fest.",
   "OnboardingCard.tourNotificationsTitle": "Benachrichtigungen",
   "OnboardingCard.tourNotificationsText":
     "Was passiert ist, während du weg warst – zum Beispiel eine Einladung.",
