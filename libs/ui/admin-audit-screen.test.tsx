@@ -11,6 +11,8 @@ import {
   accountAuditEvent,
   activityAuditEvent,
   ADMIN_AUDIT_NO_FILTER,
+  ADMIN_FILE_DOWNLOADED_KIND,
+  ADMIN_FILE_OPENED_KIND,
   ADMIN_JOB_RETRIED_KIND,
   type AdminAuditEntry,
   type AdminAuditFilter,
@@ -445,6 +447,35 @@ describe("audit log screen", () => {
     const options = [...document.querySelectorAll("[data-e2e=admin-audit-event] option")]
     expect(options.map((option) => option.textContent)).toContain(
       "Operator: Cancellation undone by an operator",
+    )
+  })
+})
+
+describe("the audit event filter with the notes switched", () => {
+  const offered =
+    () => [...document.querySelectorAll<HTMLOptionElement>("[data-e2e=admin-audit-event] option")]
+  const notesEvents = /^activity:(note\.|tag\.|operator\.file_)/
+
+  it("offers the note, tag and file events with the notes on or left out", async () => {
+    for (const notes of [true, undefined]) {
+      await mount(<AdminAuditScreen {...props([], { notes })} />)
+      const values = offered().map((option) => option.value)
+      expect(values).toContain(activityAuditEvent("note.created"))
+      expect(values).toContain(activityAuditEvent("tag.deleted"))
+      expect(values).toContain(activityAuditEvent(ADMIN_FILE_OPENED_KIND))
+      expect(values).toContain(activityAuditEvent(ADMIN_FILE_DOWNLOADED_KIND))
+    }
+  })
+
+  it("offers no note, tag or file event with the notes off, and no option names them", async () => {
+    await mount(<AdminAuditScreen {...props([], { notes: false })} />)
+    const options = offered()
+    expect(options.some((option) => notesEvents.test(option.value))).toBe(false)
+    expect(options.some((option) => /\b(notes?|tags?|files?)\b/i.test(option.textContent ?? "")))
+      .toBe(false)
+    expect(options.map((option) => option.value)).toContain(activityAuditEvent("group.renamed"))
+    expect(options.map((option) => option.value)).toContain(
+      activityAuditEvent(ADMIN_JOB_RETRIED_KIND),
     )
   })
 })
