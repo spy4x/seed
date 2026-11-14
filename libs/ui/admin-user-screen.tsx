@@ -268,7 +268,8 @@ const USER_COMMAND_ALIASES: Readonly<Record<string, readonly string[]>> = {
  * The person page's commands for the admin palette: one per tab, the page's own and then the
  * modules' (`extraTabs`, each named by its catalog key), and the "More actions" menu's Block or
  * Unblock, End all sessions, Change role and Send password reset. Each runs what its tab or menu
- * entry runs, so an action only opens its confirmation dialog. The actions follow the menu's own
+ * entry runs, so an action only opens its confirmation dialog. The tabs come first, so an empty
+ * query preselects a tab and Enter opens no confirmation. The actions follow the menu's own
  * rules: none for the operator themselves or a role at or above theirs, Change role for an
  * administrator only, and Send password reset only with an address to send it to. None while the
  * person is not shown.
@@ -310,7 +311,7 @@ export function adminUserPageCommands(
       ...(resetAddress(detail) === null ? [] : [action(`password-reset`, `AdminUser.sendReset`)]),
     ]
     : []
-  return [...actions, ...tabs]
+  return [...tabs, ...actions]
 }
 
 /** A tab a module adds to the person page (`apps/admin/src/modules/`): its id, name and content. */

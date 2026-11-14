@@ -501,18 +501,18 @@ describe("the person page's palette commands", () => {
   const actionIds = (page: Partial<Parameters<typeof adminUserPageCommands>[1]>) =>
     commands(page).map((command) => command.id).filter((id) => !id.startsWith(`user-tab-`))
 
-  it("lists the menu's actions, then a command per tab, the modules' tabs included", () => {
+  it("lists a command per tab, the modules' tabs included, before the menu's actions", () => {
     expect(commands({ operator: administrator }).map((command) => command.label)).toEqual([
-      "Block",
-      "End all sessions",
-      "Change role",
-      "Send password-reset email",
       "Overview",
       "Sign-in methods",
       "Sessions",
       "Groups",
       "Activity",
       "Data exports",
+      "Block",
+      "End all sessions",
+      "Change role",
+      "Send password-reset email",
     ])
   })
 
@@ -550,16 +550,16 @@ describe("the person page's palette commands", () => {
     const calls: unknown[][] = []
     for (const command of commands({ operator: administrator }, calls)) command.run()
     expect(calls).toEqual([
-      [`open`, `block`],
-      [`open`, `end-sessions`],
-      [`open`, `change-role`],
-      [`open`, `password-reset`],
       [`tab`, `overview`],
       [`tab`, `methods`],
       [`tab`, `sessions`],
       [`tab`, `groups`],
       [`tab`, `activity`],
       [`tab`, `data-exports`],
+      [`open`, `block`],
+      [`open`, `end-sessions`],
+      [`open`, `change-role`],
+      [`open`, `password-reset`],
     ])
   })
 
