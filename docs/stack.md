@@ -66,7 +66,8 @@ Defined in `infra/compose/`:
 ## Optional parts
 
 Seed needs only Postgres, PgBouncer, Valkey, the migration, the API, the worker and the SPA, the
-must-haves. Every other part has up to three modes, picked in the env file alone: **bundled**
+must-haves; production adds the one-shot `sourcemaps` upload, which does nothing until it is set
+up ("Source maps" below). Every other part has up to three modes, picked in the env file alone: **bundled**
 (this project runs it), **external** (the project uses an instance elsewhere, such as a stack
 shared by several projects on the host) and **off** (nothing of it runs and nothing retries).
 
@@ -74,7 +75,7 @@ shared by several projects on the host) and **off** (nothing of it runs and noth
 | ---- | ------- | -------- | --- |
 | Monitoring ("Monitoring" below) | `monitoring` in `COMPOSE_PROFILES`; `VM_REMOTE_WRITE_URL=` and `VLOGS_URL=` empty | `telemetry` in `COMPOSE_PROFILES`, not `monitoring`; `VM_REMOTE_WRITE_URL=https://…/api/v1/write`, `VLOGS_URL=https://…` and their user names and passwords | neither `monitoring` nor `telemetry` |
 | Host metrics (node-exporter, cAdvisor) | `host-monitoring` next to `monitoring` or `telemetry` | leave `host-monitoring` out; the host's own exporters report it | leave `host-monitoring` out |
-| Error tracking ("Error tracking" below) | `errors` in `COMPOSE_PROFILES` and `ERRORS_DOMAIN=errors.example.com`, then `deno task errors:setup` once, which fills both DSNs | `ERROR_REPORT_DSN=https://…` and `SPA_ERROR_REPORT_DSN=https://…` | both empty |
+| Error tracking ("Error tracking" below) | `errors` in `COMPOSE_PROFILES` and `ERRORS_DOMAIN=errors.example.com`, then `deno task errors:setup` once, which fills both DSNs; for readable SPA traces, the four `SOURCEMAPS_*` settings ("Source maps" below) | `ERROR_REPORT_DSN=https://…` and `SPA_ERROR_REPORT_DSN=https://…`, and the `SOURCEMAPS_*` settings | both DSNs and `SOURCEMAPS_URL` empty |
 | Files ([files.md](files.md)) | `files` in `COMPOSE_PROFILES`; `S3_ENDPOINT=`, `S3_PUBLIC_ENDPOINT=`, `S3_BUCKET=` empty | leave `files` out; the six `S3_*` settings name the store | not yet: see below |
 | Backup ([backups.md](backups.md)) | `backup` in `COMPOSE_PROFILES`; `BACKUP_RESTIC_REPOSITORY=…`, `BACKUP_RESTIC_PASSWORD=…` | none | leave `backup` out |
 | Traefik | `deno task proxy:start` (`compose.proxy.yml`); `deno task dev` starts it too | a container named `traefik` already on the `proxy` network | none: the apps need a proxy |
@@ -393,13 +394,38 @@ deployed checkout, then copy the two lines into `infra/envs/.env.prod`: the next
 Not bundled: email (GlitchTip sends no alert mail until you set its `EMAIL_URL`), and GlitchTip's
 database is not in the backup, which covers the app's database only.
 
-**Source maps.** The SPA build does not produce source maps, so a browser stack trace shows the
-minified bundle. To get readable traces: set `build.sourcemap: "hidden"` in
-`apps/spa/vite.config.ts`, upload `apps/spa/dist/**/*.map` for the release with `sentry-cli
-sourcemaps upload` (GlitchTip accepts it) in the deploy step, and delete the `.map` files before
-the image is built, so they are never served. The release name must match the `release` option of
-the reporter, which the SPA does not set yet. This is not wired in yet
-([#1019](https://github.com/spy4x/seed/issues/1019)).
+**Source maps.** A browser error shows source file names and lines, not the minified bundle's,
+once the deploy uploads the SPA's source maps. How it works:
+
+- The SPA build writes hidden source maps (`build.sourcemap: "hidden"` in
+  `apps/spa/vite.config.ts`): no bundle names its map.
+- `deno task deploy` passes the checkout's commit to the server as `APP_COMMIT`. The SPA image bakes
+  it in as `VITE_RELEASE`, and the reporter sends it as each report's `release`. Without a commit
+  (no git, no commit yet) the SPA sends no release and nothing is uploaded.
+- `apps/spa/dockerfile.prod` copies the built files with their maps to its `sourcemaps` stage and
+  deletes the maps from the served files in the same step, so no layer of the nginx image holds one.
+- Production's one-shot `sourcemaps` service (`infra/compose/compose.prod.yml`) runs that stage on
+  every deploy: `sentry-cli sourcemaps upload` for the release (`apps/spa/upload-sourcemaps.sh`).
+  It reads the tracker's address and token at run time, so neither is in an image. GlitchTip pairs
+  a frame with its map by the bundle's file name within the release.
+- It never fails a deploy: with `SOURCEMAPS_URL` or `SOURCEMAPS_TOKEN` empty, or when the upload
+  fails, it prints one line and exits 0. `SPA=false` keeps it off with the SPA.
+- The release pipeline (`.woodpecker/release.yml`) skips the stage: a published image uploads
+  nothing and reports no release.
+
+To turn it on, set four variables in `infra/envs/.env.prod`:
+
+| Variable | Bundled profile | External GlitchTip |
+| -------- | --------------- | ------------------ |
+| `SOURCEMAPS_URL` | `https://<ERRORS_DOMAIN>` | its address, such as `https://errors.example.com` |
+| `SOURCEMAPS_TOKEN` | a token made as below | the same, on that instance |
+| `SOURCEMAPS_ORG` | the slug of the organization `errors:setup` named after `PROJECT` | its organization's slug |
+| `SOURCEMAPS_PROJECT` | empty, which means `spa` | the SPA's project slug |
+
+Make the token in GlitchTip: sign in, open your profile's Auth Tokens page, create a token with the
+`project:releases` scope only, and copy it. The slugs are in the address of the organization's and
+the project's pages. Use the public address even for the bundled profile: GlitchTip sends the
+uploader its upload address built from `GLITCHTIP_DOMAIN`, so the container's own name fails.
 
 ## Runtime configuration
 
