@@ -179,7 +179,7 @@ Deno.test("the SPA build writes hidden source maps, which no bundle names", asyn
     fromFileUrl(new URL(`../apps/spa/vite.config.ts`, import.meta.url)),
   )
 
-  expect(config).toMatch(/\n  build: \{[^}]*\n    sourcemap: `hidden`,\n/)
+  expect(config).toMatch(/\n {2}build: \{[^}]*\n {4}sourcemap: `hidden`,\n/)
 })
 
 Deno.test("the release pipeline skips the source map stage, so a published image uploads nothing", async () => {
