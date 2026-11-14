@@ -162,7 +162,8 @@ describe(`createOutboxProcessor`, () => {
       label: `Daily report`,
       handler: ({ notes }) => (seen.push(notes), async () => {}),
     })
-    const sql = {} as postgres.Sql
+    // The outbox repository builds its kind filter with `sql` at construction; nothing runs it.
+    const sql = (() => {}) as unknown as postgres.Sql
     const mail = { store: {} as never, sender: null, brand: { webAppUrl: `` }, log: () => {} }
     const off = [
       null,

@@ -3,6 +3,7 @@ import {
   attemptFailureLine,
   ensureScheduledOutboxEvent,
   JobPublisher,
+  type OutboxKindFilter,
   OutboxProcessor,
   PostgresOutboxRepository,
 } from "@spy4x/server/outbox"
@@ -15,9 +16,19 @@ import type { PasswordResetMailDeps } from "./password-reset-mail.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import { JOB_RETRY } from "./job-failures.ts"
 import { JOB_AGGREGATE, JOB_AGGREGATE_ID, LEGACY_JOB_AGGREGATE_ID } from "./jobs.ts"
-import { type JobDefinition, type JobDeps, JOBS } from "./registry.ts"
+import { type JobDefinition, type JobDeps, JOBS, SLOW_JOB_KINDS } from "./registry.ts"
 import type { ServerFiles } from "../files/files.ts"
 import { NOTES_ON } from "../notes/setup.ts"
+
+/**
+ * The worker's outbox lanes, one processor each (docs/jobs.md, "Lanes"): the slow jobs, and every
+ * other row, group changes included. Each lane runs one row at a time, so a batch of photos never
+ * holds a sign-in code back. Together they claim every kind exactly once.
+ */
+export const OUTBOX_LANES: readonly OutboxKindFilter[] = [
+  { only: SLOW_JOB_KINDS },
+  { except: SLOW_JOB_KINDS },
+]
 
 /**
  * The worker's outbox processor: group changes go to the notifier, and jobs to the handlers of
@@ -58,6 +69,9 @@ import { NOTES_ON } from "../notes/setup.ts"
  * without it, that job reads nothing. With `notes` off (`NOTES=false`), a data export holds no
  * notes, attachments or tags, and a new account gets no welcome note.
  *
+ * `lane` limits the rows this processor claims to one of {@link OUTBOX_LANES}, so the worker runs
+ * one processor per lane side by side. Without it, the processor claims every row.
+ *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
 export function createOutboxProcessor(
@@ -79,6 +93,7 @@ export function createOutboxProcessor(
   autoPost: JobDeps["autoPost"] = undefined,
   catalogPages: JobDeps["catalogPages"] = undefined,
   notes: JobDeps["notes"] = NOTES_ON,
+  lane?: OutboxKindFilter,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {
@@ -105,7 +120,7 @@ export function createOutboxProcessor(
   if (twice.length > 0) throw new Error(`Two jobs share a kind: ${[...new Set(twice)].join(`, `)}`)
   const { repeatEveryMs, repeatCron } = repeatSchedules(jobs)
   return new OutboxProcessor(
-    new PostgresOutboxRepository(sql),
+    new PostgresOutboxRepository(sql, { kinds: lane }),
     new JobPublisher({
       aggregateType: JOB_AGGREGATE,
       handlers: Object.fromEntries(jobs.map((job) => [job.kind, job.handler(deps)])),

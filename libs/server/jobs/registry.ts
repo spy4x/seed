@@ -482,6 +482,13 @@ export const JOBS: readonly JobDefinition[] = [
   }),
 ]
 
+/**
+ * The slow job kinds, which the worker runs in a lane of their own beside every other row
+ * (docs/jobs.md, "Lanes"): an image takes about ten seconds, and a batch of them would hold up a
+ * sign-in code queued after it. A new job that takes seconds belongs here.
+ */
+export const SLOW_JOB_KINDS: readonly string[] = [IMAGE_PROCESS_JOB, IMAGE_WIDTHS_JOB]
+
 /** The job of `kind`, or `undefined` for a kind no entry has (an old row, a group change). */
 export function jobDefinition(
   kind: string,
