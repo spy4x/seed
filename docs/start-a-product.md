@@ -90,7 +90,7 @@ shared ones. Delete those of pages the product deleted, and point the rest at th
 - `/features/sign-in`, `/features/realtime` and `/features/shortcuts`: the product's own feature
   slugs from `features-data.tsx`;
 - `/docs/api`, `/docs/get-started` and `/docs/capacity`: guides listed in the product's
-  `docs-list.ts`.
+  `docs-list.ts`. With `NOTES=false`, `/docs/api` answers 404, so delete it.
 
 A pull request measures only `QUICK_PATHS` in `lighthouse/quick.ts` (the home page, `/pricing`,
 the fixture blog post and `/docs`); each must stay in `lighthouserc.json`, or the check fails.
