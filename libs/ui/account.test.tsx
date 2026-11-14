@@ -559,6 +559,21 @@ describe("AppFrame", () => {
     expect(document.querySelector("[data-e2e=app-shell-sheet-theme]")).toBe(null)
   })
 
+  it("offers no Notes destination and no Tags entry, in the rail, the phone bar or the menu, when the notes are off", async () => {
+    const links = () =>
+      [...document.querySelectorAll("a[href]")].map((link) => link.getAttribute("href")!)
+    await mount(<AppFrame user={ada} onSignOut={() => {}}>page</AppFrame>)
+    const on = links()
+    await rerender(<AppFrame user={ada} onSignOut={() => {}} notes={false}>page</AppFrame>)
+    const off = links()
+
+    expect(on.filter((href) => href === "/notes" || href === "/tags").length).toBeGreaterThan(1)
+    expect(off.filter((href) => /^\/(notes|tags)(\/|$)/.test(href))).toEqual([])
+    expect(off).toContain("/overview")
+    expect(off).toContain("/groups")
+    expect(menuItems(ACCOUNT)).toEqual([HEADER, "Sign out"])
+  })
+
   it("names a person with no name by their e-mail address, written once", async () => {
     await mount(
       <AppFrame
