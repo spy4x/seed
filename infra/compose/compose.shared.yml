@@ -244,17 +244,20 @@ services:
   # endregion Storages
 
   # region Monitoring
-  # Two modes, chosen in the env file (docs/stack.md, "Monitoring"):
+  # Three modes, chosen in the env file (docs/stack.md, "Monitoring"):
   # - Bundled: COMPOSE_PROFILES=monitoring starts VictoriaMetrics, VictoriaLogs, Grafana, vmalert
-  #   and Alertmanager here, and vmagent and Vector send to them.
-  # - External: leave that profile off and set VM_REMOTE_WRITE_URL and VLOGS_URL (and their
-  #   credentials); vmagent and Vector send to that server instead.
-  # vmagent, Vector and the Postgres exporter run in both modes. The API and the worker are told
-  # nothing about either.
+  #   and Alertmanager here, and the shippers (vmagent, Vector, its socket proxy and the Postgres
+  #   exporter) send to them.
+  # - External: COMPOSE_PROFILES=telemetry starts only the shippers; set VM_REMOTE_WRITE_URL and
+  #   VLOGS_URL (and their credentials) to the server they send to.
+  # - Off: neither profile, and none of these containers starts.
+  # A shipper lists both profiles, so either one starts it. The API and the worker are told
+  # nothing about any mode, and no service outside this region waits for one of these.
 
   # Scrapes the targets in infra/configs/vmagent.yml and pushes them on.
   vmagent:
     container_name: ${PROJECT}-vmagent
+    profiles: [telemetry, monitoring]
     image: victoriametrics/vmagent:v1.146.0
     restart: unless-stopped
     volumes:
@@ -292,6 +295,7 @@ services:
   # answers Vector's address only, has no route to anywhere else and publishes no port.
   socket-proxy:
     container_name: ${PROJECT}-socket-proxy
+    profiles: [telemetry, monitoring]
     image: wollomatic/socket-proxy:1.13.1
     restart: unless-stopped
     # The socket belongs to root on the host, and its group's number differs from host to host.
@@ -334,6 +338,7 @@ services:
   # no Linux capability, no way to gain one, a read-only file system and no published port.
   vector:
     container_name: ${PROJECT}-vector
+    profiles: [telemetry, monitoring]
     image: timberio/vector:0.59.0-alpine
     restart: unless-stopped
     volumes:
@@ -385,6 +390,7 @@ services:
 
   postgres-prometheus-exporter:
     container_name: ${PROJECT}-postgres-prometheus-exporter
+    profiles: [telemetry, monitoring]
     image: quay.io/prometheuscommunity/postgres-exporter:v0.20.1
     restart: unless-stopped
     environment:
@@ -392,8 +398,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: ${POSTGRES_EXPORTER_CPU_LIMIT}
-          memory: '${POSTGRES_EXPORTER_MEM_LIMIT}'
+          cpus: '${POSTGRES_EXPORTER_CPU_LIMIT:-1}'
+          memory: '${POSTGRES_EXPORTER_MEM_LIMIT:-512m}'
     depends_on:
       - db
 
@@ -533,14 +539,14 @@ services:
       # The VictoriaMetrics and VictoriaLogs data sources.
       - ../../infra/configs/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro,Z
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS:-}
       # Grafana has no built-in VictoriaLogs data source; it downloads this plugin at first start.
       - GF_PLUGINS_PREINSTALL_SYNC=victoriametrics-logs-datasource@0.32.0
     deploy:
       resources:
         limits:
-          cpus: ${GRAFANA_CPU_LIMIT}
-          memory: '${GRAFANA_MEM_LIMIT}'
+          cpus: '${GRAFANA_CPU_LIMIT:-1}'
+          memory: '${GRAFANA_MEM_LIMIT:-512m}'
     logging:
       driver: json-file
       options:
@@ -563,7 +569,9 @@ services:
   # nodeexporter and cadvisor watch the whole host (its CPU, disk and network, and every
   # container's resources). On a shared server that duplicates the host's own monitoring, so they
   # start only with the `host-monitoring` profile: add it to COMPOSE_PROFILES in the env file.
-  # vmagent still lists their scrape jobs and shows them as down while they are off.
+  # vmagent still lists their scrape jobs and shows them as down while they are off. vmagent is
+  # not in this profile: alone it would push to a VictoriaMetrics that does not run, so pair
+  # `host-monitoring` with `monitoring` or `telemetry`.
   nodeexporter:
     container_name: ${PROJECT}-nodeexporter
     profiles: [host-monitoring]
@@ -582,8 +590,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: ${NODEEXPORTER_CPU_LIMIT}
-          memory: '${NODEEXPORTER_MEM_LIMIT}'
+          cpus: '${NODEEXPORTER_CPU_LIMIT:-1}'
+          memory: '${NODEEXPORTER_MEM_LIMIT:-512m}'
     logging:
       driver: json-file
       options:
@@ -604,8 +612,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: ${CADVISOR_CPU_LIMIT}
-          memory: '${CADVISOR_MEM_LIMIT}'
+          cpus: '${CADVISOR_CPU_LIMIT:-1}'
+          memory: '${CADVISOR_MEM_LIMIT:-512m}'
     logging:
       driver: json-file
       options:

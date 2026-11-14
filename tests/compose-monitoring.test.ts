@@ -3,7 +3,8 @@
  * Holds the monitoring services in `infra/compose` to what docs/stack.md's "Monitoring" section
  * promises: the stack is VictoriaMetrics and VictoriaLogs, never Prometheus, Loki or promtail
  * again; the databases and Grafana run only in the `monitoring` profile, while vmagent and Vector
- * always run and take their destination from the environment (spy4x/template#159).
+ * run in the `telemetry` and `monitoring` profiles and take their destination from the
+ * environment (spy4x/template#159, https://github.com/spy4x/seed/issues/987).
  */
 
 import { expect } from "@std/expect"
@@ -77,11 +78,11 @@ Deno.test("the databases, Grafana and the alerting run only in the monitoring pr
   }
 })
 
-Deno.test("vmagent, Vector and the Postgres exporter run in both modes", async () => {
+Deno.test("vmagent, Vector and the Postgres exporter run with the telemetry or the monitoring profile", async () => {
   const all = await services()
   for (const name of [`vmagent`, `vector`, `postgres-prometheus-exporter`]) {
     expect(all[name], `${name} exists`).toBeDefined()
-    expect(all[name].profiles, `${name} is in no profile`).toBeUndefined()
+    expect(all[name].profiles, name).toEqual([`telemetry`, `monitoring`])
   }
 })
 
@@ -231,9 +232,10 @@ Deno.test("no service but the socket proxy mounts the Docker socket", async () =
   expect(all[`socket-proxy`].volumes).toEqual([`${DOCKER_SOCKET}:${DOCKER_SOCKET}:ro`])
 })
 
-Deno.test("the socket proxy runs in both modes, from a pinned image", async () => {
-  const proxy = (await services())[`socket-proxy`]
-  expect(proxy.profiles).toBeUndefined()
+Deno.test("the socket proxy runs with Vector's profiles, from a pinned image", async () => {
+  const all = await services()
+  const proxy = all[`socket-proxy`]
+  expect(proxy.profiles).toEqual(all.vector.profiles)
   expect(proxy.image).toMatch(/^wollomatic\/socket-proxy:\d+\.\d+\.\d+$/)
 })
 
