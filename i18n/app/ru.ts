@@ -1437,6 +1437,8 @@ export default {
   "ProfileExport.asking": "Запрашиваем…",
   "ProfileExport.never":
     "ZIP-архив с профилем, группами и заметками в файлах JSON и CSV. Подготовка займёт несколько минут — когда всё будет готово, пришлём письмо.",
+  "ProfileExport.neverPlain":
+    "ZIP-архив с профилем и группами в файлах JSON и CSV. Подготовка займёт несколько минут — когда всё будет готово, пришлём письмо.",
   "ProfileExport.download": "Скачать мои данные",
   "ProfileExport.preparing": "Готовим файл. Когда он будет готов, пришлём письмо и уведомление.",
   "ProfileExport.ready":
@@ -1826,6 +1828,7 @@ export default {
   "Search.openProfile": "Открыть профиль",
   "Search.downloadData": "Скачать мои данные",
   "Search.downloadDetail": "ZIP-архив с профилем, группами и заметками",
+  "Search.downloadDetailPlain": "ZIP-архив с профилем и группами",
   "Search.changePicture": "Сменить фото профиля",
   "Shortcuts.general": "Общие",
   "Shortcuts.goTo": "Переход",

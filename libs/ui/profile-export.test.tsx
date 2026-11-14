@@ -123,6 +123,15 @@ describe(`DataExportRow`, () => {
     expect(requests).toEqual([1])
   })
 
+  it(`says the file holds the profile and groups, without notes, with the notes off`, async () => {
+    await mount(row({ notes: false }).node)
+
+    expect(text(`[data-e2e=data-export-state]`)).toBe(
+      `A ZIP of your profile and groups as JSON and CSV files. It takes a few minutes, ` +
+        `and we'll email you when it's ready.`,
+    )
+  })
+
   it(`does not ask again while a request is on its way`, async () => {
     const { node, requests } = row({ pending: true })
     await mount(node)

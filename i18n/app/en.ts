@@ -1265,6 +1265,8 @@ export default {
   "ProfileExport.asking": "Requesting…",
   "ProfileExport.never":
     "A ZIP of your profile, groups and notes as JSON and CSV files. It takes a few minutes, and we'll email you when it's ready.",
+  "ProfileExport.neverPlain":
+    "A ZIP of your profile and groups as JSON and CSV files. It takes a few minutes, and we'll email you when it's ready.",
   "ProfileExport.download": "Download my data",
   "ProfileExport.preparing":
     "Preparing your file. We'll email you and send a notification when it's ready.",
@@ -1620,6 +1622,7 @@ export default {
   "Search.openProfile": "Open profile",
   "Search.downloadData": "Download my data",
   "Search.downloadDetail": "A ZIP of your profile, groups and notes",
+  "Search.downloadDetailPlain": "A ZIP of your profile and groups",
   "Search.changePicture": "Change profile picture",
   "Shortcuts.general": "General",
   "Shortcuts.goTo": "Go to",

@@ -1216,6 +1216,8 @@ export default {
   "ProfileExport.asking": "リクエストしています…",
   "ProfileExport.never":
     "プロフィール、グループ、メモをJSONとCSVファイルにまとめたZIPです。作成には数分かかり、準備ができたらメールでお知らせします。",
+  "ProfileExport.neverPlain":
+    "プロフィールとグループをJSONとCSVファイルにまとめたZIPです。作成には数分かかり、準備ができたらメールでお知らせします。",
   "ProfileExport.download": "データをダウンロード",
   "ProfileExport.preparing":
     "ファイルを準備しています。準備ができたら、メールと通知でお知らせします。",
@@ -1569,6 +1571,7 @@ export default {
   "Search.openProfile": "プロフィールを開く",
   "Search.downloadData": "データをダウンロード",
   "Search.downloadDetail": "プロフィール、グループ、メモをまとめたZIP",
+  "Search.downloadDetailPlain": "プロフィールとグループをまとめたZIP",
   "Search.changePicture": "プロフィール写真を変更",
   "Shortcuts.general": "全般",
   "Shortcuts.goTo": "移動",

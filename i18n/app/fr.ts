@@ -1419,6 +1419,8 @@ export default {
   "ProfileExport.asking": "Demande en cours…",
   "ProfileExport.never":
     "Un fichier ZIP contenant votre profil, vos groupes et vos notes aux formats JSON et CSV. Cela prend quelques minutes, et nous vous enverrons un e-mail quand il sera prêt.",
+  "ProfileExport.neverPlain":
+    "Un fichier ZIP contenant votre profil et vos groupes aux formats JSON et CSV. Cela prend quelques minutes, et nous vous enverrons un e-mail quand il sera prêt.",
   "ProfileExport.download": "Télécharger mes données",
   "ProfileExport.preparing":
     "Préparation de votre fichier. Nous vous enverrons un e-mail et une notification quand il sera prêt.",
@@ -1811,6 +1813,7 @@ export default {
   "Search.openProfile": "Ouvrir le profil",
   "Search.downloadData": "Télécharger mes données",
   "Search.downloadDetail": "Un fichier ZIP de votre profil, de vos groupes et de vos notes",
+  "Search.downloadDetailPlain": "Un fichier ZIP de votre profil et de vos groupes",
   "Search.changePicture": "Changer de photo de profil",
   "Shortcuts.general": "Général",
   "Shortcuts.goTo": "Aller à",

@@ -384,6 +384,15 @@ describe("SearchPalette", () => {
     }
   })
 
+  it("with the notes off, says Download my data makes a ZIP of the profile and groups", async () => {
+    await mount({ notes: false })
+    await open()
+
+    await type("download")
+
+    expect(listed()).toContain("Download my data | A ZIP of your profile and groups")
+  })
+
   it("with the notes off, says nothing matches a one-character query instead of asking for notes", async () => {
     await mount({ notes: false })
     await open()

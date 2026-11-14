@@ -74,7 +74,7 @@ import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { providerProofOf } from "@ui/provider-proof.tsx"
 import { createDevicesStore } from "../state/devices.ts"
 import { createSignInMethodsStore } from "../state/sign-in-methods.ts"
-import { localReads } from "../modules.ts"
+import { localReads, notesOn } from "../modules.ts"
 import { groupsStore } from "../state/groups.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { preferencesState } from "../state/preferences.ts"
@@ -779,6 +779,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         pending: dataExport.pending.value,
         error: dataExport.error.value,
         onRequest: () => void dataExport.request(),
+        notes: notesOn(),
         downloadHref: DATA_EXPORT_DOWNLOAD_PATH,
       }}
       telegram={{

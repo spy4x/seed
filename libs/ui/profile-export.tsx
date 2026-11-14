@@ -35,6 +35,8 @@ export interface DataExportRowProps {
   downloadHref: string
   /** The present in epoch milliseconds, for "24 hours passed". Default: the time of the render. */
   now?: number
+  /** Whether the notes example is on; left out, it is. Off, the file is not said to hold notes. */
+  notes?: boolean
 }
 
 /**
@@ -80,7 +82,7 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
   let value: JSX.Element | string = "…"
   let action: JSX.Element | null = null
   if (exportState === null) {
-    value = t.t(`ProfileExport.never`)
+    value = t.t(props.notes === false ? `ProfileExport.neverPlain` : `ProfileExport.never`)
     action = ask(t.t(`ProfileExport.download`), "data-export-request")
   } else if (exportState) {
     switch (exportState.status) {

@@ -24,6 +24,7 @@ import { onboardingStore } from "../state/onboarding.ts"
 import { sessionState } from "../state/session.ts"
 import { toasts } from "../state/toasts.ts"
 import { ProfileView } from "./ProfileView.tsx"
+import { configureModules } from "../modules.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
 const NAMES = [
@@ -481,5 +482,25 @@ describe("ProfileView", () => {
     const { history } = await open("/profile/billing", <ProfileView section="billing" />)
 
     expect(history.at(-1)).toBe("/profile")
+  })
+
+  it("says the data file holds the profile and groups, without notes, with the notes off", async () => {
+    const state = () => root!.querySelector("[data-e2e=data-export-state]")?.textContent ?? ""
+    await open("/profile/account", <ProfileView section="account" />)
+    await settle()
+    const on = state()
+    await act(() => render(null, root!))
+    root!.remove()
+    configureModules({ notes: false })
+
+    try {
+      await open("/profile/account", <ProfileView section="account" />)
+      await settle()
+
+      expect(on).toMatch(/^A ZIP of your profile, groups and notes as JSON and CSV files\./)
+      expect(state()).toMatch(/^A ZIP of your profile and groups as JSON and CSV files\./)
+    } finally {
+      configureModules({})
+    }
   })
 })

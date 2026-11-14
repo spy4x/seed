@@ -1114,6 +1114,8 @@ export default {
   "ProfileExport.asking": "正在申请…",
   "ProfileExport.never":
     "一个 ZIP 文件，包含你的个人资料、群组和笔记（JSON 和 CSV 格式）。准备需要几分钟，完成后我们会发邮件通知你。",
+  "ProfileExport.neverPlain":
+    "一个 ZIP 文件，包含你的个人资料和群组（JSON 和 CSV 格式）。准备需要几分钟，完成后我们会发邮件通知你。",
   "ProfileExport.download": "下载我的数据",
   "ProfileExport.preparing": "正在准备你的文件。准备好后，我们会给你发邮件和通知。",
   "ProfileExport.ready": "<hidden>你的文件已准备好。</hidden>已就绪：{size}，有效期至<day></day>。",
@@ -1429,6 +1431,7 @@ export default {
   "Search.openProfile": "打开个人资料",
   "Search.downloadData": "下载我的数据",
   "Search.downloadDetail": "包含你的个人资料、群组和笔记的 ZIP 文件",
+  "Search.downloadDetailPlain": "包含你的个人资料和群组的 ZIP 文件",
   "Search.changePicture": "更换头像",
   "Shortcuts.general": "通用",
   "Shortcuts.goTo": "前往",

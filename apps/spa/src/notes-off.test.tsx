@@ -26,6 +26,7 @@ import type { TagsDependencies } from "./state/tags.ts"
 import { createOnboardingStore } from "./state/onboarding.ts"
 import { onboardingSteps, tourSteps } from "@ui/onboarding-card.tsx"
 import { ENGLISH } from "@ui/i18n-testing.ts"
+import { paletteCommands } from "@ui/palette-commands.ts"
 import { OverviewView } from "./views/OverviewView.tsx"
 
 /** An address of the notes example: the notes, the tags, or a group's old notes links. */
@@ -232,5 +233,28 @@ describe("the first steps with the notes off", () => {
     expect(tourSteps(ENGLISH).map((step) => step.target)).toContain(
       `[data-e2e="rail-shell-rail"] a[href="${NOTE_PATHS.list}"]`,
     )
+  })
+})
+
+describe("the data export with the notes off", () => {
+  it("says in the search palette that the file holds the profile and groups, not notes", () => {
+    const detail = (notes?: boolean) =>
+      paletteCommands({
+        t: ENGLISH,
+        locale: `en`,
+        currentGroup: null,
+        online: true,
+        theme: () => `system`,
+        shortcuts: [],
+        activityGroupId: null,
+        pageCommands: [],
+        guest: false,
+        benchmark: false,
+        canInstall: false,
+        notes,
+      }, () => {}).find((option) => option.id === `action-download-data`)?.detail
+
+    expect(detail()).toBe(`A ZIP of your profile, groups and notes`)
+    expect(detail(false)).toBe(`A ZIP of your profile and groups`)
   })
 })
