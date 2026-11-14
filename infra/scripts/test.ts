@@ -119,6 +119,10 @@ export const GROUPS: TestGroup[] = [
     paths: [`tests/compose-postgres.test.ts`],
   },
   {
+    flags: [`--allow-read=infra/compose,infra/configs/glitchtip-db.sql,infra/envs/.env.example`],
+    paths: [`tests/compose-errors.test.ts`],
+  },
+  {
     flags: [
       `--allow-read=infra/compose,infra/configs,infra/backup`,
       `--allow-run=sh`,
