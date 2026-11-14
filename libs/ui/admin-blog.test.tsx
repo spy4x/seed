@@ -15,6 +15,7 @@ import type {
   BlogRevision,
   BlogRevisionSummary,
 } from "@domain/blog"
+import { BLOG_SLUG_MAX_LENGTH } from "@domain/blog"
 import { useState } from "preact/hooks"
 import { LANGUAGES } from "@domain/identity"
 import { languageName } from "@spy4x/preact-ui/language-picker"
@@ -1213,10 +1214,13 @@ describe("figure problems in the editor (#620)", () => {
 })
 
 describe("the editor's rules", () => {
-  it("suggests a slug of the address's letters only", () => {
+  it("suggests a slug of the address's letters only, Cyrillic spelled in Latin", () => {
     expect(blogSlugFromTitle("Why Deno? (and not Node)")).toBe("why-deno-and-not-node")
     expect(blogSlugFromTitle("Café — crème brûlée")).toBe("cafe-creme-brulee")
-    expect(blogSlugFromTitle("Привет, мир")).toBe("")
+    expect(blogSlugFromTitle("Привет, мир")).toBe("privet-mir")
+    expect(blogSlugFromTitle("مرحبا بالعالم")).toBe("")
+    expect(blogSlugFromTitle("a".repeat(BLOG_SLUG_MAX_LENGTH + 5)).length)
+      .toBe(BLOG_SLUG_MAX_LENGTH)
   })
 
   it("moves the slug with the title until the slug is typed or the post was published", () => {

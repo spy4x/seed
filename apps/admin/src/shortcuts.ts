@@ -91,9 +91,10 @@ export const ADMIN_PAGE_ACTIONS: Readonly<
 
 /**
  * The pages whose save button takes Ctrl S (Command S on a Mac): the blog's editor and the
- * catalog's item editor. The blog's channels page is no post.
+ * catalog's item editor. The blog's channels page is no post, and the catalog's categories and
+ * sources pages are no item: their editors' save buttons take no key.
  */
-const SAVE_PAGES = /^\/(blog|catalog)\/(?!(categories|channels)(\/|$))[^/]+$/
+const SAVE_PAGES = /^\/(blog|catalog)\/(?!(categories|channels|sources)(\/|$))[^/]+$/
 
 /** A post's editor, new or saved, whose body takes F8 to its figure problems. */
 const BLOG_POST_PAGE = /^\/blog\/(?!channels$)[^/]+$/
