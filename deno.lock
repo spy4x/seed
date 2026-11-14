@@ -51,12 +51,14 @@
     "jsr:@std/crypto@1.1.0": "1.1.0",
     "jsr:@std/csv@1.0.6": "1.0.6",
     "jsr:@std/data-structures@^1.0.9": "1.1.3",
+    "jsr:@std/data-structures@^1.1.3": "1.1.3",
     "jsr:@std/encoding@1": "1.0.11",
     "jsr:@std/encoding@1.0.11": "1.0.11",
     "jsr:@std/expect@1.0.17": "1.0.17",
     "jsr:@std/fmt@~0.222.1": "0.222.1",
     "jsr:@std/front-matter@1.0.9": "1.0.9",
     "jsr:@std/fs@1.0.24": "1.0.24",
+    "jsr:@std/fs@^1.0.19": "1.0.24",
     "jsr:@std/fs@~0.222.1": "0.222.1",
     "jsr:@std/internal@^1.0.10": "1.0.14",
     "jsr:@std/internal@^1.0.12": "1.0.14",
@@ -67,6 +69,7 @@
     "jsr:@std/jsonc@~0.222.1": "0.222.1",
     "jsr:@std/media-types@1.1.0": "1.1.0",
     "jsr:@std/path@1.1.6": "1.1.6",
+    "jsr:@std/path@^1.1.2": "1.1.6",
     "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@std/path@~0.222.1": "0.222.1",
     "jsr:@std/semver@1.0.8": "1.0.8",
@@ -97,6 +100,7 @@
     "npm:@playwright/test@1.57.0": "1.57.0",
     "npm:@preact/preset-vite@2.10.2": "2.10.2_@babel+core@7.29.7_vite@7.3.6_preact@10.29.8_preact-render-to-string@6.7.0",
     "npm:@preact/signals-core@1.12.1": "1.12.1",
+    "npm:@preact/signals-core@^1.12.1": "1.12.1",
     "npm:@preact/signals@2.5.1": "2.5.1_preact@10.29.8",
     "npm:@preact/signals@^2.5.1": "2.5.1_preact@10.29.8",
     "npm:@scure/base@2": "2.4.0",
@@ -197,6 +201,7 @@
     "@spy4x/email@1.126.0": {
       "integrity": "3b45c04316a5d807c7131a7682ba3ac0f11a05bac5ac7870d3cf40e45e2dbff3",
       "dependencies": [
+        "jsr:@spy4x/net@^1.126.0",
         "jsr:@spy4x/time@^1.126.0",
         "jsr:@std/encoding@1.0.11",
         "npm:nodemailer"
@@ -243,6 +248,9 @@
         "jsr:@spy4x/preact-icons@^14.8.0",
         "jsr:@spy4x/preact-ui@^14.8.0",
         "jsr:@spy4x/time@1.126.0",
+        "jsr:@spy4x/validation@1.126.0",
+        "npm:@preact/signals@^2.5.1",
+        "npm:arktype",
         "npm:preact@^10.29.8",
         "npm:tailwind-merge"
       ]
@@ -273,7 +281,12 @@
       "integrity": "aabd05fe5dfd3338d26f51371b4501b7a7c2b1a4d1f62bb173b616f8d4290ca7",
       "dependencies": [
         "jsr:@spy4x/platform@1.126.0",
+        "jsr:@spy4x/time@1.126.0",
+        "jsr:@spy4x/validation@1.126.0",
+        "jsr:@std/encoding@1.0.11",
+        "npm:@preact/signals-core@^1.12.1",
         "npm:@preact/signals@^2.5.1",
+        "npm:arktype",
         "npm:preact@^10.29.8",
         "npm:wouter-preact"
       ]
@@ -286,6 +299,7 @@
         "jsr:@spy4x/preact-icons@^14.8.0",
         "jsr:@spy4x/preact-theme@^14.8.0",
         "jsr:@spy4x/preact-ui@^14.8.0",
+        "jsr:@spy4x/time@1.126.0",
         "npm:@preact/signals@^2.5.1",
         "npm:preact@^10.29.8"
       ]
@@ -376,7 +390,10 @@
       ]
     },
     "@std/async@1.5.1": {
-      "integrity": "c82455dc70cab29a0adf3ac8075db934785bffdd3902af5afcf25d21a74cfd86"
+      "integrity": "c82455dc70cab29a0adf3ac8075db934785bffdd3902af5afcf25d21a74cfd86",
+      "dependencies": [
+        "jsr:@std/data-structures@^1.1.3"
+      ]
     },
     "@std/bytes@1.0.6": {
       "integrity": "f6ac6adbd8ccd99314045f5703e23af0a68d7f7e58364b47d2c7f408aeb5820a"
@@ -486,8 +503,10 @@
       "dependencies": [
         "jsr:@std/assert@^1.0.15",
         "jsr:@std/async@^1.0.15",
-        "jsr:@std/data-structures",
-        "jsr:@std/internal@^1.0.12"
+        "jsr:@std/data-structures@^1.0.9",
+        "jsr:@std/fs@^1.0.19",
+        "jsr:@std/internal@^1.0.12",
+        "jsr:@std/path@^1.1.2"
       ]
     },
     "@std/toml@1.0.11": {
