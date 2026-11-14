@@ -182,7 +182,8 @@ services:
         max-file: '3'
 
   # The file store (docs/files.md): Garage, which speaks the S3 API. Only with
-  # COMPOSE_PROFILES=files; without the profile the API uses the S3 store S3_ENDPOINT names.
+  # COMPOSE_PROFILES=files; without the profile the API uses the S3 store S3_ENDPOINT names, or
+  # none with FILES=false.
   # `--single-node --default-bucket` lays out the one node and creates the key and the bucket from
   # the environment on every start; a start with both already there changes nothing. The image is
   # the `garage` binary alone, with no shell. The bucket is private: every request needs a
@@ -978,6 +979,9 @@ services:
       # shared `proxy` network that sends such a header is refused
       # (apps/api/middlewares/proxy-peer.ts).
       - PROXY_HOSTS=traefik,${PROJECT}-mpa
+      # Files (docs/files.md, "Without files"): `false` turns uploads, downloads and data exports
+      # off, and the API then reads no S3_* below. On unless `false`.
+      - FILES=${FILES:-}
       # The file store (docs/files.md). Empty ones stop the API with an error naming them. The
       # endpoint defaults to the bundled Garage; the public one is what browsers sign against.
       - S3_ENDPOINT=${S3_ENDPOINT:-http://${PROJECT}-garage:3900}
@@ -1115,7 +1119,8 @@ services:
       - AUTH_PEPPER=${AUTH_PEPPER:-}
       # The file store (docs/files.md): the worker keeps a person's data export there
       # (docs/data-export.md) and deletes removed attachments and abandoned uploads. The same store
-      # and key as the API's.
+      # and key as the API's. `FILES=false` (docs/files.md, "Without files"): none is read.
+      - FILES=${FILES:-}
       - S3_ENDPOINT=${S3_ENDPOINT:-http://${PROJECT}-garage:3900}
       - S3_REGION=${S3_REGION:-garage}
       - S3_BUCKET=${S3_BUCKET:-${PROJECT}-files}

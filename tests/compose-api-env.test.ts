@@ -131,6 +131,13 @@ Deno.test("the api container receives the sign-up mode", async () => {
   expect(await environmentOf("api")).toContain("SIGN_UP")
 })
 
+// Without it `FILES=false` in `.env` would leave the API demanding S3_* and probing a store nobody
+// runs, and the worker warning about it on every start.
+Deno.test("the api and worker containers receive the files switch", async () => {
+  expect(await environmentOf("api")).toContain("FILES")
+  expect(await environmentOf("worker")).toContain("FILES")
+})
+
 // Without it `NOTES=false` in `.env` would leave the notes API on: the API never sees it.
 Deno.test("the api container receives the notes switch", async () => {
   expect(await environmentOf("api")).toContain("NOTES")
