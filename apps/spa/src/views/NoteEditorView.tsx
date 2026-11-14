@@ -109,6 +109,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
     noteEditorPageActions.value = offeredNoteActions({
       canWrite,
       noteOpen: shownId !== null && saved !== undefined,
+      creating,
       canMove,
     }, {
       // Focus lands on the button too, so the person is there once the chooser closes.
@@ -130,7 +131,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
       move: () => openDialog(`move`),
     })
     return () => noteEditorPageActions.value = null
-  }, [canWrite, canMove, shownId, saved, membership?.name, t])
+  }, [canWrite, creating, canMove, shownId, saved, membership?.name, t])
   // A route change focuses the loading page's heading, which the note's own heading then replaces,
   // leaving focus on the page body. Once the note shows, lost focus goes to its heading.
   const wasLoading = useRef(loading)
