@@ -64,12 +64,14 @@ example file starts `monitoring,files`.
 | Profile           | What it adds                                                                     |
 | ----------------- | -------------------------------------------------------------------------------- |
 | `monitoring`      | VictoriaMetrics, VictoriaLogs and Grafana, at http://localhost:3000              |
+| `telemetry`       | Only the shippers, vmagent and Vector, which send to another monitoring server   |
 | `files`           | Garage, the file store ([files](files.md))                                       |
 | `host-monitoring` | node-exporter and cAdvisor. They watch the whole machine, so they are off        |
 | `admin`, `mpa`    | The admin app and the public website ([the three apps](apps.md))                 |
 
-Without `monitoring`, set `VM_REMOTE_WRITE_URL` and `VLOGS_URL` to send metrics and logs to a
-monitoring server you already have. [The stack guide](stack.md#monitoring) describes both modes.
+With `telemetry` instead of `monitoring`, set `VM_REMOTE_WRITE_URL` and `VLOGS_URL` to send
+metrics and logs to a monitoring server you already have; with neither, nothing is collected.
+[The stack guide](stack.md#optional-parts) lists the three modes of every optional part.
 Grafana's sign-in is in [Admin consoles](operator-access.md#admin-consoles).
 
 ## Migrations
