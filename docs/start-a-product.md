@@ -223,8 +223,9 @@ accepted invitation open the overview, and the overview shows no note widgets. A
 first steps sit on the overview instead, with no note step and no tour stop on the notes, and "Download
 my data" names the profile and groups only. The app's billing screen shows no plan lines, but the
 plans in `libs/domain/billing/+lib.ts` still list notes and files (`features`, `limits`), and the
-website's pricing page shows them: write your own. The token screens still name notes for now
-([#1015](https://github.com/spy4x/seed/issues/1015)); so does the demo.
+website's pricing page shows them: write your own. The personal API tokens are hidden, since their
+API serves the notes only: the profile and the palette offer no API tokens, `/tokens/new` shows the
+not-found page and `/profile/api-tokens` opens the profile. The demo still names notes.
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):
