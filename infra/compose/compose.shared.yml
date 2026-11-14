@@ -670,8 +670,8 @@ services:
   # there is no separate worker. It applies its own migrations when it starts, under a lock. It
   # keeps events in its database and its task queue and cache in Valkey's database 1; the API uses
   # database 0. Pinned by digest as well as version: it runs migrations on this project's Postgres.
-  glitchtip:
-    container_name: ${PROJECT}-glitchtip
+  errors:
+    container_name: ${PROJECT}-errors
     profiles: [errors]
     image: docker.io/glitchtip/glitchtip:7.0.0@sha256:c245745b4179667da3aebd73fb8d4f1fd918f7d68ba07d1fd73ea688933b6e01
     restart: unless-stopped
@@ -694,6 +694,9 @@ services:
       - SECRET_KEY=${GLITCHTIP_SECRET_KEY:-}
       # The address in every DSN it shows; compose.prod.yml makes it https.
       - GLITCHTIP_DOMAIN=http://${ERRORS_DOMAIN:-}
+      # Browsers come by ERRORS_DOMAIN, the API by the container's name
+      # (infra/scripts/errors-setup.ts) and the healthcheck by localhost.
+      - ALLOWED_HOSTS=${ERRORS_DOMAIN:-},${PROJECT}-errors,localhost
       # Accounts come from `deno task errors:setup` and invitations, never from a sign-up form.
       - ENABLE_USER_REGISTRATION=false
       - ENABLE_ORGANIZATION_CREATION=false

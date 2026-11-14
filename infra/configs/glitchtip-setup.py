@@ -1,8 +1,8 @@
 """GlitchTip's side of `deno task errors:setup` (infra/scripts/errors-setup.ts).
 
-Runs inside the `glitchtip` container, which mounts this file, and makes what the project reports
-to: the operator's superuser, an organization named after the project, a team holding both, and
-two projects, `api` and `spa`. Each is looked up first and made only when missing, so a second run
+Runs inside the `errors` container, GlitchTip, which mounts this file, and makes what the project
+reports to: the operator's superuser, an organization named after the project, a team holding
+both, and two projects, `api` and `spa`. Each is looked up first and made only when missing, so a second run
 changes nothing; an existing user keeps the password it has. Read from the environment:
 SETUP_ORGANIZATION, SETUP_ADMIN_EMAIL and SETUP_ADMIN_PASSWORD.
 

@@ -112,7 +112,7 @@ services:
 
   # Only with COMPOSE_PROFILES=errors. Overrides compose.shared.yml's errors router by name, and
   # the DSNs GlitchTip shows name the https address.
-  glitchtip:
+  errors:
     environment:
       - GLITCHTIP_DOMAIN=https://${ERRORS_DOMAIN:-}
     labels:

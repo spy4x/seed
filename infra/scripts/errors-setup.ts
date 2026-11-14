@@ -3,9 +3,9 @@
  * `deno task errors:setup`: once the `errors` profile's GlitchTip runs, makes what the project
  * reports to and writes the two DSNs into `infra/envs/.env` (docs/stack.md, "Error tracking").
  *
- * In the running `glitchtip` container it runs `infra/configs/glitchtip-setup.py`, which makes the
- * superuser (`DEV_EMAIL`, first password `GLITCHTIP_ADMIN_PASSWORD`), an organization named after
- * `PROJECT` and the projects `api` and `spa`, each only when missing. Then it sets
+ * In the running `errors` container, GlitchTip, it runs `infra/configs/glitchtip-setup.py`, which
+ * makes the superuser (`DEV_EMAIL`, first password `GLITCHTIP_ADMIN_PASSWORD`), an organization
+ * named after `PROJECT` and the projects `api` and `spa`, each only when missing. Then it sets
  * `ERROR_REPORT_DSN` and `SPA_ERROR_REPORT_DSN` while they are empty, and keeps a value someone
  * set. Safe to run again: a second run makes nothing and writes nothing. It never prints a DSN or a
  * password.
@@ -85,7 +85,7 @@ export function internalDsn(dsn: string, project: string): string {
   if (!url?.username || !/^\/\d+$/.test(url.pathname)) {
     throw new Error(`GlitchTip gave no usable DSN; check ERRORS_DOMAIN`)
   }
-  return `http://${url.username}@${project}-glitchtip:${GLITCHTIP_PORT}${url.pathname}`
+  return `http://${url.username}@${project}-errors:${GLITCHTIP_PORT}${url.pathname}`
 }
 
 /** What {@link writeDsns} did to each DSN variable. */
@@ -142,7 +142,7 @@ if (import.meta.main) {
     `exec`,
     `-T`,
     ...inputs.flatMap((name) => [`-e`, name]),
-    `glitchtip`,
+    `errors`,
     `python`,
     `/seed/glitchtip-setup.py`,
   ], ENV_PATH)
