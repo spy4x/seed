@@ -1,6 +1,7 @@
 /**
  * The open page's own commands, which the shell's palette lists under "This page". A view hands
- * them over with {@link usePageCommands}; they leave with the view, so no command outlives its page.
+ * them over with {@link usePageCommands}; they leave with the view, so no command outlives its
+ * page.
  *
  * @module
  */

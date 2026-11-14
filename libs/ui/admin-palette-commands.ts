@@ -139,10 +139,10 @@ function englishText(key: string, values?: Record<string, string>): string {
 /**
  * Every command the operator can take now, under their headings in the order the palette lists
  * them: This page, Go to, Settings, Account. This page lists the open page's own commands, which
- * the page hands over already gated as its buttons are. A destination is listed only while its module is shown, and
- * "Search this list" only on a list whose search field `/` focuses. Each is found by its label,
- * by its English label in every language, and by the words an operator would try, in English and
- * Russian.
+ * the page hands over already gated as its buttons are. A destination is listed only while its
+ * module is shown, and "Search this list" only on a list whose search field `/` focuses. Each is
+ * found by its label, by its English label in every language, and by the words an operator would
+ * try, in English and Russian.
  *
  * @param context The admin app's state.
  * @param select Runs a choice made with the palette still open: a theme, or the single keys.

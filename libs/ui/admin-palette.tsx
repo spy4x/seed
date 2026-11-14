@@ -43,8 +43,9 @@ const ADMIN_SEARCH_HOTKEYS: readonly string[] = [`mod+k`]
  * "Search" entries open it by clicking its hidden one (`openSearch`), and it binds Ctrl K itself,
  * with its always-drawn root as what has to be on screen.
  *
- * It lists the commands of {@link adminPaletteCommands}, the open page's own first, ranked as the product's palette ranks them
- * (`matchOptions`: aliases, word order, one typo, the other keyboard layout and alphabet). A query
+ * It lists the commands of {@link adminPaletteCommands}, the open page's own first, ranked as the
+ * product's palette ranks them (`matchOptions`: aliases, word order, one typo, the other keyboard
+ * layout and alphabet). A query
  * adds "Find user …" and "Find group …" after them ({@link adminFindCommands}). Theme opens a
  * submenu whose rows change the theme at once, and Single-key shortcuts switches at once; both
  * keep the palette open.
