@@ -884,6 +884,31 @@ describe("the admin dashboard", () => {
   })
 })
 
+describe("the admin dashboard with the notes switched", () => {
+  /** The text of each element with no child element: a parent's text runs its children together. */
+  const leafTexts = (scope: Element) =>
+    [...scope.querySelectorAll(`*`)].filter((element) => element.children.length === 0)
+      .map((element) => element.textContent ?? ``)
+
+  it("shows the Notes card with the notes on or left out", async () => {
+    for (const notes of [true, undefined]) {
+      await mount(
+        <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} notes={notes} />,
+      )
+      expect(find("[data-e2e=admin-dashboard-stats]").textContent).toContain("Notes")
+    }
+  })
+
+  it("leaves the Notes card out with the notes off, and no card names notes", async () => {
+    await mount(
+      <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} notes={false} />,
+    )
+    const cards = leafTexts(find("[data-e2e=admin-dashboard-stats]"))
+    expect(cards.filter((text) => /\b(notes?|tags?|files?)\b/i.test(text))).toEqual([])
+    expect(cards).toContain("Groups")
+  })
+})
+
 describe("the admin sign-in", () => {
   it("sends the login and password, with no sign-up and no provider", async () => {
     const calls: unknown[][] = []

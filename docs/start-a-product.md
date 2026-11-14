@@ -209,8 +209,10 @@ there.
 merge cleanly. The API then answers 404 to every note, tag and attachment route and to the
 personal-token API (`/api/v1`), which serves notes only, and refuses their operations over the
 socket and `/api/call` as unknown ones. The changes pull and the Telegram bot's `/notes` leave
-them out too, and the admin app's group page shows no note widgets and no Files tab
-([admin-modules.md](admin-modules.md#what-an-operator-may-see)); moving a group's data leaves
+them out too, and the admin app's group page shows no note widgets, no Files tab and no note, tag
+or file counts ([admin-modules.md](admin-modules.md#what-an-operator-may-see)); its dashboard
+shows no Notes card, the group list no Notes column, and the audit log's event filter offers no
+note, tag or file event. Moving a group's data leaves
 notes and tags where they are, and a new account gets no welcome note. A person's data export, a group's export
 file and spreadsheets leave them out, and a group import skips them (the worker reads `NOTES` too,
 for the data export and the welcome note). The website reads it as well: `/docs/api`, the personal-token API's
@@ -220,7 +222,8 @@ links it. The tables and migrations stay, as the catalog's do. Unset or anything
 
 Set `SPA_NOTES=false` with it, for the app's screens: the rail, the palette and the keyboard
 shortcuts then offer no notes or tags, `/notes` and `/tags` show the not-found page, sign-in and an
-accepted invitation open the overview, and the overview shows no note widgets. A new account's
+accepted invitation open the overview, and the overview shows no note widgets. A group's empty
+Activity tab does not mention notes. A new account's
 first steps sit on the overview instead, with no note step and no tour stop on the notes, and "Download
 my data" names the profile and groups only. The app's billing screen shows no plan lines, but the
 plans in `libs/domain/billing/+lib.ts` still list notes and files (`features`, `limits`), and the

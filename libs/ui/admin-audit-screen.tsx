@@ -25,6 +25,7 @@ import {
   ADMIN_AUDIT_EXPORTED_KIND,
   ADMIN_AUDIT_NO_FILTER,
   ADMIN_AUDIT_SEARCH_MAX,
+  ADMIN_FILE_AUDIT_KINDS,
   ADMIN_FILE_DOWNLOADED_KIND,
   ADMIN_FILE_OPENED_KIND,
   ADMIN_JOB_CANCELLED_KIND,
@@ -172,14 +173,23 @@ function entryTone(entry: AdminAuditEntry): TimelineTone {
   return entry.byOperator ? "warning" : "neutral"
 }
 
+/** Whether an event kind is about notes, tags or their files, which exist only with the notes on. */
+function notesKind(kind: string): boolean {
+  return kind.startsWith(`note.`) || kind.startsWith(`tag.`) ||
+    ADMIN_FILE_AUDIT_KINDS.includes(kind)
+}
+
 /**
  * Every event the filter offers: the account events, then group activity (Seed's kinds, then the
- * product's), then operator actions.
+ * product's), then operator actions. With the notes off (`notes: false`) the note, tag and file
+ * events are left out.
  */
 export function eventOptions(
   t: Translator<string>,
   productKinds: readonly ProductActivityKind[] = PRODUCT_ACTIVITY_KINDS,
+  notes = true,
 ): SelectOption[] {
+  const offered = (kind: string) => notes || !notesKind(kind)
   const label = (key: string, event: string | undefined, code: string) =>
     t.t(key, { event: event ? t.t(event) : code })
   return [
@@ -187,7 +197,7 @@ export function eventOptions(
       value: accountAuditEvent(Number(eventType)),
       label: label(`AdminAudit.optionAccount`, event, eventType),
     })),
-    ...ACTIVITY_KINDS.map((kind) => ({
+    ...ACTIVITY_KINDS.filter(offered).map((kind) => ({
       value: activityAuditEvent(kind),
       label: label(`AdminAudit.optionGroup`, ACTIVITY_LABELS[kind], kind),
     })),
@@ -195,7 +205,7 @@ export function eventOptions(
       value: activityAuditEvent(kind),
       label: label(`AdminAudit.optionGroup`, event, kind),
     })),
-    ...ADMIN_OPERATOR_ACTIVITY_KINDS.map((kind) => ({
+    ...ADMIN_OPERATOR_ACTIVITY_KINDS.filter(offered).map((kind) => ({
       value: activityAuditEvent(kind),
       label: label(`AdminAudit.optionOperator`, ACTIVITY_LABELS[kind], kind),
     })),
@@ -234,6 +244,8 @@ export interface AdminAuditScreenProps {
   onFilter: (filter: AdminAuditFilter) => void
   onView: (view: AdminAuditView) => void
   onMore: () => void
+  /** Whether the notes are on (`NOTES`). Off, the event filter offers no note, tag or file event. Left out: on. */
+  notes?: boolean
   navigate?: Navigate
 }
 
@@ -268,6 +280,7 @@ export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
         filter={filter}
         operators={props.operators}
         pending={props.pending}
+        notes={props.notes !== false}
         onFilter={props.onFilter}
       />
 
@@ -331,10 +344,11 @@ export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
 
 /** The filter form: what the operator types, applied together. */
 function FilterForm(
-  { filter, operators, pending, onFilter }: {
+  { filter, operators, pending, notes, onFilter }: {
     filter: AdminAuditFilter
     operators: readonly AdminAuditOperator[]
     pending: boolean
+    notes: boolean
     onFilter: (filter: AdminAuditFilter) => void
   },
 ): JSX.Element {
@@ -364,7 +378,7 @@ function FilterForm(
               <Select
                 name="event"
                 data-e2e="admin-audit-event"
-                options={eventOptions(t)}
+                options={eventOptions(t, PRODUCT_ACTIVITY_KINDS, notes)}
                 placeholder={t.t(`AdminAudit.everyEvent`)}
                 value={draft.event ?? ""}
                 onChange={(event) => set({ event: text(event) || null })}

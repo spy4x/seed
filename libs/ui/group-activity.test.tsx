@@ -118,6 +118,18 @@ describe("group activity panel", () => {
     expect(page).not.toContain(`data-e2e="activity-list"`)
   })
 
+  it("names the notes in the empty hint with the notes on or left out", () => {
+    for (const notes of [true, undefined]) {
+      expect(html({ notes })).toContain("Changes to the group and its notes show up here.")
+    }
+  })
+
+  it("does not name notes in the empty hint with the notes off", () => {
+    const page = html({ notes: false })
+    expect(page).toContain("Changes to the group show up here.")
+    expect(page).not.toMatch(/\b(notes?|tags?|files?)\b/i)
+  })
+
   it("shows a read error in place of the empty list", () => {
     const page = html({ error: "The server is out of reach." })
     expect(page).toContain("The server is out of reach.")

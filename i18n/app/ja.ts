@@ -46,6 +46,7 @@ export default {
   "GroupActivity.loading": "アクティビティを読み込んでいます…",
   "GroupActivity.empty": "まだ何も起きていません。",
   "GroupActivity.emptyHint": "グループやメモの変更がここに表示されます。",
+  "GroupActivity.emptyHintGroupOnly": "グループの変更がここに表示されます。",
   "GroupActivity.loadingMore": "読み込んでいます…",
   "GroupActivity.loadMore": "さらに読み込む",
   "GroupActivity.openNote": "メモを開く",

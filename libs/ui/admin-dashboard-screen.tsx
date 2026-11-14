@@ -67,6 +67,8 @@ export interface AdminDashboardScreenProps {
   error: string | null
   /** Reads the numbers again. */
   onRetry: () => void
+  /** Whether the notes are on (`NOTES`). Off, the Notes card is left out. Left out: on. */
+  notes?: boolean
 }
 
 /**
@@ -74,7 +76,7 @@ export interface AdminDashboardScreenProps {
  * two 30-day charts, sign-ups and active people per day. Counts only: nobody's name or content.
  */
 export function AdminDashboardScreen(
-  { stats, error, onRetry }: AdminDashboardScreenProps,
+  { stats, error, onRetry, notes }: AdminDashboardScreenProps,
 ): JSX.Element {
   const t = useAdminText()
   return (
@@ -101,12 +103,12 @@ export function AdminDashboardScreen(
               <LoadingSkeleton rows={6} />
             </div>
           )
-        : <DashboardBody stats={stats} />}
+        : <DashboardBody stats={stats} notes={notes !== false} />}
     </Stack>
   )
 }
 
-function DashboardBody({ stats }: { stats: AdminStats }): JSX.Element {
+function DashboardBody({ stats, notes }: { stats: AdminStats; notes: boolean }): JSX.Element {
   const t = useAdminText()
   const format = useFormat()
   return (
@@ -148,11 +150,13 @@ function DashboardBody({ stats }: { stats: AdminStats }): JSX.Element {
             value={format.number(stats.groups)}
             tone="neutral"
           />
-          <Kpi
-            label={t.t(`AdminDashboard.notes`)}
-            value={format.number(stats.notes)}
-            tone="neutral"
-          />
+          {notes && (
+            <Kpi
+              label={t.t(`AdminDashboard.notes`)}
+              value={format.number(stats.notes)}
+              tone="neutral"
+            />
+          )}
         </KpiGrid>
       </section>
       {stats.guests && <GuestKpis guests={stats.guests} days={stats.signUpsPerDay.length} />}

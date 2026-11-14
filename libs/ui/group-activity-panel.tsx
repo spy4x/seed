@@ -37,6 +37,8 @@ export interface GroupActivityPanelProps {
   error: string | null
   /** The person is a member, but an editor or a viewer: the log is for admins and the owner. */
   forbidden?: boolean
+  /** Whether the notes are on (`SPA_NOTES`). Off, the empty hint does not name notes. Left out: on. */
+  notes?: boolean
   navigate?: Navigate
 }
 
@@ -72,7 +74,11 @@ export function GroupActivityPanel(props: GroupActivityPanelProps): JSX.Element 
                 headingLevel={2}
                 inset
                 title={props.loading ? t.t(`GroupActivity.loading`) : t.t(`GroupActivity.empty`)}
-                description={props.loading ? undefined : t.t(`GroupActivity.emptyHint`)}
+                description={props.loading ? undefined : t.t(
+                  props.notes === false
+                    ? `GroupActivity.emptyHintGroupOnly`
+                    : `GroupActivity.emptyHint`,
+                )}
               />
             </Card>
           )
