@@ -825,6 +825,7 @@ export default {
   "OnboardingCard.noteAction": "كتابة ملاحظة",
   "OnboardingCard.inviteTitle": "ادعُ شخصًا إلى مجموعتك",
   "OnboardingCard.inviteText": "سيرى الملاحظات نفسها مباشرة، بالدور الذي تمنحه إياه.",
+  "OnboardingCard.inviteTextPlain": "سيرى تغييرات المجموعة مباشرة، بالدور الذي تمنحه إياه.",
   "OnboardingCard.inviteAction": "دعوة شخص",
   "OnboardingCard.notificationsTitle": "فعّل الإشعارات",
   "OnboardingCard.notificationsText": "اعرف بالتغييرات فور حدوثها، حتى والتطبيق مغلق.",
@@ -838,6 +839,7 @@ export default {
   "OnboardingCard.tourGroupsTitle": "المجموعات",
   "OnboardingCard.tourGroupsText":
     "الملاحظات تعيش داخل المجموعات. أنشئ المجموعات من هنا، وادعُ الآخرين واختر أدوارهم.",
+  "OnboardingCard.tourGroupsTextPlain": "أنشئ المجموعات من هنا، وادعُ الآخرين واختر أدوارهم.",
   "OnboardingCard.tourNotificationsTitle": "الإشعارات",
   "OnboardingCard.tourNotificationsText": "ما حدث في غيابك، كدعوة جديدة مثلًا.",
   "OnboardingCard.tourProfileTitle": "الملف الشخصي",
@@ -1490,6 +1492,8 @@ export default {
   "ProfileExport.asking": "جارٍ الطلب…",
   "ProfileExport.never":
     "ملف ZIP يضم ملفك الشخصي ومجموعاتك وملاحظاتك بصيغتي JSON وCSV. يستغرق تجهيزه بضع دقائق، وسنراسلك بالبريد حين يجهز.",
+  "ProfileExport.neverPlain":
+    "ملف ZIP يضم ملفك الشخصي ومجموعاتك بصيغتي JSON وCSV. يستغرق تجهيزه بضع دقائق، وسنراسلك بالبريد حين يجهز.",
   "ProfileExport.download": "تنزيل بياناتي",
   "ProfileExport.preparing": "نجهّز ملفك الآن. سنراسلك بالبريد ونرسل إشعارًا حين يجهز.",
   "ProfileExport.ready": "<hidden>ملفك جاهز. </hidden>جاهز: {size}، حتى <day></day>.",
@@ -1867,6 +1871,7 @@ export default {
   "Search.openProfile": "فتح الملف الشخصي",
   "Search.downloadData": "تنزيل بياناتي",
   "Search.downloadDetail": "ملف ZIP يضم ملفك الشخصي ومجموعاتك وملاحظاتك",
+  "Search.downloadDetailPlain": "ملف ZIP يضم ملفك الشخصي ومجموعاتك",
   "Search.changePicture": "تغيير صورة الملف الشخصي",
   "Shortcuts.general": "عام",
   "Shortcuts.goTo": "الانتقال إلى",

@@ -732,6 +732,8 @@ export default {
   "OnboardingCard.inviteTitle": "Convide alguém para o seu grupo",
   "OnboardingCard.inviteText":
     "A pessoa vê as mesmas notas em tempo real, com a função que você der a ela.",
+  "OnboardingCard.inviteTextPlain":
+    "A pessoa vê as mudanças do grupo em tempo real, com a função que você der a ela.",
   "OnboardingCard.inviteAction": "Convidar alguém",
   "OnboardingCard.notificationsTitle": "Ative as notificações",
   "OnboardingCard.notificationsText": "Fique sabendo das mudanças, mesmo com o app fechado.",
@@ -746,6 +748,8 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Grupos",
   "OnboardingCard.tourGroupsText":
     "As notas ficam dentro de grupos. Crie grupos aqui, convide pessoas e escolha a função de cada uma.",
+  "OnboardingCard.tourGroupsTextPlain":
+    "Crie grupos aqui, convide pessoas e escolha a função de cada uma.",
   "OnboardingCard.tourNotificationsTitle": "Notificações",
   "OnboardingCard.tourNotificationsText":
     "O que aconteceu enquanto você estava fora, como um convite.",
@@ -1364,6 +1368,8 @@ export default {
   "ProfileExport.asking": "Pedindo…",
   "ProfileExport.never":
     "Um ZIP com seu perfil, grupos e notas em arquivos JSON e CSV. Leva alguns minutos, e avisamos por e-mail quando estiver pronto.",
+  "ProfileExport.neverPlain":
+    "Um ZIP com seu perfil e grupos em arquivos JSON e CSV. Leva alguns minutos, e avisamos por e-mail quando estiver pronto.",
   "ProfileExport.download": "Baixar meus dados",
   "ProfileExport.preparing":
     "Preparando seu arquivo. Quando estiver pronto, avisamos por e-mail e por notificação.",
@@ -1744,6 +1750,7 @@ export default {
   "Search.openProfile": "Abrir perfil",
   "Search.downloadData": "Baixar meus dados",
   "Search.downloadDetail": "Um ZIP com seu perfil, grupos e notas",
+  "Search.downloadDetailPlain": "Um ZIP com seu perfil e grupos",
   "Search.changePicture": "Trocar foto do perfil",
   "Shortcuts.general": "Geral",
   "Shortcuts.goTo": "Ir para",

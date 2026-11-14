@@ -764,6 +764,8 @@ export default {
   "OnboardingCard.inviteTitle": "Invitez quelqu’un dans votre groupe",
   "OnboardingCard.inviteText":
     "Cette personne verra les mêmes notes en direct, avec le rôle que vous lui donnez.",
+  "OnboardingCard.inviteTextPlain":
+    "Cette personne verra les changements du groupe en direct, avec le rôle que vous lui donnez.",
   "OnboardingCard.inviteAction": "Inviter quelqu’un",
   "OnboardingCard.notificationsTitle": "Activez les notifications",
   "OnboardingCard.notificationsText":
@@ -779,6 +781,8 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Groupes",
   "OnboardingCard.tourGroupsText":
     "Les notes vivent dans des groupes. Créez des groupes ici, invitez des personnes et choisissez leur rôle.",
+  "OnboardingCard.tourGroupsTextPlain":
+    "Créez des groupes ici, invitez des personnes et choisissez leur rôle.",
   "OnboardingCard.tourNotificationsTitle": "Notifications",
   "OnboardingCard.tourNotificationsText":
     "Ce qui s’est passé pendant votre absence, comme une invitation.",
@@ -1415,6 +1419,8 @@ export default {
   "ProfileExport.asking": "Demande en cours…",
   "ProfileExport.never":
     "Un fichier ZIP contenant votre profil, vos groupes et vos notes aux formats JSON et CSV. Cela prend quelques minutes, et nous vous enverrons un e-mail quand il sera prêt.",
+  "ProfileExport.neverPlain":
+    "Un fichier ZIP contenant votre profil et vos groupes aux formats JSON et CSV. Cela prend quelques minutes, et nous vous enverrons un e-mail quand il sera prêt.",
   "ProfileExport.download": "Télécharger mes données",
   "ProfileExport.preparing":
     "Préparation de votre fichier. Nous vous enverrons un e-mail et une notification quand il sera prêt.",
@@ -1807,6 +1813,7 @@ export default {
   "Search.openProfile": "Ouvrir le profil",
   "Search.downloadData": "Télécharger mes données",
   "Search.downloadDetail": "Un fichier ZIP de votre profil, de vos groupes et de vos notes",
+  "Search.downloadDetailPlain": "Un fichier ZIP de votre profil et de vos groupes",
   "Search.changePicture": "Changer de photo de profil",
   "Shortcuts.general": "Général",
   "Shortcuts.goTo": "Aller à",

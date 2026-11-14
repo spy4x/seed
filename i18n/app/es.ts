@@ -738,6 +738,8 @@ export default {
   "OnboardingCard.noteAction": "Escribir una nota",
   "OnboardingCard.inviteTitle": "Invita a alguien a tu grupo",
   "OnboardingCard.inviteText": "Verá las mismas notas en tiempo real, con el rol que le des.",
+  "OnboardingCard.inviteTextPlain":
+    "Verá los cambios del grupo en tiempo real, con el rol que le des.",
   "OnboardingCard.inviteAction": "Invitar a alguien",
   "OnboardingCard.notificationsTitle": "Activa las notificaciones",
   "OnboardingCard.notificationsText": "Entérate de los cambios, incluso con la app cerrada.",
@@ -752,6 +754,7 @@ export default {
   "OnboardingCard.tourGroupsTitle": "Grupos",
   "OnboardingCard.tourGroupsText":
     "Las notas viven en grupos. Crea grupos aquí, invita a personas y elige sus roles.",
+  "OnboardingCard.tourGroupsTextPlain": "Crea grupos aquí, invita a personas y elige sus roles.",
   "OnboardingCard.tourNotificationsTitle": "Notificaciones",
   "OnboardingCard.tourNotificationsText": "Lo que pasó mientras no estabas, como una invitación.",
   "OnboardingCard.tourProfileTitle": "Perfil",
@@ -1373,6 +1376,8 @@ export default {
   "ProfileExport.asking": "Solicitando…",
   "ProfileExport.never":
     "Un ZIP con tu perfil, tus grupos y tus notas en archivos JSON y CSV. Tarda unos minutos y te avisaremos por correo cuando esté listo.",
+  "ProfileExport.neverPlain":
+    "Un ZIP con tu perfil y tus grupos en archivos JSON y CSV. Tarda unos minutos y te avisaremos por correo cuando esté listo.",
   "ProfileExport.download": "Descargar mis datos",
   "ProfileExport.preparing":
     "Estamos preparando tu archivo. Te avisaremos por correo y con una notificación cuando esté listo.",
@@ -1758,6 +1763,7 @@ export default {
   "Search.openProfile": "Abrir el perfil",
   "Search.downloadData": "Descargar mis datos",
   "Search.downloadDetail": "Un ZIP con tu perfil, tus grupos y tus notas",
+  "Search.downloadDetailPlain": "Un ZIP con tu perfil y tus grupos",
   "Search.changePicture": "Cambiar la foto de perfil",
   "Shortcuts.general": "General",
   "Shortcuts.goTo": "Ir a",

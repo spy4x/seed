@@ -367,7 +367,9 @@ export function paletteCommands(
       heading.settings,
       page(`${profilePath("account")}#${DATA_EXPORT_ANCHOR}`),
       {
-        detail: { key: `Search.downloadDetail` },
+        detail: {
+          key: context.notes === false ? `Search.downloadDetailPlain` : `Search.downloadDetail`,
+        },
         aliases: [
           `export my data`,
           `GDPR`,

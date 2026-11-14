@@ -13,7 +13,7 @@ import { HOME_HEAD } from "./index.tsx"
 /**
  * The website for AI assistants (llmstxt.org): what Seed is, then every public page with its
  * description, on this website's own origin. The newsletter page is left out while subscriptions
- * are off. The published guides follow in a Docs section. The blog's live posts follow in a section of their own, which is left out while no post
+ * are off, and the API reference while the notes are off. The published guides follow in a Docs section. The blog's live posts follow in a section of their own, which is left out while no post
  * is live or the API cannot answer. A Catalog section names the catalog's page and each category's,
  * and is left out while the catalog is off, has no published item, or the API cannot answer.
  */
@@ -36,6 +36,7 @@ export const handler = define.handlers({
           title: `Pages`,
           links: SITE_PAGES
             .filter(({ path }) => ctx.state.newsletter || path !== FORM_ACTIONS.subscribe)
+            .filter(({ path }) => ctx.state.notes || path !== API_DOCS_PATH)
             .filter(({ path }) => !path.startsWith(`${DOCS_PATH}/`) || path === API_DOCS_PATH)
             .map(link),
         },

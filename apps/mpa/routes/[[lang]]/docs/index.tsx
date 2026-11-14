@@ -30,7 +30,7 @@ export const FIRST_DOC = `get-started`
 
 /**
  * `/docs`: the Get started guide first, as a band with one link, then every other published guide
- * as a card under its group, with the API reference last under Reference.
+ * as a card under its group, with the API reference last under Reference while the notes are on.
  */
 export default define.page(function DocsIndex({ state }) {
   const { t, language, href } = useSite()
@@ -44,7 +44,7 @@ export default define.page(function DocsIndex({ state }) {
         title: readDoc(slug, href)!.title,
         summary,
       })),
-      ...(index === PUBLISHED_DOCS.length - 1
+      ...(index === PUBLISHED_DOCS.length - 1 && state.notes
         ? [{
           href: href(API_DOCS_PATH),
           title: `API reference`,

@@ -1020,6 +1020,7 @@ OnboardingCard.goTo	2745d2702385bcbb
 OnboardingCard.goToHighlighted	dd4e9b3b30b69a80
 OnboardingCard.inviteAction	9b7639e8de286c00
 OnboardingCard.inviteText	a64a504ccf41a164
+OnboardingCard.inviteTextPlain	33f4394774d15a4a
 OnboardingCard.inviteTitle	0a46f5a639ca5571
 OnboardingCard.keep	125f55ebeeef85ad
 OnboardingCard.keepText	83776173b40175a0
@@ -1031,6 +1032,7 @@ OnboardingCard.notificationsText	adb691a79cf26ee0
 OnboardingCard.notificationsTitle	92dfd3632baeb6d4
 OnboardingCard.title	61e8d44ad423a4a0
 OnboardingCard.tourGroupsText	9c45c2c5941bbb4c
+OnboardingCard.tourGroupsTextPlain	42555dcc24ab1c0f
 OnboardingCard.tourGroupsTitle	39bbb719fa2b9d22
 OnboardingCard.tourNotesText	3c06ef90f52237db
 OnboardingCard.tourNotesTitle	8a7525b1492fb848
@@ -1174,6 +1176,7 @@ ProfileExport.failed	c3bebddec4061a7f
 ProfileExport.label	ee5ef73aae180f3e
 ProfileExport.network	b6950e605658ac2b
 ProfileExport.never	d015807da76535f7
+ProfileExport.neverPlain	d8682fa96dd23ad6
 ProfileExport.prepareNew	83789bb2d6adef82
 ProfileExport.preparing	79ab75995d4cdd28
 ProfileExport.ready	2a342fd34a841b84
@@ -1340,6 +1343,7 @@ Search.create	4759498ac2a719c6
 Search.current	e0d1b68224bf0b31
 Search.downloadData	edbfbe26317edf70
 Search.downloadDetail	9ac1ea3828e84eac
+Search.downloadDetailPlain	cf3034c9dd4847af
 Search.empty	7057d2dc8544a7bd
 Search.emptyOnDevice	4909b534f1b33bd7
 Search.error	d11d89ec7e75ceee

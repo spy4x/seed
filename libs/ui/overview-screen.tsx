@@ -1,4 +1,4 @@
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { isolate } from "@spy4x/preact-ui/bdi"
@@ -133,6 +133,11 @@ export interface OverviewScreenProps {
   /** `data-e2e` of the range picker's button, so the page's `d` key can open it. */
   rangeDataE2E?: string
   navigate?: Navigate
+  /**
+   * Drawn right under the page header, above everything else: the app's first steps, when the
+   * overview is where a new account lands (the notes off).
+   */
+  intro?: ComponentChildren
 }
 
 /**
@@ -241,6 +246,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
             </>
           )}
         />
+        {props.intro}
         {group && props.choosePlanHref && (
           <Notice
             tone="info"
