@@ -93,7 +93,7 @@ steps:
     image: denoland/deno:2.9.7@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
     depends_on: [guard]
     commands:
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates
       - deno task changelog
 
   build-base:

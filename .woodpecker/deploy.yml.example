@@ -34,7 +34,7 @@ steps:
       DEPLOY_KNOWN_HOSTS:
         from_secret: deploy_known_hosts
     commands:
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends rsync openssh-client git
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends rsync openssh-client git ca-certificates
       - umask 077
       - mkdir -p ~/.ssh .age
       - printf '%s\n' "$${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
