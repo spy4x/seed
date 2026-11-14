@@ -293,7 +293,20 @@ try {
     onError: reportSweepFailure,
     intervalMs: SWEEP_INTERVAL_MS,
   })
-  await Promise.all(lanes.map((lane) => lane.run(signal, OUTBOX_IDLE_MS)))
+  // A lane that fails stops the other one, and the connection closes only once both have finished
+  // their row, so no row is cut off mid-run.
+  const stopLanes = new AbortController()
+  const lanesSignal = AbortSignal.any([signal, stopLanes.signal])
+  const ends = await Promise.allSettled(
+    lanes.map((lane) =>
+      lane.run(lanesSignal, OUTBOX_IDLE_MS).catch((error) => {
+        stopLanes.abort()
+        throw error
+      })
+    ),
+  )
+  const failure = ends.find((end) => end.status === `rejected`)
+  if (failure) throw failure.reason
 } finally {
   await sql.end({ timeout: 5 })
   const reason = signal.reason instanceof ShutdownSignalError ? ` on ${signal.reason.signal}` : ""
