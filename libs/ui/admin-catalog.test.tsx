@@ -115,6 +115,29 @@ async function type(field: HTMLInputElement, value: string): Promise<void> {
   })
 }
 
+/** The text of what `field`'s `aria-describedby` names: its hint, and its error if any. */
+function description(field: Element): string {
+  return (field.getAttribute("aria-describedby") ?? "").split(" ").filter(Boolean)
+    .map((id) => document.getElementById(id)?.textContent ?? "").join(" ")
+}
+
+/**
+ * Types a Russian name, then an Arabic one, into `name`: the address `slug` spells the first in
+ * Latin, and stays empty for the second, unrefused, with its hint `hint` as its description.
+ */
+async function expectLatinAddress(
+  name: HTMLInputElement,
+  slug: () => HTMLInputElement,
+  hint: string,
+): Promise<void> {
+  await type(name, "Футболка")
+  expect(slug().value).toBe("futbolka")
+  await type(name, "قميص قطني")
+  expect(slug().value).toBe("")
+  expect(slug().getAttribute("aria-invalid")).not.toBe("true")
+  expect(description(slug())).toBe(ADMIN_ENGLISH.t(hint))
+}
+
 /** Lets effects that wait a task run. */
 async function settle(): Promise<void> {
   await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
@@ -332,6 +355,31 @@ describe("the category editor", () => {
     await mount(<Harness errors={{ "name:en": "Keep it shorter." }} />)
     expect(document.activeElement).toBe(en)
   })
+
+  it("spells a Cyrillic name's address in Latin, and leaves an Arabic one's empty with its hint", async () => {
+    function Harness() {
+      const [value, setValue] = useState({ name: {}, slug: "", slugEdited: false })
+      return (
+        <AdminCatalogCategoryEditorScreen
+          category={null}
+          languages={SETTINGS.languages}
+          loading={false}
+          notFound={false}
+          value={value}
+          onChange={setValue}
+          errors={{}}
+          saving={false}
+          onSave={() => {}}
+        />
+      )
+    }
+    await mount(<Harness />)
+    await expectLatinAddress(
+      find<HTMLInputElement>("[data-e2e=catalog-category-name]"),
+      () => find<HTMLInputElement>("[data-e2e=catalog-category-slug]"),
+      `AdminCatalogCategory.slugHint`,
+    )
+  })
 })
 
 const ITEM_SAVED: CatalogItem = {
@@ -513,6 +561,30 @@ describe("the link source editor", () => {
     expect(document.activeElement === slug).toBe(true)
   })
 
+  it("spells a Cyrillic name's tag in Latin, and leaves an Arabic one's empty with its hint", async () => {
+    function Harness() {
+      const [value, setValue] = useState({ name: "", slug: "", slugEdited: false })
+      return (
+        <AdminCatalogSourceEditorScreen
+          source={null}
+          loading={false}
+          notFound={false}
+          value={value}
+          onChange={setValue}
+          errors={{}}
+          saving={false}
+          onSave={() => {}}
+        />
+      )
+    }
+    await mount(<Harness />)
+    await expectLatinAddress(
+      find<HTMLInputElement>("[data-e2e=catalog-source-name]"),
+      () => find<HTMLInputElement>("[data-e2e=catalog-source-slug]"),
+      `AdminCatalogSource.slugHint`,
+    )
+  })
+
   it("says a used source's links keep their addresses, in the right number", async () => {
     const editor = (linkCount: number) => (
       <AdminCatalogSourceEditorScreen
@@ -638,6 +710,15 @@ describe("the item editor", () => {
     await type(find("[data-e2e=catalog-item-name]"), "Zip jacket")
     expect(last!.name).toEqual({ vi: "Áo khoác zip", en: "Zip jacket" })
     expect(last!.slug).toBe("ao-khoac-zip")
+  })
+
+  it("spells a Cyrillic name's address in Latin, and leaves an Arabic one's empty with its hint", async () => {
+    await mount(<ItemEditor calls={[]} />)
+    await expectLatinAddress(
+      find<HTMLInputElement>("[data-e2e=catalog-item-name]"),
+      () => find<HTMLInputElement>("[data-e2e=catalog-item-slug]"),
+      `AdminCatalogItem.slugHint`,
+    )
   })
 
   it("opens the tab of a refused text and puts focus on it", async () => {

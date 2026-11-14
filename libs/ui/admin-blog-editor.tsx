@@ -1,6 +1,6 @@
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
-import { slugify } from "@spy4x/platform/universal/text"
+import { asciiSlug } from "@spy4x/platform/universal/text"
 import { readingMinutes } from "@spy4x/platform/universal/text"
 import { IconChevronDown, IconGlobe } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
@@ -197,15 +197,13 @@ export function sameBlogDraft(a: BlogDraft, b: BlogDraft): boolean {
 }
 
 /**
- * The slug a title suggests: `slugify`'s, kept to the letters a post's address allows (`a-z`,
- * digits and single hyphens). A title in another script suggests `""`, and the operator types one.
+ * The slug a title suggests, in the letters a post's address allows (`a-z`, digits and single
+ * hyphens): Cyrillic is spelled in Latin (`"Привет, мир"` gives `"privet-mir"`). A title in a
+ * script with no Latin spelling, such as Arabic or Chinese, suggests `""`, and the operator types
+ * one.
  */
 export function blogSlugFromTitle(title: string): string {
-  return slugify(title)
-    .replace(/[^a-z0-9-]+/g, ``)
-    .replace(/-{2,}/g, `-`)
-    .slice(0, BLOG_SLUG_MAX_LENGTH)
-    .replace(/^-+|-+$/g, ``)
+  return asciiSlug(title, BLOG_SLUG_MAX_LENGTH)
 }
 
 /**

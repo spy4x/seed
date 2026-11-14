@@ -1,7 +1,7 @@
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
-import { slugify } from "@spy4x/platform/universal/text"
+import { asciiSlug } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { FieldErrors } from "@spy4x/validation"
 import {
@@ -366,7 +366,7 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
   const setText = (field: `name` | `description` | `material` | `fit` | `care`, text: string) => {
     const patch: Partial<CatalogItemDraft> = { [field]: { ...value[field], [language]: text } }
     if (field === `name` && language === languages[0] && !value.slugEdited) {
-      patch.slug = slugify(text).slice(0, CATALOG_SLUG_MAX_LENGTH)
+      patch.slug = asciiSlug(text, CATALOG_SLUG_MAX_LENGTH)
     }
     edit(patch)
   }

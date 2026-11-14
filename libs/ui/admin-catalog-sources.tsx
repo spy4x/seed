@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
-import { slugify } from "@spy4x/platform/universal/text"
+import { asciiSlug } from "@spy4x/platform/universal/text"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
@@ -319,9 +319,7 @@ export function AdminCatalogSourceEditorScreen(
                   props.onChange({
                     ...value,
                     name,
-                    slug: value.slugEdited
-                      ? value.slug
-                      : slugify(name).slice(0, CATALOG_SLUG_MAX_LENGTH),
+                    slug: value.slugEdited ? value.slug : asciiSlug(name, CATALOG_SLUG_MAX_LENGTH),
                   })
                 }}
                 required

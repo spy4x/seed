@@ -103,6 +103,18 @@ describe("admin keyboard shortcuts", () => {
     expect(listed("/users/7")).toBe(false)
   })
 
+  it("lists Ctrl S in the catalog's item editor, not on its categories or sources pages", () => {
+    const listed = (path: string) => rows(path).list.some((row) => row.keys === "mod+s")
+    expect(listed("/catalog/new")).toBe(true)
+    expect(listed("/catalog/0195f0b4-3c1e-7a00-8000-000000000001")).toBe(true)
+    for (const page of ["categories", "sources"]) {
+      expect(listed(`/catalog/${page}`)).toBe(false)
+      expect(listed(`/catalog/${page}/new`)).toBe(false)
+      expect(listed(`/catalog/${page}/0195f0b4-3c1e-7a00-8000-000000000001`)).toBe(false)
+    }
+    expect(listed("/catalog")).toBe(false)
+  })
+
   it("lists F8 and Shift F8 in the blog's editor and nowhere else", () => {
     const listed = (path: string) =>
       rows(path).list.filter((row) => row.keys === "f8" || row.keys === "shift+f8").length

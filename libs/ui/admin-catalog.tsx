@@ -1,7 +1,7 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
-import { search, searchWords, slugify } from "@spy4x/platform/universal/text"
+import { asciiSlug, search, searchWords } from "@spy4x/platform/universal/text"
 import { IconEllipsisVertical, IconImage, IconPlus } from "@spy4x/preact-icons"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -695,7 +695,7 @@ export function AdminCatalogCategoryEditorScreen(
     const name = { ...value.name, [language]: text }
     const slug = value.slugEdited || language !== languages[0]
       ? value.slug
-      : slugify(text).slice(0, CATALOG_SLUG_MAX_LENGTH)
+      : asciiSlug(text, CATALOG_SLUG_MAX_LENGTH)
     props.onChange({ ...value, name, slug })
   }
   return (
