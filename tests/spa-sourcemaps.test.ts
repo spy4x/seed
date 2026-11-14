@@ -174,6 +174,14 @@ Deno.test("the source map stage holds the maps and gets no token at build time",
     .toEqual([])
 })
 
+Deno.test("the SPA build writes hidden source maps, which no bundle names", async () => {
+  const config = await Deno.readTextFile(
+    fromFileUrl(new URL(`../apps/spa/vite.config.ts`, import.meta.url)),
+  )
+
+  expect(config).toMatch(/\n  build: \{[^}]*\n    sourcemap: `hidden`,\n/)
+})
+
 Deno.test("the release pipeline skips the source map stage, so a published image uploads nothing", async () => {
   const pipeline = await Deno.readTextFile(RELEASE_PIPELINE)
   const spa = pipeline.split(`\n`).find((line) =>
