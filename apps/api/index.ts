@@ -78,7 +78,7 @@ import { createCallRoute } from "./routes/call.ts"
 import { createHealthRoute } from "./routes/health.ts"
 import { isCacheConnected, kv } from "./services/cache.ts"
 import { files } from "./services/files.ts"
-import { s3ServerFiles } from "@server/files/files.ts"
+import { FILES_OFF_STORE, s3ServerFiles } from "@server/files/files.ts"
 import { readLinkedinExpiry } from "@server/blog/blog-post-linkedin-job.ts"
 import { readCatalogSetup } from "@server/catalog/setup.ts"
 import { createUmamiLinks, DEFAULT_ITEM_PATH, readTrackingSetup } from "@server/catalog/tracking.ts"
@@ -170,7 +170,7 @@ app.route(
   createHealthRoute({
     isDbConnected: () => db.isConnected(),
     isCacheConnected,
-    isFileStoreReachable: files.isReachable,
+    isFileStoreReachable: config.files ? files.isReachable : null,
   }),
 )
 // The browser sends the web app's origin; behind the TLS-terminating proxy the API sees `http://`.
@@ -259,6 +259,7 @@ app.route(
     request: (userId) => requestDataExport(sql, userId),
     readyFile: (userId) => readyDataExportFile(sql, userId),
     signDownload: files.signDownload,
+    filesOn: config.files !== null,
   }),
 )
 app.route(
@@ -286,7 +287,7 @@ const websiteStats = {
   itemPath: trackingSetup?.itemPath ??
     (processEnv.get("CATALOG_ITEM_PATH")?.trim() || DEFAULT_ITEM_PATH),
 }
-const serverFiles = s3ServerFiles(config.files)
+const serverFiles = config.files ? s3ServerFiles(config.files) : FILES_OFF_STORE
 // The operator area and its modules. The gate answers 404 to anyone below operator.
 app.route(
   "/admin",
@@ -306,7 +307,7 @@ app.route(
       now: () => new Date(),
       cursorSecret: config.authCookieSecret,
       cacheConnected: isCacheConnected,
-      fileStoreReachable: files.isReachable,
+      fileStoreReachable: config.files ? files.isReachable : null,
       readFile: files.read,
       build: config.build,
       billing: billingSetup,

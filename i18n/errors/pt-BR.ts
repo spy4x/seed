@@ -209,6 +209,8 @@ export default {
   "Reason.TOO_MANY_LINKS": "Não cabem mais links. Remova um antes.",
   "Reason.TOO_MANY_TOKENS": "Não cabem mais tokens. Revogue um antes.",
   "Reason.TOO_SOON": "Você pediu isto há menos de um dia. Tente de novo amanhã.",
+  "Reason.FILES_OFF":
+    "Os arquivos não estão configurados neste servidor, então não dá para enviar nem baixar nada.",
   "Reason.TRACKING_OFF": "Links de rastreamento precisam do endereço do site.",
   "Reason.UNKNOWN_PLAN": "Este plano não existe.",
   "Reason.UPLOADS_PENDING": "Espere os envios em andamento terminarem.",

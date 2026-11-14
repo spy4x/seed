@@ -2043,6 +2043,7 @@ export default {
   "AdminSystem.upSince": "En marcha desde",
   "AdminSystem.cache": "Caché (Valkey)",
   "AdminSystem.fileStore": "Almacén de archivos (S3)",
+  "AdminSystem.filesOff": "Desactivado: este servidor funciona sin archivos (FILES=false).",
   "AdminSystem.queue": "Cola de tareas",
   "AdminSystem.queueHint": {
     "one": "Avisa cuando una tarea espera más de {count} minuto o alguna ha fallado.",

@@ -221,6 +221,8 @@ export default {
   "Reason.TOO_MANY_LINKS": "Il n’y a plus de place pour d’autres liens. Retirez-en un d’abord.",
   "Reason.TOO_MANY_TOKENS": "Il n’y a plus de place pour d’autres jetons. Révoquez-en un d’abord.",
   "Reason.TOO_SOON": "Vous l’avez demandé il y a moins d’un jour. Réessayez demain.",
+  "Reason.FILES_OFF":
+    "Les fichiers ne sont pas configurés sur ce serveur : impossible d’envoyer ou de télécharger quoi que ce soit.",
   "Reason.TRACKING_OFF": "Les liens de suivi nécessitent l’adresse du site web.",
   "Reason.UNKNOWN_PLAN": "Ce forfait n’existe pas.",
   "Reason.UPLOADS_PENDING": "Attendez d’abord la fin des imports en cours.",

@@ -76,21 +76,23 @@ shared by several projects on the host) and **off** (nothing of it runs and noth
 | Monitoring ("Monitoring" below) | `monitoring` in `COMPOSE_PROFILES`; `VM_REMOTE_WRITE_URL=` and `VLOGS_URL=` empty | `telemetry` in `COMPOSE_PROFILES`, not `monitoring`; `VM_REMOTE_WRITE_URL=https://…/api/v1/write`, `VLOGS_URL=https://…` and their user names and passwords | neither `monitoring` nor `telemetry` |
 | Host metrics (node-exporter, cAdvisor) | `host-monitoring` next to `monitoring` or `telemetry` | leave `host-monitoring` out; the host's own exporters report it | leave `host-monitoring` out |
 | Error tracking ("Error tracking" below) | `errors` in `COMPOSE_PROFILES` and `ERRORS_DOMAIN=errors.example.com`, then `deno task errors:setup` once, which fills both DSNs; for readable SPA traces, the four `SOURCEMAPS_*` settings ("Source maps" below) | `ERROR_REPORT_DSN=https://…` and `SPA_ERROR_REPORT_DSN=https://…`, and the `SOURCEMAPS_*` settings | both DSNs and `SOURCEMAPS_URL` empty |
-| Files ([files.md](files.md)) | `files` in `COMPOSE_PROFILES`; `S3_ENDPOINT=`, `S3_PUBLIC_ENDPOINT=`, `S3_BUCKET=` empty | leave `files` out; the six `S3_*` settings name the store | not yet: see below |
+| Files ([files.md](files.md)) | `files` in `COMPOSE_PROFILES`; `S3_ENDPOINT=`, `S3_PUBLIC_ENDPOINT=`, `S3_BUCKET=` empty | leave `files` out; the six `S3_*` settings name the store | leave `files` out; `FILES=false` |
 | Backup ([backups.md](backups.md)) | `backup` in `COMPOSE_PROFILES`; `BACKUP_RESTIC_REPOSITORY=…`, `BACKUP_RESTIC_PASSWORD=…` | none | leave `backup` out |
 | Traefik | `deno task proxy:start` (`compose.proxy.yml`); `deno task dev` starts it too | a container named `traefik` already on the `proxy` network | none: the apps need a proxy |
 | Website ([apps.md](apps.md)) | `mpa` in `COMPOSE_PROFILES`; `MPA_DOMAIN=…` | none | leave `mpa` out |
 | Admin app ([apps.md](apps.md)) | `admin` in `COMPOSE_PROFILES`; `ADMIN_DOMAIN=…` | none | leave `admin` out |
 
-With only the must-haves the env file says `COMPOSE_PROFILES=` and nothing else changes; the
-lines of the parts left out may stay or go, since every one of them has a default.
+With only the must-haves the env file says `COMPOSE_PROFILES=` and `FILES=false`, and nothing else
+changes; the lines of the parts left out may stay or go, since every one of them has a default.
 `tests/compose-profiles.test.ts` holds each profile to the services it starts.
 
-**Files have no "off" yet.** Without the `files` profile and without another store, the API starts,
-but its health route waits two seconds for a store that does not answer and reports
-`"files": false`. The container's health probe gives up at the same two seconds, so the API turns
-unhealthy and Traefik stops routing to it: the SPA loads, and every `/api` call answers 404. Keep
-the bundled Garage or name another store until the API can run without one.
+**Files off needs `FILES=false`, not only the missing profile.** Compose fills an empty
+`S3_ENDPOINT` with the bundled Garage's address, so an empty setting cannot mean off. With
+`FILES=false` the API and the worker read no `S3_*` setting, `/api/health` leaves the store out of
+its checks, and every upload, download and data export answers 409 "Files are not set up on this
+server." ([files.md](files.md#without-files)). Without the profile and without `FILES=false`, the
+API's health check waits on a store nobody runs, the container turns unhealthy and Traefik stops
+routing to it.
 
 ## Database connections
 

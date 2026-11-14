@@ -56,10 +56,24 @@ env file, then run `deno task init` again.
 
 The store's own backups replace Seed's ([backups.md](backups.md)).
 
+## Without files
+
+A product that keeps no files can run without a store:
+
+1. Take `files` out of `COMPOSE_PROFILES`.
+2. Set `FILES=false`.
+
+An empty `S3_ENDPOINT` cannot mean off: Compose fills it with the bundled Garage's address. With
+`FILES=false` the API and the worker start without any `S3_*` setting, and `/api/health` leaves the
+store out of its checks. Every upload, download and data export answers 409 with the reason
+`FILES_OFF` and "Files are not set up on this server.", and the admin app's System page shows the
+file store as off. The SPA and the admin app still show their upload buttons.
+
 ## Settings
 
 | Setting                | Bundled Garage (default)                     | Another S3 store            |
 | ---------------------- | -------------------------------------------- | --------------------------- |
+| `FILES`                | empty: on                                    | empty: on                   |
 | `COMPOSE_PROFILES`     | includes `files`                             | without `files`             |
 | `S3_ENDPOINT`          | empty: `http://<PROJECT>-garage:3900`        | the store's address         |
 | `S3_PUBLIC_ENDPOINT`   | empty: `https://<DOMAIN>` (`http://` in dev) | the same address            |

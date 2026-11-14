@@ -3,6 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import { type } from "arktype"
 import { type Context, Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
+import { FILES_OFF_MESSAGE, FILES_OFF_STORE } from "@server/files/files.ts"
 import { apiError } from "../_testing/api-error.ts"
 import {
   codeForStatus,
@@ -127,6 +128,22 @@ describe(`an error no route handled`, () => {
     expect(response.status).toBe(413)
     expect(response.headers.get(`connection`)).toBe(`close`)
     expect(await apiError(response)).toEqual({ code: `bad_request`, message: `Payload Too Large` })
+  })
+
+  it(`answers a call to the file store while files are off as 409 conflict naming FILES_OFF`, async () => {
+    const app = appWith(async () => {
+      await FILES_OFF_STORE.signDownload(`a`, { contentType: `image/png`, filename: `a` })
+      return new Response(`unreachable`)
+    })
+
+    const response = await app.request(`/`)
+
+    expect(response.status).toBe(409)
+    expect(await apiError(response)).toEqual({
+      code: `conflict`,
+      message: FILES_OFF_MESSAGE,
+      reason: `FILES_OFF`,
+    })
   })
 })
 

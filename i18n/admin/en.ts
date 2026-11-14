@@ -1913,6 +1913,7 @@ export default {
   "AdminSystem.upSince": "Up since",
   "AdminSystem.cache": "Cache (Valkey)",
   "AdminSystem.fileStore": "File store (S3)",
+  "AdminSystem.filesOff": "Off: this server runs without files (FILES=false).",
   "AdminSystem.queue": "Job queue",
   "AdminSystem.queueHint": {
     "one": "Warns when a job waits more than {count} minute or a job has failed.",

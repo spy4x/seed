@@ -40,7 +40,7 @@ import { isDemoSeeded, resetDemo } from "./demo/run.ts"
 import { DEMO_ADMIN_ENV_NAMES, type DemoAdmins, readDemoAdmins } from "./demo/options.ts"
 import { seedWorkspace } from "./demo/seed.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
-import { readServerFilesSetup } from "@server/files/settings.ts"
+import { isFilesOn, readServerFilesSetup } from "@server/files/settings.ts"
 import type { ImageScratch } from "@server/files/images.ts"
 
 const sql = createSqlFromEnv(postgresEnv(), {
@@ -92,10 +92,11 @@ const billingSetup = readBillingSetup(
 
 // A person's data export (docs/data-export.md) is built here and kept in the file store, and the
 // nightly clean-up deletes removed attachments and abandoned uploads from it. Without its settings
-// the export jobs fail and are retried, so a fixed env file still delivers them.
-const filesSetup = readServerFilesSetup(processEnv)
-if (!filesSetup.success) console.warn(filesSetup.error)
-const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
+// the export jobs fail and are retried, so a fixed env file still delivers them. With
+// `FILES=false` nothing is read and nothing is warned: the API asks for no export then.
+const filesSetup = isFilesOn(processEnv) ? readServerFilesSetup(processEnv) : null
+if (filesSetup && !filesSetup.success) console.warn(filesSetup.error)
+const files = filesSetup?.success ? s3ServerFiles(filesSetup.output) : null
 // With `NOTES=false` the demo's seed and sample data write no notes, tags or attachments.
 const notes = readNotesSetup(processEnv)
 

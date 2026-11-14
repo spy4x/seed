@@ -10,7 +10,7 @@ import {
   type User,
 } from "@domain/identity"
 import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
-import { FileRefusal, type FileStore } from "@server/files/files.ts"
+import { FileRefusal, FILES_OFF_STORE, FilesOffError, type FileStore } from "@server/files/files.ts"
 import type { LedgerUpload, UploadRefusal } from "@server/files/upload-ledger.ts"
 import type { UserProfileUpdatedEvent } from "../../cqrs/events.ts"
 import {
@@ -36,6 +36,8 @@ function setUp(
     storeDown?: boolean
     picture?: string | null
     gone?: boolean
+    /** Files are off (`FILES=false`): the handlers get `FILES_OFF_STORE`. */
+    filesOff?: boolean
   } = {},
 ) {
   const calls: string[] = []
@@ -83,7 +85,7 @@ function setUp(
     isReachable: () => Promise.resolve(true),
   }
   const dependencies: PictureHandlerDependencies = {
-    files,
+    files: options.filesOff ? FILES_OFF_STORE : files,
     budget: ATTACHMENT_UPLOAD_BUDGET,
     emit: (event) => emitted.push(event),
     pictures: {
@@ -171,6 +173,13 @@ Deno.test("a GIF, a PDF and a file over the limit are refused before anything is
   expect(await refusal(sign(7, `image/gif`))).toBe(`FILE_TYPE`)
   expect(await refusal(sign(7, `application/pdf`))).toBe(`FILE_TYPE`)
   expect(await refusal(sign(7, `image/jpeg`, PICTURE_MAX_BYTES + 1))).toBe(`FILE_TOO_LARGE`)
+  expect(uploads.size).toBe(0)
+})
+
+Deno.test("with files off, a picture upload is refused with FilesOffError and nothing is kept", async () => {
+  const { sign, uploads } = setUp({ filesOff: true })
+  const error = await sign().then(() => null, (cause) => cause)
+  expect(error).toBeInstanceOf(FilesOffError)
   expect(uploads.size).toBe(0)
 })
 

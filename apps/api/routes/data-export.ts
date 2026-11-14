@@ -1,5 +1,6 @@
 import { Hono } from "hono"
-import type { MiddlewareHandler } from "hono"
+import type { Context, MiddlewareHandler } from "hono"
+import { FILES_OFF_MESSAGE } from "@server/files/files.ts"
 import type { DataExportView } from "@domain/identity"
 import type { DataExportFile, DataExportRequestResult } from "@server/auth/data-export.ts"
 import type { APIContext } from "../_types.ts"
@@ -18,6 +19,8 @@ export interface DataExportRouteDependencies {
   readyFile(userId: number): Promise<DataExportFile | null>
   /** Signs a short-lived download of `key` (`FileStore.signDownload`). */
   signDownload(key: string, file: { contentType: string; filename: string }): Promise<string>
+  /** `false` with `FILES=false`: the worker has nowhere to keep a file, so none is asked for. */
+  filesOn: boolean
 }
 
 /** The answer when an export was asked for less than a day ago. */
@@ -25,6 +28,10 @@ export const DATA_EXPORT_TOO_SOON = "You can ask for one file a day."
 
 /** The answer when there is no ready file to download. */
 export const DATA_EXPORT_NOT_READY = "Your file is not ready, or it expired."
+
+/** The answer while files are off: there is no store to keep or serve the file. */
+const filesOff = (c: Context) =>
+  errorResponse(c, `conflict`, { message: FILES_OFF_MESSAGE, reason: `FILES_OFF` })
 
 /**
  * A person's copy of their data (docs/data-export.md), mounted at
@@ -36,6 +43,9 @@ export const DATA_EXPORT_NOT_READY = "Your file is not ready, or it expired."
  *   export }` with `Retry-After`, where `export` is the one asked for in the last day.
  * - `GET /download` answers 303 to a signed URL of the newest export's file, valid for five
  *   minutes, and 404 when it is not ready or expired. Only the app's own page may ask for it.
+ *
+ * With files off both `POST /` and `GET /download` answer 409 `conflict` with reason `FILES_OFF`
+ * before they read or write anything; `GET /` still answers the newest export.
  */
 export function createDataExportRoute(dependencies: DataExportRouteDependencies): Hono<APIContext> {
   return new Hono<APIContext>()
@@ -46,6 +56,7 @@ export function createDataExportRoute(dependencies: DataExportRouteDependencies)
       return c.json({ export: await dependencies.latest(c.get("auth")!.user.id) })
     })
     .post(`/`, async (c) => {
+      if (!dependencies.filesOn) return filesOff(c)
       const result = await dependencies.request(c.get("auth")!.user.id)
       if (!result.success) {
         const waitMs = result.output.nextRequestAt.getTime() - Date.now()
@@ -63,6 +74,7 @@ export function createDataExportRoute(dependencies: DataExportRouteDependencies)
       if (c.req.header(`sec-fetch-site`) !== `same-origin`) {
         return errorResponse(c, `forbidden`, { message: `Download must come from the app` })
       }
+      if (!dependencies.filesOn) return filesOff(c)
       const file = await dependencies.readyFile(c.get("auth")!.user.id)
       if (!file) return errorResponse(c, `not_found`, { message: DATA_EXPORT_NOT_READY })
       const url = await dependencies.signDownload(file.key, {
