@@ -61,6 +61,7 @@
       "jsr:@spy4x/preact-theme",
       "jsr:@spy4x/preact-ui",
       "jsr:@spy4x/realtime",
+      "jsr:@spy4x/search",
       "jsr:@spy4x/server",
       "jsr:@spy4x/time",
       "jsr:@spy4x/validation",
@@ -72,6 +73,7 @@
       "npm:@jsr/spy4x__preact-system",
       "npm:@jsr/spy4x__preact-theme",
       "npm:@jsr/spy4x__preact-ui",
+      "npm:@jsr/spy4x__search",
       "npm:@jsr/spy4x__time",
       "npm:@jsr/spy4x__validation"
     ]
@@ -454,12 +456,9 @@
     "@spy4x/email": "jsr:@spy4x/email@1.126.0",
     "@spy4x/net": "jsr:@spy4x/net@1.126.0",
     "@spy4x/billing": "jsr:@spy4x/billing@1.126.0",
-    // The version preact-components 14.4.0 imports, so Seed's own imports and theirs share one copy
-    // and the screens' `Formatters` match theirs: 1.126.0 adds `month`, which their formatters lack.
-    // A second copy, 1.126.0 (date.ts, tz.ts, formatter-cache.ts), still loads: the ts-libs
-    // packages above import `^1.126.0`, and the `@spy4x/platform` 1.116.0 that preact-components
-    // brings imports `^1.116.0`, which resolves to 1.126.0. It moves with preact-components.
-    "@spy4x/time": "jsr:@spy4x/time@1.116.0",
+    // The version preact-components 14.8.0 imports, so Seed's own imports and theirs share one copy
+    // and the screens' `Formatters` match theirs. It moves with preact-components.
+    "@spy4x/time": "jsr:@spy4x/time@1.126.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",
@@ -469,18 +468,18 @@
     // apps/tgbot
 
     // client
-    // spy4x/preact-components 14.4.0. Every package is published at one version together, so all
+    // spy4x/preact-components 14.8.0. Every package is published at one version together, so all
     // seven move in one change, and so does the npm copy of `@spy4x/preact-system` further down
     // (the Playwright config imports it under that name). They take preact and the signals
     // packages as caret ranges, so the versions below are the one copy that loads. wouter-preact
     // must stay on the version they pin, or two copies load.
-    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@14.4.0",
-    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@14.4.0",
-    "@spy4x/preact-server": "jsr:@spy4x/preact-server@14.4.0",
-    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@14.4.0",
-    "@spy4x/preact-system": "jsr:@spy4x/preact-system@14.4.0",
-    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@14.4.0",
-    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@14.4.0",
+    "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@14.8.0",
+    "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@14.8.0",
+    "@spy4x/preact-server": "jsr:@spy4x/preact-server@14.8.0",
+    "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@14.8.0",
+    "@spy4x/preact-system": "jsr:@spy4x/preact-system@14.8.0",
+    "@spy4x/preact-theme": "jsr:@spy4x/preact-theme@14.8.0",
+    "@spy4x/preact-ui": "jsr:@spy4x/preact-ui@14.8.0",
     "preact": "npm:preact@10.29.8",
     "wouter-preact": "npm:wouter-preact@3.9.0",
     "@preact/signals": "npm:@preact/signals@2.5.1",
@@ -505,7 +504,7 @@
     // The website's browser tests check each page with axe-core (e2e/mpa).
     "@axe-core/playwright": "npm:@axe-core/playwright@4.13.0",
     // The npm name of `@spy4x/preact-system` above, for Playwright's loader; it moves with the seven.
-    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@14.4.0",
+    "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@14.8.0",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
     "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.126.0",
