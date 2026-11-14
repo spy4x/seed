@@ -363,7 +363,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     // The change ends this device's session too and opens a new one: the list changes either way.
     void loadDevices()
     // The change revoked every API token of the person: the list is read again.
-    if (result.revokedTokens && notesOn()) void tokens.load()
+    if (result.revokedTokens) void tokens.load()
     toasts.success({
       title: t.t(`ProfileView.passwordChanged`),
       body: passwordChangedMessage(t, signOutOthers, result.revokedTokens ?? 0),
@@ -719,28 +719,26 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         onEndOthers: () => void endDevices(endOtherSessions, t.t(`ProfileView.othersSignedOut`)),
       }}
       notes={notesOn()}
-      apiTokens={notesOn()
-        ? {
-          tokens: tokens.tokens.value,
-          savedAt: tokens.savedAt.value,
-          // While the groups are read the opener shows: the create page says when there is none.
-          canCreate: groups.length > 0 || groupsStore.loading.value,
-          error: tokens.errors.value.list,
-          revoking: tokens.pending.value.revoke,
-          navigate,
-          docsHref: apiDocsHref(siteOrigin.value),
-          onRevoke: (id) =>
-            void tokens.revoke(id).then((revoked) => {
-              if (revoked) {
-                toasts.success({
-                  title: t.t(`ProfileView.tokenRevoked`),
-                  body: t.t(`ProfileView.tokenRevokedBody`),
-                  dataE2E: "api-token-revoked",
-                })
-              }
-            }),
-        }
-        : undefined}
+      apiTokens={{
+        tokens: tokens.tokens.value,
+        savedAt: tokens.savedAt.value,
+        // While the groups are read the opener shows: the create page says when there is none.
+        canCreate: groups.length > 0 || groupsStore.loading.value,
+        error: tokens.errors.value.list,
+        revoking: tokens.pending.value.revoke,
+        navigate,
+        docsHref: apiDocsHref(siteOrigin.value),
+        onRevoke: (id) =>
+          void tokens.revoke(id).then((revoked) => {
+            if (revoked) {
+              toasts.success({
+                title: t.t(`ProfileView.tokenRevoked`),
+                body: t.t(`ProfileView.tokenRevokedBody`),
+                dataE2E: "api-token-revoked",
+              })
+            }
+          }),
+      }}
       onStartTotp={startTotp}
       onCancelStartTotp={() => {
         setTotpError(null)
