@@ -405,7 +405,8 @@ describe("the group overview", () => {
 
   it("shows one quiet card with no menu, range, keys' targets or note card when no widget is registered", async () => {
     // A product with the notes off and no widget of its own: the role sees no widget at all.
-    await mount({}, { widgets: [], layout: [], emptyGroup: { canCreate: true } })
+    // Customising open too, as a `c` pressed before the widgets were known would leave it.
+    await mount({}, { widgets: [], layout: [], emptyGroup: { canCreate: true }, customising: true })
 
     const card = find("[data-e2e=overview-no-widgets]")
     expect(card.querySelector("h2")?.textContent).toBe("Nothing to show yet")
