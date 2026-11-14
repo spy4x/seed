@@ -19,7 +19,7 @@ import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/[[lang]]/pri
 import Privacy, { PRIVACY_HEAD } from "./routes/[[lang]]/privacy.tsx"
 import Terms, { TERMS_HEAD } from "./routes/[[lang]]/terms.tsx"
 import { handler as mvp } from "./routes/mvp.ts"
-import ApiDocs from "./routes/[[lang]]/docs/api.tsx"
+import ApiDocs, { handler as apiDocs } from "./routes/[[lang]]/docs/api.tsx"
 import DocsIndex from "./routes/[[lang]]/docs/index.tsx"
 import { handler as doc } from "./routes/[[lang]]/docs/[slug].tsx"
 import { handler as changelog } from "./routes/[[lang]]/changelog.tsx"
@@ -86,7 +86,7 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .route("/pricing", { component: view(Pricing), handler: pricing })
     .get("/mvp", mvp.GET!)
     .route("/privacy", { component: view(Privacy) })
-    .route("/docs/api", { component: view(ApiDocs) })
+    .route("{/:lang}?/docs/api", { component: view(ApiDocs), handler: apiDocs })
     .route("/docs", { component: view(DocsIndex) })
     .get("/docs/:slug", doc.GET!)
     .get("/:lang/docs/:slug", doc.GET!)
@@ -105,6 +105,8 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
 const handler = siteWith(() => true)
 /** The same website while the API takes no subscriptions. */
 const withoutNewsletter = siteWith(() => false)
+/** The same website of a product that turns the notes example off (`NOTES=false`). */
+const withoutNotes = siteWith(() => true, { ...config, notes: false })
 /** The same website counting visits in a Umami. */
 const UMAMI = {
   origin: "https://stats.example.com",
@@ -1083,6 +1085,29 @@ describe("the public website", () => {
     expect(html).toMatch(/<a href="\/docs\/api"[^>]*><span[^>]*>API reference<\/span>/)
   })
 
+  it("answers the API reference with the site's 404 in every language while the notes are off", async () => {
+    expect((await page("/de/docs/api")).status).toBe(200)
+    for (const path of ["/docs/api", "/de/docs/api"]) {
+      const { status, html } = await page(path, withoutNotes)
+
+      expect(status, path).toBe(404)
+      expect(html, path).not.toContain(`<h2 id="quick-start">`)
+      expect(html, path).toContain(`<footer`)
+    }
+  })
+
+  it("links the API reference from no footer and no docs card while the notes are off", async () => {
+    for (const path of ["/", "/pricing", "/docs", "/de/docs/deploy"]) {
+      const { status, html } = await page(path, withoutNotes)
+
+      expect(status, path).toBe(200)
+      expect(html, path).toMatch(/href="(?:\/de)?\/docs"/)
+      expect(html, path).not.toMatch(/href="(?:\/[a-z]{2})?\/docs\/api[#"]/)
+    }
+    const { html } = await page("/docs", withoutNotes)
+    expect(html).not.toContain(`API reference`)
+  })
+
   it("draws a guide with its trail, its TechArticle and its links pointed at the website", async () => {
     const { status, html } = await page("/docs/deploy")
 
@@ -1254,6 +1279,17 @@ describe("the public website", () => {
     const locs = [...(await response.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
     expect(locs).toEqual(
       everyLanguage(SITE_PAGES.filter(({ path }) => path !== "/subscribe")).map((path) =>
+        `${site}${path}`
+      ),
+    )
+  })
+
+  it("leaves the API reference out of the sitemap while the notes are off", async () => {
+    const response = await withoutNotes(new Request(`${site}/sitemap.xml`), info)
+
+    const locs = [...(await response.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+    expect(locs).toEqual(
+      everyLanguage(SITE_PAGES.filter(({ path }) => path !== "/docs/api")).map((path) =>
         `${site}${path}`
       ),
     )
@@ -1564,6 +1600,14 @@ describe("the public website", () => {
     const text = await (await withoutNewsletter(new Request(`${site}/llms.txt`), info)).text()
 
     expect(text).not.toContain(`${site}/subscribe)`)
+    expect(text).toContain(`${site}/terms)`)
+  })
+
+  it("leaves the API reference out of llms.txt while the notes are off", async () => {
+    const text = await (await withoutNotes(new Request(`${site}/llms.txt`), info)).text()
+
+    expect(text).not.toContain(`${site}/docs/api)`)
+    expect(text).toContain(`${site}/docs/deploy)`)
     expect(text).toContain(`${site}/terms)`)
   })
 

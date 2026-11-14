@@ -165,7 +165,7 @@ no default, so keep them in the env file.
 | `GUEST_MODE`                             | "Try it now" without signing up. On unless `false`.                                               | empty            | [Guests](guests.md)                       |
 | `SIGN_UP`                                | `open`: anyone may make an account. `invite`: only invited people; also turns guests off.          | empty            | [Deploy](deploy.md#who-may-sign-up)       |
 | `SPA`                                    | The signed-in app. On unless `false`, which also closes sign-up.                                  | empty            | [The three apps](apps.md#without-the-spa) |
-| `NOTES` | Notes, tags, attachments. On unless `false`, which turns their API, move, exports and welcome note off. | empty | [Start a product](start-a-product.md#settings) |
+| `NOTES` | Notes, tags, attachments. On unless `false`, which turns their API, move, exports, welcome note and the website's API reference off. | empty | [Start a product](start-a-product.md#settings) |
 | `ATTACHMENT_UPLOAD_FILES_PER_HOUR`       | Files one person may upload per hour. Empty: 50.                                                  | empty            | [Files](files.md)                         |
 | `ATTACHMENT_UPLOAD_BYTES_PER_HOUR`       | Bytes one person may upload per hour. Empty: 52428800 (50 MiB).                                   | empty            | [Files](files.md)                         |
 | `OPERATION_COMMANDS_PER_MINUTE`          | Writes one signed-in person may make per minute. Empty: 120.                                      | empty            | [Architecture](architecture.md)           |
