@@ -8,7 +8,7 @@ import {
   parseAdminSubscriberFilter,
 } from "@domain/subscribers"
 import { AdminNewsletterScreen, type AdminNewsletterTab } from "@ui/admin-newsletter-screen.tsx"
-import { adminPageCommand, type AdminPageCommand } from "@ui/admin-palette-commands.ts"
+import { type AdminPageCommand, adminPageCommand } from "@ui/admin-palette-commands.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "@ui/i18n.ts"
 import { usePageCommands } from "../../page-commands.ts"
