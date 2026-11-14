@@ -8,6 +8,11 @@ import {
 export interface ErrorReportingEnv {
   ERROR_REPORT_DSN?: string
   ENV?: string
+  /**
+   * The commit the bundle was built from (`VITE_RELEASE`). The tracker reads the source maps
+   * uploaded for this release, so a report shows source lines. Empty sends no release.
+   */
+  RELEASE?: string
 }
 
 /** Off until `startErrorReporting` finds a DSN, so a render error before then reports nothing. */
@@ -28,6 +33,7 @@ export function startErrorReporting(
   reporter = createErrorReporter({
     dsn: env.ERROR_REPORT_DSN,
     environment: env.ENV,
+    release: env.RELEASE || undefined,
     pageUrl: page,
     redactPathAfter: ["invite"],
     // A runaway loop must not flood the tracker.

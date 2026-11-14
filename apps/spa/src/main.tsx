@@ -34,9 +34,14 @@ devBuild.value = import.meta.env.DEV === true
 guestMode.value = config.guest !== false
 siteOrigin.value = siteOriginOf(config.site, config.env)
 
-// Without a DSN this does nothing and the page makes no request to any tracker.
+// Without a DSN this does nothing and the page makes no request to any tracker. The release is the
+// commit the image was built from (apps/spa/dockerfile.prod), which names the uploaded source maps.
 startErrorReporting(
-  { ERROR_REPORT_DSN: config.errorReportDsn, ENV: config.env },
+  {
+    ERROR_REPORT_DSN: config.errorReportDsn,
+    ENV: config.env,
+    RELEASE: readBuildEnvVar(import.meta.env, `RELEASE`, { prefix: `VITE_`, optional: true }),
+  },
   globalThis,
   () => location.href,
 )
