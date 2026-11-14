@@ -45,8 +45,9 @@ function item(input: { groupId: string; id: string; title: string }): NoteItem {
 describe("offeredNoteActions", () => {
   const noop = () => {}
   const run = { attach: noop, copyLink: noop, duplicate: noop, move: noop, delete: noop }
-  const offered = (page: { canWrite: boolean; noteOpen: boolean; canMove: boolean }) =>
-    Object.keys(offeredNoteActions(page, run))
+  const offered = (
+    page: { canWrite: boolean; noteOpen: boolean; canMove: boolean; creating?: boolean },
+  ) => Object.keys(offeredNoteActions({ creating: false, ...page }, run))
 
   it("offers an editor of an open note every command, Move only with another group to go to", () => {
     expect(offered({ canWrite: true, noteOpen: true, canMove: true })).toEqual([
@@ -63,9 +64,15 @@ describe("offeredNoteActions", () => {
     expect(offered({ canWrite: false, noteOpen: true, canMove: true })).toEqual(["copyLink"])
   })
 
-  it("offers only Attach until a note is open, and nothing to a reader", () => {
-    expect(offered({ canWrite: true, noteOpen: false, canMove: true })).toEqual(["attach"])
-    expect(offered({ canWrite: false, noteOpen: false, canMove: false })).toEqual([])
+  it("offers an editor only Attach on the create page, and a reader nothing", () => {
+    expect(offered({ canWrite: true, noteOpen: false, creating: true, canMove: true }))
+      .toEqual(["attach"])
+    expect(offered({ canWrite: false, noteOpen: false, creating: true, canMove: false }))
+      .toEqual([])
+  })
+
+  it("offers nothing on a note page with no note open, such as the other-group notice", () => {
+    expect(offered({ canWrite: true, noteOpen: false, canMove: true })).toEqual([])
   })
 })
 
