@@ -211,7 +211,7 @@ function SignInGate() {
   const search = useSearch()
   const { user, isMfaRequired } = sessionState.value
   useEffect(() => {
-    const target = signInRedirect(location, search, { user, isMfaRequired })
+    const target = signInRedirect(location, search, { user, isMfaRequired }, notesOn())
     if (target) navigate(target, { replace: true })
   }, [location, search, user, isMfaRequired])
   return null

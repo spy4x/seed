@@ -89,9 +89,10 @@ function section(path: string): string {
 }
 
 const SECTIONS = new Set(SPA_ROUTE_PATHS.map(section))
-const MEMBER_SECTIONS = new Set(
-  SPA_ROUTE_PATHS.filter((path) => !SPA_ROUTES[path].open).map(section),
-)
+/** The first parts of the routes that are not open, with and without the notes' routes. */
+const memberSections = (notes: boolean) =>
+  new Set(spaRoutePaths(notes).filter((path) => !SPA_ROUTES[path].open).map(section))
+const MEMBER_SECTIONS = { on: memberSections(true), off: memberSections(false) }
 
 /**
  * Whether the SPA's router owns `pathname`: its first part is the first part of a route. Anything
@@ -105,10 +106,12 @@ export function isSpaPath(pathname: string): boolean {
  * Whether `pathname` is a page only a signed-in person can use: its first part is the first part of
  * a route that is not open. Every address under such a part counts, so a mistyped note link still
  * asks for sign-in first. A part therefore holds open routes or members' routes, never both;
- * `spa-paths.test.ts` fails when one holds both.
+ * `spa-paths.test.ts` fails when one holds both. With `notes` off (`SPA_NOTES=false`) the notes'
+ * and tags' addresses are not routed, so they show the not-found page instead of asking for sign-in.
  */
-export function isMembersOnlyPath(pathname: string): boolean {
-  return pathname.startsWith("/") && MEMBER_SECTIONS.has(section(pathname))
+export function isMembersOnlyPath(pathname: string, notes = true): boolean {
+  return pathname.startsWith("/") &&
+    MEMBER_SECTIONS[notes ? "on" : "off"].has(section(pathname))
 }
 
 /** The tab part of a group page's address: `/groups/:groupId/members` and its siblings. */
