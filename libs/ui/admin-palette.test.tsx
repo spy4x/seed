@@ -227,6 +227,29 @@ describe("AdminSearchPalette", () => {
     expect(dialog().open).toBe(false)
   })
 
+  it("lists the open page's commands first under This page, with their keys, and hands back their id", async () => {
+    const picked = await mountPalette({
+      page: [
+        { id: `user-block`, label: `Block`, aliases: [`ban`] },
+        { id: `page-action-new`, label: `New post`, kbd: `c` },
+      ],
+    })
+    await pressCtrlK()
+
+    expect(listed().slice(0, 4)).toEqual(["# This page", "Block", "New post", "# Go to"])
+    expect(keysOf("New post")).toBe("C")
+    await type("ban")
+    await pick("Block")
+    expect(picked).toEqual([{ kind: "command", id: `user-block` }])
+  })
+
+  it("has no This page heading on a page without commands", async () => {
+    await mountPalette({ page: [] })
+    await pressCtrlK()
+
+    expect(listed()).not.toContain("# This page")
+  })
+
   it("finds a command by an English word, a typo, Russian and the wrong keyboard layout", async () => {
     await mountPalette({}, RU)
     await pressCtrlK()

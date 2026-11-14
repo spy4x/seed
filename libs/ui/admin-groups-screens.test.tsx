@@ -23,6 +23,7 @@ import { type AdminUserDetail, DEFAULT_PREFERENCES, UserRole } from "@domain/ide
 import { AdminGroupsListScreen, type AdminGroupsListScreenProps } from "./admin-groups-list.tsx"
 import {
   activityTone,
+  adminGroupPageCommands,
   AdminGroupScreen,
   type AdminGroupScreenProps,
   transferCandidates,
@@ -30,7 +31,7 @@ import {
 import { AdminUserScreen, type AdminUserScreenProps } from "./admin-user-screen.tsx"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import { ADMIN_PSEUDO, englishLeft, ZONE_LABEL } from "./i18n-testing.ts"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft, ZONE_LABEL } from "./i18n-testing.ts"
 
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
@@ -995,6 +996,32 @@ describe(`one group in the admin app`, () => {
 
     await mount(<AdminGroupScreen {...groupProps([], { detail: null, error: `No such group` })} />)
     expect(find(`[data-e2e=admin-group-error]`).textContent).toContain(`No such group`)
+  })
+})
+
+describe(`the group page's palette commands`, () => {
+  it(`offers a command per tab, each opening its tab as clicking it does`, () => {
+    const opened: string[] = []
+    const commands = adminGroupPageCommands(
+      ADMIN_ENGLISH,
+      { shown: true, notes: true },
+      (tab) => void opened.push(tab),
+    )
+    for (const command of commands) command.run()
+    expect(commands.map((command) => command.label)).toEqual([
+      `Members`,
+      `Invitations`,
+      `Files`,
+      `Activity`,
+    ])
+    expect(opened).toEqual([`members`, `invitations`, `files`, `activity`])
+  })
+
+  it(`offers no Files with the notes off, and nothing while the group is not shown`, () => {
+    const ids = (page: { shown: boolean; notes: boolean }) =>
+      adminGroupPageCommands(ADMIN_ENGLISH, page, () => {}).map((command) => command.id)
+    expect(ids({ shown: true, notes: false })).not.toContain(`group-tab-files`)
+    expect(ids({ shown: false, notes: true })).toEqual([])
   })
 })
 

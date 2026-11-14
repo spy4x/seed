@@ -1,6 +1,10 @@
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { generalRows, SHORTCUT_GROUPS, type ShortcutRow } from "@ui/shortcuts.tsx"
-import type { AdminGoTo } from "@ui/admin-palette-commands.ts"
+import {
+  type AdminGoTo,
+  type AdminPageCommand,
+  adminPageCommand,
+} from "@ui/admin-palette-commands.ts"
 import type { AdminModule } from "./modules/types.ts"
 
 /** The second key of each module's "Go to" sequence, by module id: `g u` opens Users. */
@@ -87,6 +91,36 @@ export const ADMIN_PAGE_ACTIONS: Readonly<
   "/catalog/categories": [
     { keys: "c", description: `AdminShortcuts.addCategory`, href: "/catalog/categories/new" },
   ],
+}
+
+/** Extra words for each page action's command, by its catalog key, in English and Russian. */
+const PAGE_ACTION_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  "AdminShortcuts.newPost": [`write`, `create post`, `new article`, `новый пост`, `написать`],
+  "AdminShortcuts.addChannel": [`new channel`, `create channel`, `новый канал`],
+  "AdminShortcuts.addLink": [`new link`, `create link`, `новая ссылка`],
+  "AdminShortcuts.addItem": [`new item`, `new product`, `create item`, `новый товар`],
+  "AdminShortcuts.addCategory": [`new category`, `create category`, `новая категория`],
+}
+
+/**
+ * The open page's `c` actions as palette commands: each opens the page its key opens, and shows
+ * that key.
+ */
+export function adminPageActionCommands(
+  t: Translator<string>,
+  path: string,
+  navigate: (href: string) => void,
+): AdminPageCommand[] {
+  return (ADMIN_PAGE_ACTIONS[path] ?? []).map((action) => ({
+    ...adminPageCommand(
+      t,
+      `page-action-${action.href}`,
+      action.description,
+      () => navigate(action.href),
+      PAGE_ACTION_ALIASES[action.description],
+    ),
+    kbd: action.keys,
+  }))
 }
 
 /**

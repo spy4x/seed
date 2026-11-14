@@ -57,6 +57,12 @@ not mounted and `GET /api/admin/modules` leaves it out. The catalog is the one o
 the other words that find the command, in English and Russian, are its entry in `GO_TO_ALIASES`
 (`libs/ui/admin-palette-commands.ts`).
 
+A page's own actions get a command under the palette's "This page": the view hands them over with
+`usePageCommands` (`apps/admin/src/page-commands.ts`), built with `adminPageCommand`, and they
+leave with the view. Each runs the handler of its button, tab or menu entry, and is left out
+wherever that entry is hidden or disabled; a destructive one only opens its confirmation. A
+page's `c` action in `ADMIN_PAGE_ACTIONS` gets its command without that.
+
 Each page is a view that gets the `AdminContext`:
 
 | Field        | What it is                                                     |
