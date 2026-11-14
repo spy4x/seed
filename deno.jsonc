@@ -258,6 +258,10 @@
       "command": "deno run -R=./infra,./.volumes --allow-run=docker,podman --allow-net=127.0.0.1,0.0.0.0 ./infra/scripts/compose.ts",
       "description": "Runs Compose for the project; refuses a start when a host port it needs is taken"
     },
+    "errors:setup": {
+      "command": "deno run -R=./infra -W=infra/envs/.env,infra/envs/.env.tmp --allow-run=docker,podman ./infra/scripts/errors-setup.ts",
+      "description": "With the errors profile running: makes GlitchTip's superuser and two projects, and writes their DSNs into the env file"
+    },
     "db:upgrade-18": {
       "command": "deno run -R=./infra,./.volumes,./.db-upgrade -W=./.db-upgrade --allow-run=docker,podman ./infra/scripts/db-upgrade-18.ts",
       "description": "Once per server: moves the data from Postgres 16 to 18 (docs/postgres-18-upgrade.md)"

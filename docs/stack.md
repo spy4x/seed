@@ -59,7 +59,7 @@ Defined in `infra/compose/`:
   them as down while they are off. vmagent is not in this profile, so `host-monitoring` goes with
   `monitoring` or `telemetry`; alone it starts exporters nothing reads.
 - Images are pinned to a version tag, and PgBouncer's to a digest too, since every query passes
-  through it; change a pin on purpose, not by a moving `latest`. The one moving tag is the nginx
+  through it, as is GlitchTip's, which runs its own migrations on start; change a pin on purpose, not by a moving `latest`. The one moving tag is the nginx
   base of the SPA and admin images (`nginx-unprivileged:stable-alpine`).
 - Traefik router, service and middleware names all end in `-${PROJECT}`.
 
@@ -74,7 +74,7 @@ shared by several projects on the host) and **off** (nothing of it runs and noth
 | ---- | ------- | -------- | --- |
 | Monitoring ("Monitoring" below) | `monitoring` in `COMPOSE_PROFILES`; `VM_REMOTE_WRITE_URL=` and `VLOGS_URL=` empty | `telemetry` in `COMPOSE_PROFILES`, not `monitoring`; `VM_REMOTE_WRITE_URL=https://…/api/v1/write`, `VLOGS_URL=https://…` and their user names and passwords | neither `monitoring` nor `telemetry` |
 | Host metrics (node-exporter, cAdvisor) | `host-monitoring` next to `monitoring` or `telemetry` | leave `host-monitoring` out; the host's own exporters report it | leave `host-monitoring` out |
-| Error tracking ("Error tracking" below) | not in Compose yet ([#496](https://github.com/spy4x/seed/issues/496)) | `ERROR_REPORT_DSN=https://…` and `SPA_ERROR_REPORT_DSN=https://…` | both empty |
+| Error tracking ("Error tracking" below) | `errors` in `COMPOSE_PROFILES` and `ERRORS_DOMAIN=errors.example.com`, then `deno task errors:setup` once, which fills both DSNs | `ERROR_REPORT_DSN=https://…` and `SPA_ERROR_REPORT_DSN=https://…` | both empty |
 | Files ([files.md](files.md)) | `files` in `COMPOSE_PROFILES`; `S3_ENDPOINT=`, `S3_PUBLIC_ENDPOINT=`, `S3_BUCKET=` empty | leave `files` out; the six `S3_*` settings name the store | not yet: see below |
 | Backup ([backups.md](backups.md)) | `backup` in `COMPOSE_PROFILES`; `BACKUP_RESTIC_REPOSITORY=…`, `BACKUP_RESTIC_PASSWORD=…` | none | leave `backup` out |
 | Traefik | `deno task proxy:start` (`compose.proxy.yml`); `deno task dev` starts it too | a container named `traefik` already on the `proxy` network | none: the apps need a proxy |
@@ -363,20 +363,43 @@ envelope format, about 270 lines and no dependency, instead of the 30 KB `@sentr
 | Layout | Use when | Cost |
 | ------ | -------- | ---- |
 | External, one instance shared by several projects | You run more than one project on a host. The default. | One more thing to keep up, shared by all |
-| Bundled, an optional Compose profile of this project | One project runs alone on its host | Its own web and worker containers, and a database and cache of its own |
+| Bundled, the `errors` Compose profile of this project | One project runs alone on its host | One more container, about 200 MB of memory, and a database in this project's Postgres |
 
-The bundled profile is not in `infra/compose` yet: this template does not deploy GlitchTip. To
-bring one up, use GlitchTip's own Compose file, point its database at this project's Postgres (a
-separate database and user) and its cache at Valkey, and put it behind Traefik with the same router
-pattern as Grafana. Create two projects (API, SPA) and put their DSNs in the env file.
+**The bundled profile.** Put `errors` in `COMPOSE_PROFILES`, set `ERRORS_DOMAIN` to the host
+GlitchTip answers on, start the stack, and once the `errors` container is healthy run
+`deno task errors:setup`. `deno task init` generates the three passwords it needs
+(`GLITCHTIP_DB_PASS`, `GLITCHTIP_SECRET_KEY`, `GLITCHTIP_ADMIN_PASSWORD`); on a server that already
+has an env file, set them by hand. The profile runs:
+
+- `errors-db`, a one-shot that creates the `glitchtip` user and database in this project's Postgres
+  when they are missing and sets the user's password from `GLITCHTIP_DB_PASS` on every start
+  (`infra/configs/glitchtip-db.sql`).
+- `errors`, GlitchTip 7 pinned by digest: one process serves the site, takes the events and runs the
+  background jobs. It runs its own migrations on start, keeps its queue in Valkey database 1 (the app
+  uses 0), and opens at most 4 Postgres connections. Sign-up, new organizations and uptime checks
+  are off: Gatus watches uptime.
+
+`deno task errors:setup` signs nothing in and opens no port: it runs
+`infra/configs/glitchtip-setup.py` inside the `errors` container. That makes the superuser
+(`DEV_EMAIL`, with `GLITCHTIP_ADMIN_PASSWORD` as its first password), an organization named after
+`PROJECT`, and the projects `api` and `spa`, each only when missing. Then it writes
+`ERROR_REPORT_DSN` and `SPA_ERROR_REPORT_DSN` into `infra/envs/.env` while they are empty, and keeps
+a value someone set. A second run changes nothing. The API's DSN names the container
+(`http://…@<PROJECT>-errors:8000/1`), so the API reports over the project's own network; the SPA's
+names `ERRORS_DOMAIN`. Apply the DSNs with `deno task compose up -d`. On a server, run the task in the
+deployed checkout, then copy the two lines into `infra/envs/.env.prod`: the next
+`deno task deploy` replaces the server's env file with it.
+
+Not bundled: email (GlitchTip sends no alert mail until you set its `EMAIL_URL`), and GlitchTip's
+database is not in the backup, which covers the app's database only.
 
 **Source maps.** The SPA build does not produce source maps, so a browser stack trace shows the
 minified bundle. To get readable traces: set `build.sourcemap: "hidden"` in
 `apps/spa/vite.config.ts`, upload `apps/spa/dist/**/*.map` for the release with `sentry-cli
 sourcemaps upload` (GlitchTip accepts it) in the deploy step, and delete the `.map` files before
 the image is built, so they are never served. The release name must match the `release` option of
-the reporter, which the SPA does not set yet. This is not wired in: it needs a running GlitchTip to
-verify.
+the reporter, which the SPA does not set yet. This is not wired in yet
+([#1019](https://github.com/spy4x/seed/issues/1019)).
 
 ## Runtime configuration
 

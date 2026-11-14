@@ -42,6 +42,11 @@ export const SECRETS: Record<string, number> = {
   AUTH_PEPPER: 32,
   // The API takes 8 to 50 characters: 20 bytes are 40 hex characters.
   SEED_PASSWORD: 20,
+  // The errors profile's GlitchTip (docs/stack.md, "Error tracking"). The example leaves them
+  // empty, so a server without the profile need not set them; init fills them all the same.
+  GLITCHTIP_DB_PASS: 24,
+  GLITCHTIP_SECRET_KEY: 32,
+  GLITCHTIP_ADMIN_PASSWORD: 20,
 }
 
 /** What goes before the random part of a secret, for the ones whose form is fixed. */
@@ -65,7 +70,7 @@ export function projectSlug(name: string): string {
  * Compose reads. The line is found by the parser's own rules (`export`, spaces around `=`), and
  * everything around the value (quotes, a trailing `# note`) stays as written.
  */
-function setValue(text: string, key: string, old: string, value: string): string {
+export function setValue(text: string, key: string, old: string, value: string): string {
   const lines = text.split(`\n`)
   const at = lines.findLastIndex((line) => key in parseEnvValues(line, ENV_PATH))
   const eq = lines[at].indexOf(`=`)

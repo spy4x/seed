@@ -40,6 +40,7 @@ default, never a value to keep for a secret.
 | `LINKEDIN_MEMBER_ID` | From `deno task linkedin:sign-in`: the profile the worker posts on. | empty | [Blog](blog.md#linkedin) |
 | `LINKEDIN_TOKEN_EXPIRES_AT` | From `deno task linkedin:sign-in`: when the sign-in runs out (ISO 8601). The admin warns 14 days before. | empty | [Blog](blog.md#linkedin) |
 | `ADMIN_DOMAIN`         | The admin app's host, with the `admin` profile. Empty turns the operator area off.                           | `admin.localhost`  | [The three apps](apps.md#deploy-the-admin-app) |
+| `ERRORS_DOMAIN` | GlitchTip's host, with the `errors` profile. | `errors.localhost` | [The stack](stack.md#error-tracking) |
 
 | Profile           | What it starts                                                                   | Guide                                   |
 | ----------------- | -------------------------------------------------------------------------------- | --------------------------------------- |
@@ -50,6 +51,7 @@ default, never a value to keep for a secret.
 | `admin`           | The admin app at `ADMIN_DOMAIN`.                                                 | [The three apps](apps.md)               |
 | `backup`          | The daily backup. Needs the backup variables.                                    | [Backups](backups.md)                   |
 | `files`           | The bundled file store, Garage. Leave it out to use another S3 store.            | [Files](files.md)                       |
+| `errors`          | This project's own error tracker, GlitchTip, at `ERRORS_DOMAIN`. Then run `deno task errors:setup` once. | [The stack](stack.md#error-tracking) |
 
 ## Database
 
@@ -264,6 +266,9 @@ routes answer 404. Register `https://<DOMAIN>/api/auth/google/callback`, or `/gi
 | -------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `ERROR_REPORT_DSN`               | A GlitchTip or Sentry DSN for the API's unhandled errors. Empty: no reporting.                      | [The stack](stack.md#error-tracking) |
 | `SPA_ERROR_REPORT_DSN`           | The same for the browser. Public; the SPA container reads it on start, so a restart applies it.     | [The stack](stack.md#error-tracking) |
+| `GLITCHTIP_DB_PASS`, `GLITCHTIP_SECRET_KEY` | With the `errors` profile: the password of GlitchTip's database user, and its signing key. Secret; `deno task init` generates them. | [The stack](stack.md#error-tracking) |
+| `GLITCHTIP_ADMIN_PASSWORD`       | With the `errors` profile: the first password of GlitchTip's superuser, `DEV_EMAIL`. Secret; `deno task init` generates it. | [The stack](stack.md#error-tracking) |
+| `GLITCHTIP_CPU_LIMIT`, `GLITCHTIP_MEM_LIMIT` | GlitchTip's CPU and memory limit. Example: `1`, `1G`. |  |
 | `SPA_REALTIME`                   | `false` or `0` turns the WebSocket off: the page uses HTTP and checks for changes every 30 seconds. | [Offline](offline.md)                |
 | `SPA_OFFLINE`                    | `false` or `0` turns the offline layer off: no device copy and no queue of writes.                  | [Offline](offline.md)                |
 | `SPA_NOTES`                      | `false` or `0` hides the notes example's screens, with the API's `NOTES=false`.                     | [Start a product](start-a-product.md#settings) |

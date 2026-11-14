@@ -61,11 +61,11 @@ Deno.test("the database counts as healthy only once it accepts TCP connections",
 
 Deno.test("every long-running service starts again after a reboot", async () => {
   // A service without a restart policy stays Exited after a host reboot or a Docker restart, as
-  // the Postgres exporter did (spy4x/seed#560). The one-shot migrate and the never-started base
-  // image are the only exceptions.
+  // the Postgres exporter did (spy4x/seed#560). The one-shots (migrate, and errors-db, which makes
+  // GlitchTip's database) and the never-started base image are the only exceptions.
   const missing = Object.entries(await services())
     .filter(([name, service]) =>
-      name !== "migrate" && !service.profiles?.includes(`donotstart`) &&
+      ![`migrate`, `errors-db`].includes(name) && !service.profiles?.includes(`donotstart`) &&
       service.restart !== `unless-stopped`
     )
     .map(([name]) => name)

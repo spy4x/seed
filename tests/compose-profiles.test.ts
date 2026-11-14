@@ -103,6 +103,11 @@ Deno.test("the host-monitoring profile starts the host exporters and no shipper"
     .toEqual([...MUST_HAVES, ...HOST_EXPORTERS].sort())
 })
 
+Deno.test("the errors profile starts GlitchTip and its database setup, and nothing else", async () => {
+  expect(started(await stack([`compose.prod.yml`]), [`errors`]))
+    .toEqual([...MUST_HAVES, `errors`, `errors-db`].sort())
+})
+
 Deno.test("a service in a profile reads no variable bare that no must-have reads", async () => {
   // Compose interpolates every service, started or not, and an unset `${X}` in a resource limit
   // stops the whole project. So a profiled service gives each of its own variables a default

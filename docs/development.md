@@ -24,6 +24,7 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `db:seed`                    | Adds the demo data and the development administrator                                           |
 | `db:reset`                   | Drops, migrates and seeds a development database (`ENV=dev` only)                               |
 | `db:upgrade-18`              | Once per server: moves the data from Postgres 16 to 18 ([guide](postgres-18-upgrade.md))        |
+| `errors:setup`               | With the `errors` profile: makes GlitchTip's projects and fills the two DSNs ([guide](stack.md#error-tracking)) |
 | **Checks and tests**         |                                                                                                 |
 | `check`                      | Lint, format check, type check and unit tests                                                   |
 | `fix`                        | Fixes lint findings and formats every file                                                      |

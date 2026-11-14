@@ -109,3 +109,19 @@ services:
       - "traefik.http.routers.http-admin-${PROJECT}.entrypoints=web"
       - "traefik.http.routers.http-admin-${PROJECT}.middlewares=https-redirect-${PROJECT}"
       - "traefik.http.routers.http-admin-${PROJECT}.service=noop@internal"
+
+  # Only with COMPOSE_PROFILES=errors. Overrides compose.shared.yml's errors router by name, and
+  # the DSNs GlitchTip shows name the https address.
+  errors:
+    environment:
+      - GLITCHTIP_DOMAIN=https://${ERRORS_DOMAIN:-}
+    labels:
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.errors-${PROJECT}.entrypoints=websecure"
+      - "traefik.http.routers.errors-${PROJECT}.tls=true"
+      - "traefik.http.routers.errors-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      # Plain HTTP for the errors host redirects to HTTPS; the middleware is the API's.
+      - "traefik.http.routers.http-errors-${PROJECT}.rule=Host(`${ERRORS_DOMAIN:-}`)"
+      - "traefik.http.routers.http-errors-${PROJECT}.entrypoints=web"
+      - "traefik.http.routers.http-errors-${PROJECT}.middlewares=https-redirect-${PROJECT}"
+      - "traefik.http.routers.http-errors-${PROJECT}.service=noop@internal"

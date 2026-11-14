@@ -65,6 +65,16 @@ Deno.test("generated secrets meet the API's lengths and are hex", () => {
   expect(randomHex(24)).not.toBe(randomHex(24))
 })
 
+Deno.test("init fills GlitchTip's three secrets, which the example leaves empty", () => {
+  // Empty in the example, so a deploy without the errors profile need not set them
+  // (deploy.ts's unsafeSecretsIn); init fills them so turning the profile on needs no edit.
+  const keys = [`GLITCHTIP_DB_PASS`, `GLITCHTIP_SECRET_KEY`, `GLITCHTIP_ADMIN_PASSWORD`]
+  const shipped = parseEnvValues(example, `.env.example`)
+  for (const key of keys) expect(shipped[key], key).toBe(``)
+  const values = parseEnvValues(prepareEnv(example, undefined, `acme`, fake).text, `.env`)
+  for (const key of keys) expect(values[key], key).toMatch(/^x{40,}$/)
+})
+
 Deno.test("a project name becomes a Compose project name", () => {
   expect(projectSlug(`My Product`)).toBe(`my-product`)
   expect(projectSlug(` Financy! `)).toBe(`financy`)
