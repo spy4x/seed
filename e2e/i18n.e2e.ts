@@ -58,7 +58,7 @@ test.describe("the interface language", () => {
     }
   })
 
-  test("a language chosen on the device before sign-in is the account's,on every device and in the admin app", async ({ browser, request }) => {
+  test("a language chosen on the device before sign-in is the account's, on every device and in the admin app", async ({ browser, request }) => {
     test.setTimeout(90_000)
     const email = `e2e-language-${uuidV7().slice(-8)}@example.com`
     const devices: BrowserContext[] = []
