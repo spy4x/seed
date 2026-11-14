@@ -213,7 +213,7 @@ them out too, and the admin app's group page shows no note widgets and no Files 
 ([admin-modules.md](admin-modules.md#what-an-operator-may-see)); moving a group's data leaves
 notes and tags where they are, and a new account gets no welcome note. A person's data export, a group's export
 file and spreadsheets leave them out, and a group import skips them (the worker reads `NOTES` too,
-for the data export). The website reads it as well: `/docs/api`, the personal-token API's
+for the data export and the welcome note). The website reads it as well: `/docs/api`, the personal-token API's
 reference, answers 404 in every language, and no footer, docs card, guide, sitemap or `llms.txt`
 links it. The tables and migrations stay, as the catalog's do. Unset or anything but
 `false` keeps the notes on.

@@ -56,7 +56,7 @@ import { NOTES_ON } from "../notes/setup.ts"
  * `fetcher` is how `blog.publish` asks the website whether a post is live; tests pass a fake.
  * With `shareResults`, the hourly `blog.share-results` job reads each posted copy's numbers;
  * without it, that job reads nothing. With `notes` off (`NOTES=false`), a data export holds no
- * notes, attachments or tags.
+ * notes, attachments or tags, and a new account gets no welcome note.
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
