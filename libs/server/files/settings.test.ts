@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { readServerFilesSetup } from "./settings.ts"
+import { isFilesOn, readServerFilesSetup } from "./settings.ts"
 
 const ALL = {
   S3_ENDPOINT: `http://app-garage:3900`,
@@ -10,6 +10,17 @@ const ALL = {
   S3_SECRET_ACCESS_KEY: `secret`,
 }
 const reader = (values: Record<string, string>) => ({ get: (name: string) => values[name] })
+
+describe("isFilesOn", () => {
+  it("is off only for FILES=false, and on when unset, empty or anything else", () => {
+    expect(isFilesOn(reader({ FILES: `false` }))).toBe(false)
+    expect(isFilesOn(reader({ FILES: ` false ` }))).toBe(false)
+    for (const value of [undefined, ``, `true`, `False`, `0`]) {
+      const values: Record<string, string> = value === undefined ? {} : { FILES: value }
+      expect({ value, on: isFilesOn(reader(values)) }).toEqual({ value, on: true })
+    }
+  })
+})
 
 describe("readServerFilesSetup", () => {
   it("reads the five settings the worker needs", () => {

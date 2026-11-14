@@ -2198,6 +2198,7 @@ export default {
   "AdminSystem.upSince": "تعمل منذ",
   "AdminSystem.cache": "ذاكرة التخزين المؤقت (Valkey)",
   "AdminSystem.fileStore": "تخزين الملفات (S3)",
+  "AdminSystem.filesOff": "متوقف: يعمل هذا الخادم دون ملفات (FILES=false).",
   "AdminSystem.queue": "طابور المهام",
   "AdminSystem.queueHint": {
     "zero": "ينبّه حين تنتظر مهمة أكثر من {count} دقيقة أو تفشل مهمة.",

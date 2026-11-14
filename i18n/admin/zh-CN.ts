@@ -1775,6 +1775,7 @@ export default {
   "AdminSystem.upSince": "运行起始时间",
   "AdminSystem.cache": "缓存（Valkey）",
   "AdminSystem.fileStore": "文件存储（S3）",
+  "AdminSystem.filesOff": "已关闭：此服务器在无文件模式下运行（FILES=false）。",
   "AdminSystem.queue": "任务队列",
   "AdminSystem.queueHint": {
     "other": "当有任务等待超过 {count} 分钟或有任务失败时发出警告。",

@@ -6,6 +6,7 @@ import { CALL_ERROR_STATUS } from "@spy4x/realtime/operations"
 import { isRecord } from "@spy4x/platform/universal/is-record"
 import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 import type { ApiErrorBody, ErrorCode, ErrorReason } from "@domain/errors"
+import { FilesOffError } from "@server/files/files.ts"
 
 /** What an error answer says besides its code. */
 export interface ErrorResponseOptions {
@@ -110,10 +111,14 @@ export const UNEXPECTED_ERROR_MESSAGE = `Request failed`
 
 /**
  * The app's last word on an error, in the one shape: an `HTTPException` (a body too large, not
- * JSON, or too slow) keeps its status, message and headers; anything else is `internal` with a
- * sentence that says nothing about the failure.
+ * JSON, or too slow) keeps its status, message and headers; a call that needed the file store while
+ * files are off (`FilesOffError`) is `conflict` with reason `FILES_OFF`, since asking again will
+ * not help; anything else is `internal` with a sentence that says nothing about the failure.
  */
 export function unhandledErrorResponse(c: Context, error: unknown): Response {
+  if (error instanceof FilesOffError) {
+    return errorResponse(c, `conflict`, { message: error.message, reason: error.code })
+  }
   if (!(error instanceof HTTPException)) {
     return errorResponse(c, `internal`, { message: UNEXPECTED_ERROR_MESSAGE })
   }

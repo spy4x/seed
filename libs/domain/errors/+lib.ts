@@ -69,6 +69,8 @@ export const API_ERROR_REASONS = [
   `DEMO_REFUSED`,
   /** The public demo's admin account tried to sign in anywhere but the admin app. */
   `DEMO_ADMIN_ELSEWHERE`,
+  /** The call needs the file store, and this server runs with files off (`FILES=false`). */
+  `FILES_OFF`,
 ] as const
 
 /** Every `reason` an error may carry. Closed: the compiler refuses one that is not listed. */

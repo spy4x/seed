@@ -2102,6 +2102,7 @@ export default {
   "AdminSystem.upSince": "Работает с",
   "AdminSystem.cache": "Кеш (Valkey)",
   "AdminSystem.fileStore": "Хранилище файлов (S3)",
+  "AdminSystem.filesOff": "Выключено: этот сервер работает без файлов (FILES=false).",
   "AdminSystem.queue": "Очередь задач",
   "AdminSystem.queueHint": {
     "one":

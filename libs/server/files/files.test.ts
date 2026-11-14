@@ -7,6 +7,9 @@ import {
   FILE_URL_SECONDS,
   FileRefusal,
   fileRule,
+  FILES_OFF_MESSAGE,
+  FILES_OFF_STORE,
+  FilesOffError,
   type ObjectStore,
   STAGING_PREFIX,
 } from "./files.ts"
@@ -244,4 +247,30 @@ Deno.test("the store counts as reachable only when a listing succeeds", async ()
 
   expect(await up.isReachable()).toBe(true)
   expect(await down.isReachable()).toBe(false)
+})
+
+Deno.test("the store of a server with files off refuses every call with FilesOffError", async () => {
+  const rule = fileRule([`image/png`], 10)
+  const calls: [string, () => Promise<unknown>][] = [
+    [`signUpload`, () => FILES_OFF_STORE.signUpload(rule, { contentType: `image/png`, size: 1 })],
+    [`confirmUpload`, () =>
+      FILES_OFF_STORE.confirmUpload(`${STAGING_PREFIX}a`, `b`, {
+        contentType: `image/png`,
+        size: 1,
+      })],
+    [
+      `signDownload`,
+      () => FILES_OFF_STORE.signDownload(`a`, { contentType: `image/png`, filename: `a` }),
+    ],
+    [`delete`, () => FILES_OFF_STORE.delete(`a`)],
+    [`read`, () => FILES_OFF_STORE.read(`a`)],
+    [`isReachable`, () => FILES_OFF_STORE.isReachable()],
+    [`put`, () => FILES_OFF_STORE.put(`a`, new Uint8Array([1]))],
+    [`deleteOlderThan`, () => FILES_OFF_STORE.deleteOlderThan(`a/`, new Date(0))],
+  ]
+  for (const [name, call] of calls) {
+    const error = await call().then(() => null, (error: unknown) => error)
+    expect(error, name).toBeInstanceOf(FilesOffError)
+    expect((error as FilesOffError).message, name).toBe(FILES_OFF_MESSAGE)
+  }
 })

@@ -1851,6 +1851,7 @@ export default {
   "AdminSystem.upSince": "稼働開始",
   "AdminSystem.cache": "キャッシュ（Valkey）",
   "AdminSystem.fileStore": "ファイルストレージ（S3）",
+  "AdminSystem.filesOff": "オフ：このサーバーはファイルなしで動作しています（FILES=false）。",
   "AdminSystem.queue": "ジョブキュー",
   "AdminSystem.queueHint": {
     "other": "ジョブの待ち時間が{count}分を超えるか、失敗したジョブがあると警告します。",

@@ -183,6 +183,7 @@ export default {
   "Reason.TOO_MANY_LINKS": "链接数量已达上限，请先移除一个。",
   "Reason.TOO_MANY_TOKENS": "令牌数量已达上限，请先撤销一个。",
   "Reason.TOO_SOON": "你在一天内已经申请过了，请明天再试。",
+  "Reason.FILES_OFF": "此服务器未设置文件功能，无法上传或下载文件。",
   "Reason.TRACKING_OFF": "追踪链接需要先设置网站地址。",
   "Reason.UNKNOWN_PLAN": "这个套餐不存在。",
   "Reason.UPLOADS_PENDING": "请等当前上传完成后再操作。",

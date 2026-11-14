@@ -16,6 +16,7 @@ import { AttachmentError, NoteError, NoteVersionConflictError } from "@domain/no
 import { TagError, TagVersionConflictError } from "@domain/tags"
 import { PlanError, toPlanRefusal } from "@domain/billing"
 import { IdempotencyError } from "@spy4x/server/idempotency"
+import { FilesOffError } from "@server/files/files.ts"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import type { OperationCaller } from "../middlewares/operation-rate-limits.ts"
 import type { AppAuthState } from "./sign-in.ts"
@@ -99,6 +100,12 @@ export function toRequestError(error: unknown): RealtimeRequestError | null {
     return new RealtimeRequestError(PICTURE_ERROR_CODES[error.code], error.message, {
       code: error.code,
     }, { reason: error.code, fields: error.fields })
+  }
+  if (error instanceof FilesOffError) {
+    // Not `internal`: a client retries that, and asking again will not turn the files on.
+    return new RealtimeRequestError("conflict", error.message, { code: error.code }, {
+      reason: error.code,
+    })
   }
   if (error instanceof PlanError) {
     // The socket's codes are closed, so a plan refusal is `forbidden` and names itself in details.

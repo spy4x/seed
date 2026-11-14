@@ -1,5 +1,14 @@
 import type { FileStoreSettings } from "./files.ts"
 
+/**
+ * Reads the files' switch (docs/files.md, "Without files"): `FILES=false` turns uploads, downloads
+ * and data exports off, so no process needs a file store; anything else, unset included, keeps
+ * them on. An empty `S3_ENDPOINT` cannot mean off, since compose fills it with the bundled Garage.
+ */
+export function isFilesOn(env: { get(name: string): string | undefined }): boolean {
+  return env.get(`FILES`)?.trim() !== `false`
+}
+
 /** The variables the worker reads to reach the file store; the API reads the same ones. */
 export const SERVER_FILES_KEYS = [
   `S3_ENDPOINT`,

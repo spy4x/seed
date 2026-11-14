@@ -35,7 +35,8 @@ export interface AdminSystemRouteDependencies {
   limit: MiddlewareHandler<APIContext>
   system: AdminSystemStore
   cacheConnected(): Promise<boolean>
-  fileStoreReachable(): Promise<boolean>
+  /** `null` while files are off (`FILES=false`): the page shows the store as off and never asks it. */
+  fileStoreReachable: (() => Promise<boolean>) | null
   build: { version: string | null; commit: string | null }
   now(): Date
   /** The runtime's name and version; `navigator.userAgent` by default, such as `Deno/2.9.7`. */
@@ -78,10 +79,11 @@ export async function readSystemSnapshot(
   const { system } = dependencies
   const now = dependencies.now()
   const timeout = dependencies.probeTimeoutMs ?? CACHE_PROBE_TIMEOUT_MS
+  const { fileStoreReachable } = dependencies
   const [db, cache, files] = await Promise.all([
     timed(() => system.databaseConnected(), timeout),
     timed(() => dependencies.cacheConnected(), timeout),
-    timed(() => dependencies.fileStoreReachable(), timeout),
+    fileStoreReachable ? timed(fileStoreReachable, timeout) : null,
   ])
   const [facts, queue, backup, migrations] = db.ok
     ? await Promise.all([
@@ -105,7 +107,7 @@ export async function readSystemSnapshot(
     reachable: cache.ok,
     latencyMs: cache.ms,
   }
-  const fileStoreCard = {
+  const fileStoreCard = files && {
     health: files.ok ? AdminHealth.OK : AdminHealth.ERROR,
     reachable: files.ok,
     latencyMs: files.ms,
@@ -134,7 +136,7 @@ export async function readSystemSnapshot(
     health: worstHealth(
       database.health,
       cacheCard.health,
-      fileStoreCard.health,
+      fileStoreCard?.health ?? AdminHealth.OK,
       queueCard.health,
       backupCard.health,
       migrationsCard.health,

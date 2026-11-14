@@ -14,6 +14,7 @@ import {
 } from "@domain/identity"
 import type { OperationCall } from "@spy4x/realtime/operations"
 import { IdempotencyError } from "@spy4x/server/idempotency"
+import { FILES_OFF_MESSAGE, FilesOffError } from "@server/files/files.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
 import { POLICY_CLOSE_CODE, Realtime, type RealtimeOptions, toRequestError } from "./realtime.ts"
 import type { AppAuthState } from "./sign-in.ts"
@@ -534,6 +535,16 @@ describe("toRequestError", () => {
     expect((picture as RealtimeRequestError).fields).toEqual({
       size: { code: "min", values: { rule: 1 } },
     })
+  })
+
+  it("answers a call that needs the file store while files are off as a conflict naming FILES_OFF", () => {
+    const error = toRequestError(new FilesOffError())
+    expect(error).toMatchObject({
+      code: "conflict",
+      reason: "FILES_OFF",
+      message: FILES_OFF_MESSAGE,
+    })
+    expect(error?.details).toEqual({ code: "FILES_OFF" })
   })
 
   it("does not describe an unexpected failure", () => {

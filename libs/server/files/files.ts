@@ -333,3 +333,39 @@ export function s3ServerFiles(settings: Omit<FileStoreSettings, `publicEndpoint`
     settings.bucket,
   )
 }
+
+/** What a person reads when files are off (`FILES=false`) and a call needs the store. */
+export const FILES_OFF_MESSAGE = `Files are not set up on this server.`
+
+/**
+ * A call that needs the file store while files are off (`FILES=false`, docs/files.md). The API
+ * answers it as `conflict` with reason `FILES_OFF` on every transport (`toRequestError`,
+ * `unhandledErrorResponse`).
+ */
+export class FilesOffError extends Error {
+  readonly code = `FILES_OFF`
+  constructor() {
+    super(FILES_OFF_MESSAGE)
+    this.name = `FilesOffError`
+  }
+}
+
+/** Refuses the call: files are off. */
+const refuse = (): Promise<never> => Promise.reject(new FilesOffError())
+
+/**
+ * The store of a server whose files are off: every call is refused with {@link FilesOffError}
+ * and none reaches a store, so a feature that needs one fails fast instead of waiting on an address
+ * nobody answers at.
+ */
+export const FILES_OFF_STORE: FileStore & ServerFiles = {
+  bucket: ``,
+  signUpload: refuse,
+  confirmUpload: refuse,
+  signDownload: refuse,
+  delete: refuse,
+  read: refuse,
+  isReachable: refuse,
+  put: refuse,
+  deleteOlderThan: refuse,
+}

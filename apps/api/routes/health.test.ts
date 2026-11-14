@@ -29,6 +29,20 @@ Deno.test("health reports degraded, still 200, when only the file store is down"
   expect(body).toMatchObject({ status: "degraded", checks: { database: true, files: false } })
 })
 
+Deno.test("health with files off never asks the file store and reports ok without a files check", async () => {
+  const route = createHealthRoute({
+    isDbConnected: () => Promise.resolve(true),
+    isCacheConnected: () => Promise.resolve(true),
+    isFileStoreReachable: null,
+  })
+  const response = await route.request("/")
+  const body = await response.json()
+
+  expect(response.status).toBe(200)
+  expect(body.status).toBe("ok")
+  expect(body.checks).toEqual({ database: true, cache: true })
+})
+
 Deno.test("health reports degraded, still 200, when only the cache is down", async () => {
   const { status, body } = await health(true, false)
 

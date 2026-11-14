@@ -15,7 +15,7 @@ import {
   type AttachmentUploadBudget,
   type PendingAttachmentUpload,
 } from "@domain/notes"
-import { FileRefusal, type FileStore } from "@server/files/files.ts"
+import { FileRefusal, FILES_OFF_STORE, FilesOffError, type FileStore } from "@server/files/files.ts"
 import {
   type AttachmentHandlerDependencies,
   createAttachmentConfirmHandler,
@@ -163,10 +163,13 @@ function setUp(
     limits?: Partial<Entitlements["limits"]>
     rules?: Partial<AttachmentRules>
     budget?: AttachmentUploadBudget
+    /** Files are off (`FILES=false`): the handlers get `FILES_OFF_STORE`. */
+    filesOff?: boolean
   } = {},
 ) {
   const memory = memoryAttachments()
   const store = fakeFiles(options.confirm ?? null)
+  if (options.filesOff) store.files = FILES_OFF_STORE
   const roles = new Map([[EDITOR, GroupRole.EDITOR], [VIEWER, GroupRole.VIEWER], [
     OTHER_EDITOR,
     GroupRole.EDITOR,
@@ -343,6 +346,13 @@ Deno.test("a download is signed for a member of the file's group only, with its 
   await expect(download(
     new AttachmentDownloadQuery({ actor: setup.actor(VIEWER), groupId: OTHER_GROUP, id }),
   )).rejects.toMatchObject({ code: `GROUP_NOT_FOUND` })
+})
+
+Deno.test("with files off, an upload is refused with FilesOffError and nothing waits for a confirm", async () => {
+  const { signAs, pending } = setUp({ filesOff: true })
+
+  await expect(signAs(EDITOR)).rejects.toBeInstanceOf(FilesOffError)
+  expect(pending.size).toBe(0)
 })
 
 Deno.test("the list gives a member the note's files and the group's room under its plan", async () => {

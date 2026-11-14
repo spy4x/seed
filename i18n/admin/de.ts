@@ -1985,6 +1985,7 @@ export default {
   "AdminSystem.upSince": "Läuft seit",
   "AdminSystem.cache": "Cache (Valkey)",
   "AdminSystem.fileStore": "Dateispeicher (S3)",
+  "AdminSystem.filesOff": "Aus: Dieser Server läuft ohne Dateien (FILES=false).",
   "AdminSystem.queue": "Job-Warteschlange",
   "AdminSystem.queueHint": {
     "one": "Warnt, wenn ein Job länger als {count} Minute wartet oder ein Job fehlgeschlagen ist.",

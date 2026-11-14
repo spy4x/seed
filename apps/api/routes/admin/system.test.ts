@@ -27,7 +27,8 @@ interface Options {
   hang?: keyof AdminSystemStore
   databaseConnected?: boolean
   cache?: () => Promise<boolean>
-  files?: () => Promise<boolean>
+  /** `null`: files are off (`FILES=false`). */
+  files?: (() => Promise<boolean>) | null
   oldestDueAt?: Date | null
   failed?: number
   lastBackup?: Date | null
@@ -71,7 +72,7 @@ function buildApp(options: Options = {}) {
     now: () => NOW,
     system,
     cacheConnected: options.cache ?? (() => Promise.resolve(true)),
-    fileStoreReachable: options.files ?? (() => Promise.resolve(true)),
+    fileStoreReachable: options.files === undefined ? () => Promise.resolve(true) : options.files,
     build: { version: "v1.2.3", commit: "abc1234" },
     runtime: "Deno/2.9.7",
     startedAt: new Date("2026-10-16T08:00:00.000Z"),
@@ -242,6 +243,13 @@ describe("system routes", () => {
     expect(body.fileStore).toMatchObject({ health: AdminHealth.ERROR, reachable: false })
     expect(body.cache.health).toBe(AdminHealth.OK)
     expect(body.health).toBe(AdminHealth.ERROR)
+  })
+
+  it("shows the file store as off, never an error, while files are off", async () => {
+    const body = await snapshot({ files: null })
+
+    expect(body.fileStore).toBeNull()
+    expect(body.health).toBe(AdminHealth.OK)
   })
 
   it("warns about a queue whose oldest due job waits more than five minutes", async () => {

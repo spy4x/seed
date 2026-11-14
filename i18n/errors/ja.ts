@@ -204,6 +204,8 @@ export default {
   "Reason.TOO_MANY_LINKS": "これ以上リンクを追加できません。先に1つ外してください。",
   "Reason.TOO_MANY_TOKENS": "これ以上トークンを追加できません。先に1つ取り消してください。",
   "Reason.TOO_SOON": "前回のリクエストから1日経っていません。明日もう一度お試しください。",
+  "Reason.FILES_OFF":
+    "このサーバーではファイル機能が設定されていないため、アップロードもダウンロードもできません。",
   "Reason.TRACKING_OFF": "トラッキングリンクにはウェブサイトのアドレスが必要です。",
   "Reason.UNKNOWN_PLAN": "このプランは存在しません。",
   "Reason.UPLOADS_PENDING": "先に、進行中のアップロードが終わるまでお待ちください。",
