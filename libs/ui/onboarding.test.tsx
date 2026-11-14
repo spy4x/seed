@@ -472,6 +472,16 @@ describe("first steps with the notes off", () => {
     expect(off.filter((step) => NAMES_NOTES.test(`${step.title} ${step.body}`))).toEqual([])
   })
 
+  it("opens the card's tour at Groups, step 1 of 3", async () => {
+    const { update } = await mount({ notes: false })
+
+    await update({ tourOpen: true })
+
+    expect(document.activeElement?.textContent).toBe("Groups")
+    expect(document.body.textContent).toContain("Step 1 of 3")
+    expect(document.body.textContent).not.toMatch(NAMES_NOTES)
+  })
+
   it("draws four steps and offers Finish once they are done, though no note was ever written", async () => {
     const { calls, update } = await mount({
       notes: false,

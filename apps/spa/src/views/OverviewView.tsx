@@ -19,7 +19,9 @@ import { overviewStore } from "../state/overview.ts"
 import { preferencesState } from "../state/preferences.ts"
 import { selectionStore } from "../state/selection.ts"
 import { toasts } from "../state/toasts.ts"
+import { onboardingStore } from "../state/onboarding.ts"
 import { notesOn } from "../modules.ts"
+import { OnboardingView } from "./OnboardingView.tsx"
 
 /** The page's own keys, `d` and `c`, while the overview is open; `null` on every other page. */
 export const overviewPageActions = signal<{ openRange(): void; openCustomise(): void } | null>(
@@ -48,9 +50,16 @@ export function OverviewRedirect() {
 /**
  * Wires `/overview/:groupId` to the overview store, the person's preferences (where the layout is
  * kept) and the address (where the range is kept). A person who is not a member sees "This group
- * does not exist." without a request, as on the other group pages.
+ * does not exist." without a request, as on the other group pages. With the notes off it is where a
+ * new account lands, so it draws the first steps under its header; `onboarding` is their store,
+ * which tests replace.
  */
-export function OverviewView({ groupId }: { groupId: string }) {
+export function OverviewView(
+  { groupId, onboarding = onboardingStore }: {
+    groupId: string
+    onboarding?: typeof onboardingStore
+  },
+) {
   const [location, navigate] = useLocation()
   const search = useSearch()
   const membership = groupsStore.groups.value.find((group) => group.id === groupId)
@@ -204,6 +213,7 @@ export function OverviewView({ groupId }: { groupId: string }) {
       choosePlanHref={choosePlan ? GROUP_PATHS.billing(groupId) : null}
       rangeDataE2E={RANGE_E2E}
       navigate={navigate}
+      intro={notesOn() ? null : <OnboardingView store={onboarding} />}
     />
   )
 }

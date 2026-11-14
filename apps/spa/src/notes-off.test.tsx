@@ -23,6 +23,10 @@ import { selectionStore } from "./state/selection.ts"
 import { newNoteStore } from "./state/new-note.ts"
 import type { NotesDependencies } from "./state/notes.ts"
 import type { TagsDependencies } from "./state/tags.ts"
+import { createOnboardingStore } from "./state/onboarding.ts"
+import { onboardingSteps, tourSteps } from "@ui/onboarding-card.tsx"
+import { ENGLISH } from "@ui/i18n-testing.ts"
+import { OverviewView } from "./views/OverviewView.tsx"
 
 /** An address of the notes example: the notes, the tags, or a group's old notes links. */
 const NOTES_ADDRESS = /^\/(notes|tags)(\/|$)|^\/groups\/[^/]+\/notes/
@@ -161,5 +165,72 @@ describe("the SPA with the notes off", () => {
     expect(off).not.toContain(`data-e2e="new-note-dialog"`)
     expect(hrefs(off)).toContain(OVERVIEW_PATHS.root)
     newNoteStore.open.value = false
+  })
+})
+
+describe("the first steps with the notes off", () => {
+  /** A new person's steps: none done. */
+  const NONE = {
+    emailVerified: false,
+    noteCreated: false,
+    memberInvited: false,
+    notificationsOn: false,
+    twoFactorOn: false,
+  }
+
+  /** A store whose fake server says the person is new: nothing done, nothing dismissed. */
+  async function newPerson() {
+    const fresh = { steps: NONE, dismissed: false, tourSeen: false }
+    const store = createOnboardingStore({
+      query: () => Promise.resolve(fresh) as Promise<never>,
+      command: () => Promise.resolve(fresh) as Promise<never>,
+    })
+    await store.open()
+    return store
+  }
+
+  /** The overview of group `g`, owned by the person, with the first steps from `onboarding`. */
+  function overview(onboarding: ReturnType<typeof createOnboardingStore>): string {
+    groupsStore.groups.value = [
+      { id: `g`, name: `Home`, role: GroupRole.OWNER } as typeof groupsStore.groups.value[number],
+    ]
+    selectionStore.groupId.value = `g`
+    return renderToString(
+      <Router ssrPath={OVERVIEW_PATHS.group(`g`)}>
+        <OverviewView groupId="g" onboarding={onboarding} />
+      </Router>,
+    )
+  }
+
+  it("draws them on the overview, with no note step, and leaves the overview alone with the notes on", async () => {
+    const onboarding = await newPerson()
+
+    const on = overview(onboarding)
+    configureModules({ notes: false })
+    const off = overview(onboarding)
+
+    expect(on).not.toContain(`data-e2e="onboarding"`)
+    // Under the page header and above the page's content, as above the notes list.
+    const at = (e2e: string) => off.indexOf(`data-e2e="${e2e}"`)
+    expect(at(`page-header`)).toBeLessThan(at(`onboarding`))
+    expect(at(`onboarding`)).toBeLessThan(at(`overview-no-widgets`))
+    expect(off).not.toContain(ENGLISH.t(`OnboardingCard.noteTitle`))
+    expect(off).not.toContain(ENGLISH.t(`OnboardingCard.inviteText`))
+    expect(off).toContain(ENGLISH.t(`OnboardingCard.inviteTextPlain`))
+  })
+
+  it("offers no step or tour stop that leads to the notes", () => {
+    const steps = onboardingSteps(ENGLISH, NONE, `g`, undefined, false, false)
+    const guest = onboardingSteps(ENGLISH, NONE, `g`, undefined, true, false)
+    const hrefs = [...steps, ...guest].map((step) => step.action?.href ?? ``)
+    const targets = tourSteps(ENGLISH, false).map((step) => String(step.target))
+
+    expect(steps.map((step) => step.id)).not.toContain(`note`)
+    expect(guest.map((step) => step.id)).toEqual([`keep`])
+    expect(hrefs.filter((href) => NOTES_ADDRESS.test(href))).toEqual([])
+    expect(targets.filter((target) => target.includes(`"${NOTE_PATHS.list}"`))).toEqual([])
+    expect(tourSteps(ENGLISH).map((step) => step.target)).toContain(
+      `[data-e2e="rail-shell-rail"] a[href="${NOTE_PATHS.list}"]`,
+    )
   })
 })
