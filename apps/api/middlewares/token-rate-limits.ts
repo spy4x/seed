@@ -16,9 +16,10 @@ import type { TokenApiContext } from "../routes/token-api.ts"
 /** The limits of the token API (`routes/token-api.ts`). Each answers 429 with `Retry-After`. */
 export interface TokenRateLimits {
   /**
-   * Refused requests per client IP, spent before the token is checked: guessing tokens, or using a
-   * revoked one, runs out of budget. A request that succeeds gives its slot back, so a client that
-   * runs several tokens from one address is held only by each token's own budget.
+   * Requests without a live token per client IP: guessing tokens, or using a revoked one, runs out
+   * of budget. The route calls it only once the lookup found no live token
+   * (`refuseWithoutToken` in `routes/token-api.ts`), so every request it sees is a refusal, and a
+   * live token, from any address, is held only by its own budget.
    */
   failuresByIp: MiddlewareHandler<TokenApiContext>
   /** Requests per token, whatever the address: each token has a budget of its own. */
@@ -81,8 +82,6 @@ export function createTokenRateLimits(settings: TokenRateLimitSettings): TokenRa
       remoteAddr: serveRemoteAddr,
       keyResolver: userThenIp<TokenApiContext>(() => undefined, { trustedProxy: `x-real-ip` }),
       keyPrefix: `api-token-ip:`,
-      skipSuccessful: true,
-      onRefundError: onStoreError,
     }),
     byToken: createRateLimitMiddleware(failOpen(`ratelimit-api-token`), {
       remoteAddr: serveRemoteAddr,
