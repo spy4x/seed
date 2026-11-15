@@ -567,7 +567,7 @@ describe("ProfileView", () => {
       onlyReads(calls)
     })
 
-    it("opens nothing for an id the open section does not draw, or one that is no palette target", async () => {
+    it("opens nothing, and does not fail, for an id the open section does not draw or a hash like #__proto__", async () => {
       for (const id of ["account-delete-open", "__proto__", "constructor", "password-new"]) {
         await land("security", id, { mfa: UserMFAStatus.CONFIGURED })
         expect(openDialogs(), id).toEqual([])
