@@ -31,7 +31,6 @@
     "jsr:@spy4x/preact-system@14.8.0": "14.8.0",
     "jsr:@spy4x/preact-theme@14.8.0": "14.8.0",
     "jsr:@spy4x/preact-theme@^14.8.0": "14.8.0",
-    "jsr:@spy4x/preact-ui@*": "14.8.0",
     "jsr:@spy4x/preact-ui@14.8.0": "14.8.0",
     "jsr:@spy4x/preact-ui@^14.8.0": "14.8.0",
     "jsr:@spy4x/realtime@1.127.0": "1.127.0",
