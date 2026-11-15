@@ -262,8 +262,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
         asksNotes || !notesOn ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t),
       )
     }
-    const records = text === "" ? [] : recordRows(latest.current.records ?? [], text)
-    return [...notes, ...matched, ...records]
+    return [...notes, ...matched, ...recordRows(latest.current.records ?? [], text)]
   }
   /** A pick made inside a submenu, with the palette still open. */
   const select = (choice: SearchChoice) => latest.current.onSelect(choice)
@@ -317,8 +316,8 @@ export function openSearch(container: Element | null): void {
 
 /**
  * The rows of each record source that `query` matches, best first, at most its limit, under its
- * heading. A query the matcher reads as empty (only punctuation) matches every record with score
- * `0`, so those are dropped: any real match scores more.
+ * heading. A query the matcher reads as empty (nothing typed, or only punctuation) matches every
+ * record with score `0`, so those are dropped: any real match scores more.
  */
 function recordRows(sources: readonly PaletteRecordSource[], query: string): PaletteOption[] {
   return sources.flatMap((source, index) =>
