@@ -124,7 +124,7 @@ test.describe("the admin audit log", () => {
         390,
       )
       // The Event cell names the person, who set no name, by their address; it fits the screen
-      // and breaks after the `@`, never inside the domain.
+      // and keeps its domain on one line.
       const phoneLine = rows.first().locator("[data-e2e=admin-audit-people-phone]")
       await expect(phoneLine).toContainText(targetEmail)
       const domain = await phoneLine.evaluate((line) => {
