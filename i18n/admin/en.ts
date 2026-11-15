@@ -1728,7 +1728,8 @@ export default {
   "AdminNav.imports": "Imports",
   "AdminImports.title": "Imports",
   "AdminImports.subtitle":
-    "Every group's file imports: where each one is, its counts and how long it took. Never what a file holds.",
+    "Every group's file imports: where each one is, its counts and how long it took.",
+  "AdminImports.private": "File contents and row values are never shown here.",
   "AdminImports.status": "Status",
   "AdminImports.all": "All",
   "AdminImports.chip": "{status} {count}",

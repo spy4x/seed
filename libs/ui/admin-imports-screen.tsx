@@ -191,6 +191,9 @@ export function AdminImportsScreen(props: AdminImportsScreenProps): JSX.Element 
         subtitle={t.t(`AdminImports.subtitle`)}
         titleDataE2E="admin-imports-title"
       />
+      <p class="text-sm text-muted" data-e2e="admin-imports-private">
+        {t.t(`AdminImports.private`)}
+      </p>
       <RadioChips
         legend={t.t(`AdminImports.status`)}
         hideLegend

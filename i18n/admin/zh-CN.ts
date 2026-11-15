@@ -1599,8 +1599,8 @@ export default {
   "AdminNav.jobs": "任务",
   "AdminNav.imports": "导入",
   "AdminImports.title": "导入",
-  "AdminImports.subtitle":
-    "所有群组的文件导入：每次导入进行到哪一步、各项数量和耗时。从不显示文件内容。",
+  "AdminImports.subtitle": "所有群组的文件导入：每次导入进行到哪一步、各项数量和耗时。",
+  "AdminImports.private": "这里从不显示文件内容和行中的值。",
   "AdminImports.status": "状态",
   "AdminImports.all": "全部",
   "AdminImports.chip": "{status} {count}",

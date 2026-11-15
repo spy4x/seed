@@ -1897,7 +1897,8 @@ export default {
   "AdminNav.imports": "Импорт",
   "AdminImports.title": "Импорт",
   "AdminImports.subtitle":
-    "Импорт файлов во всех группах: на каком шаге каждый, его счётчики и сколько он занял. Никогда — содержимое файла.",
+    "Импорт файлов во всех группах: на каком шаге каждый, его счётчики и сколько он занял.",
+  "AdminImports.private": "Содержимое файлов и значения строк здесь никогда не показываются.",
   "AdminImports.status": "Статус",
   "AdminImports.all": "Все",
   "AdminImports.chip": "{status} {count}",

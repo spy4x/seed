@@ -1673,7 +1673,8 @@ export default {
   "AdminNav.imports": "インポート",
   "AdminImports.title": "インポート",
   "AdminImports.subtitle":
-    "全グループのファイルのインポート。各インポートの段階、件数、所要時間を表示します。ファイルの中身は表示しません。",
+    "全グループのファイルのインポート。各インポートの段階、件数、所要時間を表示します。",
+  "AdminImports.private": "ファイルの中身や行の値はここには表示されません。",
   "AdminImports.status": "ステータス",
   "AdminImports.all": "すべて",
   "AdminImports.chip": "{status} {count}",

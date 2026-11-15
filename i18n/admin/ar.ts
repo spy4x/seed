@@ -1978,7 +1978,8 @@ export default {
   "AdminNav.imports": "الاستيراد",
   "AdminImports.title": "الاستيراد",
   "AdminImports.subtitle":
-    "عمليات استيراد الملفات في كل المجموعات: أين وصلت كل عملية وأعدادها والمدة التي استغرقتها. ولا يظهر أبدًا محتوى أي ملف.",
+    "عمليات استيراد الملفات في كل المجموعات: أين وصلت كل عملية وأعدادها والمدة التي استغرقتها.",
+  "AdminImports.private": "لا يظهر هنا أبدًا محتوى الملفات ولا قيم الصفوف.",
   "AdminImports.status": "الحالة",
   "AdminImports.all": "الكل",
   "AdminImports.chip": "{status} {count}",

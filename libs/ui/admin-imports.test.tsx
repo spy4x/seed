@@ -146,6 +146,12 @@ describe("the admin imports list", () => {
     expect(filters).toEqual([{ status: `failed`, page: 1 }])
   })
 
+  it("says on its own line that file contents are never shown", async () => {
+    await mount(page().node)
+    expect(text(`[data-e2e="admin-imports-private"]`))
+      .toBe("File contents and row values are never shown here.")
+  })
+
   it("shows a row's group, kind, uploader, counts and timing, linking the group and the person", async () => {
     await mount(page().node)
     const row = find(`[data-e2e="admin-import-${saved.id}"]`).closest("tr")!

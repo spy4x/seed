@@ -1795,7 +1795,8 @@ export default {
   "AdminNav.imports": "Importe",
   "AdminImports.title": "Importe",
   "AdminImports.subtitle":
-    "Die Datei-Importe aller Gruppen: wo jeder steht, seine Zahlen und wie lange er dauerte. Nie der Inhalt einer Datei.",
+    "Die Datei-Importe aller Gruppen: wo jeder steht, seine Zahlen und wie lange er dauerte.",
+  "AdminImports.private": "Dateiinhalte und Zeilenwerte werden hier nie angezeigt.",
   "AdminImports.status": "Status",
   "AdminImports.all": "Alle",
   "AdminImports.chip": "{status} {count}",

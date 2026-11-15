@@ -1836,7 +1836,8 @@ export default {
   "AdminNav.imports": "Importações",
   "AdminImports.title": "Importações",
   "AdminImports.subtitle":
-    "As importações de arquivos de todos os grupos: em que etapa cada uma está, seus números e quanto tempo levou. Nunca o conteúdo de um arquivo.",
+    "As importações de arquivos de todos os grupos: em que etapa cada uma está, seus números e quanto tempo levou.",
+  "AdminImports.private": "O conteúdo dos arquivos e os valores das linhas nunca aparecem aqui.",
   "AdminImports.status": "Situação",
   "AdminImports.all": "Todas",
   "AdminImports.chip": "{status} {count}",
