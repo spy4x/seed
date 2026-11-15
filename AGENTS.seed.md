@@ -44,6 +44,9 @@ that server without asking: deploy to it, edit its env file (`infra/envs/.env.pr
 `deno task deploy` copies there), change or reset its database, and delete this project's data
 under `.volumes/`. Other projects run on the same server and are not ours to touch.
 
+`.woodpecker/demo-deploy.yml` deploys `main` there every night at 06:30 UTC, before the demo's
+wipe, and on a manual run of `main` in Woodpecker. A deploy by hand is still fine.
+
 This holds for the template only. A product started from the template deletes this section: its
 server holds real people's data.
 

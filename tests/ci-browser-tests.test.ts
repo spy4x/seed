@@ -12,10 +12,13 @@
  * measures in a stage of its own, with no other step of the pipeline beside it. A pull request
  * runs it only when it changes a file the website is built from (#821); the nightly run and a tag
  * always run it, and the e2e steps run whether it ran or not. A pull request measures only the
- * quick pages (#876). The four image builds follow the same pattern: a pull request builds them
- * only when it changes a file that goes into an image. A pull request titled `[WIP]` runs only
- * `check` and `secrets` (`.woodpecker/wip.yml`, copies of ci.yml's), and removing `[WIP]` from the
- * title (`pull_request_metadata`) runs the same steps as a pull request (#1058).
+ * quick pages (#876). A pull request builds the four images only when it changes what decides
+ * whether an image builds: the four Dockerfiles, `.dockerignore`, `deno.jsonc`, `deno.lock` and
+ * the workflow. A source change that breaks a bundle is caught by the push to `main`, which, like
+ * a tag, always builds them (https://github.com/spy4x/ringmaster/issues/296). A pull request
+ * titled `[WIP]` runs only `check` and `secrets` (`.woodpecker/wip.yml`, copies of ci.yml's), and
+ * removing `[WIP]` from the title (`pull_request_metadata`) runs the same steps as a pull request
+ * (#1058).
  */
 
 import { expect } from "@std/expect"
@@ -290,12 +293,25 @@ const imagesFor = async (event: string, changed: string[]) => {
   return IMAGES.filter((name) => steps[name] && runsFor(steps[name], event, `main`, changed))
 }
 
-Deno.test("a pull request that changes no file of an image builds none, a push to main and a tag build all four, and the nightly run none", async () => {
-  for (const file of [`docs/screenshots/a.png`, `README.md`, `tests/x.test.ts`, `.claude/x.md`]) {
+Deno.test("a pull request that changes only source builds no image, a push to main and a tag build all four, and the nightly run none", async () => {
+  const files = [
+    `docs/screenshots/a.png`,
+    `README.md`,
+    `tests/x.test.ts`,
+    `.claude/x.md`,
+    `apps/mpa/routes/index.tsx`,
+    `libs/server/db/x.ts`,
+    `i18n/de.json`,
+    `docs/billing.md`,
+    `media/demo/demo.webm`,
+    `apps/api/+main.ts`,
+    `infra/compose/x.yml`,
+  ]
+  for (const file of files) {
     expect({ file, images: await imagesFor(`pull_request`, [file]) }).toEqual({ file, images: [] })
   }
   for (const event of [`push`, `tag`]) {
-    expect({ event, images: await imagesFor(event, [`README.md`]) }).toEqual({
+    expect({ event, images: await imagesFor(event, [`apps/api/+main.ts`]) }).toEqual({
       event,
       images: IMAGES,
     })
@@ -303,17 +319,16 @@ Deno.test("a pull request that changes no file of an image builds none, a push t
   expect(await imagesFor(`cron`, [])).toEqual([])
 })
 
-Deno.test("a pull request that changes an app, a library, a Dockerfile or the lockfile builds all four images", async () => {
+Deno.test("a pull request that changes a Dockerfile, .dockerignore, the manifest, the lockfile or the workflow builds all four images", async () => {
   const files = [
     `apps/api/dockerfile.node`,
-    `apps/mpa/routes/index.tsx`,
-    `libs/server/db/x.ts`,
-    `i18n/de.json`,
-    `docs/billing.md`,
-    `media/demo/demo.webm`,
-    `deno.lock`,
-    `deno.jsonc`,
+    `apps/api/dockerfile.bun`,
+    `apps/mpa/dockerfile.node`,
+    `apps/mpa/dockerfile.bun`,
     `.dockerignore`,
+    `deno.jsonc`,
+    `deno.lock`,
+    `.woodpecker/ci.yml`,
   ]
   for (const file of files) {
     expect({ file, images: await imagesFor(`pull_request`, [file]) }).toEqual({

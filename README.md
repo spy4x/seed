@@ -214,7 +214,7 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 
 ```sh
 deno task check           # lint, format check, type check and unit tests
-deno task hooks:install   # runs the checks before every commit
+deno task hooks:install   # refuses a push while check is red, in every worktree
 deno task e2e:local       # browser tests on a stack of their own
 ```
 
