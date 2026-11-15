@@ -213,6 +213,11 @@ describe(`the quick-create rows`, () => {
     expect(note.choice).toEqual({ kind: `quick-create`, entity: `note`, title: long })
   })
 
+  it(`end a cut text at its last word, with no space before the "…"`, () => {
+    const [note] = quickCreateRows(context(), `${`a`.repeat(35)} trip and more`)
+    expect(note.label).toBe(`New note: “${shown(`${`a`.repeat(35)} trip…`)}”`)
+  })
+
   it(`use the language's own quotes`, () => {
     expect(rows(`молоко`, { t: RU })[0][0]).toBe(`Новая заметка: «${shown(`молоко`)}»`)
   })

@@ -536,14 +536,17 @@ export function pickedChoice(choice: SearchChoice, alternative: boolean): Search
   return choice
 }
 
-/** The most characters of the query a row or the no-results line repeats. */
+/** The most characters of the query a row repeats: a quick-create row, the search's hint row. */
 const QUOTED_MAX = 40
 
-/** `query` trimmed and cut to {@link QUOTED_MAX} characters, an emoji counting as one. */
+/**
+ * `query` trimmed and cut to {@link QUOTED_MAX} characters, an emoji counting as one. A cut ends in
+ * "…" right after the last word kept, never after a space.
+ */
 export function quoted(query: string): string {
   const characters = Array.from(query.trim())
   return characters.length > QUOTED_MAX
-    ? `${characters.slice(0, QUOTED_MAX).join("")}…`
+    ? `${characters.slice(0, QUOTED_MAX).join("").trimEnd()}…`
     : characters.join("")
 }
 
