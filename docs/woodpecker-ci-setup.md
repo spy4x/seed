@@ -110,7 +110,8 @@ Every Deno step runs `deno install --frozen` first, so a `deno.lock` that does n
 
 Deploys run from a developer's machine with `deno task deploy` ([Deploy an
 update](deploy-updates.md)) until a product turns on `.woodpecker/deploy.yml.example`. Then every
-push to the default branch that passes `ci.yml` deploys itself the same way. Seed keeps it off.
+push to the default branch that passes `ci.yml` deploys itself the same way. Seed keeps it off
+and deploys its own demo nightly from `.woodpecker/demo-deploy.yml`, which a product deletes.
 
 1. Copy the file: `cp .woodpecker/deploy.yml.example .woodpecker/deploy.yml`. Change `main` in its
    `when` when the default branch has another name.

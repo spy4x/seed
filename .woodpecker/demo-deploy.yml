@@ -1,0 +1,46 @@
+# Deploys Seed's `main` to the live demo every night, and on a manual run of `main`.
+#
+# Seed's own pipeline: a product deletes this file, lists it in `.seed/skip` (docs/products.md)
+# and turns on `deploy.yml.example` instead (docs/woodpecker-ci-setup.md). The Woodpecker cron job `nightly-deploy` starts it at 06:30 UTC,
+# before the demo's nightly wipe at midnight in America/Los_Angeles (07:00 or 08:00 UTC), so the
+# wipe seeds the new version. Nightly, not on every push: the images are built on the server,
+# which other projects share, and a day's merges ship in one build.
+#
+# `main` is protected and each merge passed CI, so this runs no `ci.yml` first. The step is the
+# example's: it decrypts the env files with the repository's age key and runs `deno task deploy`.
+# Its secrets hold that key and an SSH key that can run Docker on the server, which is as good as
+# root there, so they are enabled for the cron and manual events only: a pull request never sees
+# them. The repository stays untrusted: no volume, no Docker socket, no privileged step.
+#
+# Every runtime variable is written `$$`, so Woodpecker leaves it for the shell. The image is
+# pinned by digest.
+
+when:
+  - event: cron
+    cron: nightly-deploy
+  - event: manual
+    branch: main
+
+steps:
+  deploy:
+    image: denoland/deno:2.9.7@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+    environment:
+      DEPLOY_ENV_KEY:
+        from_secret: deploy_env_key
+      DEPLOY_SSH_KEY:
+        from_secret: deploy_ssh_key
+      DEPLOY_SSH_CONFIG:
+        from_secret: deploy_ssh_config
+      DEPLOY_KNOWN_HOSTS:
+        from_secret: deploy_known_hosts
+    commands:
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends rsync openssh-client git ca-certificates
+      - umask 077
+      - mkdir -p ~/.ssh .age
+      - printf '%s\n' "$${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+      - printf '%s\nIdentityFile ~/.ssh/deploy_key\nIdentitiesOnly yes\n' "$${DEPLOY_SSH_CONFIG}" > ~/.ssh/config
+      - printf '%s\n' "$${DEPLOY_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+      - printf '%s\n' "$${DEPLOY_ENV_KEY}" > .age/key.txt
+      - deno install --frozen
+      - deno task env:decrypt
+      - deno task deploy

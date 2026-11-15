@@ -53,7 +53,9 @@ product's first pull request:
    README.
 3. Delete `AGENTS.seed.md`, which holds the rules of Seed's own repository, and the lines in
    `AGENTS.md` and `CLAUDE.md` that name it. List `AGENTS.seed.md` in `.seed/skip`. Then add what
-   is specific to the product to `AGENTS.md`. A sync never touches `AGENTS.md`.
+   is specific to the product to `AGENTS.md`. A sync never touches `AGENTS.md`. Delete
+   `.woodpecker/demo-deploy.yml` too, the nightly deploy of Seed's own demo, and list it in
+   `.seed/skip`.
 4. Remove or replace what belongs to Seed's own website and its author:
    [the checklist](start-a-product.md).
 
