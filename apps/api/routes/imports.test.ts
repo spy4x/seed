@@ -3,7 +3,16 @@ import { describe, it } from "@std/testing/bdd"
 import { Hono } from "hono"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { GroupRole } from "@domain/groups"
-import { IMPORT_FILE_MAX_BYTES, ImportStatus, type ImportSummary } from "@domain/imports"
+import type { Actor } from "@domain/identity"
+import {
+  IMPORT_FILE_MAX_BYTES,
+  IMPORT_REVIEW_ROWS_MAX,
+  ImportCheckQuery,
+  ImportStatus,
+  type ImportSummary,
+} from "@domain/imports"
+import { ok } from "@spy4x/platform/universal/result"
+import { importKind } from "@server/imports/import-kind.ts"
 import { noteImportKind } from "@server/notes/note-import.ts"
 import type { APIContext } from "../_types.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
@@ -54,6 +63,8 @@ function readImport(): ImportSummary {
     rowCount: 2,
     savedCount: null,
     errorCount: null,
+    skippedCount: null,
+    options: null,
     failure: null,
     createdAt: at,
     readAt: at,
@@ -80,6 +91,7 @@ function app(userId: number | null = STARTER) {
         Promise.resolve(groupId === GROUP_ID && id === IMPORT_ID ? stored : null),
       listForUser: (_groupId, user) => Promise.resolve(user === STARTER ? [stored] : []),
       file: () => Promise.resolve(FILE),
+      review: () => Promise.reject(new Error(`the notes kind has no review`)),
       requestCommit: (_groupId, _id, _actor, mapping) => {
         writes.push(`commit ${JSON.stringify(mapping)}`)
         return Promise.resolve({ ...stored, status: ImportStatus.COMMITTING })
@@ -161,6 +173,35 @@ describe("uploading a file", () => {
     expect(writes).toEqual([])
   })
 
+  it("refuses options for a kind that reads none, and options past their limits, storing nothing", async () => {
+    const { hono, writes } = app()
+    const many = Object.fromEntries(Array.from({ length: 21 }, (_, i) => [`k${i}`, `v`]))
+    for (
+      const options of [
+        { account: `a` },
+        { account: `a`.repeat(2048) },
+        many,
+        { "1st": `a` },
+        { account: 1 },
+        [`a`],
+      ]
+    ) {
+      const query = new URLSearchParams({
+        kind: `notes`,
+        name: `a.csv`,
+        options: JSON.stringify(options),
+      })
+      const response = await hono.request(`${base}?${query}`, {
+        method: `POST`,
+        headers: origin,
+        body: FILE,
+      })
+      expect([options, response.status, (await apiError(response)).reason])
+        .toEqual([options, 400, `INVALID_REQUEST`])
+    }
+    expect(writes).toEqual([])
+  })
+
   it("asks for a session first", async () => {
     const { hono } = app(null)
     const response = await hono.request(`${base}?kind=notes&name=a.csv`, {
@@ -207,12 +248,14 @@ describe("checking and saving", () => {
       body: JSON.stringify({ mapping: { title: 0, body: 1 } }),
     })
     expect(response.status).toBe(200)
-    expect(await response.json()).toMatchObject({
+    const body = await response.json()
+    expect(body).toMatchObject({
       rowCount: 2,
       valid: 1,
       withErrors: 1,
       rows: [{ row: 2 }],
     })
+    expect(body).not.toHaveProperty(`reviews`)
     expect(writes).toEqual([])
   })
 
@@ -227,6 +270,20 @@ describe("checking and saving", () => {
     expect(writes).toEqual([])
   })
 
+  it("refuses choices for a field that is not a choice before queueing the save", async () => {
+    const { hono, writes } = app()
+    for (const choices of [{ "1": { title: `Picked` } }, { "2": { body: `Picked` } }]) {
+      const response = await hono.request(`${base}/${IMPORT_ID}/commit`, {
+        method: `POST`,
+        headers: json,
+        body: JSON.stringify({ mapping: { title: 0 }, choices }),
+      })
+      expect([choices, response.status, (await apiError(response)).reason])
+        .toEqual([choices, 400, `INVALID_REQUEST`])
+    }
+    expect(writes).toEqual([])
+  })
+
   it("queues the save with the mapping and answers 202", async () => {
     const { hono, writes } = app()
     const response = await hono.request(`${base}/${IMPORT_ID}/commit`, {
@@ -236,5 +293,41 @@ describe("checking and saving", () => {
     })
     expect(response.status).toBe(202)
     expect(writes).toEqual([`commit {"title":0}`])
+  })
+})
+
+describe("a check of a kind with a review", () => {
+  it("reviews and answers only the first valid rows, numbered as in the file", async () => {
+    const rows = [[``], ...Array.from({ length: IMPORT_REVIEW_ROWS_MAX + 1 }, (_, i) => [`T${i}`])]
+    const kind = importKind({
+      ...noteImportKind,
+      read: () => ok({ columns: null, rows, mapping: { title: 0 } }),
+      review: () => Promise.reject(new Error(`a check reviews through the repository`)),
+    })
+    let reviewed = 0
+    const dependencies = {
+      roleOf: () => Promise.resolve(GroupRole.EDITOR),
+      kinds: [kind],
+      imports: {
+        get: () => Promise.resolve(readImport()),
+        file: () => Promise.resolve(FILE),
+        review: (_kind: unknown, values: readonly unknown[]) => {
+          reviewed = values.length
+          return Promise.resolve(values.map(() => ({ skip: null, suggestions: {} })))
+        },
+      },
+    } as unknown as ImportHandlerDependencies
+    const result = await createImportCheckHandler(dependencies)(
+      new ImportCheckQuery({
+        actor: { userId: STARTER } as Actor,
+        groupId: GROUP_ID,
+        importId: IMPORT_ID,
+        mapping: { title: 0 },
+      }),
+    )
+    expect(reviewed).toBe(IMPORT_REVIEW_ROWS_MAX)
+    expect(result.valid).toBe(IMPORT_REVIEW_ROWS_MAX + 1)
+    expect(result.reviews).toHaveLength(IMPORT_REVIEW_ROWS_MAX)
+    expect(result.reviews?.[0]).toEqual({ row: 2, cells: [`T0`], skip: null, suggestions: {} })
   })
 })
