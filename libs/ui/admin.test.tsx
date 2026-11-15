@@ -204,6 +204,19 @@ describe("the admin user list", () => {
     expect(calls).toEqual([["search", { ...filter, query: "ada love", page: 1 }, true]])
   })
 
+  it("keeps a trailing space in the field when the trimmed search comes back", async () => {
+    const calls: unknown[][] = []
+    using time = new FakeTime()
+    await mount(<AdminUsersScreen {...listProps(calls)} />)
+    await type(SEARCH, "ada ")
+    await act(() => time.tick(ADMIN_SEARCH_DELAY))
+    const sent = calls[0]?.[1] as AdminUserFilter
+    expect(sent.query).toBe("ada")
+    await mount(<AdminUsersScreen {...listProps(calls, { filter: sent })} />)
+
+    expect(find<HTMLInputElement>(SEARCH).value).toBe("ada ")
+  })
+
   it("filters at once when a status or role is chosen, back on page 1", async () => {
     const calls: unknown[][] = []
     await mount(
