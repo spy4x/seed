@@ -32,7 +32,6 @@ AdminApiTokens.revoked	f6f738d043929f59
 AdminApiTokens.revokedOn	8151a3cd91e2f88a
 AdminApiTokens.revoking	1a36f21b3cfe6642
 AdminApiTokens.state	a3b50c476732c740
-AdminApiTokens.stateCount	626082c1fb492801
 AdminApiTokens.subtitle	5f00a31300987977
 AdminApiTokens.title	fa884c0e7a4a72f3
 AdminApiTokens.token	d2089be672953d11
@@ -210,7 +209,6 @@ AdminBilling.active	92340695899bd2d8
 AdminBilling.all	a52ace420f2175d0
 AdminBilling.billedYearly	f6f60960af8077cc
 AdminBilling.cancelled	d353a99eb4556847
-AdminBilling.chipCount	ce5efaf46c9edcae
 AdminBilling.clear	7179ea0035fca783
 AdminBilling.count	ac11f244b44d9729
 AdminBilling.customers	aabe76f1f4ec532b
@@ -254,11 +252,9 @@ AdminBilling.readSetup	04390429e10d3341
 AdminBilling.renews	c86308bb960de5d6
 AdminBilling.retry	d8b8392e2c542950
 AdminBilling.search	2a8e542a62c57dc0
-AdminBilling.searching	c31723ab330289fe
 AdminBilling.seatPrice	0c6bef749b98210b
 AdminBilling.source	79d49334db715b61
 AdminBilling.status	920e413c7d411b61
-AdminBilling.submit	49c266baaaa70981
 AdminBilling.subtitle	ca8abfee28cc48d3
 AdminBilling.title	3ac8bbca9a74cfbd
 AdminBilling.trial	98a66e9745c9cb5e
@@ -368,15 +364,10 @@ AdminBillingCustomer.waiting	da2ed57a49c27458
 AdminBillingCustomer.when	cf9c7aa24a26aac4
 AdminBillingCustomer.yearly	6e69b59ed34d42ef
 AdminBillingCustomer.youBelong	020623d0a4ab0bb4
-AdminBlog.all	a52ace420f2175d0
 AdminBlog.allShared	155ac0dfea187fa2
 AdminBlog.allSharedHint	e9d3cb2902c492b9
 AdminBlog.channels	e06376a24ab79ea4
-AdminBlog.chipAll	7ad000982d871de6
-AdminBlog.chipDrafts	93fd634826247308
 AdminBlog.chipNeedsSharing	10eb06be57a70c74
-AdminBlog.chipPublished	48e47d43f6f358ea
-AdminBlog.chipScheduled	b18dd7d18ca5bae4
 AdminBlog.clear	7179ea0035fca783
 AdminBlog.colPublished	2ef42ec21d9300dd
 AdminBlog.colSharing	bbedc70e985fe0b6
@@ -404,13 +395,11 @@ AdminBlog.retry	d8b8392e2c542950
 AdminBlog.scheduled	4724f344c1c0e4a1
 AdminBlog.scheduledChip	4724f344c1c0e4a1
 AdminBlog.search	b7af5443846710cb
-AdminBlog.searching	c31723ab330289fe
 AdminBlog.sharingDone	11a6767d5674c7e4
 AdminBlog.sharingNone	d4f85d36757c12f0
 AdminBlog.sharingToDo	7de7f9f56a361946
 AdminBlog.showAll	aa7d01a62d3f8f26
 AdminBlog.status	920e413c7d411b61
-AdminBlog.submit	49c266baaaa70981
 AdminBlog.subtitle	0924087be40fb003
 AdminBlog.title	8c6bc099534a0251
 AdminBlogChannels.actionsFor	aac6defa1846338b
@@ -435,7 +424,6 @@ AdminBlogChannels.automatic	79ee63db6f2844ba
 AdminBlogChannels.back	69f7dcf78f3c3cd6
 AdminBlogChannels.backToChannels	bfcd9a5b4518c0b7
 AdminBlogChannels.cancel	19766ed6ccb2f4a3
-AdminBlogChannels.chipActive	a5aa1ccd77987db0
 AdminBlogChannels.chipArchived	96d3af34a7bea207
 AdminBlogChannels.delete	831aada50d43f8ff
 AdminBlogChannels.deleteConfirm	2bbb8097afc491e2
@@ -751,10 +739,6 @@ AdminBlogSharing.visitsHint	bd08c35df9fe82bd
 AdminCatalog.addCategory	aafdf428fd0256ea
 AdminCatalog.addItem	d1a0b329a72b8f16
 AdminCatalog.categories	b8b1d894c6837252
-AdminCatalog.chipAll	7ad000982d871de6
-AdminCatalog.chipDraft	93fd634826247308
-AdminCatalog.chipHidden	f39b65ec02eaeddf
-AdminCatalog.chipPublished	d13ebcbce31a05d1
 AdminCatalog.chipSoldOut	8da8698218d68d52
 AdminCatalog.clearFilters	7179ea0035fca783
 AdminCatalog.copyFailed	6bad7bdb27b753ae
@@ -1227,9 +1211,7 @@ AdminGroups.roleMember	7c968fb71f50e335
 AdminGroups.roleOwner	4b1b8aa3608a26da
 AdminGroups.roleViewer	678bfa6af48b17cd
 AdminGroups.search	2a8e542a62c57dc0
-AdminGroups.searching	c31723ab330289fe
 AdminGroups.status	920e413c7d411b61
-AdminGroups.submit	49c266baaaa70981
 AdminGroups.subtitle	484fbe19c6ca13f9
 AdminGroups.title	39bbb719fa2b9d22
 AdminImports.all	a52ace420f2175d0
@@ -1441,8 +1423,6 @@ AdminNewsletter.resendText	e12731fa24802d96
 AdminNewsletter.resendTitle	4c91a713550b1673
 AdminNewsletter.resendTo	718f014fa029a30b
 AdminNewsletter.retry	d8b8392e2c542950
-AdminNewsletter.search	49c266baaaa70981
-AdminNewsletter.searching	c31723ab330289fe
 AdminNewsletter.sending	b8ed5279e897be5d
 AdminNewsletter.sendingState	e595f17fac1d8384
 AdminNewsletter.sent	c16bc82bf1f04ede
@@ -1767,9 +1747,7 @@ AdminUsers.roleOperator	291101a07fe980e9
 AdminUsers.roleSupervisor	9de790933254b865
 AdminUsers.roleViewer	678bfa6af48b17cd
 AdminUsers.search	0a36d3dd1aab8ddf
-AdminUsers.searching	c31723ab330289fe
 AdminUsers.status	920e413c7d411b61
-AdminUsers.submit	49c266baaaa70981
 AdminUsers.subtitle	29ab3533a217b14d
 AdminUsers.title	6b0cc904d081a8c1
 AdminUsers.withSignIn	66a96b059abfe8fa
