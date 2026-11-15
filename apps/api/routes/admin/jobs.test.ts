@@ -154,6 +154,7 @@ function buildApp(options: Options = {}) {
             ready: true,
             itemId: ITEM_ID,
             itemName: `Zip jacket`,
+            position: 0,
           }]),
         ),
       )),
@@ -261,7 +262,13 @@ describe(`jobs routes`, () => {
       list: [imageJob(PHOTO_ID), imageJob(PICTURE_ID), failed],
       record: imageJob(PHOTO_ID),
     })
-    const photo = { id: PHOTO_ID, ready: true, itemId: ITEM_ID, itemName: `Zip jacket` }
+    const photo = {
+      id: PHOTO_ID,
+      ready: true,
+      itemId: ITEM_ID,
+      itemName: `Zip jacket`,
+      position: 0,
+    }
 
     const list = await (await send(app, `GET`, `/jobs`)).json()
     expect(list.jobs.map((job: { photo: unknown }) => job.photo)).toEqual([photo, null, null])

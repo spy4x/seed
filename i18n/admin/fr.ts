@@ -1744,7 +1744,7 @@ export default {
   "AdminJobs.startedAt": "<label>Démarrée</label> <when></when>",
   "AdminJobs.notYet": "Pas encore",
   "AdminJobs.job": "Tâche",
-  "AdminJobs.photoOf": "Photo de <link>{item}</link>",
+  "AdminJobs.photoOf": "Photo {number} de <link>{item}</link>",
   "AdminJobs.status": "Statut",
   "AdminJobs.attemptsHeader": "Essais",
   "AdminJobs.when": "Quand",

@@ -1853,7 +1853,7 @@ export default {
   "AdminJobs.startedAt": "<label>بدأت</label> <when></when>",
   "AdminJobs.notYet": "ليس بعد",
   "AdminJobs.job": "المهمة",
-  "AdminJobs.photoOf": "صورة <link>{item}</link>",
+  "AdminJobs.photoOf": "الصورة {number} من صور <link>{item}</link>",
   "AdminJobs.status": "الحالة",
   "AdminJobs.attemptsHeader": "المحاولات",
   "AdminJobs.when": "الوقت",

@@ -116,6 +116,8 @@ export interface AdminJobPhoto {
   itemId: string
   /** The item's name in the catalog's default language. */
   itemName: string
+  /** The photo's place among its item's photos, 0 first (the cover); the screens show it + 1. */
+  position: number
 }
 
 /** One run of a job, as the list and the detail page show it. Times are ISO 8601. */

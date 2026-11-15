@@ -459,8 +459,11 @@ Deno.test("jobs: an image job's photo names its item in the catalog's default la
       ready: false,
       itemId: item.id,
       itemName: `Zip jacket`,
+      position: 0,
     })
     expect(photos.get(shown)?.ready).toBe(true)
+    // The second photo added sits after the cover.
+    expect(photos.get(shown)?.position).toBe(1)
     expect(photos.has(picture)).toBe(false)
     expect((await readJobPhotos(sql, [shown], [`vi`, `en`])).get(shown)?.itemName).toBe(`Áo khoác`)
   })

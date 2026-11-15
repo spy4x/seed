@@ -217,14 +217,17 @@ const TABLE_CLASS = [
   `max-sm:[&_:is(th,td):nth-child(n+2)]:hidden`,
 ].join(` `)
 
-/** "Photo of Zip jacket", the item name a link to its page: what an image job processes. */
+/**
+ * "Photo 2 of Zip jacket", the item name a link to its page: what an image job processes. The
+ * number is the photo's 0-based position + 1, so several uploads to one item read apart.
+ */
 function PhotoOf(
   { photo, t, navigate }: { photo: AdminJobPhoto; t: Translator<string>; navigate?: Navigate },
 ): JSX.Element {
   return (
     <span class="text-sm">
       <Rich
-        parts={t.parts(`AdminJobs.photoOf`, { item: photo.itemName })}
+        parts={t.parts(`AdminJobs.photoOf`, { number: photo.position + 1, item: photo.itemName })}
         tags={{
           link: (text) => (
             <Link
