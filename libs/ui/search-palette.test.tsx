@@ -398,6 +398,55 @@ describe("SearchPalette", () => {
     ])
   })
 
+  it("says offline that only this device was searched when no note matched, in a dimmed row that never takes the highlight", async () => {
+    const { picked } = await mount({}, () => ({ notes: [], onDevice: true }))
+    const hint = () => document.querySelector("[data-e2e=search] [role=option][aria-disabled=true]")
+    const sentence =
+      "Nothing on this device matches “snorkel”. Search again when you're back online."
+    await open()
+
+    await fill("snorkel")
+    await until(() => listed().includes(sentence))
+
+    expect(listed().slice(-2)).toEqual(["# Notes on this device", sentence])
+    expect(hint()?.textContent).toBe(sentence)
+    expect(hint()?.getAttribute("aria-selected")).toBe("false")
+    expect(text(find("[data-e2e=search] [role=option][aria-selected=true]"))).toBe(
+      `New note: “${isolated("snorkel")}” | In Home`,
+    )
+    await act(() => {
+      hint()!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+    })
+    expect(picked).toEqual([])
+    expect(find("[data-e2e=search] input")).toBeTruthy()
+  })
+
+  it("says nothing about the device online when no note matched", async () => {
+    await mount({}, () => ({ notes: [], onDevice: false }))
+    await open()
+
+    await fill("snorkel")
+    await until(() => listed()[0] === "# Create")
+
+    expect(listed().some((row) => row.startsWith("Nothing"))).toBe(false)
+    expect(document.querySelector("[data-e2e=search] [role=option][aria-disabled=true]")).toBeNull()
+  })
+
+  it("says a query too short to search notes needs another character, in a dimmed row", async () => {
+    const { asked } = await mount({}, () => ({ notes: [], onDevice: true }))
+    await open()
+
+    await fill("s")
+    await until(() => listed().includes("Type at least 2 characters to search notes."))
+
+    expect(listed().slice(-2)).toEqual(["# Notes", "Type at least 2 characters to search notes."])
+    expect(find("[data-e2e=search] [role=option][aria-disabled=true]").textContent).toBe(
+      "Type at least 2 characters to search notes.",
+    )
+    expect(asked).not.toContain("s")
+    expect(listed().some((row) => row.startsWith("Nothing"))).toBe(false)
+  })
+
   it("shows a long query cut to forty characters in its rows, an emoji counting as one, and hands back all of it", async () => {
     const { picked } = await mount({}, () => ({ notes: [], onDevice: false }))
     const long = `${"🛒".repeat(41)} שלום`

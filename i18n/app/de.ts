@@ -1695,6 +1695,12 @@ export default {
   "Search.loading": "Wird gesucht …",
   "Search.error":
     "Die Suche hat nicht geklappt. Ändere deine Suche, um es noch einmal zu versuchen.",
+  "Search.tooShort": {
+    "one": "Gib mindestens {count} Zeichen ein, um Notizen zu durchsuchen.",
+    "other": "Gib mindestens {count} Zeichen ein, um Notizen zu durchsuchen.",
+  },
+  "Search.emptyOnDevice":
+    "Auf diesem Gerät passt nichts zu „{query}“. Suche noch einmal, wenn du wieder online bist.",
   "Search.notes": "Notizen",
   "Search.notesOnDevice": "Notizen auf diesem Gerät",
   "Search.groups": "Gruppen",

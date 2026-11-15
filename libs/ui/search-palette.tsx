@@ -20,6 +20,7 @@ import {
   type PaletteOption,
   pickedChoice,
   quickCreateRows,
+  quoted,
   type SearchChoice,
 } from "./palette-commands.ts"
 import { useAppText } from "./i18n.ts"
@@ -182,7 +183,9 @@ export function paletteLabels(
  * product's `records` sources that matches, under its own heading. Any typed text also gets the
  * Create section's quick-create rows ({@link quickCreateRows}): Enter opens the create form with
  * the text filled in, and Ctrl Enter (⌘Enter) creates the item and opens it.
- * When the notes come from the device, their heading says so. Enter on a
+ * When the notes come from the device, their heading says so, and when none of them matched, a
+ * dimmed row says that only this device was searched; a query too short to search notes gets a
+ * dimmed row that says so too ({@link notesHint}). Enter on a
  * group makes it the current one, and Ctrl Enter (⌘Enter) opens its settings. Theme opens a
  * submenu whose rows change the theme at once and keep the palette open.
  */
@@ -236,7 +239,14 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     const matched = matchOptions(rows, text, rows.length)
     // Built from the query, so they list for any text; under Create, after the plain commands.
     const quickCreate = quickCreateRows(context(t), text)
-    return [...notes, ...matched, ...quickCreate, ...recordRows(latest.current.records ?? [], text)]
+    const hint = notesHint(t, text, notesOn, asksNotes && answer.onDevice && notes.length === 0)
+    return [
+      ...notes,
+      ...matched,
+      ...quickCreate,
+      ...recordRows(latest.current.records ?? [], text),
+      ...hint,
+    ]
   }
   /** A pick made inside a submenu, with the palette still open. */
   const select = (choice: SearchChoice) => latest.current.onSelect(choice)
@@ -306,6 +316,30 @@ function recordRows(sources: readonly PaletteRecordSource[], query: string): Pal
         choice: { kind: "page", href: entry.href },
       }))
   )
+}
+
+/**
+ * A dimmed row under the notes heading that says why no note is listed: the query is too short to
+ * search notes, or `noneOnDevice`, only this device's notes were searched and none matched, so the
+ * person searches again online before creating a duplicate. None for the empty query or with the
+ * notes off. It is disabled and listed last, so a runnable row such as `New note: "…"` keeps the
+ * highlight and Enter never picks it.
+ */
+function notesHint(
+  t: Translator<string>,
+  text: string,
+  notesOn: boolean,
+  noneOnDevice: boolean,
+): PaletteOption[] {
+  if (text === "" || !notesOn) return []
+  const hint = (label: string, heading: string): PaletteOption[] => // An empty reason disables the row without a second line: its label already says why.
+  [{ id: `notes-hint`, label, group: t.t(heading), disabledReason: `` }]
+  if (Array.from(text).length < NOTE_QUERY_MIN) {
+    return hint(t.t(`Search.tooShort`, { count: NOTE_QUERY_MIN }), `Search.notes`)
+  }
+  return noneOnDevice
+    ? hint(t.t(`Search.emptyOnDevice`, { query: quoted(text) }), `Search.notesOnDevice`)
+    : []
 }
 
 /** A note row's second line: the group, when the person has several, then the snippet. */

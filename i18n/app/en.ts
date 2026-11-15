@@ -1599,6 +1599,12 @@ export default {
   "Search.close": "Close search",
   "Search.loading": "Searching…",
   "Search.error": "Could not search. Change your search to try again.",
+  "Search.tooShort": {
+    "one": "Type at least {count} character to search notes.",
+    "other": "Type at least {count} characters to search notes.",
+  },
+  "Search.emptyOnDevice":
+    "Nothing on this device matches “{query}”. Search again when you're back online.",
   "Search.notes": "Notes",
   "Search.notesOnDevice": "Notes on this device",
   "Search.groups": "Groups",

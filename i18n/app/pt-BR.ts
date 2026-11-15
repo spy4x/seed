@@ -1725,6 +1725,13 @@ export default {
   "Search.close": "Fechar a busca",
   "Search.loading": "Buscando…",
   "Search.error": "Não foi possível buscar. Mude o texto da busca para tentar de novo.",
+  "Search.tooShort": {
+    "one": "Digite pelo menos {count} caractere para buscar notas.",
+    "many": "Digite pelo menos {count} de caracteres para buscar notas.",
+    "other": "Digite pelo menos {count} caracteres para buscar notas.",
+  },
+  "Search.emptyOnDevice":
+    "Nada neste dispositivo corresponde a “{query}”. Busque de novo quando estiver online.",
   "Search.notes": "Notas",
   "Search.notesOnDevice": "Notas neste dispositivo",
   "Search.groups": "Grupos",

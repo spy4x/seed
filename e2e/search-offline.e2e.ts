@@ -93,6 +93,13 @@ test.describe("search with no network", () => {
       const group = options.filter({ hasText: "New group" })
       await expect(group).toHaveAttribute("aria-disabled", "true")
       await expect(group).toContainText("Needs a connection")
+      // Only the device was searched: a dimmed row says so, so the person does not make a twin.
+      const hint = options.filter({
+        hasText: "Nothing on this device matches “snorkel”. Search again when you're back online.",
+      })
+      await expect(hint).toBeVisible()
+      await expect(hint).toHaveAttribute("aria-disabled", "true")
+      await expect(hint).toHaveAttribute("aria-selected", "false")
     } finally {
       await context.close()
       await cleanup(request, user)

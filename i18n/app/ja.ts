@@ -1548,6 +1548,11 @@ export default {
   "Search.close": "検索を閉じる",
   "Search.loading": "検索しています…",
   "Search.error": "検索できませんでした。検索語を変えてもう一度お試しください。",
+  "Search.tooShort": {
+    "other": "メモを検索するには{count}文字以上入力してください。",
+  },
+  "Search.emptyOnDevice":
+    "このデバイスには「{query}」に一致するものはありません。オンラインに戻ってから、もう一度検索してください。",
   "Search.notes": "メモ",
   "Search.notesOnDevice": "このデバイス上のメモ",
   "Search.groups": "グループ",
