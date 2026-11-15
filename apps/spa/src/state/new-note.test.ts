@@ -109,6 +109,21 @@ describe("new note store", () => {
     expect(newNote.errors.value).toEqual({ form: "Too many notes." })
   })
 
+  it("ignores adding at once while an add runs, keeping its title and the dialog closed", async () => {
+    const { newNote, calls } = store({ note: note("groceries", 1) })
+    const first = newNote.addNow("groceries", ACME)
+
+    const second = newNote.addNow("other", ACME)
+    // Read before awaiting: the first add empties the title once it succeeds.
+    expect(newNote.title.value).toBe("groceries")
+    expect(newNote.open.value).toBe(false)
+    expect(await second).toBeNull()
+
+    expect((await first)?.title).toBe("groceries")
+    expect(calls).toEqual([{ groupId: ACME.id, id: "id-1", title: "groceries" }])
+    expect(newNote.open.value).toBe(false)
+  })
+
   it("forgets the draft and the dialog on sign-out", async () => {
     const { newNote } = store()
     newNote.show()
