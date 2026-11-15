@@ -603,7 +603,7 @@ describe("ProfileView", () => {
       await onlyReads(calls)
     })
 
-    it("presses once per navigation: the same command again opens the dialog again", async () => {
+    it("opens the dialog again when the same command is picked a second time", async () => {
       const { move } = await land("security", "sessions-end-others")
       await cancel()
 
