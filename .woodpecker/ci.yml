@@ -1,5 +1,8 @@
-# Continuous integration: runs on every pull request, every push to main and every tag (release.yml
-# waits for it).
+# Continuous integration: runs on every pull request, every push to main, every tag (release.yml
+# waits for it) and the nightly cron run on main (docs/woodpecker-ci-setup.md, "The nightly run").
+# A push to main runs only `check`, `secrets` and the images: its pull request already ran the
+# rest. The nightly run takes the slow steps, `e2e-full` and the full Lighthouse run, which a
+# later push would otherwise cancel; a pull request and a tag skip `e2e-full`.
 #
 # Woodpecker reads every `*.yml` in this folder as its own workflow. A product turns on deploys on
 # every push to main by copying `deploy.yml.example` (docs/woodpecker-ci-setup.md).
@@ -18,6 +21,7 @@ when:
   - event: push
     branch: main
   - event: tag
+  - event: cron
 
 variables:
   # Markdown that only `check`, Lighthouse and the browser tests read. A pull request that
@@ -25,7 +29,7 @@ variables:
   # alert-rules, runtimes, e2e-smoke): they cannot fail over them, and they took about 20 minutes
   # (homelab#131). `check` still runs, and so do Lighthouse and the images when their own lists
   # name a changed file. Woodpecker skips a step with an `exclude` list only when every changed
-  # file matches it.
+  # file matches it. A push to main runs none of the steps that start the stack.
   - &markdown_only
     - "*.md"
     - "**/README.md"
@@ -46,15 +50,13 @@ variables:
     - event: pull_request
       path:
         exclude: *markdown_only
-    - event: push
-      branch: main
+    - event: cron
     - event: tag
   - &browser_when
     - event: pull_request
       path:
         exclude: *internal_markdown
-    - event: push
-      branch: main
+    - event: cron
     - event: tag
   # When the four image steps run: see image-node.
   - &image_when
@@ -90,7 +92,7 @@ steps:
   secrets:
     # Scans the commits for secrets with gitleaks (#494), beside `check`. A pull request scans its
     # own commits, from where it left the target branch, so a key added in one commit and removed
-    # in a later one still fails it. A push to main and a tag scan the whole history of the commit
+    # in a later one still fails it. Every other event scans the whole history of the commit
     # (about 600 commits, seconds): that needs no previous commit, which a first push or a
     # force-push lacks. `--redact` keeps the values out of the log; reviewed findings are in
     # .gitleaksignore. The image is on ghcr.io, out of Docker Hub's pull limit (#923), and ships
@@ -264,15 +266,14 @@ steps:
     # it measures no leftover of an earlier step.
     # A pull request measures only the pages in apps/mpa/lighthouse/quick.ts, one run each
     # (`LIGHTHOUSE_PAGES=quick`, #876), against the same scores: 1.3 minutes in its first run
-    # (#877). A push to `main` and a tag measure every page three times, which took a median of
-    # 13.4 minutes. The light run is on trial until 2026-11-15: if a speed regression reaches
-    # `main` and stays there more than a day, the full run goes back on pull requests.
+    # (#877). The nightly run and a tag measure every page three times, which took a median of
+    # 13.4 minutes: the full run is nightly, so a speed regression shows on `main` within a day.
     # A pull request runs it only when it changes a file the built website comes from (#821): the
     # MPA, what its module graph imports (libs/ui, libs/domain, four libs/server members, the
     # catalogs, the guides docs-list.ts publishes), the two API files of its stand-in blog API, and
-    # the manifests, the lockfile and this file. A push to `main` and a tag always run it. Woodpecker
-    # applies `path` to pull requests and pushes only, and runs the step when the forge lists no
-    # changed file.
+    # the manifests, the lockfile and this file. The nightly run and a tag always run it, and a push
+    # to `main` never. Woodpecker applies `path` to pull requests and pushes only, and runs the step
+    # when the forge lists no changed file.
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
       - event: pull_request
@@ -293,8 +294,7 @@ steps:
           - deno.lock
           - package.json
           - .woodpecker/ci.yml
-      - event: push
-        branch: main
+      - event: cron
       - event: tag
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
@@ -332,7 +332,8 @@ steps:
     # own (`template_e2e_app`); it waits for both itself. It starts the API, the worker, the Vite
     # dev server and a proxy that serves them at http://app.localhost:<port>. A tag runs the set
     # too, because release.yml waits for this workflow. A pull request that changes only the Markdown
-    # in `markdown_only` at the top skips it: the smoke set opens no guide.
+    # in `markdown_only` at the top skips it: the smoke set opens no guide. A push to `main` skips
+    # it, and so does the nightly run, whose `e2e-full` runs every spec of the set.
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
       - event: pull_request
@@ -376,16 +377,16 @@ steps:
         optional: true
 
   e2e-full:
-    # Every browser test of the product (`e2e/*.e2e.ts`), after a merge: only a push to `main`
-    # runs it, so it never stands between a pull request and its merge, nor between a tag and its
-    # images. A red run here is the sign that a merge broke a screen the smoke set does not open.
+    # Every browser test of the product (`e2e/*.e2e.ts`): only the nightly run on `main` runs it,
+    # so it never stands between a pull request and its merge, nor between a tag and its images,
+    # and no push cancels it. A red run here is the sign that a merge broke a screen the smoke set
+    # does not open.
     # The specs that start the app with no network need the built SPA behind nginx; a step has no
     # container tool, so `E2E_BUILT=nginx` installs the build into this container's own nginx, as
     # e2e/spa/run.sh does.
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
-      - event: push
-        branch: main
+      - event: cron
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -418,7 +419,7 @@ steps:
       - echo "127.0.0.1 app.localhost" >> /etc/hosts
       # Stops after ten failed tests in a pass, for the same reason as in e2e-smoke.
       - deno task e2e:local --max-failures=10
-    # As e2e-smoke. A push to `main` always runs lighthouse.
+    # As e2e-smoke. The nightly run always runs lighthouse.
     depends_on:
       - browser
       - name: lighthouse
@@ -428,7 +429,8 @@ steps:
     # Starts the API, the worker and the website on Deno, Node and Bun, and checks each answers
     # (tests/runtimes/smoke.sh, #623). The Node image gets Deno and Bun from their release zips,
     # checked against their SHA-256. The script works in its own copy of the checkout, so it runs
-    # beside `browser` and `lighthouse` without sharing their builds or vapid.json.
+    # beside `browser` and `lighthouse` without sharing their builds or vapid.json. It runs when
+    # the stack's steps do (`stack_when`): not on a push to `main`.
     image: docker.io/library/node:26.13.0-bookworm@sha256:fa52d1669505e29b58c042875b1d65c229e0787a3610fd52869b22b68e480853
     when: *stack_when
     environment:
@@ -486,7 +488,8 @@ steps:
     # mirror needs no login; an image it lacks is pulled from Docker Hub as before.
     # A pull request builds them only when it changes a file that goes into an image (#876): the
     # build context that .dockerignore lets in (each Dockerfile copies it whole), the Dockerfiles,
-    # and this file. A push to `main` and a tag always build them.
+    # and this file. A push to `main` and a tag always build them; the nightly run builds none,
+    # since the push it runs on built them.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
     when: *image_when
     commands:
