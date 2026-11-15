@@ -271,7 +271,7 @@ Deno.test("the nightly run and a tag run Lighthouse whatever they change, and a 
   expect(blockingSteps(ci, `deno task lighthouse`, `push`, `main`, website)).toEqual([])
 })
 
-Deno.test("a pull request measures the quick pages, and the nightly run and a tag every page", async () => {
+Deno.test("a pull request and its title edit measure the quick pages, and the nightly run and a tag every page", async () => {
   // run.sh measures every page unless LIGHTHOUSE_PAGES=quick; only a pull request and its title
   // edit may set it.
   const commands = list((await workflow()).steps?.lighthouse?.commands).map((line) => line.trim())
