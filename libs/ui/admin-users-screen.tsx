@@ -158,8 +158,6 @@ export function AdminUsersScreen(
     createdAt: user.createdAt,
     user,
   }))
-  const filtered = filter.query !== "" || filter.role !== null || filter.blocked !== "any" ||
-    filter.account !== undefined
 
   return (
     <Stack>
