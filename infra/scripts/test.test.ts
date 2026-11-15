@@ -100,7 +100,8 @@ Deno.test("tests everything without asking git when the run is not a pull reques
     const env of [
       {},
       { CI_PIPELINE_EVENT: `push`, CI_COMMIT_TARGET_BRANCH: `main` },
-      { CI_PIPELINE_EVENT: `cron` },
+      { CI_PIPELINE_EVENT: `cron`, CI_COMMIT_TARGET_BRANCH: `main` },
+      { CI_PIPELINE_EVENT: `tag`, CI_COMMIT_TARGET_BRANCH: `main` },
       { CI_PIPELINE_EVENT: `pull_request` },
     ]
   ) {
