@@ -718,16 +718,20 @@ describe("SearchPalette", () => {
     expect(listed().some((row) => row.startsWith("Open benchmark"))).toBe(false)
   })
 
-  it("shows the error line when the search fails", async () => {
+  it("shows a failed note search under Notes, in a dimmed row, and still lists the commands", async () => {
     await mount(
       {},
       (query) => query === "" ? { notes: [], onDevice: false } : Promise.reject(new Error("429")),
     )
     await open()
 
-    await type("plan")
+    await type("new")
 
-    expect(status()).toBe("Could not search. Change your search to try again.")
+    const failed = "Could not search. Change your search to try again."
+    expect(listed().slice(-2)).toEqual(["# Notes", failed])
+    expect(find("[data-e2e=search] [role=option][aria-disabled=true]").textContent).toBe(failed)
+    expect(listed()).toContain(`New note | In Home`)
+    expect(status()).not.toBe(failed)
   })
 
   it("draws the app's shortcut keys, a g sequence among them, without failing", async () => {

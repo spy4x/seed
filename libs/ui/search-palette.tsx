@@ -55,7 +55,7 @@ export interface SearchPaletteProps {
   /**
    * The notes for a query of at least {@link NOTE_QUERY_MIN} characters, best first; for the empty
    * query, the current group's most recent ones. `signal` aborts when the answer is no longer
-   * wanted. A rejection shows the error line.
+   * wanted. A rejection shows a dimmed error row under Notes; the rest of the list stays.
    */
   searchNotes: (query: string, signal: AbortSignal) => Promise<SearchNotesAnswer>
   /** Every group the person belongs to now. */
@@ -212,8 +212,14 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     const text = query.trim()
     const notesOn = latest.current.notes ?? true
     const asksNotes = notesOn && (text === "" || Array.from(text).length >= NOTE_QUERY_MIN)
+    // A failed note search shows under Notes and keeps the rest of the list. A stale answer,
+    // failed or not, the palette drops.
+    let failed = false
     const answer = asksNotes
-      ? await latest.current.searchNotes(text, signal)
+      ? await latest.current.searchNotes(text, signal).catch(() => {
+        failed = true
+        return { notes: [], onDevice: false }
+      })
       : { notes: [], onDevice: false }
     // The recent notes are all the current group's, so only a query's rows name their group.
     const namesGroup = text !== "" && groups.length > 1
@@ -239,7 +245,13 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     const matched = matchOptions(rows, text, rows.length)
     // Built from the query, so they list for any text; under Create, after the plain commands.
     const quickCreate = quickCreateRows(context(t), text)
-    const hint = notesHint(t, text, notesOn, asksNotes && answer.onDevice && notes.length === 0)
+    const hint = notesHint(
+      t,
+      text,
+      notesOn,
+      asksNotes && answer.onDevice && notes.length === 0,
+      failed,
+    )
     return [
       ...notes,
       ...matched,
@@ -320,8 +332,8 @@ function recordRows(sources: readonly PaletteRecordSource[], query: string): Pal
 
 /**
  * A dimmed row under the notes heading that says why no note is listed: the query is too short to
- * search notes, or `noneOnDevice`, only this device's notes were searched and none matched, so the
- * person searches again online before creating a duplicate. None for the empty query or with the
+ * search notes, the search `failed`, or `noneOnDevice`, only this device's notes were searched and
+ * none matched, so the person searches again online before creating a duplicate. None for the empty query or with the
  * notes off. It is disabled and listed last, so a runnable row such as `New note: "…"` keeps the
  * highlight and Enter never picks it.
  */
@@ -330,6 +342,7 @@ function notesHint(
   text: string,
   notesOn: boolean,
   noneOnDevice: boolean,
+  failed: boolean,
 ): PaletteOption[] {
   if (text === "" || !notesOn) return []
   const hint = (label: string, heading: string): PaletteOption[] => // An empty reason disables the row without a second line: its label already says why.
@@ -337,6 +350,7 @@ function notesHint(
   if (Array.from(text).length < NOTE_QUERY_MIN) {
     return hint(t.t(`Search.tooShort`, { count: NOTE_QUERY_MIN }), `Search.notes`)
   }
+  if (failed) return hint(t.t(`Search.error`), `Search.notes`)
   return noneOnDevice
     ? hint(t.t(`Search.emptyOnDevice`, { query: quoted(text) }), `Search.notesOnDevice`)
     : []
