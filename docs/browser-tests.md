@@ -48,19 +48,20 @@ A run that needs both makes two passes: the dev server first, then the built SPA
 ## What CI runs
 
 A merge needs the pull-request check, so that check runs a smoke set, unless the pull request
-changes only Markdown outside the product. The whole suite runs after the merge. Every step of the
+changes only Markdown outside the product. The whole suite runs nightly on `main`. Every step of the
 pipeline is in [the CI guide](woodpecker-ci-setup.md).
 
 | When                    | Step         | Specs                                                    |
 | ----------------------- | ------------ | -------------------------------------------------------- |
 | Pull request, and a tag | `e2e-smoke`  | The smoke set below (`deno task e2e:local --smoke`)      |
-| Push to `main`          | `e2e-full`   | Every `e2e/*.e2e.ts` (`deno task e2e:local`)             |
+| The nightly run         | `e2e-full`   | Every `e2e/*.e2e.ts` (`deno task e2e:local`)             |
 | All three               | `browser`    | The website's `e2e/mpa/*.mpa.ts`                         |
 | All three               | `browser`    | `e2e/spa/*.spa.ts`, on the SPA behind nginx              |
 | All three, see below    | `lighthouse` | The website's Lighthouse budget (`deno task lighthouse`) |
 
-A pull request runs `lighthouse` only when it changes a file the website is built from; a push to
-`main` and a tag always run it. The file list is in [the CI guide](woodpecker-ci-setup.md).
+A push to `main` runs none of these: its pull request already did. A pull request runs
+`lighthouse` only when it changes a file the website is built from; the nightly run and a tag
+always run it. The file list and the nightly run are in [the CI guide](woodpecker-ci-setup.md).
 
 The smoke set is `SMOKE_SPECS` in
 [`infra/scripts/e2e-local-plan.ts`](../infra/scripts/e2e-local-plan.ts):
@@ -74,8 +75,9 @@ The smoke set is `SMOKE_SPECS` in
 | `e2e/groups-pages.e2e.ts`       | A group created, renamed, deleted and restored                  |
 | `e2e/url-filters.e2e.ts`        | Filters in the address follow the browser's back and forward    |
 
-Every other screen is tested only on `main`, so a red `e2e-full` there means the last merge broke
-one. It also turns the README's badge red, but blocks no pull request.
+Every other screen is tested only in the nightly run on `main`, so a red `e2e-full` there means a
+merge since the last green night broke one. It turns the README's badge red until the next push to
+`main`, but blocks no pull request.
 
 Both steps stop early: the smoke set after three failed tests, the whole suite after ten in a
 pass. A red step may list only some failures, so run the specs on your machine for the rest.

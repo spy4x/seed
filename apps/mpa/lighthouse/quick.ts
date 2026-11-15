@@ -9,7 +9,7 @@ export interface LighthouseConfig {
 /**
  * The pages a pull request measures (`LIGHTHOUSE_PAGES=quick` in run.sh, #876): one of each
  * template the website renders. The home page, the pricing table, a blog post and the docs index.
- * Every path must also be in lighthouserc.json, which a push to `main` and a tag measure in full.
+ * Every path must also be in lighthouserc.json, which the nightly run and a tag measure in full.
  */
 export const QUICK_PATHS = [`/`, `/pricing`, `/blog/how-the-website-speed-check-works`, `/docs`]
 

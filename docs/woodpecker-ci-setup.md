@@ -7,19 +7,21 @@ The pipeline lives in `.woodpecker/ci.yml`. Woodpecker reads every `*.yml` file 
 web interface. Every product copied from the template gets the pipeline the moment its repository is
 activated in Woodpecker.
 
-It runs on every pull request, every push to `main` and every tag, in this order; only
-`release.yml` (below) filters tags to `v<digit>*`. A push to any other branch runs nothing: open a
-pull request to run the pipeline. This is the one list of CI's steps; other pages link here.
+It runs on every pull request, every push to `main`, every tag and the nightly run on `main`
+(below), in this order; only `release.yml` filters tags to `v<digit>*`. A push to `main` runs
+only `check`, `secrets` and the four image steps: its pull request already ran the rest. A push to
+any other branch runs nothing: open a pull request to run the pipeline. This is the one list of
+CI's steps; other pages link here.
 
 ```
 check ──┬── integration      (Postgres and Valkey services) ──┐
         ├── backup-restore   (Postgres service)               │
         ├── alert-rules                                       ├── lighthouse
         └── browser          (build, e2e-mpa, e2e-spa) ───────┘   (website changes,
-                                                                   push to `main`, tag)
+                                                                   nightly, tag)
                                                         ┌─────────────┴─┐
                                                    e2e-smoke         e2e-full
-                                            (pull request, tag)   (push to `main`)
+                                            (pull request, tag)     (nightly)
 ```
 
 A pull request that changes no file of the website skips `lighthouse`; `e2e-smoke` then starts
@@ -42,7 +44,7 @@ performance falls when another step shares the CPU.
 - `check` runs `deno task check`: format, lint, type check and unit tests.
 - `secrets` scans commits for secrets with gitleaks, beside `check`, on every event. A pull request
   scans its own commits since it left the target branch, so a key added and then removed in the
-  same pull request still fails it; a push to `main` and a tag scan the whole history. The log
+  same pull request still fails it; every other event scans the whole history. The log
   shows each finding with its value redacted. Run it locally with `gitleaks git . --redact` (every
   branch) or `gitleaks git . --redact --log-opts=origin/main..HEAD` (your branch, as CI does). To
   allow a false positive, end its line with a `gitleaks:allow` comment; a finding in a commit that
@@ -64,17 +66,18 @@ performance falls when another step shares the CPU.
 - `lighthouse` builds the website and runs `deno task lighthouse` (`apps/mpa/lighthouse/run.sh`):
   the website's pages, served behind nginx with gzip, must score at least 95 for performance and
   100 for accessibility, best practices and SEO in Lighthouse mobile. The pages are listed in
-  `apps/mpa/lighthouse/lighthouserc.json`, and a push to `main` and a tag measure each three times. A
+  `apps/mpa/lighthouse/lighthouserc.json`, and the nightly run and a tag measure each three times. A
   pull request measures only the pages in `apps/mpa/lighthouse/quick.ts`, one run each
   (`LIGHTHOUSE_PAGES=quick`), against the same scores. It starts when every step before it has ended, and the
-  e2e steps wait for it, so nothing else of the pipeline runs beside it. A push to `main` and a tag
-  always run it. A pull request runs it only when it changes a file the website is built from: the
+  e2e steps wait for it, so nothing else of the pipeline runs beside it. The nightly run and a tag
+  always run it, and a push to `main` never. A pull request runs it only when it changes a file the website is built from: the
   `path` list of the step in `ci.yml` (`apps/mpa`, `libs/ui`, `libs/domain`, the `libs/server`
   members the website imports, the two API files its stand-in blog API serves, `i18n`, the guides
   in `docs/*.md`, the manifests, `deno.lock` and `ci.yml` itself). A new import of the website from another folder adds that folder to the list.
   The e2e steps depend on it as optional, so they still run when it is skipped.
 - `image-node`, `image-bun`, `image-mpa-node` and `image-mpa-bun` build the Node and Bun images of
-  the API and the website with kaniko, pushing nothing. A push to `main` and a tag always build them;
+  the API and the website with kaniko, pushing nothing. A push to `main` and a tag always build them,
+  the nightly run never;
   a pull request only when it changes a file that goes into an image: the `path` list under
   `variables` in `ci.yml`, which follows `.dockerignore`.
 - `e2e-smoke` runs the product's smoke set on every pull request (except one that changes only
@@ -84,10 +87,10 @@ performance falls when another step shares the CPU.
   `infra/scripts/e2e-local-plan.ts`: `auth-profile-ws-push.e2e.ts`, `sign-in-next.e2e.ts`,
   `notes.e2e.ts`, `profile-two-tabs.e2e.ts`, `groups-pages.e2e.ts` and `url-filters.e2e.ts`. A pull
   request that breaks sign-in, the profile, notes or the groups pages in a browser fails here.
-- `e2e-full` runs every `e2e/*.e2e.ts` on a push to `main` only: `deno task e2e:local
+- `e2e-full` runs every `e2e/*.e2e.ts` in the nightly run only: `deno task e2e:local
   --max-failures=10`, with the built SPA in the container's own nginx for the specs that start the
   app with no network (`E2E_BUILT=nginx`). It is not part of the pull-request check, so it blocks no
-  merge; a red run on `main` says the last merge broke a screen outside the smoke set.
+  merge; a red nightly run says a merge broke a screen outside the smoke set.
 - The four browser steps run in `mcr.microsoft.com/playwright`, which ships Chromium and its system
   libraries, and install the pinned Deno release from GitHub, checked against its SHA-256.
   Playwright's own browser download, run through Deno in the plain Deno image, hangs. The image
@@ -105,6 +108,33 @@ Woodpecker, because the repository requires approval for forks.
 
 Every Deno step runs `deno install --frozen` first, so a `deno.lock` that does not match
 `deno.jsonc` fails the pipeline instead of being rewritten.
+
+## The nightly run
+
+A cron run on `main` every night runs `check`, `secrets`, the stack's steps (`integration`,
+`backup-restore`, `alert-rules`, `browser`, `runtimes`), the full `lighthouse` run and
+`e2e-full`. It skips the images, which the push to `main` built, and `e2e-smoke`, whose specs
+`e2e-full` runs too. The slow steps, `e2e-full` (about 27 minutes) and the full Lighthouse run
+(about 13), run here rather than on each push to `main` for two reasons: the repository cancels a
+running push or pull-request pipeline when a newer one starts, but never a cron one, so the run
+finishes; and a merge, and a deploy that waits for `ci.yml`, no longer waits about 40 minutes. A red
+nightly run is the sign that a merge broke something pull requests do not test. It blocks nothing.
+
+Woodpecker keeps crons on the server, not in `ci.yml`, so create it once per repository:
+
+- In the web interface: the repository's settings, **Crons**, name `nightly`, branch `main`,
+  schedule `0 2 * * *` (02:00 UTC every day).
+- Or with the API and a personal access token:
+
+  ```sh
+  curl -fsS -X POST -H "Authorization: Bearer $WOODPECKER_TOKEN" -H 'Content-Type: application/json' \
+    -d '{"name":"nightly","branch":"main","schedule":"0 2 * * *"}' \
+    "$WOODPECKER_SERVER/api/repos/<repo id>/cron"
+  ```
+
+The schedule takes five fields (minute, hour, day of month, month, day of week) or a descriptor such
+as `@daily`, with no seconds field, in the cron's time zone, UTC unless set. A product that copies
+`ci.yml` creates its own cron the same way.
 
 ## Deploy on every push to main
 
