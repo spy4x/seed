@@ -163,8 +163,10 @@ export default defineConfig({
   },
   // Vite's default cache is the repository root's node_modules/.vite, which the admin app's dev
   // server uses too: whichever starts second rewrites the other's pre-bundled dependencies, and a
-  // page asking for one it dropped gets "Outdated Optimize Dep" and stays blank. One cache each.
-  cacheDir: fromFileUrl(new URL("../../node_modules/.vite/spa", import.meta.url)),
+  // page asking for one it dropped gets "Outdated Optimize Dep" and stays blank. One cache each,
+  // in the app's own folder: @spy4x/preact-theme's Vite plugin finds pre-bundled files by their
+  // "/.vite/deps/" path, so the folder keeps the name `.vite`.
+  cacheDir: fromFileUrl(new URL("./.vite", import.meta.url)),
   optimizeDeps: {
     // These come in through the Deno plugin's resolver, which the dev server's dependency scan
     // does not follow: tailwind-merge (through the JSR package @spy4x/preact-cn) and
