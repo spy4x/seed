@@ -397,6 +397,17 @@ describe("stats screen states", () => {
     expect(has("[data-e2e=admin-stats-unknown-website] button")).toBe(false)
   })
 
+  it("centres the buttons of every error state under their centred text", async () => {
+    const url = "https://umami.example.com/websites/w1"
+    for (const state of ["token-refused", "unknown-website", "unreachable"] as const) {
+      await mount(<AdminStatsScreen {...props([], { response: { state, umamiUrl: url } })} />)
+      const buttons = find(`[data-e2e=admin-stats-${state}] a`).parentElement!
+      expect(buttons.classList.contains("justify-center")).toBe(true)
+    }
+    await mount(<AdminStatsScreen {...props([], { response: null, error: "Down." })} />)
+    expect(find("[data-e2e=admin-stats-error]").classList.contains("items-center")).toBe(true)
+  })
+
   it("offers Try again, never zeros, while Umami is down with nothing kept", async () => {
     const calls: unknown[][] = []
     const down: WebsiteStatsResponse = {

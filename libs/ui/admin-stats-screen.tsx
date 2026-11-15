@@ -141,7 +141,7 @@ function StatsBody(props: AdminStatsScreenProps): JSX.Element {
   if (response === null) {
     return error
       ? (
-        <div class="flex flex-col items-start gap-3" data-e2e="admin-stats-error">
+        <div class="flex flex-col items-center gap-3" data-e2e="admin-stats-error">
           <ErrorState message={t.t(`AdminStats.loadError`)} />
           <Button variant="secondary" onClick={() => onRefresh(false)}>
             {t.t(`AdminStats.tryAgain`)}
@@ -160,7 +160,7 @@ function StatsBody(props: AdminStatsScreenProps): JSX.Element {
           title={t.t(`AdminStats.problemTitle`)}
           description={t.t(PROBLEM_TEXT[response.state])}
           action={
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap justify-center gap-2">
               {response.state === `unreachable` && (
                 <Button
                   variant="secondary"
