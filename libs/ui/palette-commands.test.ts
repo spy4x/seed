@@ -120,11 +120,26 @@ describe(`the palette's commands`, () => {
     expect(install?.choice).toEqual({ kind: `install` })
   })
 
-  it(`keep New group listed offline, dimmed with why it cannot run`, () => {
-    const newGroup = (online: boolean) =>
-      paletteCommands(context({ online }), () => {}).find((option) => option.label === `New group`)
-    expect(newGroup(true)?.disabledReason).toBeUndefined()
-    expect(newGroup(false)?.disabledReason).toBe(`Needs a connection`)
+  it(`keep each command the server must run listed offline, dimmed with why, and dim none online`, () => {
+    // A guest gets Keep your account; Turn off two-factor sign-in is listed only for a member.
+    const dimmed = (online: boolean) =>
+      [{ guest: true }, { twoFactor: true }].flatMap((extra) =>
+        paletteCommands(context({ online, canInstall: true, benchmark: true, ...extra }), () => {})
+          .filter((option) => option.disabledReason !== undefined)
+          .map((option) => `${option.label}: ${option.disabledReason}`)
+      )
+    expect(new Set(dimmed(false))).toEqual(
+      new Set([
+        `New group`,
+        `Keep your account`,
+        `Download my data`,
+        `Change profile picture`,
+        `Delete my account`,
+        `Turn off two-factor sign-in`,
+        `Sign out of all other devices`,
+      ].map((label) => `${label}: Needs a connection`)),
+    )
+    expect(dimmed(true)).toEqual([])
   })
 
   it(`ask the app to sign out through its own sign-out, never directly`, () => {
