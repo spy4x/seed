@@ -1730,7 +1730,6 @@ export default {
     "many": "Digite pelo menos {count} de caracteres para buscar notas.",
     "other": "Digite pelo menos {count} caracteres para buscar notas.",
   },
-  "Search.empty": "Nada encontrado para “{query}”.",
   "Search.emptyOnDevice":
     "Nada neste dispositivo corresponde a “{query}”. Busque de novo quando estiver online.",
   "Search.notes": "Notas",
@@ -1751,6 +1750,7 @@ export default {
   "Search.newNote": "Nova nota",
   "Search.newTag": "Nova etiqueta",
   "Search.newGroup": "Novo grupo",
+  "Search.withText": "{label}: “{text}”",
   "Search.openOverview": "Abrir a visão geral",
   "Search.openNotifications": "Abrir notificações",
   "Search.openProfile": "Abrir perfil",

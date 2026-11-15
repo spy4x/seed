@@ -3,12 +3,17 @@ import { describe, it } from "@std/testing/bdd"
 import { GroupRole } from "@domain/groups"
 import {
   assertCanSeeImport,
+  IMPORT_CHOICE_FIELDS_MAX,
   IMPORT_FILE_NAME_MAX_LENGTH,
+  IMPORT_OPTIONS_MAX_BYTES,
+  IMPORT_OPTIONS_MAX_KEYS,
+  importCommitBodySchema,
   ImportError,
   importMappingBodySchema,
   importUpload,
   importUploadQuerySchema,
   parseImportFileName,
+  parseImportOptions,
   parseImportRequest,
 } from "./+lib.ts"
 
@@ -90,6 +95,85 @@ describe("a mapping's body", () => {
         codeOf(() => parseImportRequest(importMappingBodySchema, { mapping: { title: column } })),
       )
         .toBe(`INVALID_REQUEST`)
+    }
+  })
+})
+
+describe("an upload's options", () => {
+  it("are absent without the query, and a JSON object of text otherwise", () => {
+    expect(parseImportOptions(undefined)).toBeUndefined()
+    expect(parseImportOptions(`{"accountId":"a1"}`)).toEqual({ accountId: `a1` })
+  })
+
+  it("takes exactly the most bytes and keys, and refuses one more of either", () => {
+    const filler = `{"a":"${`x`.repeat(IMPORT_OPTIONS_MAX_BYTES - 8)}"}`
+    expect(new TextEncoder().encode(filler).byteLength).toBe(IMPORT_OPTIONS_MAX_BYTES)
+    expect(codeOf(() => parseImportOptions(filler))).toBeNull()
+    expect(codeOf(() => parseImportOptions(filler.replace(`"a"`, `"ab"`))))
+      .toBe(`INVALID_REQUEST`)
+    const keys = (count: number) =>
+      JSON.stringify(Object.fromEntries(Array.from({ length: count }, (_, i) => [`k${i}`, `v`])))
+    expect(codeOf(() => parseImportOptions(keys(IMPORT_OPTIONS_MAX_KEYS)))).toBeNull()
+    expect(codeOf(() => parseImportOptions(keys(IMPORT_OPTIONS_MAX_KEYS + 1))))
+      .toBe(`INVALID_REQUEST`)
+  })
+
+  it("counts bytes, not characters", () => {
+    const wide = `{"a":"${`é`.repeat(IMPORT_OPTIONS_MAX_BYTES / 2)}"}`
+    expect(wide.length).toBeLessThan(IMPORT_OPTIONS_MAX_BYTES + 10)
+    expect(codeOf(() => parseImportOptions(wide))).toBe(`INVALID_REQUEST`)
+  })
+
+  it("refuses text that is not JSON, an array, a number value and a key that is no field key", () => {
+    for (
+      const raw of [`{`, `[]`, `["a"]`, `"a"`, `null`, `{"a":1}`, `{"1a":"x"}`, `{"__proto__":"x"}`]
+    ) {
+      expect([raw, codeOf(() => parseImportOptions(raw))]).toEqual([raw, `INVALID_REQUEST`])
+    }
+  })
+})
+
+describe("a save's body", () => {
+  it("takes a mapping alone, or with choices of text per row number", () => {
+    expect(parseImportRequest(importCommitBodySchema, { mapping: { title: 0 } }))
+      .toEqual({ mapping: { title: 0 } })
+    expect(
+      parseImportRequest(importCommitBodySchema, {
+        mapping: { title: 0 },
+        choices: { "1": { category: `c1` }, "12": { category: `` } },
+      }),
+    ).toEqual({
+      mapping: { title: 0 },
+      choices: { "1": { category: `c1` }, "12": { category: `` } },
+    })
+  })
+
+  it("refuses a row number below 1 or not a number, a long or non-text value and too many fields", () => {
+    const fields = (count: number) =>
+      Object.fromEntries(Array.from({ length: count }, (_, i) => [`f${i}`, `v`]))
+    expect(
+      codeOf(() =>
+        parseImportRequest(importCommitBodySchema, {
+          mapping: {},
+          choices: { "1": fields(IMPORT_CHOICE_FIELDS_MAX) },
+        })
+      ),
+    ).toBeNull()
+    for (
+      const choices of [
+        { "0": { a: `v` } },
+        { "-1": { a: `v` } },
+        { "x": { a: `v` } },
+        { "1": { a: `v`.repeat(201) } },
+        { "1": { a: 1 } },
+        { "1": fields(IMPORT_CHOICE_FIELDS_MAX + 1) },
+      ]
+    ) {
+      expect([
+        choices,
+        codeOf(() => parseImportRequest(importCommitBodySchema, { mapping: {}, choices })),
+      ])
+        .toEqual([choices, `INVALID_REQUEST`])
     }
   })
 })

@@ -1,8 +1,9 @@
 /**
  * The palette's commands in a real browser: the Theme submenu applies a theme with the palette
  * still open, the palette's look on a phone and a desktop in both palettes, photographed into
- * the test's output folder for the design review, a group page's own commands per role, and the
- * risky account commands, which only open their confirmation.
+ * the test's output folder for the design review, a group page's own commands per role, the
+ * risky account commands, which only open their confirmation, and the quick-create rows, which
+ * make a note, tag or group from the typed text.
  */
 import { type APIRequestContext, type BrowserContext, type Page } from "@playwright/test"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
@@ -313,6 +314,108 @@ test.describe("the palette's commands", () => {
       // 3: two-factor is still configured.
       expect(me.mfa, JSON.stringify(me)).toBe(3)
     } finally {
+      await cleanup(request, email)
+    }
+  })
+
+  test("typed text offers New note, New tag and New group named after it: Enter fills the form, Ctrl Enter creates and opens", async ({ page, request }) => {
+    test.setTimeout(180_000)
+    const email = `e2e-palette-quick-${uuidV7().slice(-8)}@example.com`
+    await cleanup(request, email)
+    const errors: string[] = []
+    page.on("pageerror", (error) => errors.push(error.stack ?? error.message))
+    try {
+      const signedUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
+        headers,
+        data: { email, password },
+      })
+      expect(signedUp.ok(), await signedUp.text()).toBe(true)
+      await signIn(page, email, password)
+      await gotoApp(page, "/groups", page.locator("[data-e2e=shell-ws-status]"))
+      const palette = page.locator("[data-e2e=search]")
+      const field = palette.getByRole("combobox")
+      // The typed text is isolated in the row's label, so its direction cannot reorder it.
+      const row = (label: string, text: string) =>
+        new RegExp(`^${label}: “\\u2068?${text}\\u2069?”`)
+      const railSearch = page.locator("[data-e2e=shell-search-rail] button")
+      /** Opens the palette with Ctrl K, or with a click on the rail's Search button, and types `text`. */
+      const ask = async (text: string, from: "keys" | "rail" = "keys") => {
+        // Ctrl K opens the palette only while no modal dialog is open: wait for one to finish closing.
+        await expect.poll(() =>
+          page.evaluate(() => document.querySelector("dialog[open]") === null)
+        )
+          .toBe(true)
+        if (from === "rail") await railSearch.click()
+        else await page.keyboard.press("Control+k")
+        await expect(field).toBeFocused()
+        await field.fill(text)
+        await expect(palette.getByRole("option").first()).toHaveAccessibleName(
+          row("New note", text),
+        )
+      }
+
+      // A command cancelled first: the quick-create right after it still works.
+      await page.keyboard.press("Control+k")
+      await field.fill("dark")
+      await page.keyboard.press("Escape")
+      await expect(palette).toBeHidden()
+
+      // From the rail's Search button: closing the New note dialog gives focus back to it.
+      await ask("groceries", "rail")
+      await expect(palette.getByRole("option").nth(1)).toHaveAccessibleName(
+        row("New tag", "groceries"),
+      )
+      await expect(palette.getByRole("option").nth(2)).toHaveAccessibleName(
+        row("New group", "groceries"),
+      )
+      await page.keyboard.press("Enter")
+      const dialog = page.locator("[data-e2e=new-note-dialog]")
+      const title = dialog.locator("[data-e2e=new-note-title]")
+      await expect(dialog).toBeVisible()
+      await expect(title).toHaveValue("groceries")
+      await expect(title).toBeFocused()
+      await page.keyboard.press("Escape")
+      await expect(dialog).toBeHidden()
+      await expect(railSearch).toBeFocused()
+
+      await ask("Weekly groceries")
+      await page.keyboard.press("Control+Enter")
+      await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+      await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Weekly groceries")
+      await expect(dialog).toBeHidden()
+
+      await ask("Errands")
+      await page.keyboard.press("ArrowDown")
+      await page.keyboard.press("Enter")
+      await expect(page).toHaveURL("/tags/new")
+      await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue("Errands")
+
+      await ask("Chores")
+      await page.keyboard.press("ArrowDown")
+      await page.keyboard.press("Control+Enter")
+      await expect(page).toHaveURL(/\/tags\/[0-9a-f-]{36}$/)
+      await expect(page.locator("[data-e2e=tag-created]")).toBeVisible()
+      await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue("Chores")
+
+      await ask("Book club")
+      await page.keyboard.press("ArrowDown")
+      await page.keyboard.press("ArrowDown")
+      await page.keyboard.press("Enter")
+      await expect(page).toHaveURL("/groups/new")
+      await expect(page.getByRole("textbox", { name: "Name" })).toHaveValue("Book club")
+
+      // A long query on a phone: the row shows forty characters and never overflows.
+      await page.setViewportSize({ width: 390, height: 900 })
+      await gotoApp(page, "/groups", page.locator("[data-e2e=shell-ws-status]"))
+      await page.keyboard.press("Control+k")
+      await field.fill(`${"Shopping list for the long weekend trip ".repeat(3)}🛒 مرحبا`)
+      const first = palette.getByRole("option").first()
+      await expect(first).toHaveAccessibleName(/^New note: “.*…/)
+      expect(await first.evaluate((option) => option.scrollWidth <= option.clientWidth)).toBe(true)
+      await page.screenshot({ path: test.info().outputPath(`quick-create-390.png`) })
+      expect(errors).toEqual([])
+    } finally {
+      if (errors.length) console.log(errors.join(`\n---\n`))
       await cleanup(request, email)
     }
   })

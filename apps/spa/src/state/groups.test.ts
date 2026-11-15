@@ -236,6 +236,33 @@ describe("groups store", () => {
     expect(store.groups.value).toEqual([])
   })
 
+  it("puts a given name in the new group's form, keeping the rest and dropping the earlier refusal", async () => {
+    const { store } = harness({
+      create: () => Promise.reject(new RealtimeRequestError("forbidden", "Group id is in use")),
+    })
+    store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "Trip", emoji: "🏕️" })
+    await store.create()
+
+    store.startCreate("groceries")
+
+    expect(store.draft(null)).toMatchObject({ name: "groceries", emoji: "🏕️" })
+    expect(store.unsaved(null)).toBe(true)
+    expect(store.editorErrors.value).toEqual({})
+  })
+
+  it("keeps a refused create's text and why when the new group's editor opens after it", async () => {
+    const { store } = harness({
+      create: () => Promise.reject(new RealtimeRequestError("forbidden", "Group id is in use")),
+    })
+    store.startCreate("groceries")
+    await store.create()
+
+    store.openEditor(null)
+
+    expect(store.draft(null).name).toBe("groceries")
+    expect(store.editorErrors.value).toEqual({ form: "Group id is in use" })
+  })
+
   it("says a create needs a connection when the server was not reached", async () => {
     const { store } = harness({ create: () => Promise.reject(new TypeError("fetch failed")) })
     store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "Trip" })
@@ -313,6 +340,16 @@ describe("groups store", () => {
     expect(store.draft("a").name).toBe("Typed")
     store.openEditor("b")
     expect(store.draft("a").name).toBe("a")
+  })
+
+  it("drops a refusal when an editor opens with nothing typed for it", async () => {
+    const { store } = harness({})
+    await store.create()
+    expect(store.editorErrors.value.name).toBe("Enter a name.")
+
+    store.openEditor(null)
+
+    expect(store.editorErrors.value).toEqual({})
   })
 
   it("saves only the name when only the name changed, and keeps the row's members", async () => {
@@ -471,6 +508,22 @@ describe("groups store", () => {
     expect(store.editorErrors.value).toEqual({ form: "Only an admin can" })
     expect(store.draft("a").name).toBe("New")
     expect(store.unsaved("a")).toBe(true)
+  })
+
+  it("keeps what was typed for a group but drops why its save was refused when its editor opens again", async () => {
+    const { store } = harness({
+      pages: [{ groups: [item("a", "1", "Old")], nextCursor: null }],
+      rename: () => Promise.reject(new TypeError("fetch failed")),
+    })
+    await store.refresh()
+    store.edit("a", { ...store.draft("a"), name: "New" })
+    await store.save("a")
+    expect(store.editorErrors.value.form).toBeDefined()
+
+    store.openEditor("a")
+
+    expect(store.draft("a").name).toBe("New")
+    expect(store.editorErrors.value).toEqual({})
   })
 
   it("does not send a save with a wrong field, or for a group the person does not have", async () => {

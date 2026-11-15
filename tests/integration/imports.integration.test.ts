@@ -2,6 +2,7 @@
 import { expect } from "@std/expect"
 import type postgres from "postgres"
 import type { OutboxEvent } from "@spy4x/server/outbox"
+import { err, ok } from "@spy4x/platform/universal/result"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { GroupRole } from "@domain/groups"
 import type { Actor } from "@domain/identity"
@@ -530,3 +531,365 @@ Deno.test("imports: the cleanup deletes imports left unsaved for a day, with the
     expect(await liveTitles(sql, groupId)).toEqual([`Kept`])
   })
 })
+
+// #region A kind with options, a review and choices
+
+/** What the test kind's `readOptions` stores: the parent note the upload names. */
+interface LinkedOptions {
+  parentNoteId: string
+}
+
+/** What the test kind's `commit` and `undo` were handed, per call. */
+interface CommitSeen {
+  step: `commit` | `undo`
+  options: unknown
+  choices: readonly Readonly<Record<string, string>>[]
+}
+
+/**
+ * Notes linked to a parent note of the group, the shape of a bank statement linked to an account:
+ * the upload names the parent (`readOptions`, refused as not found outside the group), the review
+ * skips a title the group has already and suggests a tag for the others, and the tag is a choice
+ * written as the note's body.
+ */
+function linkedKind(seen: CommitSeen[]): ImportKind {
+  return importKind<{ title: string }>({
+    id: `linked`,
+    label: `Linked notes`,
+    accept: [`.csv`],
+    maxBytes: noteImportKind.maxBytes,
+    fields: [
+      { key: `title`, label: `Title`, required: true },
+      { key: `tag`, label: `Tag`, choice: true },
+    ],
+    canCreate: noteImportKind.canCreate,
+    read: noteImportKind.read,
+    check: (row, mapping, options) => {
+      const title = (row[mapping.title] ?? ``).trim()
+      if (!(options as LinkedOptions | null)?.parentNoteId) return err([`No parent`])
+      return title ? ok({ title }) : err([`A title is required`])
+    },
+    async readOptions(tx, raw, context): Promise<LinkedOptions> {
+      if (!raw.parentNoteId) throw new ImportError(`INVALID_REQUEST`, `Choose the parent note`)
+      const [parent] = await tx`
+        SELECT id FROM notes WHERE id = ${raw.parentNoteId} AND group_id = ${context.groupId}
+      `
+      if (!parent) throw new ImportError(`ITEM_NOT_FOUND`, `The parent note was not found`)
+      return { parentNoteId: raw.parentNoteId }
+    },
+    async review(tx, values, context) {
+      const titles = values.map((value) => value.title)
+      const existing = await tx<{ title: string }[]>`
+        SELECT title FROM notes
+        WHERE group_id = ${context.groupId} AND deleted_at IS NULL AND title = ANY(${titles})
+      `
+      const have = new Set(existing.map((row) => row.title))
+      return values.map((value) => ({
+        skip: have.has(value.title) ? `Saved before` : null,
+        suggestions: { tag: `auto ${value.title}` },
+      }))
+    },
+    async commit(tx, values, context) {
+      seen.push({ step: `commit`, options: context.options, choices: context.choices })
+      const notes = values.map((value, index) => ({
+        title: value.title,
+        body: context.choices[index].tag ?? ``,
+      }))
+      return await noteImportKind.commit(tx, notes, context)
+    },
+    async undo(tx, ids, context) {
+      seen.push({ step: `undo`, options: context.options, choices: context.choices })
+      await noteImportKind.undo(tx, ids, context)
+    },
+  })
+}
+
+/** Uploads `titles` as the linked kind with `options`: the import, read. */
+async function uploadedLinked(
+  sql: postgres.Sql,
+  kinds: readonly ImportKind[],
+  groupId: string,
+  userId: number,
+  options: Record<string, string> | undefined,
+  ...titles: string[]
+): Promise<ImportSummary> {
+  const api = handlers(sql, kinds)
+  const created = await api.create(
+    new ImportCreateCommand({
+      actor: actor(userId),
+      groupId,
+      kind: `linked`,
+      fileName: `linked.csv`,
+      file: await importUpload(new TextEncoder().encode(`title,tag\n${titles.join(`\n`)}\n`)),
+      options,
+    }),
+  )
+  await importReadJob(sql, kinds)(job(created.id))
+  return await api.get(new ImportGetQuery({ actor: actor(userId), groupId, importId: created.id }))
+}
+
+/** A live note of the group with `title`, saved through a notes import: its id. */
+async function parentNote(sql: postgres.Sql, groupId: string, userId: number, title: string) {
+  await saved(sql, groupId, userId, title)
+  const [note] = await sql<{ id: string }[]>`
+    SELECT id FROM notes WHERE group_id = ${groupId} AND title = ${title}
+  `
+  return note.id
+}
+
+async function notesWithBodies(sql: postgres.Sql, groupId: string) {
+  return await sql<{ title: string; body: string }[]>`
+    SELECT title, body FROM notes WHERE group_id = ${groupId} AND deleted_at IS NULL ORDER BY title
+  `
+}
+
+async function commitJobsOf(sql: postgres.Sql, id: string): Promise<number> {
+  const [{ count }] = await sql<{ count: number }[]>`
+    SELECT count(*)::int FROM outbox_events
+    WHERE event_kind = 'imports.commit' AND aggregate_id = ${id}
+  `
+  return count
+}
+
+Deno.test("imports with options: an option naming a note of another group is refused as not found, and nothing is stored", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor, stranger } = await team(sql)
+    const [own] = await sql<{ groupId: string }[]>`
+      SELECT group_id FROM group_members WHERE user_id = ${stranger}
+    `
+    const theirs = await parentNote(sql, own.groupId, stranger, `Theirs`)
+    const kinds = [linkedKind([])]
+    const before = (await sql`SELECT id FROM imports`).length
+
+    expect(
+      await codeOf(() =>
+        uploadedLinked(sql, kinds, groupId, editor, { parentNoteId: theirs }, `A`)
+      ),
+    ).toBe(`ITEM_NOT_FOUND`)
+    expect(await codeOf(() => uploadedLinked(sql, kinds, groupId, editor, undefined, `A`)))
+      .toBe(`INVALID_REQUEST`)
+    expect((await sql`SELECT id FROM imports`).length).toBe(before)
+  })
+})
+
+Deno.test("imports with options: the stored options come back on the import, and the notes kind has none", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Parent`)
+    const read = await uploadedLinked(sql, [linkedKind([])], groupId, editor, { parentNoteId }, `A`)
+
+    expect(read).toMatchObject({ status: ImportStatus.READY, options: { parentNoteId } })
+    const notesId = await saved(sql, groupId, editor, `Plain`)
+    const notes = await handlers(sql).get(
+      new ImportGetQuery({ actor: actor(editor), groupId, importId: notesId }),
+    )
+    expect(notes).toMatchObject({
+      status: ImportStatus.COMMITTED,
+      savedCount: 1,
+      options: null,
+      skippedCount: null,
+    })
+  })
+})
+
+Deno.test("imports with options: a notes upload with options is refused before anything is stored", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const create = () =>
+      handlers(sql).create(
+        new ImportCreateCommand({
+          actor: actor(editor),
+          groupId,
+          kind: `notes`,
+          fileName: `notes.csv`,
+          file: { bytes: csv(`A`), sha256: ``, toJSON: () => `` },
+          options: { parentNoteId: `x` },
+        }),
+      )
+    expect(await codeOf(create)).toBe(`INVALID_REQUEST`)
+    // The repository refuses too, without the handler in front of it.
+    const repository = new PostgresImportRepository(sql, KINDS)
+    expect(
+      await codeOf(() =>
+        repository.create(
+          { id: uuidV7(), groupId, kind: `notes`, fileName: `n.csv`, file: csv(`A`), options: {} },
+          editor,
+          noteImportKind,
+        )
+      ),
+    ).toBe(`INVALID_REQUEST`)
+    expect((await sql`SELECT id FROM imports`).length).toBe(0)
+  })
+})
+
+Deno.test("imports with a review: a check answers each valid row with its cells, skip and suggestions", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Have`)
+    const kinds = [linkedKind([])]
+    const read = await uploadedLinked(
+      sql,
+      kinds,
+      groupId,
+      editor,
+      { parentNoteId },
+      `Have`,
+      // A blank line is no row; a cell of spaces is a row without a title.
+      `  `,
+      `New`,
+    )
+
+    const result = await handlers(sql, kinds).check(
+      new ImportCheckQuery({
+        actor: actor(editor),
+        groupId,
+        importId: read.id,
+        mapping: { title: 0 },
+      }),
+    )
+    expect(result).toMatchObject({ rowCount: 3, valid: 2, withErrors: 1 })
+    expect(result.reviews).toEqual([
+      { row: 1, cells: [`Have`], skip: `Saved before`, suggestions: { tag: `auto Have` } },
+      { row: 3, cells: [`New`], skip: null, suggestions: { tag: `auto New` } },
+    ])
+  })
+})
+
+Deno.test("imports with a review: the skipped row is not saved, and a choice reaches commit over the suggestion", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Have`)
+    const seen: CommitSeen[] = []
+    const kinds = [linkedKind(seen)]
+    const read = await uploadedLinked(
+      sql,
+      kinds,
+      groupId,
+      editor,
+      { parentNoteId },
+      `Have`,
+      `Chosen`,
+      `Suggested`,
+    )
+
+    await handlers(sql, kinds).commit(
+      new ImportCommitCommand({
+        actor: actor(editor),
+        groupId,
+        importId: read.id,
+        mapping: { title: 0 },
+        // Row 1 is skipped by the review, so its choice is ignored.
+        choices: { "1": { tag: `ignored` }, "2": { tag: `picked` } },
+      }),
+    )
+    await importCommitJob(sql, { ...NO_BILLING, kinds })(job(read.id))
+
+    expect(await notesWithBodies(sql, groupId)).toEqual([
+      { title: `Chosen`, body: `picked` },
+      { title: `Have`, body: `Body of Have` },
+      { title: `Suggested`, body: `auto Suggested` },
+    ])
+    expect(seen).toEqual([{
+      step: `commit`,
+      options: { parentNoteId },
+      choices: [{ tag: `picked` }, { tag: `auto Suggested` }],
+    }])
+    const done = await handlers(sql, kinds).get(
+      new ImportGetQuery({ actor: actor(editor), groupId, importId: read.id }),
+    )
+    expect(done).toMatchObject({
+      status: ImportStatus.COMMITTED,
+      savedCount: 2,
+      skippedCount: 1,
+      errorCount: 0,
+    })
+
+    await handlers(sql, kinds).undo(
+      new ImportUndoCommand({ actor: actor(editor), groupId, importId: read.id }),
+    )
+    expect(seen[1]).toEqual({ step: `undo`, options: { parentNoteId }, choices: [] })
+    expect(await liveTitles(sql, groupId)).toEqual([`Have`])
+  })
+})
+
+Deno.test("imports with a review: a check's review runs read-only, so a kind cannot write while it previews", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Parent`)
+    const writer = importKind({
+      ...linkedKind([]),
+      async review(tx, values) {
+        await tx`UPDATE notes SET title = 'Changed' WHERE group_id = ${groupId}`
+        return values.map(() => ({ skip: null, suggestions: {} }))
+      },
+    })
+    const read = await uploadedLinked(sql, [writer], groupId, editor, { parentNoteId }, `A`)
+
+    await expect(
+      handlers(sql, [writer]).check(
+        new ImportCheckQuery({
+          actor: actor(editor),
+          groupId,
+          importId: read.id,
+          mapping: { title: 0 },
+        }),
+      ),
+    ).rejects.toThrow(`read-only transaction`)
+    expect(await liveTitles(sql, groupId)).toEqual([`Parent`])
+  })
+})
+
+Deno.test("imports with a review: a second save of the same file saves nothing, even when both previews came first", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Parent`)
+    const kinds = [linkedKind([])]
+    const api = handlers(sql, kinds)
+    const first = await uploadedLinked(sql, kinds, groupId, editor, { parentNoteId }, `A`, `B`)
+    const second = await uploadedLinked(sql, kinds, groupId, editor, { parentNoteId }, `A`, `B`)
+    for (const one of [first, second]) {
+      const ref = { actor: actor(editor), groupId, importId: one.id, mapping: { title: 0 } }
+      const preview = await api.check(new ImportCheckQuery(ref))
+      expect(preview.reviews?.map((review) => review.skip)).toEqual([null, null])
+      await api.commit(new ImportCommitCommand(ref))
+    }
+
+    await importCommitJob(sql, { ...NO_BILLING, kinds })(job(first.id))
+    await importCommitJob(sql, { ...NO_BILLING, kinds })(job(second.id))
+
+    expect(await liveTitles(sql, groupId)).toEqual([`A`, `B`, `Parent`])
+    const again = await api.get(
+      new ImportGetQuery({ actor: actor(editor), groupId, importId: second.id }),
+    )
+    expect(again).toMatchObject({ status: ImportStatus.COMMITTED, savedCount: 0, skippedCount: 2 })
+  })
+})
+
+Deno.test("imports with choices: a field that is not a choice and a row past the file are refused before the save is queued", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Parent`)
+    const kinds = [linkedKind([])]
+    const read = await uploadedLinked(sql, kinds, groupId, editor, { parentNoteId }, `A`, `B`)
+    const commit = (choices: Record<string, Record<string, string>>) => () =>
+      handlers(sql, kinds).commit(
+        new ImportCommitCommand({
+          actor: actor(editor),
+          groupId,
+          importId: read.id,
+          mapping: { title: 0 },
+          choices,
+        }),
+      )
+
+    expect(await codeOf(commit({ "1": { title: `Renamed` } }))).toBe(`INVALID_REQUEST`)
+    expect(await codeOf(commit({ "3": { tag: `x` } }))).toBe(`INVALID_REQUEST`)
+    expect(await stored(sql, read.id)).toMatchObject({ status: ImportStatus.READY })
+    expect(await commitJobsOf(sql, read.id)).toBe(0)
+
+    expect(await codeOf(commit({ "2": { tag: `x` } }))).toBeNull()
+    expect(await commitJobsOf(sql, read.id)).toBe(1)
+  })
+})
+
+// #endregion A kind with options, a review and choices

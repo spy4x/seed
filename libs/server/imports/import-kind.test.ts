@@ -8,7 +8,9 @@ import {
   ImportError,
 } from "@domain/imports"
 import { err, ok } from "@spy4x/platform/universal/result"
+import type postgres from "postgres"
 import {
+  assertChoices,
   assertMapping,
   cellOf,
   checkRows,
@@ -16,6 +18,8 @@ import {
   type ImportKind,
   importKind,
   kindOf,
+  reviewValues,
+  valuesToSave,
 } from "./import-kind.ts"
 
 /** A kind whose row needs a number in its `amount` column. */
@@ -66,6 +70,16 @@ describe("defining an import kind", () => {
     expect(() =>
       importKind(amounts({ fields: [{ key: `a`, label: `A` }, { key: `a`, label: `B` }] }))
     ).toThrow(RangeError)
+  })
+
+  it("refuses a required field that is also a choice", () => {
+    expect(() =>
+      importKind(
+        amounts({ fields: [{ key: `amount`, label: `Amount`, required: true, choice: true }] }),
+      )
+    ).toThrow(`required field amount cannot be a choice`)
+    expect(importKind(amounts({ fields: [{ key: `amount`, label: `Amount`, choice: true }] })).id)
+      .toBe(`amounts`)
   })
 
   it("finds a listed kind by id and refuses an unknown one", () => {
@@ -121,5 +135,82 @@ describe("checking every row", () => {
     expect(result.withErrors).toBe(IMPORT_CHECK_ROWS_MAX + 5)
     expect(result.rows).toHaveLength(IMPORT_CHECK_ROWS_MAX)
     expect(result.rows[0].errors).toHaveLength(IMPORT_ROW_ERRORS_MAX)
+  })
+})
+
+describe("the person's choices", () => {
+  const kind = importKind(amounts({
+    fields: [{ key: `amount`, label: `Amount`, required: true }, {
+      key: `category`,
+      label: `Category`,
+      choice: true,
+    }],
+  }))
+
+  it("pass for a choice field on any row the file has", () => {
+    expect(codeOf(() => assertChoices(kind, { "1": { category: `c` }, "3": {} }, 3))).toBeNull()
+  })
+
+  it("refuse a field that is not a choice, a field the kind lacks and a row past the file", () => {
+    expect(codeOf(() => assertChoices(kind, { "1": { amount: `5` } }, 3))).toBe(`INVALID_REQUEST`)
+    expect(codeOf(() => assertChoices(kind, { "1": { color: `red` } }, 3))).toBe(`INVALID_REQUEST`)
+    expect(codeOf(() => assertChoices(kind, { "4": { category: `c` } }, 3))).toBe(`INVALID_REQUEST`)
+    expect(codeOf(() => assertChoices(kind, { "0": { category: `c` } }, 3))).toBe(`INVALID_REQUEST`)
+  })
+})
+
+describe("a review", () => {
+  const tx = {} as postgres.TransactionSql
+  const context = { importId: `i`, groupId: `g`, actorId: 1, role: GroupRole.EDITOR, options: null }
+
+  it("hands the options to every row's check", () => {
+    const seen: unknown[] = []
+    const kind = importKind(amounts({
+      check: (_row, _mapping, options) => {
+        seen.push(options)
+        return ok(1)
+      },
+    }))
+    expect(checkRows(kind, [[`1`], [`2`]], { amount: 0 }, { accountId: `a` }).valueRows)
+      .toEqual([1, 2])
+    expect(seen).toEqual([{ accountId: `a` }, { accountId: `a` }])
+  })
+
+  it("answers one review per value and refuses a kind that answers another number", async () => {
+    const one = { skip: null, suggestions: {} }
+    const fine = importKind(
+      amounts({ review: (_tx, values) => Promise.resolve(values.map(() => one)) }),
+    )
+    expect(await reviewValues(fine, tx, [1, 2], context)).toEqual([one, one])
+    const short = importKind(amounts({ review: () => Promise.resolve([one]) }))
+    await expect(reviewValues(short, tx, [1, 2], context)).rejects.toThrow(
+      `review answered 1 rows for 2`,
+    )
+  })
+
+  it("leaves skipped rows out and overlays each kept row's suggestions with its row's choices", () => {
+    const saved = valuesToSave(
+      [10, 20, 30],
+      [1, 3, 4],
+      [
+        { skip: `Saved before`, suggestions: { category: `food` } },
+        { skip: null, suggestions: { category: `rent`, note: `x` } },
+        { skip: null, suggestions: { category: `fun` } },
+      ],
+      { "1": { category: `ignored` }, "2": { category: `refused row` }, "3": { category: `home` } },
+    )
+    expect(saved).toEqual({
+      values: [20, 30],
+      choices: [{ category: `home`, note: `x` }, { category: `fun` }],
+      skipped: 1,
+    })
+  })
+
+  it("keeps every value without a review, with only the person's choices", () => {
+    expect(valuesToSave([10, 20], [1, 2], null, { "2": { category: `c` } })).toEqual({
+      values: [10, 20],
+      choices: [{}, { category: `c` }],
+      skipped: 0,
+    })
   })
 })

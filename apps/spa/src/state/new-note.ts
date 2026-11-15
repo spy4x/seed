@@ -34,8 +34,12 @@ export function createNewNoteStore(dependencies: NewNoteDependencies) {
   const added = signal<NewNoteAdded | null>(null)
   let id = dependencies.newId()
 
-  /** Opens the dialog with what was left in it; the last success line is gone. */
-  function show(): void {
+  /**
+   * Opens the dialog with what was left in it, or with `text` as the title in its place, as the
+   * palette's `New note: "…"` does; the last success line is gone.
+   */
+  function show(text?: string): void {
+    if (text !== undefined) title.value = text
     added.value = null
     errors.value = NO_ERRORS
     open.value = true
@@ -81,6 +85,22 @@ export function createNewNoteStore(dependencies: NewNoteDependencies) {
     }
   }
 
+  /**
+   * Adds a note titled `text` to `target` without opening the dialog, as the palette's Ctrl Enter
+   * on `New note: "…"` does. Resolves the note once made; when it was refused or failed, `null`,
+   * with the dialog open on the text and why, so nothing typed is lost.
+   */
+  async function addNow(text: string, target: NewNoteTarget | null): Promise<NoteItem | null> {
+    if (pending.value) return null
+    title.value = text
+    const note = await add(target)
+    if (!note) {
+      added.value = null
+      open.value = true
+    }
+    return note
+  }
+
   /** Forgets everything, for the next person signed in on this device. */
   function reset(): void {
     open.value = false
@@ -92,7 +112,7 @@ export function createNewNoteStore(dependencies: NewNoteDependencies) {
     id = dependencies.newId()
   }
 
-  return { open, title, groupId, pending, errors, added, show, close, add, reset }
+  return { open, title, groupId, pending, errors, added, show, close, add, addNow, reset }
 }
 
 export const newNoteStore = createNewNoteStore({
