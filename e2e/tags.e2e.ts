@@ -112,6 +112,43 @@ test.describe("tags", () => {
     }
   })
 
+  test("the palette's Delete this tag only asks, with focus in the confirmation, and Escape returns focus to More actions", async ({ browser, request }) => {
+    const user = "e2e_tags_palette@example.com"
+    await cleanup(request, user)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      await signUp(request, user)
+      const page = await context.newPage()
+      await signInOnline(page, user)
+      const groupId = await selectedGroup(page, "Tag team")
+      const tags = new TagsPage(page)
+      await tags.open()
+      await tags.create("Urgent", "Red")
+      await tags.row("Urgent").locator("[data-e2e=tag-edit]").click()
+      await expect(page.locator("[data-e2e=tag-title]")).toHaveText("Urgent")
+      const tagUrl = page.url()
+
+      const palette = page.locator("[data-e2e=search]")
+      await page.keyboard.press("Control+k")
+      await palette.getByRole("combobox").fill("удалить метку")
+      await palette.getByRole("option", { name: "Delete this tag" }).click()
+      await expect(palette).toBeHidden()
+      const confirm = page.locator("[data-e2e=tag-delete-dialog]")
+      await expect(confirm).toBeVisible()
+      await expect.poll(() => confirm.evaluate((dialog) => dialog.contains(document.activeElement)))
+        .toBe(true)
+      await page.keyboard.press("Escape")
+      await expect(confirm).toBeHidden()
+      // Escape hands focus to the "More actions" button, as when Delete is picked from that menu.
+      await expect(page.locator("[data-e2e=tag-editor-menu]")).toBeFocused()
+      await expect(page).toHaveURL(tagUrl)
+      expect((await serverTags(page, groupId)).map((tag) => tag.name)).toEqual(["Urgent"])
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
   test("a tag typed on the create page is kept and created in the group the person switches to", async ({ browser, request }) => {
     const user = "e2e_tags_switch@example.com"
     await cleanup(request, user)

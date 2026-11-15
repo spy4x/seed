@@ -1,10 +1,11 @@
+import { signal, useSignal } from "@preact/signals"
 import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { canMutateNotes } from "@domain/groups"
 import { DEFAULT_TAG_COLOR } from "@domain/tags"
-import { TagEditorScreen } from "@ui/tag-editor-screen.tsx"
+import { TagEditorScreen, tagMenuActions } from "@ui/tag-editor-screen.tsx"
 import { TAG_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
 import { notesStore } from "../state/notes.ts"
@@ -16,8 +17,16 @@ import { isSpaPath } from "./spa-paths.ts"
 import { deleteAndAnnounce } from "./tag-delete.ts"
 import { useAppText } from "@ui/i18n.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
+import { afterPalette } from "./palette-attach.ts"
+import { readyActions, type TagPageActions } from "./shortcuts.ts"
 
 const network = createOnlineStatus()
+
+/**
+ * What the open tag page lets the command palette do: Delete while the page's menu offers it and it
+ * can be picked; `null` while no tag page is open.
+ */
+export const tagEditorPageActions = signal<TagPageActions | null>(null)
 
 /**
  * Wires the tag editor to the tags store: `/tags/new` (no `tagId`) creates a tag in the person's
@@ -59,6 +68,23 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
   const saved = tag
     ? { id: tag.id, name: tag.name, color: tag.color, noteCount: tag.noteCount }
     : null
+  const deleting = store.deleting.value !== null
+  // The palette's Delete opens the menu's confirmation through the screen, once the palette has
+  // closed, and only while the menu could open it too.
+  const requestDialog = useSignal<"delete" | null>(null)
+  const ready = readyActions(tagMenuActions({
+    canWrite,
+    tagShown: saved !== null,
+    hasDelete: canWrite && saved !== null,
+    deleting,
+  }))
+  useEffect(() => {
+    tagEditorPageActions.value = Object.fromEntries(ready.map((action) => [
+      action,
+      () => afterPalette(document, () => requestDialog.value = action),
+    ]))
+    return () => tagEditorPageActions.value = null
+  }, [ready.join()])
   return (
     <>
       <TagEditorScreen
@@ -97,7 +123,7 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
           if (created) navigate(TAG_PATHS.tag(result.id), { replace: true })
         }}
         onRevert={() => store.revert()}
-        deleting={store.deleting.value !== null}
+        deleting={deleting}
         onDelete={canWrite && tag
           ? async () => {
             if (await deleteAndAnnounce(t, store, tag.id, notesStore, toasts)) {
@@ -107,6 +133,8 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
           : undefined}
         offline={!network.online.value && currentLayer() !== null}
         navigate={navigate}
+        requestDialog={requestDialog.value}
+        onDialogRequested={() => requestDialog.value = null}
       />
       <UnsavedGuard
         when={canWrite && store.unsaved.value}

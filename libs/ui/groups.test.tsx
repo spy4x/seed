@@ -36,9 +36,11 @@ import { groupLabel, GroupMark } from "./group-appearance.tsx"
 import { GroupPicker } from "./group-picker.tsx"
 import {
   EMPTY_GROUP_DRAFT,
+  type GroupDialog,
   type GroupDraft,
   GroupEditorScreen,
   type GroupEditorScreenProps,
+  groupMenuActions,
   GroupTab,
   groupTabOf,
 } from "./group-editor-screen.tsx"
@@ -869,6 +871,71 @@ describe("GroupEditorScreen header", () => {
     expect(focused()).toBe("group-menu")
   })
 
+  it("opens each menu dialog the app asks for, acts only on confirm, and Cancel returns focus to More actions", async () => {
+    const remove = spy<[]>()
+    const leave = spy<[]>()
+    const requested = spy<[]>()
+    const owned = { ...defaults, onDelete: remove.fn, isLastGroup: false }
+    const admin = { ...owned, group: { ...team, role: GroupRole.ADMIN }, onLeave: leave.fn }
+    const ask = async (props: GroupEditorScreenProps, dialog: GroupDialog) => {
+      await rerender(<GroupEditorScreen {...props} requestDialog={null} />)
+      await rerender(
+        <GroupEditorScreen {...props} requestDialog={dialog} onDialogRequested={requested.fn} />,
+      )
+    }
+    await mount(<GroupEditorScreen {...owned} />)
+
+    await ask(owned, `delete`)
+    expect(find("[data-e2e=group-delete-dialog]").textContent).toContain(`Delete "Team"?`)
+    await clickText("[data-e2e=group-delete-dialog]", "Cancel")
+    expect(focused()).toBe("group-menu")
+
+    await ask(owned, `transfer`)
+    expect(has("[data-e2e=group-transfer-dialog] [data-e2e=transfer-body]")).toBe(true)
+    await click("[data-e2e=group-transfer-dialog] button[aria-label=Close]")
+    expect(focused()).toBe("group-menu")
+
+    await ask(admin, `leave`)
+    expect(has("[data-e2e=group-leave-dialog]")).toBe(true)
+    await clickText("[data-e2e=group-leave-dialog]", "Cancel")
+    expect(focused()).toBe("group-menu")
+
+    expect([remove.calls, leave.calls, requested.calls.length]).toEqual([[], [], 3])
+  })
+
+  it("opens no dialog the menu does not offer or has disabled, and still clears the request", async () => {
+    const requested = spy<[]>()
+    const asks: [string, Partial<GroupEditorScreenProps>, GroupDialog][] = [
+      ["Delete for an admin", { group: { ...team, role: GroupRole.ADMIN } }, `delete`],
+      ["Transfer for an admin", { group: { ...team, role: GroupRole.ADMIN } }, `transfer`],
+      ["Leave for the owner", {}, `leave`],
+      ["Delete of the last group", { isLastGroup: true }, `delete`],
+      [
+        "Leave of the last group",
+        { group: { ...team, role: GroupRole.ADMIN }, isLastGroup: true },
+        `leave`,
+      ],
+      ["Delete with a plan", { hasSubscription: true }, `delete`],
+      ["Transfer with a plan", { hasSubscription: true }, `transfer`],
+      ["Transfer with nobody to take it", { members: [owner] }, `transfer`],
+    ]
+    for (const [name, props, dialog] of asks) {
+      await mount(<GroupEditorScreen {...defaults} {...props} />)
+      await rerender(
+        <GroupEditorScreen
+          {...defaults}
+          {...props}
+          requestDialog={dialog}
+          onDialogRequested={requested.fn}
+        />,
+      )
+      const open = `[data-e2e=group-delete-dialog], [data-e2e=group-leave-dialog], ` +
+        `[data-e2e=group-transfer-dialog]`
+      expect(has(open), name).toBe(false)
+    }
+    expect(requested.calls).toHaveLength(asks.length)
+  })
+
   it("offers Invite in the Members tab's header to the owner and admins only, as a link to the invitation page", async () => {
     const navigate = spy<[string]>()
     const members = { ...defaults, tab: GroupTab.MEMBERS }
@@ -1000,6 +1067,50 @@ describe("GroupEditorScreen tabs", () => {
     await rerender(<GroupEditorScreen {...defaults} tab={GroupTab.BILLING} />)
     expect(has("a[data-e2e=group-member-count]")).toBe(false)
     expect(find("[data-e2e=group-member-count]").textContent).toBe("2 members")
+  })
+})
+
+describe("groupMenuActions", () => {
+  const facts = {
+    role: GroupRole.OWNER,
+    members: [owner, editor],
+    hasTransfer: true,
+    hasExport: true,
+    isLastGroup: false,
+    hasSubscription: false,
+    offline: false,
+    exporting: false,
+  }
+
+  it("offers the owner Transfer, Export and Delete, and no Leave", () => {
+    expect(groupMenuActions(facts)).toEqual({ transfer: null, export: null, delete: null })
+  })
+
+  it("offers an admin, an editor and a viewer only Leave", () => {
+    for (const role of [GroupRole.ADMIN, GroupRole.EDITOR, GroupRole.VIEWER]) {
+      expect(groupMenuActions({ ...facts, role }), GroupRole[role]).toEqual({ leave: null })
+    }
+  })
+
+  it("leaves out Transfer with nobody to take the group, and what the app does not wire", () => {
+    expect(groupMenuActions({ ...facts, members: [owner] })).toEqual({ export: null, delete: null })
+    expect(groupMenuActions({ ...facts, members: null })).toEqual({ export: null, delete: null })
+    expect(groupMenuActions({ ...facts, hasTransfer: false, hasExport: false }))
+      .toEqual({ delete: null })
+  })
+
+  it("says why a shown item is disabled: the last group, a live plan, no network, an export running", () => {
+    expect(groupMenuActions({ ...facts, hasSubscription: true })).toEqual({
+      transfer: "subscription",
+      export: null,
+      delete: "subscription",
+    })
+    expect(groupMenuActions({ ...facts, isLastGroup: true, hasSubscription: true }).delete)
+      .toBe("lastGroup")
+    expect(groupMenuActions({ ...facts, role: GroupRole.EDITOR, isLastGroup: true }))
+      .toEqual({ leave: "lastGroup" })
+    expect(groupMenuActions({ ...facts, offline: true }).export).toBe("offline")
+    expect(groupMenuActions({ ...facts, exporting: true }).export).toBe("exporting")
   })
 })
 

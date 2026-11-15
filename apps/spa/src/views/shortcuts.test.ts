@@ -12,7 +12,7 @@ import { createTranslator } from "@spy4x/platform/universal/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
 import { paletteCommands, type PaletteOption } from "@ui/palette-commands.ts"
-import { pageCommands, runNoteCommand, spaShortcutRows } from "./shortcuts.ts"
+import { pageCommands, readyActions, runActionCommand, spaShortcutRows } from "./shortcuts.ts"
 
 function rows(activityGroupId: string | null, onOverview = false) {
   const seen = { navigated: [] as string[], newNote: 0, shortcuts: 0, range: 0, customise: 0 }
@@ -138,26 +138,85 @@ describe("the open page's commands in the search palette", () => {
   })
 })
 
+describe("the tag and group pages' commands in the search palette", () => {
+  const closed = { overview: false, benchmark: false, noteEditor: null }
+
+  it("offer Delete on a tag page that offers it, found by English and Russian words", () => {
+    const commands = pageCommands(RU, { ...closed, tagEditor: { delete: noop } }, [])
+    expect(commands?.map((c) => c.id)).toEqual(["tag-delete"])
+    expect(commands?.[0].label).toBe(RU.t(`AppShell.deleteTag`))
+    expect(commands?.[0].aliases).toContain("Delete this tag")
+    expect(commands?.[0].aliases).toContain("удалить метку")
+  })
+
+  it("offer a tag page that offers nothing an empty This page", () => {
+    expect(pageCommands(RU, { ...closed, tagEditor: {} }, [])).toEqual([])
+  })
+
+  it("offer the group page's commands in its menu's order, only those it offers", () => {
+    const owner = { transfer: noop, export: noop, delete: noop }
+    expect(pageCommands(RU, { ...closed, groupEditor: owner }, [])?.map((c) => c.id))
+      .toEqual(["group-transfer", "group-export", "group-delete"])
+    expect(pageCommands(RU, { ...closed, groupEditor: { leave: noop } }, [])?.map((c) => c.id))
+      .toEqual(["group-leave"])
+    const leave = pageCommands(RU, { ...closed, groupEditor: { leave: noop } }, [])?.[0]
+    expect(leave?.aliases).toEqual([
+      "Leave this group",
+      "quit group",
+      "exit group",
+      "покинуть группу",
+      "уйти из группы",
+    ])
+  })
+})
+
 const noop = () => {}
 const all = { attach: noop, duplicate: noop, move: noop, copyLink: noop, delete: noop }
 
-describe("runNoteCommand", () => {
-  it("runs the note page's action its command names, once", () => {
+describe("readyActions", () => {
+  it("keeps the menu items the person can pick now and leaves out the disabled ones", () => {
+    expect(readyActions({ transfer: "subscription", export: null, delete: "lastGroup" }))
+      .toEqual(["export"])
+    expect(readyActions({ leave: null })).toEqual(["leave"])
+    expect(readyActions({ delete: "deleting" })).toEqual([])
+    expect(readyActions({})).toEqual([])
+  })
+})
+
+describe("runActionCommand", () => {
+  it("runs the open page's action its command names, once", () => {
     const ran: string[] = []
     const actions = {
       duplicate: () => void ran.push("duplicate"),
       delete: () => void ran.push("delete"),
     }
-    runNoteCommand("note-delete", actions)
-    runNoteCommand("note-duplicate", actions)
-    expect(ran).toEqual(["delete", "duplicate"])
+    runActionCommand("note-delete", { noteEditor: actions })
+    runActionCommand("note-duplicate", { noteEditor: actions })
+    runActionCommand("tag-delete", {
+      noteEditor: null,
+      tagEditor: { delete: () => ran.push("tag") },
+    })
+    runActionCommand("group-leave", {
+      noteEditor: null,
+      groupEditor: { leave: () => void ran.push("leave"), delete: () => void ran.push("group") },
+    })
+    expect(ran).toEqual(["delete", "duplicate", "tag", "leave"])
   })
 
-  it("does nothing for a command the page does not offer now, or off a note page", () => {
+  it("does nothing for a command the page does not offer now, or off its page", () => {
     const ran: string[] = []
-    runNoteCommand("note-delete", { copyLink: () => void ran.push("copy") })
-    runNoteCommand("note-copy-link", null)
-    runNoteCommand("overview-range", { copyLink: () => void ran.push("copy") })
+    runActionCommand("note-delete", { noteEditor: { copyLink: () => void ran.push("copy") } })
+    runActionCommand("note-copy-link", { noteEditor: null })
+    runActionCommand("overview-range", { noteEditor: { copyLink: () => void ran.push("copy") } })
+    runActionCommand("tag-delete", { noteEditor: null, tagEditor: {} })
+    runActionCommand("group-delete", {
+      noteEditor: null,
+      groupEditor: { leave: () => ran.push("x") },
+    })
+    runActionCommand("group-delete", {
+      noteEditor: null,
+      tagEditor: { delete: () => ran.push("y") },
+    })
     expect(ran).toEqual([])
   })
 })

@@ -68,6 +68,32 @@ export interface TagEditorScreenProps {
   navigate?: Navigate
   /** Drawn right under the page header, in every state of the page: the app's offline status. */
   intro?: ComponentChildren
+  /**
+   * The delete confirmation to open, such as the command palette's "Delete this tag": it opens,
+   * with focus first on the "More actions" button so closing it returns there, only while the menu
+   * offers Delete and it can be picked ({@link tagMenuActions}); otherwise nothing opens. The page
+   * then calls `onDialogRequested`, so the app clears the request and the next one opens it again.
+   */
+  requestDialog?: TagDialog | null
+  onDialogRequested?: () => void
+}
+
+/** A dialog of the tag page's menu that the app may open: see `requestDialog`. */
+export type TagDialog = "delete"
+
+/**
+ * The tag page's menu: "Delete tag" shows to someone who may change the group's tags, on a saved
+ * tag whose page can delete it; it maps to `null` when it can be picked, or to `"deleting"` while a
+ * delete is in flight. Left out, the menu does not show it. The page's menu and the app's palette
+ * both read this, so they never disagree.
+ *
+ * @param page.hasDelete The app passes `onDelete`.
+ */
+export function tagMenuActions(
+  page: { canWrite: boolean; tagShown: boolean; hasDelete: boolean; deleting: boolean },
+): { delete?: "deleting" | null } {
+  if (!page.canWrite || !page.tagShown || !page.hasDelete) return {}
+  return { delete: page.deleting ? "deleting" : null }
 }
 
 /** How long a read may take before the page says it is loading, so a fast one never flickers. */
@@ -177,6 +203,12 @@ function Editor(props: WithGroup): JSX.Element {
   const t = useAppText()
   const canWrite = group.canWrite
   const [asking, setAsking] = useState(false)
+  const actions = tagMenuActions({
+    canWrite,
+    tagShown: tag !== null,
+    hasDelete: props.onDelete !== undefined,
+    deleting: props.deleting ?? false,
+  })
   const name = useRef<HTMLInputElement>(null)
   // A refused name lands the person on the field to fix.
   useEffect(() => {
@@ -200,6 +232,18 @@ function Editor(props: WithGroup): JSX.Element {
     if (active && fields.current?.contains(active)) return
     name.current?.focus()
   }, [showFooter, saving, tag?.id])
+  // The confirmation the app asks for opens as the menu's Delete would, and only while it can be
+  // picked. Focus goes to the menu first, so closing the dialog returns it there, not to the page.
+  const request = props.requestDialog
+  useEffect(() => {
+    if (!request) return
+    if (request === `delete` && actions.delete === null) {
+      fields.current?.ownerDocument.querySelector<HTMLElement>("[data-e2e=tag-editor-menu]")
+        ?.focus()
+      setAsking(true)
+    }
+    props.onDialogRequested?.()
+  }, [request])
   return (
     <EditorPage>
       <PageHeader
@@ -210,10 +254,10 @@ function Editor(props: WithGroup): JSX.Element {
         subtitle={group.name}
         subtitleDataE2E="tags-group"
         menuDataE2E="tag-editor-menu"
-        menu={canWrite && tag && props.onDelete && (
+        menu={actions.delete !== undefined && (
           <DropdownItem
             onClick={() => setAsking(true)}
-            disabled={props.deleting}
+            disabled={actions.delete !== null}
             danger
             dataE2E="tag-editor-delete"
           >

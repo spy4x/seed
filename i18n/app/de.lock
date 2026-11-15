@@ -73,9 +73,14 @@ ApiTokens.savedCopyBody	351c5337745efb5d
 ApiTokens.savedCopyTitle	f4d763c76743f235
 AppShell.attachFiles	7a16f72089c90420
 AppShell.copyNoteLink	b52a6072203d1af5
+AppShell.deleteGroup	7a859f79d972eadf
 AppShell.deleteNote	26bb0172956f0597
+AppShell.deleteTag	f8c659b8b925b3eb
 AppShell.duplicateNote	6711dc91b58f162d
+AppShell.exportGroup	3cb0166cfa5626a9
+AppShell.leaveGroup	d114934b315b673a
 AppShell.moveNote	bed1a194780fa3ac
+AppShell.transferGroup	02354795cce05dfd
 AttachmentMessages.budget	c18c4cf9e9615a66
 AttachmentMessages.linkExpired	f53bd3c01f1a7194
 AttachmentMessages.load	77da0092e28eaf94
