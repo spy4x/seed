@@ -255,7 +255,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   }, [])
   const devicesRead = devices.sessions.value !== null || devices.error.value !== null
   const anchorsReady = section === "account"
-    ? !filesOn() || dataExport.current.value !== undefined
+    ? dataExport.current.value !== undefined
     : section === "security"
     ? devicesRead
     : section === "danger-zone"
