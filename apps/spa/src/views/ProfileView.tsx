@@ -261,16 +261,20 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   useEffect(() => {
     const press = PROFILE_ANCHORS.get(anchor.id)
     if (!anchorsReady || press === undefined) return
-    // An effect, never the `pushState` listener itself: the settings layout focuses a newly shown
-    // section's heading in an effect of the same render, which runs before this one (a child's
-    // effects run first). Pressed from the listener, the dialog opened before that and gave the
-    // focus back to the heading.
-    setAnchor({ id: `` })
-    history.replaceState(history.state, ``, location.pathname + location.search)
-    const control = document.getElementById(anchor.id)
-    control?.focus()
-    // Focused first: the dialog gives the focus back to it when it closes.
-    if (press) control?.click()
+    // The settings layout focuses a newly shown section's heading in an effect of this same render.
+    // Preact runs a render's effects in one batch, in an order that changes when a component was
+    // already waiting from an earlier render, so the press waits for the batch to end. Pressed
+    // before that (the `pushState` listener once did), the dialog took the heading as the place
+    // to give the focus back to.
+    const timer = setTimeout(() => {
+      setAnchor({ id: `` })
+      history.replaceState(history.state, ``, location.pathname + location.search)
+      const control = document.getElementById(anchor.id)
+      control?.focus()
+      // Focused first: the dialog gives the focus back to it when it closes.
+      if (press) control?.click()
+    }, 0)
+    return () => clearTimeout(timer)
   }, [anchor, anchorsReady])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
