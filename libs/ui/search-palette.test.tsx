@@ -14,6 +14,7 @@ import { GroupRole } from "@domain/groups"
 import {
   emptyLabel,
   openSearch,
+  type PaletteRecord,
   type SearchChoice,
   type SearchNotesAnswer,
   SearchPalette,
@@ -623,5 +624,117 @@ describe("SearchPalette", () => {
     })
 
     expect(picked).toEqual([{ kind: "note", noteId: PLAN.id, groupId: HOME.id }])
+  })
+})
+
+describe("SearchPalette records", () => {
+  const SAVINGS = { id: "a1", label: "Savings account", detail: "$1,200", href: "/accounts/a1" }
+  const CARD = { id: "a2", label: "Credit card", aliases: ["Visa"], href: "/accounts/a2" }
+  const accounts = (records: PaletteRecord[] = [SAVINGS, CARD], limit?: number) => ({
+    heading: "Accounts",
+    records: () => records,
+    limit,
+  })
+  /** The rows listed under `heading`. */
+  const under = (heading: string) => {
+    const rows = listed()
+    const start = rows.indexOf(`# ${heading}`)
+    if (start === -1) return []
+    const end = rows.findIndex((row, index) => index > start && row.startsWith("# "))
+    return rows.slice(start + 1, end === -1 ? undefined : end)
+  }
+  const pick = async (label: string) => {
+    const row = [...document.querySelectorAll("[role=option]")]
+      .find((candidate) => text(candidate).startsWith(label))!
+    await act(() => {
+      row.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+    })
+  }
+
+  it("finds a record by a typo, by its alias and typed in the other keyboard layout", async () => {
+    await mount({ records: [accounts()] })
+    await open()
+
+    await type("savngs")
+    expect(under("Accounts")).toEqual(["Savings account | $1,200"])
+    await type("visa")
+    expect(under("Accounts")).toEqual(["Credit card"])
+    // "savings" typed on a Russian (ЙЦУКЕН) layout.
+    await type("ыфмштпы")
+    expect(under("Accounts")).toEqual(["Savings account | $1,200"])
+  })
+
+  it("lists a source after the groups and commands, even when its record matches best", async () => {
+    await mount({ records: [accounts([{ id: "t", label: "Theme", href: "/accounts/t" }])] })
+    await open()
+    await type("theme")
+
+    const headings = listed().filter((row) => row.startsWith("# "))
+    expect(headings.length).toBeGreaterThan(1)
+    expect(headings.at(-1)).toBe("# Accounts")
+  })
+
+  it("opens a picked record's page", async () => {
+    const { picked } = await mount({ records: [accounts()] })
+    await open()
+    await type("credit")
+    await pick("Credit card")
+
+    expect(picked).toEqual([{ kind: "page", href: "/accounts/a2" }])
+  })
+
+  it("lists no records for the empty query, nor for punctuation alone", async () => {
+    await mount({ records: [accounts()] })
+    await open()
+    expect(listed()).not.toContain("# Accounts")
+
+    await type("!!!")
+    expect(listed()).not.toContain("# Accounts")
+  })
+
+  it("adds no heading for a source without a matching record", async () => {
+    await mount({
+      records: [accounts(), { heading: "Invoices", records: () => [] }, {
+        heading: "Budgets",
+        records: () => [{ id: "b1", label: "Groceries", href: "/budgets/b1" }],
+      }],
+    })
+    await open()
+    await type("savings")
+
+    expect(under("Accounts")).toEqual(["Savings account | $1,200"])
+    expect(listed()).not.toContain("# Invoices")
+    expect(listed()).not.toContain("# Budgets")
+  })
+
+  it("lists at most five rows of a source, or its own limit, best first", async () => {
+    const rents = Array.from({ length: 8 }, (_, index) => ({
+      id: `r${index}`,
+      label: `Rental ${index}`,
+      href: `/accounts/r${index}`,
+    }))
+    rents.push({ id: "exact", label: "Rent", href: "/accounts/exact" })
+    await mount({ records: [accounts(rents), { ...accounts(rents, 2), heading: "Rent again" }] })
+    await open()
+    await type("rent")
+
+    expect(under("Accounts")).toEqual(["Rent", "Rental 0", "Rental 1", "Rental 2", "Rental 3"])
+    expect(under("Rent again")).toEqual(["Rent", "Rental 0"])
+  })
+
+  it("keeps rows of two sources apart when their records share an id", async () => {
+    const { picked } = await mount({
+      records: [accounts([SAVINGS]), {
+        heading: "Goals",
+        records: () => [{ id: SAVINGS.id, label: "Savings goal", href: "/goals/a1" }],
+      }],
+    })
+    await open()
+    await type("savings")
+    expect(under("Accounts")).toEqual(["Savings account | $1,200"])
+    expect(under("Goals")).toEqual(["Savings goal"])
+
+    await pick("Savings goal")
+    expect(picked).toEqual([{ kind: "page", href: "/goals/a1" }])
   })
 })
