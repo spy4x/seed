@@ -236,7 +236,11 @@ export function AdminUsersScreen(
           }}
           clearLabel={t.t(`AdminUsers.clear`)}
           count={list
-            ? <span data-e2e="admin-users-count">{t.t(`AdminUsers.count`, { count: list.total })}</span>
+            ? (
+              <span data-e2e="admin-users-count">
+                {t.t(`AdminUsers.count`, { count: list.total })}
+              </span>
+            )
             : undefined}
         />
       </div>
