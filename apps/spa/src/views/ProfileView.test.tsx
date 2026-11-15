@@ -478,6 +478,106 @@ describe("ProfileView", () => {
     }
   })
 
+  describe("a palette address that names a risky button", () => {
+    const device = {
+      id: 7,
+      deviceName: "Firefox on Linux",
+      ipHint: "203.0.113.*",
+      createdAt: "2026-10-01T08:00:00.000Z",
+      lastUsedAt: "2026-10-04T08:00:00.000Z",
+      current: true,
+    }
+    const phone = { ...device, id: 9, deviceName: "Safari on iPhone", current: false }
+    // `land` sets two-factor for its test only: the suite's account is put back after each.
+    let user = sessionState.value.user
+    beforeAll(() => {
+      user = sessionState.value.user
+    })
+    afterEach(() => {
+      sessionState.value = { ...sessionState.value, user }
+    })
+
+    /**
+     * Opens `/profile/<section>#<id>` with the signed-in devices `sessions` and two-factor `mfa`,
+     * and returns every request the page made, as `METHOD path`.
+     */
+    async function land(
+      section: string,
+      id: string,
+      { sessions = [device, phone], mfa = UserMFAStatus.NOT_CONFIGURED } = {},
+    ) {
+      const calls: string[] = []
+      const refuse = globalThis.fetch
+      globalThis.fetch = (input, init) => {
+        const url = new URL(String(input), "http://app.localhost/")
+        calls.push(`${init?.method ?? "GET"} ${url.pathname}`)
+        return url.pathname === "/api/auth/sessions"
+          ? Promise.resolve(Response.json({ sessions }))
+          : refuse(input, init)
+      }
+      sessionState.value = { ...sessionState.value, user: { ...sessionState.value.user!, mfa } }
+      history.replaceState(null, "", `/profile/${section}#${id}`)
+      try {
+        await open(`/profile/${section}`, <ProfileView section={section} />)
+        await settle()
+        await settle()
+      } finally {
+        globalThis.fetch = refuse
+        history.replaceState(null, "", "/")
+      }
+      return calls
+    }
+
+    /** The `data-e2e` hooks of the dialogs open now. */
+    const openDialogs = () =>
+      [...root!.querySelectorAll("dialog[open]")].map((open) => open.getAttribute("data-e2e"))
+
+    /** Asserts the page only read: nothing deleted, turned off or signed out. */
+    const onlyReads = (calls: string[]) =>
+      expect(calls.filter((call) => !call.startsWith("GET "))).toEqual([])
+
+    it("#account-delete-open opens the deletion confirmation, focused, and deletes nothing", async () => {
+      const calls = await land("danger-zone", "account-delete-open")
+
+      expect(openDialogs()).toEqual(["account-delete-dialog"])
+      expect(document.activeElement?.id).toBe("account-delete-open")
+      onlyReads(calls)
+    })
+
+    it("#totp-disable opens the turn-off confirmation, focused, while two-factor is on", async () => {
+      const calls = await land("security", "totp-disable", { mfa: UserMFAStatus.CONFIGURED })
+
+      expect(openDialogs()).toEqual(["totp-disable-confirm"])
+      expect(document.activeElement?.id).toBe("totp-disable")
+      onlyReads(calls)
+    })
+
+    it("#sessions-end-others opens its confirmation, focused, and signs nothing out", async () => {
+      const calls = await land("security", "sessions-end-others")
+
+      expect(openDialogs()).toEqual(["sessions-end-others-confirm"])
+      expect(document.activeElement?.id).toBe("sessions-end-others")
+      onlyReads(calls)
+    })
+
+    it("#sessions-end-others with no other device opens no dialog", async () => {
+      const calls = await land("security", "sessions-end-others", { sessions: [device] })
+
+      expect(openDialogs()).toEqual([])
+      onlyReads(calls)
+    })
+
+    it("presses nothing for an id of another section, or one no section draws", async () => {
+      for (const id of ["account-delete-open", "__proto__", "constructor", "password-new"]) {
+        await land("security", id, { mfa: UserMFAStatus.CONFIGURED })
+        expect(openDialogs(), id).toEqual([])
+        await act(() => render(null, root!))
+        root!.remove()
+        root = null
+      }
+    })
+  })
+
   it("sends an address with no such section back to /profile", async () => {
     const { history } = await open("/profile/billing", <ProfileView section="billing" />)
 
