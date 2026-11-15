@@ -156,9 +156,9 @@ function StatsBody(props: AdminStatsScreenProps): JSX.Element {
   if (response === null) {
     return error
       ? (
-        <div class="flex flex-col items-center gap-3" data-e2e="admin-stats-error">
+        <div class="flex flex-col gap-3" data-e2e="admin-stats-error">
           <ErrorState message={t.t(`AdminStats.loadError`)} />
-          <Button variant="secondary" onClick={() => onRefresh(false)}>
+          <Button variant="secondary" class="self-center" onClick={() => onRefresh(false)}>
             {t.t(`AdminStats.tryAgain`)}
           </Button>
         </div>
@@ -568,7 +568,7 @@ function VisitsChart(
               {t.t(`AdminStats.chartSummary`, { total: format.number(total), count: report.days })}
             </span>
             {named.length > 0 && (
-              <div class="w-48">
+              <div class="w-full sm:w-auto sm:min-w-48 sm:max-w-xs">
                 <Select
                   name="source"
                   aria-label={t.t(`AdminStats.source`)}

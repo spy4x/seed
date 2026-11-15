@@ -442,7 +442,7 @@ describe("stats screen states", () => {
       expect(buttons.classList.contains("justify-center")).toBe(true)
     }
     await mount(<AdminStatsScreen {...props([], { response: null, error: "Down." })} />)
-    expect(find("[data-e2e=admin-stats-error]").classList.contains("items-center")).toBe(true)
+    expect(find("[data-e2e=admin-stats-error] button").classList.contains("self-center")).toBe(true)
   })
 
   it("offers Try again, never zeros, while Umami is down with nothing kept", async () => {
