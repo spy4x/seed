@@ -123,6 +123,30 @@ test.describe("the admin audit log", () => {
       expect(await ops.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         390,
       )
+      // The Event cell names the person, who set no name, by their address; it fits the screen
+      // and keeps its domain on one line.
+      const phoneLine = rows.first().locator("[data-e2e=admin-audit-people-phone]")
+      await expect(phoneLine).toContainText(targetEmail)
+      const domain = await phoneLine.evaluate((line) => {
+        // The address ends the name, so its domain is the last characters of the name's last
+        // text node, however the name is split into nodes.
+        const name = [...line.querySelectorAll("bdi")].find((bdi) => bdi.textContent?.includes("@"))
+        const text = name?.lastChild
+        if (
+          !text || text.nodeType !== Node.TEXT_NODE || !text.textContent?.endsWith("example.com")
+        ) {
+          return null
+        }
+        const range = document.createRange()
+        range.setStart(text, text.textContent.length - "example.com".length)
+        range.setEnd(text, text.textContent.length)
+        return {
+          lines: range.getClientRects().length,
+          right: Math.ceil(line.closest("tr")!.getBoundingClientRect().right),
+        }
+      })
+      expect(domain).toEqual({ lines: 1, right: expect.any(Number) })
+      expect(domain!.right).toBeLessThanOrEqual(390)
     } finally {
       await admin?.close()
       await cleanup(request, targetEmail)
