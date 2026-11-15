@@ -150,6 +150,27 @@ test.describe("the people actions of the admin app", () => {
       await expect(trail).toContainText("from viewer to supervisor")
       await expect(trail).toContainText("Password-reset email sent by an operator")
       await expect(trail).toContainText("Sessions ended")
+
+      // On a phone every row of the list page fits the screen: the role chips wrap rather than
+      // cut "Administrator" off at the edge.
+      await ops.setViewportSize({ width: 390, height: 800 })
+      await ops.goto(`${adminBase}/users?q=${encodeURIComponent(targetEmail)}`)
+      await expect(ops.locator("[data-e2e=admin-users-list] tbody tr")).toHaveCount(1)
+      const administrator = ops.locator("[data-e2e=admin-users-role]")
+        .getByRole("button", { name: "Administrator" })
+      await expect(administrator).toBeInViewport({ ratio: 1 })
+      const overflow = await ops.evaluate(() => {
+        const width = document.documentElement.clientWidth
+        const rows = document.querySelectorAll(
+          "[data-e2e^=admin-users-] , [data-e2e=admin-users-list] tr",
+        )
+        return {
+          page: document.documentElement.scrollWidth - width,
+          rows: [...rows].filter((row) => row.getBoundingClientRect().right > width)
+            .map((row) => row.getAttribute("data-e2e") ?? row.tagName),
+        }
+      })
+      expect(overflow).toEqual({ page: 0, rows: [] })
     } finally {
       await laptop?.close()
       await admin?.close()
