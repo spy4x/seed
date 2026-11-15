@@ -116,7 +116,7 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
                   <Link
                     href={IMPORT_PATHS.import(item.id)}
                     navigate={props.navigate}
-                    class="flex min-h-11 flex-col gap-0.5 px-4 py-3 hover:bg-subtle focus-visible:outline-2 focus-visible:outline-focus sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                    class="flex min-h-11 flex-col gap-1 px-4 py-3 hover:bg-subtle focus-visible:outline-2 focus-visible:outline-focus sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                     data-e2e="import-recent-item"
                   >
                     <bdi class="min-w-0 truncate font-medium text-foreground">{item.fileName}</bdi>
