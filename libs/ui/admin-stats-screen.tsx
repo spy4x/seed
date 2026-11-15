@@ -46,6 +46,20 @@ export const ADMIN_STATS_SETUP_URL =
 /** How long a first load waits before it draws the skeleton, so a fast answer never flashes one. */
 export const STATS_SKELETON_DELAY_MS = 300
 
+/**
+ * The thumbnail of an item without a photo: a picture icon on a faint square, the size of a photo,
+ * so its row lines up with the rows that have one. Translucent grey reads in both themes.
+ */
+export const NO_PHOTO_THUMBNAIL = `data:image/svg+xml,${
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" ` +
+      `fill="#8882"/><svg x="10" y="10" width="20" height="20" viewBox="0 0 24 24" fill="none" ` +
+      `stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" ` +
+      `y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path ` +
+      `d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></svg>`,
+  )
+}`
+
 /** Below this many visits on most days, the chart draws one point per week. */
 const WEEKLY_BELOW = 3
 
@@ -589,7 +603,10 @@ function Items(
     value,
     values,
     lowSample: item.lowSample,
-    image: item.coverId ? { src: ADMIN_CATALOG_PATHS.thumbnail(item.coverId), alt: `` } : undefined,
+    image: {
+      src: item.coverId ? ADMIN_CATALOG_PATHS.thumbnail(item.coverId) : NO_PHOTO_THUMBNAIL,
+      alt: ``,
+    },
     note: item.topSource ? t.t(`AdminStats.mostlyFrom`, { source: item.topSource }) : undefined,
     href: ADMIN_CATALOG_PATHS.item(item.id),
   })

@@ -16,6 +16,7 @@ import {
   AdminStatsScreen,
   type AdminStatsScreenProps,
   chartPoints,
+  NO_PHOTO_THUMBNAIL,
   STATS_SKELETON_DELAY_MS,
 } from "./admin-stats-screen.tsx"
 import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
@@ -306,6 +307,15 @@ describe("stats screen", () => {
     ])
     expect(find("[data-e2e=admin-stats-most-ordered]").textContent).toContain("mostly Zalo A")
     expect(find("[data-e2e=admin-stats-not-ordered]").textContent).toContain("at least 10 views")
+  })
+
+  it("draws an item's photo, or a placeholder of the same size when it has none", async () => {
+    await mount(<AdminStatsScreen {...props([])} />)
+    const photo = find<HTMLImageElement>("[data-e2e=admin-stats-most-ordered] tbody img")
+    const placeholder = find<HTMLImageElement>("[data-e2e=admin-stats-not-ordered] tbody img")
+    expect(photo.getAttribute("src")).toBe("/api/admin/catalog/photos/cover-1/thumbnail")
+    expect(placeholder.getAttribute("src")).toBe(NO_PHOTO_THUMBNAIL)
+    expect(placeholder.getAttribute("alt")).toBe("")
   })
 
   it("counts the order clicks per channel and says what the numbers leave out", async () => {
