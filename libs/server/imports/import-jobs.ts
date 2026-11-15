@@ -9,13 +9,21 @@ import {
 import {
   IMPORT_EVENTS,
   IMPORT_SAMPLE_ROWS,
+  type ImportChoices,
   ImportError,
   type ImportMapping,
   ImportStatus,
 } from "@domain/imports"
 import type { JobHandler } from "@server/jobs/jobs.ts"
 import { PostgresBillingRepository } from "../billing/postgres-billing-repository.ts"
-import { assertMapping, checkRows, columnCount, type ImportKind } from "./import-kind.ts"
+import {
+  assertMapping,
+  checkRows,
+  columnCount,
+  type ImportKind,
+  reviewValues,
+  valuesToSave,
+} from "./import-kind.ts"
 import {
   announceImport,
   assertMayAct,
@@ -76,7 +84,9 @@ export function importReadJob(sql: postgres.Sql, kinds: readonly ImportKind[]): 
 /**
  * Saves a `COMMITTING` import: reads its file again, checks every row under the saved mapping and
  * writes every valid row through the kind's `commit`, its batch in `import_records`, in one
- * transaction, then drops the file. Rows with errors are left out and counted. A refusal (the
+ * transaction, then drops the file. Rows with errors are left out and counted. A kind with a
+ * `review` is asked again here, in this transaction, and the rows it skips are left out and
+ * counted too; each value goes to `commit` with its suggestions overlaid with the person's choices. A refusal (the
  * uploader lost the role, the plan is full, the file no longer reads) saves nothing and marks the
  * import `FAILED` with why; any other fault rolls back and the job is tried again. A rerun on a
  * saved import finds it `COMMITTED` and stops, so no row is written twice.
@@ -105,8 +115,26 @@ export function importCommitJob(sql: postgres.Sql, setup: ImportJobSetup): JobHa
         const read = await kind.read(row.file)
         if (!read.ok) throw new ImportError("IMPORT_REFUSED", read.error)
         const mapping = JSON.parse(row.mappingJson ?? `{}`) as ImportMapping
+        const options: unknown = JSON.parse(row.optionsJson ?? `null`)
         assertMapping(kind, mapping, columnCount(read.value))
-        const { values, result } = checkRows(kind, read.value.rows, mapping)
+        const checked = checkRows(kind, read.value.rows, mapping, options)
+        // Reviewed now, under the group's lock: a save of the same file that finished first is
+        // seen, however the two previews raced.
+        const reviews = kind.review && checked.values.length > 0
+          ? await reviewValues(kind, tx, checked.values, {
+            importId: id,
+            groupId: row.groupId,
+            actorId: row.userId,
+            role,
+            options,
+          })
+          : null
+        const { values, choices, skipped } = valuesToSave(
+          checked.values,
+          checked.valueRows,
+          reviews,
+          JSON.parse(row.choicesJson ?? `{}`) as ImportChoices,
+        )
         const sequence = await announceImport(tx, row.groupId, row.userId, IMPORT_EVENTS.committed)
         if (sequence === null) throw new ImportError("GROUP_NOT_FOUND", `The group was deleted.`)
         const ids = values.length === 0 ? [] : await kind.commit(tx, values, {
@@ -114,6 +142,8 @@ export function importCommitJob(sql: postgres.Sql, setup: ImportJobSetup): JobHa
           groupId: row.groupId,
           actorId: row.userId,
           role,
+          options,
+          choices,
           changeSequence: sequence,
           allowances: await allowancesOf(billing, row.groupId, setup),
         })
@@ -125,7 +155,8 @@ export function importCommitJob(sql: postgres.Sql, setup: ImportJobSetup): JobHa
         }
         await tx`
           UPDATE imports SET status = ${ImportStatus.COMMITTED}, file = NULL,
-            saved_count = ${ids.length}, error_count = ${result.withErrors},
+            saved_count = ${ids.length}, error_count = ${checked.result.withErrors},
+            skipped_count = ${kind.review ? skipped : null},
             committed_at = CURRENT_TIMESTAMP
           WHERE id = ${id}
         `
@@ -150,7 +181,7 @@ export function importCommitJob(sql: postgres.Sql, setup: ImportJobSetup): JobHa
   }
 }
 
-/** An import's row as the jobs read it, with its file and its mapping as text. */
+/** An import's row as the jobs read it, with its file and its JSON columns as text. */
 interface LockedImport {
   status: ImportStatus
   kind: string
@@ -158,6 +189,8 @@ interface LockedImport {
   userId: number
   file: Uint8Array | null
   mappingJson: string | null
+  optionsJson: string | null
+  choicesJson: string | null
 }
 
 /**
@@ -173,7 +206,7 @@ async function lockImport(tx: postgres.TransactionSql, id: string): Promise<Lock
   await tx`SELECT 1 FROM groups WHERE id = ${peek.groupId} FOR NO KEY UPDATE`
   const [row] = await tx<LockedImport[]>`
     SELECT status, kind, group_id AS "groupId", user_id AS "userId", file,
-      mapping::text AS "mappingJson"
+      mapping::text AS "mappingJson", options::text AS "optionsJson", choices::text AS "choicesJson"
     FROM imports WHERE id = ${id}
     FOR UPDATE
   `

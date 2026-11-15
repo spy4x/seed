@@ -1535,6 +1535,9 @@ CREATE TABLE imports (
     commit_requested_at TIMESTAMPTZ(3),
     committed_at TIMESTAMPTZ(3),
     undone_at TIMESTAMPTZ(3),
+    options JSONB,
+    choices JSONB,
+    skipped_count INT4,
     CONSTRAINT imports_status_check CHECK (status BETWEEN 1 AND 6),
     CONSTRAINT imports_file_size_check CHECK (file_size >= 0),
     CONSTRAINT imports_failure_check CHECK ((failure IS NULL) = (failed_at IS NULL))

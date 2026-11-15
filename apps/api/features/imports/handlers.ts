@@ -3,6 +3,7 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import type { GroupRole } from "@domain/groups"
 import {
   assertCanSeeImport,
+  IMPORT_REVIEW_ROWS_MAX,
   ImportCheckQuery,
   ImportCommitCommand,
   ImportCreateCommand,
@@ -14,13 +15,17 @@ import {
   ImportUndoCommand,
 } from "@domain/imports"
 import {
+  assertChoices,
   assertMapping,
   checkRows,
   columnCount,
   type ImportKind,
   kindOf,
 } from "@server/imports/import-kind.ts"
-import type { PostgresImportRepository } from "@server/imports/postgres-import-repository.ts"
+import {
+  noOptions,
+  type PostgresImportRepository,
+} from "@server/imports/postgres-import-repository.ts"
 
 /** What the import handlers run on. */
 export interface ImportHandlerDependencies {
@@ -28,20 +33,22 @@ export interface ImportHandlerDependencies {
   roleOf(groupId: string, userId: number): Promise<GroupRole | null>
   imports: Pick<
     PostgresImportRepository,
-    "create" | "get" | "listForUser" | "file" | "requestCommit" | "undo"
+    "create" | "get" | "listForUser" | "file" | "review" | "requestCommit" | "undo"
   >
   kinds: readonly ImportKind[]
 }
 
 /**
  * Stores an upload: the kind must exist, take the file's ending and size, and the actor must be a
- * member whose role may create its records (checked again inside the write).
+ * member whose role may create its records (checked again inside the write). Options for a kind
+ * that reads none are refused before anything is written.
  */
 export function createImportCreateHandler(
   { imports, kinds }: ImportHandlerDependencies,
 ): CommandHandler<ImportCreateCommand> {
   return async ({ data }) => {
     const kind = kindOf(kinds, data.kind)
+    if (data.options !== undefined && !kind.readOptions) throw noOptions(kind)
     const name = data.fileName.toLowerCase()
     if (!kind.accept.some((ending) => name.endsWith(ending))) {
       throw new ImportError(
@@ -65,6 +72,7 @@ export function createImportCreateHandler(
         kind: kind.id,
         fileName: data.fileName,
         file: data.file.bytes,
+        options: data.options,
       },
       data.actor.userId,
       kind,
@@ -96,7 +104,8 @@ export function createImportListHandler(
 
 /**
  * Checks every row of a read import under a mapping and answers the refused ones, capped; saves
- * nothing. Only someone who could save it may check it.
+ * nothing. A kind with a `review` also answers the first valid rows with its review of each, in a
+ * read-only transaction. Only someone who could save it may check it.
  */
 export function createImportCheckHandler(
   dependencies: ImportHandlerDependencies,
@@ -118,13 +127,37 @@ export function createImportCheckHandler(
     const read = bytes ? await kind.read(bytes) : null
     if (!read?.ok) throw new ImportError("IMPORT_REFUSED", read?.error ?? `The file is gone`)
     assertMapping(kind, data.mapping, columnCount(read.value))
-    return checkRows(kind, read.value.rows, data.mapping).result
+    const { values, valueRows, result } = checkRows(
+      kind,
+      read.value.rows,
+      data.mapping,
+      found.options,
+    )
+    if (!kind.review) return result
+    const shown = values.slice(0, IMPORT_REVIEW_ROWS_MAX)
+    const reviews = shown.length === 0 ? [] : await dependencies.imports.review(kind, shown, {
+      importId: found.id,
+      groupId: data.groupId,
+      actorId: data.actor.userId,
+      role: role!,
+      options: found.options,
+    })
+    return {
+      ...result,
+      reviews: reviews.map(({ skip, suggestions }, index) => ({
+        row: valueRows[index],
+        cells: [...read.value.rows[valueRows[index] - 1]],
+        skip,
+        suggestions,
+      })),
+    }
   }
 }
 
 /**
- * Saves a read import under a mapping: the commit job writes the rows. The mapping is checked
- * against the file first, so a wrong column is a 400 here and never a failed import; the
+ * Saves a read import under a mapping and the person's choices: the commit job writes the rows.
+ * The mapping and the choices are checked against the kind and the file first, so a wrong column,
+ * a field that is not a choice or a row past the file is a 400 here and never a failed import; the
  * repository then checks who may save it again, on the locked group.
  */
 export function createImportCommitHandler(
@@ -137,12 +170,14 @@ export function createImportCommitHandler(
       const bytes = await dependencies.imports.file(found.id)
       const read = bytes ? await kind.read(bytes) : null
       if (read?.ok) assertMapping(kind, data.mapping, columnCount(read.value))
+      if (data.choices) assertChoices(kind, data.choices, found.rowCount ?? 0)
     }
     return await dependencies.imports.requestCommit(
       data.groupId,
       data.importId,
       data.actor.userId,
       data.mapping,
+      data.choices,
     )
   }
 }
