@@ -1803,15 +1803,6 @@ export default {
   "Search.close": "Закрыть поиск",
   "Search.loading": "Ищем…",
   "Search.error": "Не удалось выполнить поиск. Измените запрос, чтобы попробовать снова.",
-  "Search.tooShort": {
-    "one": "Чтобы искать по заметкам, введите хотя бы {count} символ.",
-    "few": "Чтобы искать по заметкам, введите хотя бы {count} символа.",
-    "many": "Чтобы искать по заметкам, введите хотя бы {count} символов.",
-    "other": "Чтобы искать по заметкам, введите хотя бы {count} символа.",
-  },
-  "Search.empty": "По запросу «{query}» ничего не нашлось.",
-  "Search.emptyOnDevice":
-    "На этом устройстве по запросу «{query}» ничего нет. Поищите снова, когда появится сеть.",
   "Search.notes": "Заметки",
   "Search.notesOnDevice": "Заметки на этом устройстве",
   "Search.groups": "Группы",
@@ -1829,6 +1820,7 @@ export default {
   "Search.newNote": "Новая заметка",
   "Search.newTag": "Новая метка",
   "Search.newGroup": "Новая группа",
+  "Search.withText": "{label}: «{text}»",
   "Search.openOverview": "Открыть обзор",
   "Search.openNotifications": "Открыть уведомления",
   "Search.openProfile": "Открыть профиль",

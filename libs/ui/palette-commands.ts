@@ -6,6 +6,7 @@
  * @module
  */
 import type { CommandPaletteOption } from "@spy4x/preact-ui/command-palette"
+import { isolate } from "@spy4x/preact-ui/bdi"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { ThemePreference } from "@domain/identity"
 import {
@@ -50,6 +51,14 @@ export type SearchChoice =
   | { kind: "sign-out" }
   /** Ask the browser to install the app, as the install offer's button does. */
   | { kind: "install" }
+  /**
+   * Make a note, tag or group with the typed text as its title or name: open its create form with
+   * the text filled in, or, with `now` (Ctrl Enter, ⌘Enter), create it and open it.
+   */
+  | { kind: "quick-create"; entity: QuickCreateEntity; title: string; now?: boolean }
+
+/** What a quick-create row makes. */
+export type QuickCreateEntity = "note" | "tag" | "group"
 
 /** A command of the open page that the palette lists, such as "Change date range". */
 export interface PageCommand {
@@ -517,12 +526,57 @@ export function themeCommand(
 
 /**
  * What a pick asks for: a group row's Ctrl Enter (⌘Enter) opens the group's settings instead of
- * switching to it; every other choice is the same either way.
+ * switching to it, and a quick-create row's creates the item at once instead of opening its form;
+ * every other choice is the same either way.
  */
 export function pickedChoice(choice: SearchChoice, alternative: boolean): SearchChoice {
-  return alternative && choice.kind === "switch-group"
-    ? { kind: "group-settings", groupId: choice.groupId }
-    : choice
+  if (!alternative) return choice
+  if (choice.kind === "switch-group") return { kind: "group-settings", groupId: choice.groupId }
+  if (choice.kind === "quick-create") return { ...choice, now: true }
+  return choice
+}
+
+/** The most characters of the query a row or the no-results line repeats. */
+const QUOTED_MAX = 40
+
+/** `query` trimmed and cut to {@link QUOTED_MAX} characters, an emoji counting as one. */
+export function quoted(query: string): string {
+  const characters = Array.from(query.trim())
+  return characters.length > QUOTED_MAX
+    ? `${characters.slice(0, QUOTED_MAX).join("")}…`
+    : characters.join("")
+}
+
+/**
+ * The Create rows that make something from what was typed: `New note: "…"`, `New tag: "…"` and
+ * `New group: "…"`, with the whole trimmed query as the title or name. None for a query that is
+ * empty or only spaces. They are built from the query, never matched against it, so any text gets
+ * them. Who may create follows the plain New note, New tag and New group commands: a note or tag
+ * needs a group the person may write to and the notes on; a group needs the server, so offline its
+ * row stays listed, dimmed, with why. The label shows the text capped by {@link quoted} and
+ * isolated, so a long or right-to-left query neither overflows the row nor reorders the label.
+ */
+export function quickCreateRows(context: PaletteContext, query: string): PaletteOption[] {
+  const { t, currentGroup } = context
+  const title = query.trim()
+  if (title === "") return []
+  const writable = currentGroup?.canWrite && context.notes !== false ? currentGroup : null
+  const row = (entity: QuickCreateEntity, key: string): PaletteOption => ({
+    id: `quick-create-${entity}`,
+    label: t.t(`Search.withText`, { label: t.t(key), text: isolate(quoted(title)) }),
+    group: t.t(`Search.create`),
+    choice: { kind: "quick-create", entity, title },
+  })
+  const detail = writable ? t.t(`Search.inGroup`, { group: writable.name }) : undefined
+  return [
+    ...(writable
+      ? [{ ...row("note", `Search.newNote`), detail }, { ...row("tag", `Search.newTag`), detail }]
+      : []),
+    {
+      ...row("group", `Search.newGroup`),
+      disabledReason: context.online ? undefined : t.t(`Search.needsConnection`),
+    },
+  ]
 }
 
 /**

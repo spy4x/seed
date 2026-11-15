@@ -1738,14 +1738,6 @@ export default {
   "Search.close": "Cerrar la búsqueda",
   "Search.loading": "Buscando…",
   "Search.error": "No se pudo buscar. Cambia la búsqueda para volver a intentarlo.",
-  "Search.tooShort": {
-    "one": "Escribe al menos {count} carácter para buscar notas.",
-    "many": "Escribe al menos {count} caracteres para buscar notas.",
-    "other": "Escribe al menos {count} caracteres para buscar notas.",
-  },
-  "Search.empty": "Nada coincide con «{query}».",
-  "Search.emptyOnDevice":
-    "Nada en este dispositivo coincide con «{query}». Vuelve a buscar cuando tengas conexión.",
   "Search.notes": "Notas",
   "Search.notesOnDevice": "Notas en este dispositivo",
   "Search.groups": "Grupos",
@@ -1764,6 +1756,7 @@ export default {
   "Search.newNote": "Nueva nota",
   "Search.newTag": "Nueva etiqueta",
   "Search.newGroup": "Nuevo grupo",
+  "Search.withText": "{label}: «{text}»",
   "Search.openOverview": "Abrir el resumen",
   "Search.openNotifications": "Abrir las notificaciones",
   "Search.openProfile": "Abrir el perfil",

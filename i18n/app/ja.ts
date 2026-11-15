@@ -1548,12 +1548,6 @@ export default {
   "Search.close": "検索を閉じる",
   "Search.loading": "検索しています…",
   "Search.error": "検索できませんでした。検索語を変えてもう一度お試しください。",
-  "Search.tooShort": {
-    "other": "メモを検索するには{count}文字以上入力してください。",
-  },
-  "Search.empty": "「{query}」に一致する項目はありません。",
-  "Search.emptyOnDevice":
-    "このデバイスには「{query}」に一致するものはありません。オンラインに戻ってから、もう一度検索してください。",
   "Search.notes": "メモ",
   "Search.notesOnDevice": "このデバイス上のメモ",
   "Search.groups": "グループ",
@@ -1572,6 +1566,7 @@ export default {
   "Search.newNote": "新しいメモ",
   "Search.newTag": "新しいタグ",
   "Search.newGroup": "新しいグループ",
+  "Search.withText": "{label}：「{text}」",
   "Search.openOverview": "概要を開く",
   "Search.openNotifications": "通知を開く",
   "Search.openProfile": "プロフィールを開く",

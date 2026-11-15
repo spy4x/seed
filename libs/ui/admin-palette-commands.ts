@@ -22,7 +22,7 @@ import {
   SIGN_OUT_ALIASES,
   themeCommand,
 } from "./palette-commands.ts"
-import { quoted } from "./search-palette.tsx"
+import { quoted } from "./palette-commands.ts"
 
 /** What a picked command asks the admin app to do. */
 export type AdminSearchChoice =
