@@ -7,17 +7,14 @@ import { Button } from "@spy4x/preact-ui/button"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Field } from "@spy4x/preact-ui/field"
-import { Input } from "@spy4x/preact-ui/input"
+import { FilterBar } from "@spy4x/preact-ui/filter-bar"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
-import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   ADMIN_DEFAULT_SORT,
   ADMIN_PICTURE_PATH,
-  ADMIN_SEARCH_MAX_LENGTH,
   type AdminAccountFilter,
   type AdminBlockedFilter,
   type AdminUserFilter,
@@ -29,8 +26,8 @@ import {
   USER_ROLE_NAMES,
   UserRole,
 } from "@domain/identity"
-import { ADMIN_PATHS } from "./admin-frame.tsx"
-import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { ADMIN_PATHS, ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
+import type { Navigate } from "./progressive.tsx"
 import { OnDay, When } from "@spy4x/preact-ui/format"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
@@ -108,15 +105,18 @@ interface UserTableRow {
 }
 
 export interface AdminUsersScreenProps {
-  /** What the address asked for; the search form and the chips start from it. */
+  /** What the address asked for; the filter bar starts from it. */
   filter: AdminUserFilter
   /** The page of people, or `null` while it loads. */
   list: AdminUserListResponse | null
   pending: boolean
   /** Why the list could not be read, or `null`. */
   error: string | null
-  /** The operator searched, sorted or changed a filter: the app reads page 1 of that. */
-  onSearch: (filter: AdminUserFilter) => void
+  /**
+   * The operator searched, sorted or changed a filter: the app reads page 1 of that. `replace` is
+   * set while they type, so the address changes without a history entry per pause.
+   */
+  onSearch: (filter: AdminUserFilter, replace?: boolean) => void
   onPage: (page: number) => void
   /** The signed-in operator's id: their own row says "You". */
   operatorId?: number
@@ -127,22 +127,17 @@ export interface AdminUsersScreenProps {
 
 /**
  * The people page: everyone with an account, in a table the server sorts and pages, with a
- * search by name or address and filter chips for status and role. Each name opens the person.
+ * `FilterBar` that searches by name or address as you type and filters by status, account and
+ * role. Each name opens the person.
  */
 export function AdminUsersScreen(
   { filter, list, pending, error, onSearch, onPage, operatorId, exportHref, navigate }:
     AdminUsersScreenProps,
 ): JSX.Element {
-  const heading = useRef<HTMLHeadingElement>(null)
-  // The search field is not rebuilt when the query changes, since that would drop focus out of it
-  // after every search; going back in history sets its text instead.
-  const query = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    if (query.current && query.current.value !== filter.query) query.current.value = filter.query
-  }, [filter.query])
+  const heading = useRef<HTMLDivElement>(null)
   const t = useAdminText()
 
-  // When the person turns the page, the reader starts again at the list's heading once that page
+  // When the person turns the page, the reader starts again at the list once that page
   // arrives. A search or a filter also lands on page 1, but focus stays in the field they used.
   const page = list?.page
   const turned = useRef<number | null>(null)
@@ -184,113 +179,70 @@ export function AdminUsersScreen(
           </Button>
         )}
       />
-      <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
-        {
-          /* No `pending` here: a pending form disables its fieldset, which drops focus out of the
-            search field. The busy submit button already refuses a second search. */
-        }
-        <ScreenForm
-          onSubmit={(data) =>
-            onSearch({ ...filter, query: String(data.get("q") ?? "").trim(), page: 1 })}
-        >
-          <div class="flex flex-wrap items-end gap-3" role="search">
-            <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-              <Field id="admin-users-q" label={t.t(`AdminUsers.search`)}>
-                <Input
-                  ref={query}
-                  name="q"
-                  type="search"
-                  data-e2e="admin-users-search"
-                  defaultValue={filter.query}
-                  maxLength={ADMIN_SEARCH_MAX_LENGTH}
-                  autocomplete="off"
-                />
-              </Field>
-            </div>
-            <Button
-              type="submit"
-              data-e2e="admin-users-submit"
-              busy={pending}
-              busyLabel={t.t(`AdminUsers.searching`)}
-            >
-              {t.t(`AdminUsers.submit`)}
-            </Button>
-          </div>
-        </ScreenForm>
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <FilterChips label={t.t(`AdminUsers.status`)} dataE2E="admin-users-blocked">
-            <ToggleChips
-              mode="single"
-              label={t.t(`AdminUsers.status`)}
-              options={[
+      <div data-e2e="admin-users-filters">
+        <FilterBar
+          search={{
+            value: filter.query,
+            label: t.t(`AdminUsers.search`),
+            delay: ADMIN_SEARCH_DELAY,
+            onChange: (query) => onSearch({ ...filter, query: query.trim(), page: 1 }, true),
+          }}
+          filters={[
+            {
+              id: `blocked`,
+              label: t.t(`AdminUsers.status`),
+              options: [
                 { value: `active`, label: t.t(`AdminUsers.active`) },
                 { value: `blocked`, label: t.t(`AdminUsers.blocked`) },
-              ]}
-              value={filter.blocked === "any" ? null : filter.blocked}
-              onChange={(value) =>
-                onSearch({ ...filter, blocked: (value ?? "any") as AdminBlockedFilter, page: 1 })}
-            />
-          </FilterChips>
-          <FilterChips label={t.t(`AdminUsers.account`)} dataE2E="admin-users-account">
-            <ToggleChips
-              mode="single"
-              label={t.t(`AdminUsers.account`)}
+              ],
+              value: filter.blocked === "any" ? null : filter.blocked,
+              onChange: (value) =>
+                onSearch({ ...filter, blocked: (value ?? "any") as AdminBlockedFilter, page: 1 }),
+            },
+            {
+              id: `account`,
+              label: t.t(`AdminUsers.account`),
               // Guest accounts, made with one click and no sign-in method, or every other.
-              options={[
+              options: [
                 { value: `guest`, label: t.t(`AdminUsers.guests`) },
                 { value: `full`, label: t.t(`AdminUsers.withSignIn`) },
-              ]}
-              value={filter.account ?? null}
-              onChange={(value) => {
+              ],
+              value: filter.account ?? null,
+              onChange: (value) => {
                 const { account: _old, ...rest } = filter
                 onSearch({
                   ...rest,
                   ...(value ? { account: value as AdminAccountFilter } : {}),
                   page: 1,
                 })
-              }}
-            />
-          </FilterChips>
-          <FilterChips label={t.t(`AdminUsers.role`)} dataE2E="admin-users-role">
-            <ToggleChips
-              mode="single"
-              label={t.t(`AdminUsers.role`)}
-              options={ROLES.map((role) => ({ value: String(role), label: roleLabel(t, role) }))}
-              value={filter.role === null ? null : String(filter.role)}
-              onChange={(value) =>
+              },
+            },
+            {
+              id: `role`,
+              label: t.t(`AdminUsers.role`),
+              options: ROLES.map((role) => ({ value: String(role), label: roleLabel(t, role) })),
+              value: filter.role === null ? null : String(filter.role),
+              onChange: (value) =>
                 onSearch({
                   ...filter,
                   role: value === null ? null : Number(value) as UserRole,
                   page: 1,
-                })}
-            />
-          </FilterChips>
-          {filtered && (
-            <Button
-              variant="ghost"
-              size="sm"
-              data-e2e="admin-users-clear"
-              onClick={() => {
-                const { account: _old, ...rest } = filter
-                onSearch({ ...rest, query: "", role: null, blocked: "any", page: 1 })
-              }}
-            >
-              {t.t(`AdminUsers.clear`)}
-            </Button>
-          )}
-        </div>
+                }),
+            },
+          ]}
+          onClear={() => {
+            const { account: _old, ...rest } = filter
+            onSearch({ ...rest, role: null, blocked: "any", page: 1 })
+          }}
+          clearLabel={t.t(`AdminUsers.clear`)}
+          count={list
+            ? <span data-e2e="admin-users-count">{t.t(`AdminUsers.count`, { count: list.total })}</span>
+            : undefined}
+        />
       </div>
 
       <ErrorState message={error} />
 
-      <h2
-        ref={heading}
-        tabIndex={-1}
-        class="rounded-sm text-sm text-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
-        data-e2e="admin-users-count"
-      >
-        {list ? t.t(`AdminUsers.count`, { count: list.total }) : t.t(`AdminUsers.loading`)}
-      </h2>
       {list === null
         ? !error && (
           <div role="status" aria-label={t.t(`AdminUsers.loading`)}>
@@ -298,7 +250,14 @@ export function AdminUsersScreen(
           </div>
         )
         : (
-          <div data-e2e="admin-users-list">
+          <div
+            ref={heading}
+            tabIndex={-1}
+            aria-label={t.t(`AdminUsers.people`)}
+            aria-busy={pending}
+            class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+            data-e2e="admin-users-list"
+          >
             <DataTable
               mode="server"
               // On a phone only the person column shows, with the role and status under the name,
@@ -384,20 +343,6 @@ function userColumns(
       ),
     },
   ]
-}
-
-/** One row of filter chips with its visible name; the chips' group carries the same name. */
-function FilterChips(
-  { label, dataE2E, children }: { label: string; dataE2E: string; children: JSX.Element },
-): JSX.Element {
-  return (
-    // Wraps onto a second line at every width: a row that scrolled sideways on a phone cut the
-    // last chip ("Administrator") with no sign that more was there.
-    <div class="flex flex-wrap items-center gap-2" data-e2e={dataE2E}>
-      <span class="shrink-0 text-sm text-muted" aria-hidden="true">{label}</span>
-      {children}
-    </div>
-  )
 }
 
 /**

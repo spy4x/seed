@@ -74,8 +74,7 @@ test.describe("the admin app", () => {
       await expect(ops.locator("[data-e2e=admin-users-title]")).toBeVisible()
 
       // Finds the person by address and opens their page.
-      await ops.locator("[data-e2e=admin-users-search]").fill(targetEmail)
-      await ops.locator("[data-e2e=admin-users-submit]").click()
+      await ops.locator("[data-e2e=admin-users-filters] [data-e2e=filter-search]").fill(targetEmail)
       await expect(ops).toHaveURL(new RegExp(`\\?q=${encodeURIComponent(targetEmail)}`))
       const row = ops.locator("[data-e2e=admin-users-list] a")
       await expect(row).toHaveCount(1)

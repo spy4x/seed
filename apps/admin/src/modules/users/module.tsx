@@ -39,9 +39,9 @@ function UsersView({ context }: { context: AdminContext }): JSX.Element {
     state.loadList(filter)
   }, [filter])
   const list = state.list.value
-  const go = (next: AdminUserFilter) => {
+  const go = (next: AdminUserFilter, replace?: boolean) => {
     const query = adminUserFilterQuery(next)
-    context.navigate(query ? `${ADMIN_PATHS.users}?${query}` : ADMIN_PATHS.users)
+    context.navigate(query ? `${ADMIN_PATHS.users}?${query}` : ADMIN_PATHS.users, { replace })
   }
   return (
     <AdminUsersScreen
