@@ -526,13 +526,20 @@ describe("ProfileView", () => {
       const { navigate } = await open(`/profile/${section}`, ROUTED)
       await settle()
       await settle()
-      const move = async (to: string, hash: string) => {
+      /**
+       * Navigates as the palette does. With `opens`, waits up to 3 s for a dialog to open, since a
+       * loaded CI machine needs more turns than one frame; without, waits a fixed 300 ms.
+       */
+      const move = async (to: string, hash: string, opens = true) => {
         history.pushState(null, "", `/profile/${to}#${hash}`)
         navigate(`/profile/${to}`)
         dispatchEvent(new Event("pushState"))
         // Longer than Preact's wait for a frame (35 ms) before it runs effects.
-        await new Promise((done) => setTimeout(done, 100))
-        await settle()
+        const deadline = Date.now() + (opens ? 3_000 : 300)
+        do {
+          await new Promise((done) => setTimeout(done, 50))
+          await settle()
+        } while (Date.now() < deadline && !(opens && root!.querySelector("dialog[open]")))
       }
       return { calls, move }
     }
@@ -641,7 +648,7 @@ describe("ProfileView", () => {
       const { move } = await land("danger-zone", "")
       const heading = root!.querySelector("h2[id]")!.id
       expect(heading).not.toBe("")
-      await move("danger-zone", heading)
+      await move("danger-zone", heading, false)
       expect(document.activeElement?.id).not.toBe(heading)
       expect(openDialogs()).toEqual([])
     })
