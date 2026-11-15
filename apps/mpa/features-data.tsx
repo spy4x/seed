@@ -191,6 +191,7 @@ export function tiers({ t, href, rich, language }: Site): readonly Tier[] {
             t.t(`FeatureExport.fact2`),
             t.t(`FeatureExport.fact3`),
             t.t(`FeatureExport.fact4`),
+            t.t(`FeatureExport.fact5`),
           ],
           code: {
             label: t.t(`FeatureExport.code`),

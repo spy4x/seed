@@ -1,6 +1,7 @@
 // Seed's own site: see docs/start-a-product.md
 import type { ComponentType } from "preact"
 import {
+  IconArrowDownTray,
   IconChatBubble,
   IconClock,
   IconCreditCard,
@@ -55,6 +56,12 @@ export const ADMIN_TOUR_MODULES: readonly AdminTourModule[] = [
   { id: `catalog`, name: `AdminTour.catalog`, Icon: IconPackage, text: `AdminTour.catalogText` },
   { id: `audit`, name: `AdminTour.audit`, Icon: IconShieldCheck, text: `AdminTour.auditText` },
   { id: `jobs`, name: `AdminTour.jobs`, Icon: IconClock, text: `AdminTour.jobsText` },
+  {
+    id: `imports`,
+    name: `AdminTour.imports`,
+    Icon: IconArrowDownTray,
+    text: `AdminTour.importsText`,
+  },
   { id: `system`, name: `AdminTour.system`, Icon: IconServer, text: `AdminTour.systemText` },
   { id: `api-tokens`, name: `AdminTour.tokens`, Icon: IconKey, text: `AdminTour.tokensText` },
 ]

@@ -148,7 +148,8 @@ export default {
   "HomeStatus.guests":
     "Guest accounts: try the app with one click, keep the account by adding a sign-in method",
   "HomeStatus.groups": "Groups with members, roles, invitations and ownership transfer",
-  "HomeStatus.export": "Exporting a group to a file, and importing one as a new group",
+  "HomeStatus.export":
+    "Exporting a group to a file, importing one as a new group, and importing notes from a CSV",
   "HomeStatus.attachments": "Images and PDFs attached to notes, within each plan's room",
   "HomeStatus.billing": "Per-member billing with trials, through Stripe",
   "HomeStatus.account":
@@ -418,6 +419,8 @@ export default {
   "FeatureExport.fact3":
     "Every note and tag gets a new id, so an import never collides with what is there",
   "FeatureExport.fact4": "Each aggregate registers its own part of the file",
+  "FeatureExport.fact5":
+    "Notes come in from a CSV too: match its columns, see every refused row, save them as one batch and undo it in one step",
   "FeatureExport.code": "Read the export code",
   "FeatureLanguages.nav": "Languages",
   "FeatureLanguages.title": "In nine languages from the start",
@@ -690,6 +693,9 @@ export default {
   "AdminTour.auditText": "Every sign-in, change and operator action. Export it as CSV.",
   "AdminTour.jobs": "Jobs",
   "AdminTour.jobsText": "Every background job. Run a failed one again or cancel it.",
+  "AdminTour.imports": "Imports",
+  "AdminTour.importsText":
+    "Every group's file imports: counts, timing and why one failed. Never the file's content.",
   "AdminTour.system": "System",
   "AdminTour.systemText": "The health of the database, the cache, the job queue and the backup.",
   "AdminTour.tokens": "API tokens",

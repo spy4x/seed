@@ -153,7 +153,8 @@ export default {
   "HomeStatus.guests":
     "Cuentas de invitado: prueba la aplicación con un clic y conserva la cuenta añadiendo un método de inicio de sesión",
   "HomeStatus.groups": "Grupos con miembros, roles, invitaciones y traspaso de la propiedad",
-  "HomeStatus.export": "Exportar un grupo a un archivo e importarlo como grupo nuevo",
+  "HomeStatus.export":
+    "Exportar un grupo a un archivo, importarlo como grupo nuevo e importar notas desde un CSV",
   "HomeStatus.attachments": "Imágenes y PDF adjuntos a las notas, dentro del espacio de cada plan",
   "HomeStatus.billing": "Facturación por miembro con periodos de prueba, a través de Stripe",
   "HomeStatus.account":
@@ -431,6 +432,8 @@ export default {
   "FeatureExport.fact3":
     "Cada nota y etiqueta recibe un id nuevo, así una importación nunca choca con lo que ya hay",
   "FeatureExport.fact4": "Cada agregado registra su propia parte del archivo",
+  "FeatureExport.fact5":
+    "Las notas también llegan desde un CSV: asocia sus columnas, ve cada fila rechazada, guárdalas en un lote y deshazlo en un paso",
   "FeatureExport.code": "Ver el código de exportación",
   "FeatureLanguages.nav": "Idiomas",
   "FeatureLanguages.title": "En nueve idiomas desde el principio",
@@ -716,6 +719,9 @@ export default {
   "AdminTour.auditText": "Cada inicio de sesión, cambio y acción de operador. Exportable a CSV.",
   "AdminTour.jobs": "Tareas",
   "AdminTour.jobsText": "Cada tarea en segundo plano. Vuelve a ejecutar una fallida o cancélala.",
+  "AdminTour.imports": "Importaciones",
+  "AdminTour.importsText":
+    "Las importaciones de archivos de todos los grupos: cifras, duración y el motivo de un fallo. Nunca el contenido del archivo.",
   "AdminTour.system": "Sistema",
   "AdminTour.systemText": "El estado de la base de datos, la caché, la cola de tareas y la copia.",
   "AdminTour.tokens": "Tokens de API",

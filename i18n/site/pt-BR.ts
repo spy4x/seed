@@ -154,7 +154,8 @@ export default {
   "HomeStatus.guests":
     "Contas de visitante: experimente o app com um clique e fique com a conta adicionando uma forma de entrar",
   "HomeStatus.groups": "Grupos com membros, funções, convites e transferência de dono",
-  "HomeStatus.export": "Exportar um grupo para um arquivo e importá-lo como um grupo novo",
+  "HomeStatus.export":
+    "Exportar um grupo para um arquivo, importá-lo como um grupo novo e importar notas de um CSV",
   "HomeStatus.attachments": "Imagens e PDFs anexados às notas, dentro do espaço de cada plano",
   "HomeStatus.billing": "Cobrança por membro com período de teste, pelo Stripe",
   "HomeStatus.account":
@@ -431,6 +432,8 @@ export default {
   "FeatureExport.fact3":
     "Cada nota e etiqueta ganha um id novo, então uma importação nunca colide com o que já existe",
   "FeatureExport.fact4": "Cada agregado registra a própria parte do arquivo",
+  "FeatureExport.fact5":
+    "As notas também chegam de um CSV: associe as colunas, veja cada linha recusada, salve tudo em um lote e desfaça em um passo",
   "FeatureExport.code": "Ler o código de exportação",
   "FeatureLanguages.nav": "Idiomas",
   "FeatureLanguages.title": "Nove idiomas desde o início",
@@ -712,6 +715,9 @@ export default {
   "AdminTour.auditText": "Cada acesso, alteração e ação de operador. Exporte em CSV.",
   "AdminTour.jobs": "Tarefas",
   "AdminTour.jobsText": "Cada tarefa em segundo plano. Rode de novo uma que falhou ou cancele.",
+  "AdminTour.imports": "Importações",
+  "AdminTour.importsText":
+    "As importações de arquivos de todos os grupos: números, duração e o motivo de uma falha. Nunca o conteúdo do arquivo.",
   "AdminTour.system": "Sistema",
   "AdminTour.systemText": "A saúde do banco de dados, do cache, da fila de tarefas e do backup.",
   "AdminTour.tokens": "Tokens de API",

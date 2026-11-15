@@ -158,7 +158,7 @@ export default {
     "Comptes invités : essayez l’application en un clic, gardez le compte en ajoutant une méthode de connexion",
   "HomeStatus.groups": "Groupes avec membres, rôles, invitations et transfert de propriété",
   "HomeStatus.export":
-    "Export d’un groupe vers un fichier, et import d’un fichier comme nouveau groupe",
+    "Export d’un groupe vers un fichier, import d’un fichier comme nouveau groupe, et import de notes depuis un CSV",
   "HomeStatus.attachments":
     "Images et PDF joints aux notes, dans la limite d’espace de chaque forfait",
   "HomeStatus.billing": "Facturation par membre avec périodes d’essai, via Stripe",
@@ -439,6 +439,8 @@ export default {
   "FeatureExport.fact3":
     "Chaque note et chaque étiquette reçoit un nouvel identifiant : un import n’entre jamais en collision avec l’existant",
   "FeatureExport.fact4": "Chaque agrégat déclare sa propre partie du fichier",
+  "FeatureExport.fact5":
+    "Les notes s’importent aussi depuis un CSV, avec les colonnes à associer, chaque ligne refusée affichée, un seul lot enregistré et annulable en une étape",
   "FeatureExport.code": "Lire le code de l’export",
   "FeatureLanguages.nav": "Langues",
   "FeatureLanguages.title": "En neuf langues dès le départ",
@@ -738,6 +740,9 @@ export default {
     "Chaque connexion, modification et action d’opérateur. Exportez-le en CSV.",
   "AdminTour.jobs": "Tâches",
   "AdminTour.jobsText": "Chaque tâche en arrière-plan. Relancez celle qui a échoué ou annulez-la.",
+  "AdminTour.imports": "Imports",
+  "AdminTour.importsText":
+    "Les imports de fichiers de tous les groupes, avec leurs chiffres, leur durée et la cause d’un échec. Jamais le contenu du fichier.",
   "AdminTour.system": "Système",
   "AdminTour.systemText":
     "L’état de la base de données, du cache, de la file de tâches et de la sauvegarde.",
