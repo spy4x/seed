@@ -1,10 +1,11 @@
 # Deploys Seed's `main` to the live demo every night, and on a manual run of `main`.
 #
 # Seed's own pipeline: a product deletes this file, lists it in `.seed/skip` (docs/products.md)
-# and turns on `deploy.yml.example` instead (docs/woodpecker-ci-setup.md). The Woodpecker cron job `nightly-deploy` starts it at 06:30 UTC,
-# before the demo's nightly wipe at midnight in America/Los_Angeles (07:00 or 08:00 UTC), so the
-# wipe seeds the new version. Nightly, not on every push: the images are built on the server,
-# which other projects share, and a day's merges ship in one build.
+# and turns on `deploy.yml.example` instead (docs/woodpecker-ci-setup.md). The Woodpecker cron
+# job `nightly-deploy` starts it at 06:30 UTC, before the demo's nightly wipe at midnight in
+# America/Los_Angeles (07:00 or 08:00 UTC), so the wipe seeds the new version. Nightly, not on
+# every push: the images are built on the server, which other projects share, and a day's merges
+# ship in one build.
 #
 # `main` is protected and each merge passed CI, so this runs no `ci.yml` first. The step is the
 # example's: it decrypts the env files with the repository's age key and runs `deno task deploy`.
