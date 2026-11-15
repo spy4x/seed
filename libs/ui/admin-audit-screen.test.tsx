@@ -293,6 +293,18 @@ describe("audit log screen", () => {
     expect(about.split("lin@example.com")).toHaveLength(2)
   })
 
+  it("lets a phone line break an address after its @, never a plain name", async () => {
+    const plain = { id: 12, name: "lin@example.com", email: "lin@example.com" }
+    const entry = { ...blocked, key: "account-6", person: plain }
+    await mount(<AdminAuditScreen {...props([], { entries: [entry, blocked] })} />)
+    const lines = [...document.querySelectorAll("[data-e2e=admin-audit-people-phone]")]
+    const [address, named] = lines.map((line) => [...line.querySelectorAll("bdi")])
+
+    expect(address[0].innerHTML).toBe("lin@<wbr>example.com")
+    expect(lines[0].className).toContain("wrap-break-word")
+    expect(named.map((bdi) => bdi.innerHTML)).toEqual(["Ada Lovelace", "Grace Hopper"])
+  })
+
   it("shows the same entries on a timeline, people still linked", async () => {
     await mount(<AdminAuditScreen {...props([], { view: "timeline" })} />)
     const timeline = find("[data-e2e=admin-audit-timeline]")

@@ -123,6 +123,23 @@ test.describe("the admin audit log", () => {
       expect(await ops.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         390,
       )
+      // The Event cell names the person, who set no name, by their address; it fits the screen
+      // and breaks after the `@`, never inside the domain.
+      const phoneLine = rows.first().locator("[data-e2e=admin-audit-people-phone]")
+      await expect(phoneLine).toContainText(targetEmail)
+      const domain = await phoneLine.evaluate((line) => {
+        const text = [...line.querySelectorAll("bdi")].flatMap((bdi) => [...bdi.childNodes])
+          .find((node) => node.nodeType === Node.TEXT_NODE && node.textContent === "example.com")
+        if (!text) return null
+        const range = document.createRange()
+        range.selectNodeContents(text)
+        return {
+          lines: range.getClientRects().length,
+          right: Math.ceil(line.closest("tr")!.getBoundingClientRect().right),
+        }
+      })
+      expect(domain).toEqual({ lines: 1, right: expect.any(Number) })
+      expect(domain!.right).toBeLessThanOrEqual(390)
     } finally {
       await admin?.close()
       await cleanup(request, targetEmail)
