@@ -10,13 +10,13 @@ import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { FilterBar } from "@spy4x/preact-ui/filter-bar"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
-import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   type AdminCatalogResponse,
   CATALOG_NAME_MAX_LENGTH,
@@ -116,26 +116,19 @@ export const ADMIN_CATALOG_NO_FILTER: AdminCatalogFilter = {
   query: ``,
 }
 
-/** The longest search the list's box takes. */
+/** The longest search the list takes; the bar cuts a longer one. */
 export const ADMIN_CATALOG_SEARCH_MAX_LENGTH = 100
 
-const STATUS_CHIPS: { value: CatalogItemStatus | `all`; label: string }[] = [
-  { value: `all`, label: `AdminCatalog.chipAll` },
-  { value: `draft`, label: `AdminCatalog.chipDraft` },
-  { value: `published`, label: `AdminCatalog.chipPublished` },
-  { value: `hidden`, label: `AdminCatalog.chipHidden` },
-]
-
-/** The items a filter shows, and the counts of its chips. */
+/** The items a filter shows, and the counts of its status menu and sold-out toggle. */
 export interface CatalogListView {
   items: CatalogItemRow[]
-  /** Each status chip's count, and "Sold-out sizes"'s, under the other filters. */
-  counts: Record<CatalogItemStatus | `all` | `soldOut`, number>
+  /** Each status option's count, and "Sold-out sizes"'s, under the other filters. */
+  counts: Record<CatalogItemStatus | `soldOut`, number>
 }
 
 /**
  * Filters the catalog's items: every word of the search must occur, accents and case ignored, in
- * the item's name in any language, its address or its category's name. A status chip's count
+ * the item's name in any language, its address or its category's name. A status option's count
  * follows the search and the sold-out filter; the sold-out count follows the search and the status.
  */
 export function filterCatalogItems(
@@ -155,14 +148,13 @@ export function filterCatalogItems(
   })
   const soldOut = (item: CatalogItemRow) => item.stock !== `in-stock`
   const ofStatus = (item: CatalogItemRow) => filter.status === null || item.status === filter.status
-  const forChips = filter.soldOut ? found.filter(soldOut) : found
+  const forStatus = filter.soldOut ? found.filter(soldOut) : found
   return {
-    items: forChips.filter(ofStatus),
+    items: forStatus.filter(ofStatus),
     counts: {
-      all: forChips.length,
-      draft: forChips.filter((item) => item.status === `draft`).length,
-      published: forChips.filter((item) => item.status === `published`).length,
-      hidden: forChips.filter((item) => item.status === `hidden`).length,
+      draft: forStatus.filter((item) => item.status === `draft`).length,
+      published: forStatus.filter((item) => item.status === `published`).length,
+      hidden: forStatus.filter((item) => item.status === `hidden`).length,
       soldOut: found.filter(ofStatus).filter(soldOut).length,
     },
   }
@@ -280,7 +272,10 @@ export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element 
   )
 }
 
-/** The search, the chips and the rows of a catalog that has items. */
+/**
+ * The filter bar (a search, a status menu and a sold-out toggle, each with counts) and the rows of
+ * a catalog that has items.
+ */
 function CatalogList(
   { catalog, filter, onFilter, navigate }: {
     catalog: AdminCatalogResponse
@@ -295,54 +290,41 @@ function CatalogList(
   const filtered = filter.query !== `` || filter.status !== null || filter.soldOut
   const t = useAdminText()
   const count = t.t(`AdminCatalog.count`, { count: view.items.length })
+  const status = (value: CatalogItemStatus) => ({
+    value,
+    label: t.t(STATUS_BADGES[value].text),
+    count: view.counts[value],
+  })
   return (
     <>
-      <div class="flex flex-col gap-3" role="search" data-e2e="catalog-filters">
-        <div class="max-w-md">
-          <Field id="catalog-q" label={t.t(`AdminCatalog.search`)}>
-            <Input
-              type="search"
-              data-e2e="catalog-search"
-              value={filter.query}
-              maxLength={ADMIN_CATALOG_SEARCH_MAX_LENGTH}
-              autocomplete="off"
-              onInput={(event) => onFilter({ ...filter, query: event.currentTarget.value })}
-            />
-          </Field>
-        </div>
-        {/* One row that scrolls sideways on a phone rather than wrapping. */}
-        <div class="-mx-4 flex max-w-[calc(100%+2rem)] items-center gap-4 overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0">
-          <div data-e2e="catalog-status">
-            <ToggleChips
-              mode="single"
-              label={t.t(`AdminCatalog.status`)}
-              class="flex-nowrap sm:flex-wrap"
-              options={STATUS_CHIPS.map((chip) => ({
-                value: chip.value,
-                label: t.t(chip.label, { count: view.counts[chip.value] }),
-              }))}
-              value={filter.status ?? `all`}
-              onChange={(value) =>
-                onFilter({
-                  ...filter,
-                  status: value === null || value === `all` ? null : value as CatalogItemStatus,
-                })}
-            />
-          </div>
-          <div data-e2e="catalog-sold-out">
-            <ToggleChips
-              label={t.t(`AdminCatalog.stock`)}
-              options={[{
-                value: `soldOut`,
-                label: t.t(`AdminCatalog.chipSoldOut`, { count: view.counts.soldOut }),
-              }]}
-              value={filter.soldOut ? [`soldOut`] : []}
-              onChange={(value) => onFilter({ ...filter, soldOut: value.length > 0 })}
-            />
-          </div>
-        </div>
+      {/* The catalog is filtered in the browser, so the search needs no pause before it runs. */}
+      <div data-e2e="catalog-filters">
+        <FilterBar
+          search={{
+            value: filter.query,
+            label: t.t(`AdminCatalog.search`),
+            onChange: (query) =>
+              onFilter({ ...filter, query: query.slice(0, ADMIN_CATALOG_SEARCH_MAX_LENGTH) }),
+          }}
+          filters={[{
+            id: `status`,
+            label: t.t(`AdminCatalog.status`),
+            options: [status(`draft`), status(`published`), status(`hidden`)],
+            value: filter.status,
+            onChange: (value) => onFilter({ ...filter, status: value as CatalogItemStatus | null }),
+          }]}
+          toggles={[{
+            id: `sold-out`,
+            label: t.t(`AdminCatalog.chipSoldOut`, { count: view.counts.soldOut }),
+            pressed: filter.soldOut,
+            onChange: (soldOut) => onFilter({ ...filter, soldOut }),
+          }]}
+          togglesLabel={t.t(`AdminCatalog.stock`)}
+          onClear={() => onFilter({ ...filter, status: null, soldOut: false })}
+          clearLabel={t.t(`AdminCatalog.clearFilters`)}
+          count={<span data-e2e="catalog-count">{count}</span>}
+        />
       </div>
-      <h2 class="text-sm text-muted" aria-live="polite" data-e2e="catalog-count">{count}</h2>
       {view.items.length === 0
         ? (
           <Card data-e2e="catalog-nothing">

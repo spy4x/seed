@@ -42,9 +42,11 @@ function BillingView({ context }: { context: AdminContext }): JSX.Element {
   }, [filter])
   const list = state.list.value
   const figures = state.figures.value
-  const go = (next: AdminBillingFilter) => {
+  const go = (next: AdminBillingFilter, replace?: boolean) => {
     const query = adminBillingFilterQuery(next)
-    context.navigate(query ? `${ADMIN_BILLING_PATHS.list}?${query}` : ADMIN_BILLING_PATHS.list)
+    context.navigate(query ? `${ADMIN_BILLING_PATHS.list}?${query}` : ADMIN_BILLING_PATHS.list, {
+      replace,
+    })
   }
   return (
     <AdminBillingListScreen

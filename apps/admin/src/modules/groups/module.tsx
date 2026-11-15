@@ -62,9 +62,11 @@ function GroupsView({ context }: { context: AdminContext }): JSX.Element {
   // `null` until `GET /api/admin/modules` is read: drawn as with the notes on, like the group page.
   const moduleIds = context.moduleIds.value
   const notes = moduleIds === null || moduleIds.has(`notes`)
-  const go = (next: AdminGroupFilter) => {
+  const go = (next: AdminGroupFilter, replace?: boolean) => {
     const query = adminGroupFilterQuery(next)
-    context.navigate(query ? `${ADMIN_GROUP_PATHS.list}?${query}` : ADMIN_GROUP_PATHS.list)
+    context.navigate(query ? `${ADMIN_GROUP_PATHS.list}?${query}` : ADMIN_GROUP_PATHS.list, {
+      replace,
+    })
   }
   return (
     <AdminGroupsListScreen

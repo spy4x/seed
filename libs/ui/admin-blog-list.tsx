@@ -1,5 +1,5 @@
 import type { JSX } from "preact"
-import { useEffect, useRef, useState } from "preact/hooks"
+import { useEffect, useRef } from "preact/hooks"
 import { IconPencilSquare, IconPlus } from "@spy4x/preact-icons"
 import { Badge, type BadgeColor, type BadgeType } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -7,24 +7,22 @@ import { Card } from "@spy4x/preact-ui/card"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Field } from "@spy4x/preact-ui/field"
+import { FilterBar } from "@spy4x/preact-ui/filter-bar"
 import { useFormat, When } from "@spy4x/preact-ui/format"
-import { Input } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
-import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   type AdminBlogListResponse,
   type AdminBlogPostRow,
   type AdminBlogSharingSummary,
-  BLOG_SEARCH_MAX_LENGTH,
   blogPostPath,
   type BlogPostStatus,
 } from "@domain/blog"
-import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
+import type { Navigate } from "./progressive.tsx"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
 
@@ -38,7 +36,7 @@ export const ADMIN_BLOG_PATHS = {
 
 /**
  * What the list shows: one status or every post, and the search text (title or slug). `sharing`
- * keeps the live posts that still list a channel as to do; it takes the status chips' place.
+ * keeps the live posts that still list a channel as to do; it takes the status filter's place.
  */
 export interface AdminBlogFilter {
   status: BlogPostStatus | null
@@ -47,9 +45,6 @@ export interface AdminBlogFilter {
 }
 
 export const ADMIN_BLOG_NO_FILTER: AdminBlogFilter = { status: null, query: `` }
-
-/** The chip value of the sharing filter, next to the statuses. */
-const NEEDS_SHARING = `sharing`
 
 /** Each status's badge (its word as a catalog key), the same in the list and in the editor's header. */
 const BLOG_STATUS_BADGES: Record<
@@ -68,44 +63,44 @@ export function BlogStatusBadge({ status }: { status: BlogPostStatus }): JSX.Ele
   return <Badge text={t.t(badge.key)} color={badge.color} type={badge.type} />
 }
 
-/** Each chip: its word alone, and with the count once the list has loaded. */
-const STATUS_CHIPS: { value: BlogPostStatus | `all`; label: string; counted: string }[] = [
-  { value: `all`, label: `AdminBlog.all`, counted: `AdminBlog.chipAll` },
-  { value: `draft`, label: `AdminBlog.drafts`, counted: `AdminBlog.chipDrafts` },
-  { value: `scheduled`, label: `AdminBlog.scheduledChip`, counted: `AdminBlog.chipScheduled` },
-  { value: `published`, label: `AdminBlog.publishedChip`, counted: `AdminBlog.chipPublished` },
+/** Each choice of the Status menu, its word as a catalog key; the menu adds its count. */
+const STATUS_OPTIONS: { value: BlogPostStatus; label: string }[] = [
+  { value: `draft`, label: `AdminBlog.drafts` },
+  { value: `scheduled`, label: `AdminBlog.scheduledChip` },
+  { value: `published`, label: `AdminBlog.publishedChip` },
 ]
 
 export interface AdminBlogListScreenProps {
-  /** What the address and the search asked for; the chips and the search form start from it. */
+  /** What the address and the search asked for; the filter bar starts from it. */
   filter: AdminBlogFilter
   /** The posts and the counts, or `null` while they load or when they failed. */
   list: AdminBlogListResponse | null
   pending: boolean
   /** Set when the list could not be read, or `null`. The screen says so in its own words. */
   error: string | null
-  onFilter: (filter: AdminBlogFilter) => void
+  /** `replace` is set while the operator types, so the address changes without a history entry. */
+  onFilter: (filter: AdminBlogFilter, replace?: boolean) => void
   onRetry: () => void
   navigate?: Navigate
 }
 
 /**
- * The blog's list: every post with its status, topic and dates, filtered by status chips
- * that show their counts and searched by title or slug. "New post" is the page's one action; a
+ * The blog's list: every post with its status, topic and dates, in a `FilterBar` that searches
+ * by title or slug as you type, filters by status with each one's count, and toggles the live
+ * posts that still need sharing. "New post" is the page's one action; a
  * title opens the post's editor. On a phone each row stacks its status, topic and date under the
  * title.
  */
 export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Element {
   const { filter, list, pending, error, onFilter, navigate } = props
   const t = useAdminText()
-  const heading = useRef<HTMLHeadingElement>(null)
-  // After a search or a chip the list is new: once it arrives, the reader starts again at its
-  // count. The first list is no change, so focus stays where it was.
+  const heading = useRef<HTMLDivElement>(null)
+  // The empty state's Clear goes away with the filter it clears: once the new list arrives, the
+  // reader starts again at the list. The filter bar's controls stay, so focus stays in them, and
+  // the bar announces the new count.
   const asked = useRef(false)
-  const [searching, setSearching] = useState(false)
   useEffect(() => {
     if (pending) return
-    setSearching(false)
     if (asked.current && list !== null) heading.current?.focus()
     asked.current = false
   }, [pending, list])
@@ -165,75 +160,52 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
         )
         : (
           <>
-            <ScreenForm
-              pending={pending}
-              onSubmit={(data) => {
-                setSearching(true)
-                change({ ...filter, query: String(data.get(`q`) ?? ``).trim() })
-              }}
-            >
-              {/* Keyed by the query, so a cleared filter empties the field too. */}
-              <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
-                <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-                  <Field id="admin-blog-q" label={t.t(`AdminBlog.search`)}>
-                    <Input
-                      name="q"
-                      type="search"
-                      data-e2e="admin-blog-search"
-                      defaultValue={filter.query}
-                      maxLength={BLOG_SEARCH_MAX_LENGTH}
-                      autocomplete="off"
-                    />
-                  </Field>
-                </div>
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  data-e2e="admin-blog-submit"
-                  busy={pending && searching}
-                  busyLabel={t.t(`AdminBlog.searching`)}
-                >
-                  {t.t(`AdminBlog.submit`)}
-                </Button>
-              </div>
-            </ScreenForm>
-            <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-              {/* One row that scrolls sideways on a phone rather than wrapping. */}
-              <div
-                class="-mx-4 flex max-w-[calc(100%+2rem)] items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0"
-                data-e2e="admin-blog-status"
-              >
-                <ToggleChips
-                  mode="single"
-                  label={t.t(`AdminBlog.status`)}
-                  class="flex-nowrap sm:flex-wrap"
-                  options={[
-                    ...STATUS_CHIPS.map((chip) => ({
-                      value: chip.value as string,
-                      label: list
-                        ? t.t(chip.counted, { count: list.counts[chip.value] })
-                        : t.t(chip.label),
-                    })),
-                    ...(sharing || filter.sharing
-                      ? [{
-                        value: NEEDS_SHARING,
-                        label: sharing
-                          ? t.t(`AdminBlog.chipNeedsSharing`, { count: sharing.needsSharing })
-                          : t.t(`AdminBlog.needsSharing`),
-                      }]
-                      : []),
-                  ]}
-                  value={filter.sharing ? NEEDS_SHARING : filter.status ?? `all`}
-                  onChange={(value) =>
-                    change({
+            <div data-e2e="admin-blog-filters">
+              <FilterBar
+                search={{
+                  value: filter.query,
+                  label: t.t(`AdminBlog.search`),
+                  delay: ADMIN_SEARCH_DELAY,
+                  onChange: (query) => onFilter({ ...filter, query: query.trim() }, true),
+                }}
+                filters={[{
+                  id: `status`,
+                  label: t.t(`AdminBlog.status`),
+                  options: STATUS_OPTIONS.map((option) => ({
+                    value: option.value,
+                    label: t.t(option.label),
+                    ...(list ? { count: list.counts[option.value] } : {}),
+                  })),
+                  value: filter.status,
+                  // A status and the sharing filter are one choice in the address: either drops the other.
+                  onChange: (value) =>
+                    onFilter({
                       ...filter,
-                      sharing: value === NEEDS_SHARING ? true : undefined,
-                      status: value === null || value === `all` || value === NEEDS_SHARING
-                        ? null
-                        : value as BlogPostStatus,
-                    })}
-                />
-              </div>
+                      sharing: undefined,
+                      status: value as BlogPostStatus | null,
+                    }),
+                }]}
+                toggles={sharing || filter.sharing
+                  ? [{
+                    id: `sharing`,
+                    label: sharing
+                      ? t.t(`AdminBlog.chipNeedsSharing`, { count: sharing.needsSharing })
+                      : t.t(`AdminBlog.needsSharing`),
+                    pressed: filter.sharing === true,
+                    onChange: (pressed) =>
+                      onFilter({ ...filter, status: null, sharing: pressed ? true : undefined }),
+                  }]
+                  : []}
+                onClear={() => onFilter({ ...ADMIN_BLOG_NO_FILTER, query: filter.query })}
+                clearLabel={t.t(`AdminBlog.clear`)}
+                count={list
+                  ? (
+                    <span data-e2e="admin-blog-count">
+                      {t.t(`AdminBlog.count`, { count: list.posts.length })}
+                    </span>
+                  )
+                  : undefined}
+              />
             </div>
 
             {error && (
@@ -245,18 +217,6 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
               </div>
             )}
 
-            {(list !== null || !error) && (
-              <h2
-                ref={heading}
-                tabIndex={-1}
-                class="text-sm text-muted"
-                data-e2e="admin-blog-count"
-              >
-                {list
-                  ? t.t(`AdminBlog.count`, { count: list.posts.length })
-                  : t.t(`AdminBlog.loading`)}
-              </h2>
-            )}
             {list === null
               ? !error && (
                 <div role="status" aria-label={t.t(`AdminBlog.loading`)}>
@@ -264,7 +224,14 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
                 </div>
               )
               : (
-                <div data-e2e="admin-blog-list">
+                <div
+                  ref={heading}
+                  tabIndex={-1}
+                  aria-label={t.t(`AdminBlog.posts`)}
+                  aria-busy={pending}
+                  class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+                  data-e2e="admin-blog-list"
+                >
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}

@@ -79,10 +79,10 @@ function BlogListView({ context }: { context: AdminContext }): JSX.Element {
       list={list.list}
       pending={list.pending}
       error={list.error}
-      onFilter={(next) => {
+      onFilter={(next, replace) => {
         state.query.value = next.query
         const href = blogListHref(next)
-        if (href !== blogListHref(filter)) context.navigate(href)
+        if (href !== blogListHref(filter)) context.navigate(href, { replace })
       }}
       onRetry={() => state.loadList(filter)}
       navigate={context.navigate}

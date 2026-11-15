@@ -99,6 +99,18 @@ async function press(scope: string, label: string): Promise<void> {
   await click(button)
 }
 
+/**
+ * Opens the filter bar's menu `id` and chooses the item whose text is `text`: its label, then
+ * its count when it shows one.
+ */
+async function choose(id: string, text: string): Promise<void> {
+  await click(find(`[data-e2e=filter-${id}]`))
+  const item = [...document.querySelectorAll<HTMLElement>("[role=menuitemradio]")]
+    .find((candidate) => candidate.textContent?.trim() === text)
+  if (!item) throw new Error(`the ${id} menu has no ${text}`)
+  await click(item)
+}
+
 const OPERATOR_ID = 7
 
 const live: AdminApiToken = {
@@ -186,7 +198,8 @@ describe("the API tokens page", () => {
     ) expect(list).toContain(shown)
     expect(has(`[data-e2e="admin-api-token-state-live"]`)).toBe(true)
     expect(has(`[data-e2e="admin-api-token-state-revoked"]`)).toBe(true)
-    expect(text(`[data-e2e="admin-api-tokens-count"]`)).toBe("3 tokens")
+    expect(text(`[data-e2e="admin-api-tokens-filters"] [data-e2e="admin-api-tokens-count"]`))
+      .toBe("3 tokens")
   })
 
   it("offers revoke on someone else's live token only, never on a revoked one or the operator's", async () => {
@@ -200,13 +213,21 @@ describe("the API tokens page", () => {
     expect(events).toEqual([["ask", { kind: "revoke", token: live }]])
   })
 
-  it("filters by state on page 1, the chips counting each state", async () => {
+  it("filters by a chosen state on page 1, the State menu counting each state", async () => {
     const { node, events } = tokensPage({ filter: { state: null, page: 3 } })
     await mount(node)
 
-    expect(text(`[data-e2e="admin-api-tokens-state"]`)).toContain("Revoked (1)")
-    await press(`[data-e2e="admin-api-tokens-state"]`, "Revoked (1)")
+    await choose("state", "Revoked1")
     expect(events).toEqual([["filter", { state: "revoked", page: 1 }]])
+  })
+
+  it("drops the state filter with its chip's remove button, back on page 1", async () => {
+    const { node, events } = tokensPage({ filter: { state: "revoked", page: 2 } })
+    await mount(node)
+
+    expect(find("[data-e2e=filter-state]").getAttribute("aria-label")).toBe("State: Revoked")
+    await click(find("[aria-label='Remove the Revoked filter']"))
+    expect(events).toEqual([["filter", { state: null, page: 1 }]])
   })
 
   it("says loading, then shows an error in place of the list", async () => {
@@ -252,24 +273,35 @@ describe("the API tokens page", () => {
     )
   })
 
-  it("moves focus to the token count once a revoke goes through", async () => {
+  it("asks for the next page and moves focus to the list once it arrives, not on the first", async () => {
+    const many = { ...page, total: 30 }
+    const first = tokensPage({ list: many })
+    await mount(first.node)
+    expect(document.activeElement === find(`[data-e2e="admin-api-tokens-list"]`)).toBe(false)
+    await press("nav", "2")
+    expect(first.events).toEqual([["page", 2]])
+    await mount(tokensPage({ list: { ...many, page: 2 } }).node)
+    expect(document.activeElement === find(`[data-e2e="admin-api-tokens-list"]`)).toBe(true)
+  })
+
+  it("moves focus to the token list once a revoke goes through", async () => {
     const sending = { target: { kind: "revoke", token: live }, error: null, pending: true } as const
     await mount(tokensPage({ confirm: sending }).node)
     await mount(tokensPage({ confirm: NO_CONFIRM }).node)
-    expect(document.activeElement === find(`[data-e2e="admin-api-tokens-count"]`)).toBe(true)
+    expect(document.activeElement === find(`[data-e2e="admin-api-tokens-list"]`)).toBe(true)
   })
 
   it("leaves focus alone when the revoke dialog is cancelled or refused", async () => {
     const asking = { target: { kind: "revoke", token: live }, error: null, pending: false } as const
     await mount(tokensPage({ confirm: asking }).node)
     await mount(tokensPage({ confirm: NO_CONFIRM }).node)
-    expect(document.activeElement === find(`[data-e2e="admin-api-tokens-count"]`)).toBe(false)
+    expect(document.activeElement === find(`[data-e2e="admin-api-tokens-list"]`)).toBe(false)
 
     const sending = { ...asking, pending: true } as const
     const refused = { ...asking, error: "Something went wrong. Try again." } as const
     await mount(tokensPage({ confirm: sending }).node)
     await mount(tokensPage({ confirm: refused }).node)
-    expect(document.activeElement === find(`[data-e2e="admin-api-tokens-count"]`)).toBe(false)
+    expect(document.activeElement === find(`[data-e2e="admin-api-tokens-list"]`)).toBe(false)
   })
 
   it("on a phone, shows the owner and state under the token name and a 44 px Revoke", async () => {

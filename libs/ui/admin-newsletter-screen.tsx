@@ -10,22 +10,15 @@ import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Field } from "@spy4x/preact-ui/field"
-import { Input } from "@spy4x/preact-ui/input"
+import { FilterBar } from "@spy4x/preact-ui/filter-bar"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { Tabs } from "@spy4x/preact-ui/tabs"
-import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import { languageName } from "@spy4x/preact-ui/language-picker"
-import {
-  ADMIN_SEARCH_MAX_LENGTH,
-  ADMIN_STATS_DAYS,
-  type Language,
-  LANGUAGES,
-} from "@domain/identity"
+import { ADMIN_STATS_DAYS, type Language, LANGUAGES } from "@domain/identity"
 import type {
   AdminNewsletterSend,
   AdminNewsletterStats,
@@ -36,6 +29,7 @@ import type {
   AdminSubscriberStatusFilter,
 } from "@domain/subscribers"
 import { changeTone, countAxisTop, statChange } from "./admin-dashboard-screen.tsx"
+import { ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
 import { ScreenForm } from "./progressive.tsx"
 import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
 import type { Formatters } from "@spy4x/time/format"
@@ -91,15 +85,18 @@ export interface AdminNewsletterScreenProps {
   /** The numbers, or `null` while they load or when they could not be read. */
   stats: AdminNewsletterStats | null
   statsError: string | null
-  /** What the address asked for; the search form and the chips start from it. */
+  /** What the address asked for; the filter bar starts from it. */
   filter: AdminSubscriberFilter
   /** The page of addresses, or `null` while it loads. */
   list: AdminSubscriberListResponse | null
   pending: boolean
   /** Why the list could not be read, or `null`. */
   error: string | null
-  /** The operator searched or changed the status: the app reads page 1 of that. */
-  onSearch: (filter: AdminSubscriberFilter) => void
+  /**
+   * The operator searched or changed a filter: the app reads page 1 of that. `replace` is set
+   * while they type, so the address changes without a history entry per pause.
+   */
+  onSearch: (filter: AdminSubscriberFilter, replace?: boolean) => void
   onPage: (page: number) => void
   /** The sent issues, newest first, or `null` while they load. */
   sends: readonly AdminNewsletterSend[] | null
@@ -113,7 +110,7 @@ export interface AdminNewsletterScreenProps {
   onOpenDialog: (dialog: AdminSubscriberDialog) => void
   onCloseDialog: () => void
   onConfirm: () => void
-  /** Counts the actions that went through; a change moves focus to the list's heading. */
+  /** Counts the actions that went through; a change moves focus to the list. */
   done: number
   exporting: boolean
   onExport: () => void
@@ -273,13 +270,13 @@ function growthText(t: Translator<string>, growth: number, days: number): string
   })
 }
 
-/** The search, the status chips and the table of addresses. */
+/** The filter bar (search, status and language) and the table of addresses. */
 function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
   const { filter, list, pending, error, onSearch, onPage, onOpenDialog, done } = props
-  const heading = useRef<HTMLHeadingElement>(null)
+  const heading = useRef<HTMLDivElement>(null)
   const t = useAdminText()
 
-  // After a page change or an action the list is new: the reader starts again at its heading. The
+  // After a page change or an action the list is new: the reader starts again at the list. The
   // first page that arrives is no change, so focus stays where it was.
   const page = list?.page
   const seen = useRef<{ page?: number; done: number }>({ done })
@@ -298,91 +295,53 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
       <Notice tone="info" title={t.t(`AdminNewsletter.notKeptTitle`)}>
         {t.t(`AdminNewsletter.notKeptText`)}
       </Notice>
-      <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
-        <ScreenForm
-          pending={pending}
-          onSubmit={(data) =>
-            onSearch({ ...filter, query: String(data.get("q") ?? "").trim(), page: 1 })}
-        >
-          {/* Keyed by the query, so the box shows the search the list was loaded with. */}
-          <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
-            <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-              <Field id="admin-newsletter-q" label={t.t(`AdminNewsletter.address`)}>
-                <Input
-                  name="q"
-                  type="search"
-                  data-e2e="admin-newsletter-search"
-                  defaultValue={filter.query}
-                  maxLength={ADMIN_SEARCH_MAX_LENGTH}
-                  autocomplete="off"
-                />
-              </Field>
-            </div>
-            <Button
-              type="submit"
-              variant="secondary"
-              data-e2e="admin-newsletter-submit"
-              busy={pending}
-              busyLabel={t.t(`AdminNewsletter.searching`)}
-            >
-              {t.t(`AdminNewsletter.search`)}
-            </Button>
-          </div>
-        </ScreenForm>
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <div class="flex flex-wrap items-center gap-2" data-e2e="admin-newsletter-status">
-            <span class="text-sm text-muted" aria-hidden="true">
-              {t.t(`AdminNewsletter.status`)}
-            </span>
-            <ToggleChips
-              mode="single"
-              label={t.t(`AdminNewsletter.status`)}
-              options={STATUS_CHIPS.map((chip) => ({ value: chip.value, label: t.t(chip.key) }))}
-              value={filter.status === "any" ? null : filter.status}
-              onChange={(value) =>
+      <div data-e2e="admin-newsletter-filters">
+        <FilterBar
+          search={{
+            value: filter.query,
+            label: t.t(`AdminNewsletter.address`),
+            delay: ADMIN_SEARCH_DELAY,
+            onChange: (query) => onSearch({ ...filter, query: query.trim(), page: 1 }, true),
+          }}
+          filters={[
+            {
+              id: `status`,
+              label: t.t(`AdminNewsletter.status`),
+              options: STATUS_CHIPS.map((chip) => ({ value: chip.value, label: t.t(chip.key) })),
+              value: filter.status === "any" ? null : filter.status,
+              onChange: (value) =>
                 onSearch({
                   ...filter,
                   status: (value ?? "any") as AdminSubscriberStatusFilter,
                   page: 1,
-                })}
-            />
-          </div>
-          <div class="flex flex-wrap items-center gap-2" data-e2e="admin-newsletter-language">
-            <span class="text-sm text-muted" aria-hidden="true">
-              {t.t(`AdminNewsletter.language`)}
-            </span>
-            <ToggleChips
-              mode="single"
-              label={t.t(`AdminNewsletter.language`)}
-              options={LANGUAGES.map((language) => ({
+                }),
+            },
+            {
+              id: `language`,
+              label: t.t(`AdminNewsletter.language`),
+              options: LANGUAGES.map((language) => ({
                 value: language,
                 label: languageName(language),
-              }))}
-              value={filter.language === "any" ? null : filter.language}
-              onChange={(value) =>
-                onSearch({ ...filter, language: (value ?? "any") as Language | "any", page: 1 })}
-            />
-          </div>
-          {filtered && (
-            <Button
-              variant="ghost"
-              size="sm"
-              data-e2e="admin-newsletter-clear"
-              onClick={() => onSearch({ query: "", status: "any", language: "any", page: 1 })}
-            >
-              {t.t(`AdminNewsletter.clear`)}
-            </Button>
-          )}
-        </div>
+              })),
+              value: filter.language === "any" ? null : filter.language,
+              onChange: (value) =>
+                onSearch({ ...filter, language: (value ?? "any") as Language | "any", page: 1 }),
+            },
+          ]}
+          onClear={() => onSearch({ ...filter, status: "any", language: "any", page: 1 })}
+          clearLabel={t.t(`AdminNewsletter.clear`)}
+          count={list
+            ? (
+              <span data-e2e="admin-newsletter-count">
+                {t.t(`AdminNewsletter.count`, { count: list.total })}
+              </span>
+            )
+            : undefined}
+        />
       </div>
 
       <ErrorState message={error} dataE2E="admin-newsletter-error" />
 
-      <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-newsletter-count">
-        {list
-          ? t.t(`AdminNewsletter.count`, { count: list.total })
-          : t.t(`AdminNewsletter.loadingAddresses`)}
-      </h2>
       {list === null
         ? !error && (
           <div role="status" aria-label={t.t(`AdminNewsletter.loadingAddresses`)}>
@@ -390,7 +349,14 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
           </div>
         )
         : (
-          <div data-e2e="admin-newsletter-list">
+          <div
+            ref={heading}
+            tabIndex={-1}
+            aria-label={t.t(`AdminNewsletter.subscribers`)}
+            aria-busy={pending}
+            class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+            data-e2e="admin-newsletter-list"
+          >
             <DataTable
               mode="server"
               class="[&>div:first-child]:min-h-0"

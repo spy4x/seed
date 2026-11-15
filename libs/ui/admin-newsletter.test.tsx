@@ -1,10 +1,11 @@
 /**
  * The newsletter page of the operator area, driven in a browser DOM (happy-dom): what the
- * search and the chips send, what each row offers, what the dialog confirms, where focus goes, and
+ * search and the filter menus send, what each row offers, what the dialog confirms, where focus goes, and
  * the empty, loading and error states.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
+import { FakeTime } from "@std/testing/time"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
@@ -19,6 +20,7 @@ import {
   AdminNewsletterScreen,
   type AdminNewsletterScreenProps,
 } from "./admin-newsletter-screen.tsx"
+import { ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
 
 /** A day as the screens write it on this device: the default formatter, with no person's settings. */
 const day = (at: string) => createFormatters().date(at)
@@ -113,6 +115,18 @@ async function press(scope: string, text: string): Promise<void> {
   await clickOn(button)
 }
 
+/** The filter bar's search field. */
+const SEARCH = "[data-e2e=admin-newsletter-filters] [data-e2e=filter-search]"
+
+/** Opens the filter bar's menu `id` and chooses the item whose text is `label`. */
+async function choose(id: string, label: string): Promise<void> {
+  await clickOn(find(`[data-e2e=filter-${id}]`))
+  const item = findAll("[role=menuitemradio]")
+    .find((candidate) => candidate.textContent?.trim() === label)
+  if (!item) throw new Error(`the ${id} menu has no ${label}`)
+  await clickOn(item)
+}
+
 const ann: AdminSubscriberRow = {
   email: "ann@example.com",
   status: "confirmed",
@@ -159,7 +173,8 @@ function props(
     list: { subscribers: [cat, ann], total: 2, page: 1, pageSize: 25 },
     pending: false,
     error: null,
-    onSearch: (filter) => calls.push(["search", filter]),
+    onSearch: (filter, replace) =>
+      calls.push(replace ? ["search", filter, replace] : ["search", filter]),
     onPage: (page) => calls.push(["page", page]),
     sends: [issue],
     sendsError: null,
@@ -187,36 +202,46 @@ describe("operator area: newsletter page", () => {
     expect(find("[data-e2e=admin-newsletter-chart]").textContent).toContain("+1 in 2 days")
   })
 
-  it("searches the typed address from page 1, keeping the status", async () => {
+  it("searches the typed address once the typing pauses, from page 1, keeping the status", async () => {
     const calls: unknown[][] = []
+    using time = new FakeTime()
     await mount(
       <AdminNewsletterScreen
         {...props(calls, { filter: { query: "", status: "pending", language: "any", page: 3 } })}
       />,
     )
 
-    await type("[data-e2e=admin-newsletter-search]", "  cat@ ")
-    await submit("[data-e2e=admin-newsletter-submit]")
+    await type(SEARCH, "  ca")
+    await type(SEARCH, "  cat@ ")
+    await act(() => time.tick(ADMIN_SEARCH_DELAY - 1))
+    expect(calls).toEqual([])
+    await act(() => time.tick(1))
+
+    // Typing replaces the address instead of adding a history entry per pause.
     expect(calls).toEqual([["search", {
       query: "cat@",
       status: "pending",
       language: "any",
       page: 1,
-    }]])
+    }, true]])
   })
 
-  it("filters by status with a chip, and clears every filter", async () => {
+  it("filters by status from its menu, and clears every filter but the search", async () => {
     const calls: unknown[][] = []
-    await mount(<AdminNewsletterScreen {...props(calls)} />)
+    await mount(
+      <AdminNewsletterScreen
+        {...props(calls, { filter: { ...ADMIN_SUBSCRIBERS_NO_FILTER, page: 2 } })}
+      />,
+    )
 
-    await press("[data-e2e=admin-newsletter-status]", "Confirmed")
+    await choose("status", "Confirmed")
     expect(calls).toEqual([["search", {
       query: "",
       status: "confirmed",
       language: "any",
       page: 1,
     }]])
-    expect(has("[data-e2e=admin-newsletter-clear]")).toBe(false)
+    expect(has("[data-e2e=filter-clear]")).toBe(false)
 
     calls.length = 0
     await mount(
@@ -224,11 +249,11 @@ describe("operator area: newsletter page", () => {
         {...props(calls, { filter: { query: "x", status: "pending", language: "de", page: 2 } })}
       />,
     )
-    await clickOn(find("[data-e2e=admin-newsletter-clear]"))
-    expect(calls).toEqual([["search", ADMIN_SUBSCRIBERS_NO_FILTER]])
+    await clickOn(find("[data-e2e=filter-clear]"))
+    expect(calls).toEqual([["search", { ...ADMIN_SUBSCRIBERS_NO_FILTER, query: "x" }]])
   })
 
-  it("shows each address's language, and filters by language with a chip (#527)", async () => {
+  it("shows each address's language, and filters by language from its menu (#527)", async () => {
     const calls: unknown[][] = []
     await mount(<AdminNewsletterScreen {...props(calls)} />)
 
@@ -237,7 +262,7 @@ describe("operator area: newsletter page", () => {
       "Deutsch",
       "English",
     ])
-    await press("[data-e2e=admin-newsletter-language]", "Deutsch")
+    await choose("language", "Deutsch")
     expect(calls).toEqual([["search", { query: "", status: "any", language: "de", page: 1 }]])
   })
 
@@ -292,10 +317,10 @@ describe("operator area: newsletter page", () => {
     expect(find("[data-e2e=admin-newsletter-dialog]").textContent).toContain(message)
   })
 
-  it("moves focus to the list's heading after an action went through", async () => {
+  it("moves focus to the list after an action went through, and shows the count in the filter bar", async () => {
     const calls: unknown[][] = []
     await mount(<AdminNewsletterScreen {...props(calls)} />)
-    expect(document.activeElement?.getAttribute("data-e2e")).not.toBe("admin-newsletter-count")
+    expect(document.activeElement?.getAttribute("data-e2e")).not.toBe("admin-newsletter-list")
 
     await mount(
       <AdminNewsletterScreen
@@ -305,8 +330,14 @@ describe("operator area: newsletter page", () => {
         })}
       />,
     )
-    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-newsletter-count")
-    expect(find("[data-e2e=admin-newsletter-count]").textContent).toBe("1 subscriber")
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-newsletter-list")
+    expect(find("[data-e2e=admin-newsletter-list]").className.split(" ")).toEqual(
+      expect.arrayContaining(["focus-visible:ring-2", "focus-visible:ring-focus"]),
+    )
+    expect(
+      find("[data-e2e=admin-newsletter-filters] [data-e2e=admin-newsletter-count]").textContent,
+    )
+      .toBe("1 subscriber")
   })
 
   it("exports from the header's one primary action, which waits while a file is on its way", async () => {
@@ -342,7 +373,8 @@ describe("operator area: newsletter page", () => {
     const calls: unknown[][] = []
     await mount(<AdminNewsletterScreen {...props(calls, { stats: null, list: null })} />)
     expect(find("[role=status][aria-label='Loading the numbers']")).toBeTruthy()
-    expect(find("[data-e2e=admin-newsletter-count]").textContent).toBe("Loading subscribers")
+    expect(find("[role=status][aria-label='Loading subscribers']")).toBeTruthy()
+    expect(has("[data-e2e=admin-newsletter-count]")).toBe(false)
 
     await mount(
       <AdminNewsletterScreen
