@@ -206,11 +206,15 @@ export const GROUPS: TestGroup[] = [
   { flags: [`--allow-read=i18n,apps,libs`], paths: [`i18n`] },
 ]
 
-/** The `deno test` arguments of a group, for the given paths (all of the group's by default). */
+/**
+ * The `deno test` arguments of a group, for the given paths (all of the group's by default). The
+ * `related` flags apply only to a group that `selectable` allows; any other runs whole.
+ */
 export function testArgs(
   group: TestGroup,
   paths = group.paths,
   extra: string[] = [],
+  related: string[] = [],
 ): string[] {
   const ignore = group.ignore?.length ? [`--ignore=${group.ignore.join(`,`)}`] : []
   return [
@@ -220,6 +224,7 @@ export function testArgs(
     ...group.flags,
     ...ignore,
     ...extra,
+    ...selectable(group) ? related : [],
     ...paths,
   ]
 }
@@ -507,7 +512,7 @@ async function runAll(extra: string[], verbose: boolean, related: string[]): Pro
   }
   const started = performance.now()
   const args = (group: TestGroup) =>
-    testArgs(group, group.paths, selectable(group) ? [...extra, ...related] : extra)
+    testArgs(group, group.paths, extra, related)
   const run = (group: TestGroup) => () => capture(args(group))
   const parallel = GROUPS.filter((group) => !group.serial)
   const serial = GROUPS.filter((group) => group.serial)

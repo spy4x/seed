@@ -71,6 +71,10 @@ Deno.test("limits only the groups whose files depend on nothing but their import
     `tests/migration-names.test.ts`,
     `tests/load/group-plan.test.ts`,
   ])
+  const related = [`--related=libs/ui/notes.tsx`]
+  expect(testArgs(GROUPS[0], GROUPS[0].paths, [], related)).toContain(related[0])
+  const scan = groupOf(`tests/ui-boundary.test.ts`)!
+  expect(testArgs(scan, scan.paths, [], related)).not.toContain(related[0])
 })
 
 Deno.test("reads changed and deleted files from git's name-status output", () => {
