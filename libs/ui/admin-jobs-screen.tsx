@@ -369,7 +369,8 @@ export function AdminJobsScreen(props: AdminJobsScreenProps): JSX.Element {
     <Stack>
       <PageHeader
         title={t.t(`AdminJobs.title`)}
-        subtitle={t.t(`AdminJobs.subtitle`)}
+        // The header truncates its subtitle; wrapping it lets a phone show the whole sentence.
+        subtitle={<span class="whitespace-normal">{t.t(`AdminJobs.subtitle`)}</span>}
         titleDataE2E="admin-jobs-title"
         menu={failed > 0
           ? (
