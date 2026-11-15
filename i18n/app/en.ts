@@ -1630,6 +1630,7 @@ export default {
   "Search.downloadDetail": "A ZIP of your profile, groups and notes",
   "Search.downloadDetailPlain": "A ZIP of your profile and groups",
   "Search.changePicture": "Change profile picture",
+  "Search.turnOffTwoFactor": "Turn off two-factor sign-in",
   "Shortcuts.general": "General",
   "Shortcuts.goTo": "Go to",
   "Shortcuts.newNote": "In New note",

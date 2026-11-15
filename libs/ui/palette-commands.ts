@@ -21,6 +21,9 @@ import {
 import { PROFILE_SECTION_TEXT } from "./profile-screen.tsx"
 import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
 import { PICTURE_BUTTON_ID, pictureRule } from "./profile-picture.tsx"
+import { ACCOUNT_DELETE_BUTTON_ID } from "./account-delete.tsx"
+import { TOTP_DISABLE_BUTTON_ID } from "./profile-security.tsx"
+import { END_OTHERS_BUTTON_ID } from "./signed-in-devices.tsx"
 import { THEME_KEYS, themeName } from "./preferences.tsx"
 import type { ShortcutRow } from "./shortcuts.tsx"
 import { englishText, type KeyedMessage, messageText } from "./message.ts"
@@ -92,6 +95,8 @@ export interface PaletteContext {
   benchmark: boolean
   /** Whether the browser offers to install the app now. */
   canInstall: boolean
+  /** Whether two-factor sign-in is on: "Turn off two-factor sign-in" is listed only then. */
+  twoFactor?: boolean
   /**
    * Whether the notes example is on; left out, it is. Off, no command names notes or tags, and
    * Settings has no API tokens, whose API serves the notes only.
@@ -410,6 +415,50 @@ export function paletteCommands(
         aliases: [`add to home screen`, `pwa`, `desktop app`, `установить приложение`],
       })]
       : []),
+    // The three risky account commands never act: each opens its section's own confirmation, which
+    // keeps every check it has (password, current code, the server's rules).
+    command(
+      "delete-account",
+      `AccountDelete.title`,
+      heading.account,
+      page(`${profilePath("danger-zone")}#${ACCOUNT_DELETE_BUTTON_ID}`),
+      { aliases: [`delete account`, `close account`, `remove account`, `удалить аккаунт`] },
+    ),
+    ...(context.twoFactor && !context.guest
+      ? [command(
+        "turn-off-two-factor",
+        `Search.turnOffTwoFactor`,
+        heading.account,
+        page(`${profilePath("security")}#${TOTP_DISABLE_BUTTON_ID}`),
+        {
+          aliases: [
+            `disable 2fa`,
+            `turn off 2fa`,
+            `two-factor`,
+            `authenticator`,
+            `отключить двухфакторную`,
+            `выключить 2fa`,
+          ],
+        },
+      )]
+      : []),
+    // The palette does not know whether other devices are signed in: the list is read on the
+    // profile only. Listed always; with no other device, the section opens without a dialog.
+    command(
+      "end-other-sessions",
+      `SignedInDevices.signOutOthers`,
+      heading.account,
+      page(`${profilePath("security")}#${END_OTHERS_BUTTON_ID}`),
+      {
+        aliases: [
+          `end other sessions`,
+          `sign out everywhere`,
+          `log out other devices`,
+          `выйти на других устройствах`,
+          `завершить другие сеансы`,
+        ],
+      },
+    ),
     command("sign-out", `Frame.signOut`, heading.account, { kind: "sign-out" }, {
       aliases: SIGN_OUT_ALIASES,
     }),

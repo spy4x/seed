@@ -1758,6 +1758,7 @@ export default {
   "Search.downloadDetail": "Um ZIP com seu perfil, grupos e notas",
   "Search.downloadDetailPlain": "Um ZIP com seu perfil e grupos",
   "Search.changePicture": "Trocar foto do perfil",
+  "Search.turnOffTwoFactor": "Desativar a verificação em duas etapas",
   "Shortcuts.general": "Geral",
   "Shortcuts.goTo": "Ir para",
   "Shortcuts.newNote": "Em Nova nota",

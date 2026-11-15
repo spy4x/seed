@@ -1879,6 +1879,7 @@ export default {
   "Search.downloadDetail": "ملف ZIP يضم ملفك الشخصي ومجموعاتك وملاحظاتك",
   "Search.downloadDetailPlain": "ملف ZIP يضم ملفك الشخصي ومجموعاتك",
   "Search.changePicture": "تغيير صورة الملف الشخصي",
+  "Search.turnOffTwoFactor": "إيقاف التحقق بخطوتين",
   "Shortcuts.general": "عام",
   "Shortcuts.goTo": "الانتقال إلى",
   "Shortcuts.newNote": "في «ملاحظة جديدة»",

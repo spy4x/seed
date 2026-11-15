@@ -222,6 +222,8 @@ describe("SearchPalette", () => {
       "Change profile picture | JPEG, PNG, WebP or HEIC, up to 10 MB.",
       "Keyboard shortcuts",
       "# Account",
+      "Delete my account",
+      "Sign out of all other devices",
       "Sign out",
     ])
   })
@@ -470,6 +472,59 @@ describe("SearchPalette", () => {
     expect(picked).toEqual(
       Array(3).fill({ kind: "page", href: "/profile/account#profile-picture-choose" }),
     )
+  })
+
+  it("hands back only a page for each risky account command: the button that opens its confirmation", async () => {
+    const { picked } = await mount({ twoFactor: true })
+    const rows = [
+      ["delete account", "Delete my account"],
+      ["удалить аккаунт", "Delete my account"],
+      ["disable 2fa", "Turn off two-factor sign-in"],
+      ["отключить двухфакторную", "Turn off two-factor sign-in"],
+      ["end other sessions", "Sign out of all other devices"],
+      ["выйти на других устройствах", "Sign out of all other devices"],
+    ]
+    for (const [query, label] of rows) {
+      await open()
+      await type(query)
+      const row = [...document.querySelectorAll("[role=option]")]
+        .find((candidate) => text(candidate) === label)
+      expect(row, query).toBeDefined()
+      await act(() => {
+        row!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+      })
+    }
+    expect(picked).toEqual([
+      { kind: "page", href: "/profile/danger-zone#account-delete-open" },
+      { kind: "page", href: "/profile/danger-zone#account-delete-open" },
+      { kind: "page", href: "/profile/security#totp-disable" },
+      { kind: "page", href: "/profile/security#totp-disable" },
+      { kind: "page", href: "/profile/security#sessions-end-others" },
+      { kind: "page", href: "/profile/security#sessions-end-others" },
+    ])
+  })
+
+  it("lists Turn off two-factor sign-in only while two-factor is on, and never for a guest", async () => {
+    const offered = async (props: Partial<SearchPaletteProps>) => {
+      await mount(props)
+      await open()
+      await type("two-factor")
+      const found = listed().includes("Turn off two-factor sign-in")
+      await act(() => render(null, root!))
+      return found
+    }
+    expect(await offered({ twoFactor: true })).toBe(true)
+    expect(await offered({})).toBe(false)
+    expect(await offered({ twoFactor: true, guest: true })).toBe(false)
+  })
+
+  it("lists Delete my account and Sign out of all other devices for a guest too", async () => {
+    await mount({ guest: true })
+    await open()
+    expect(listed()).toEqual(expect.arrayContaining([
+      "Delete my account",
+      "Sign out of all other devices",
+    ]))
   })
 
   it("writes the picture rule's size in the person's region format", async () => {

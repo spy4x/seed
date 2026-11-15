@@ -31,9 +31,10 @@ test("asking for my data shows it in preparation, keeps it after a reload, and r
     // The delete section's link lands on the row's control.
     await gotoApp(page, "/profile/danger-zone", page.locator("[data-e2e=danger-zone]"))
     await page.locator("[data-e2e=account-delete-export-link]").click()
-    await expect(page).toHaveURL(/\/profile\/account#your-data$/)
     const ask = page.locator("[data-e2e=data-export-request]")
     await expect(ask).toBeFocused()
+    // Once landed, the hash is dropped: a later visit to this entry does not land again.
+    await expect(page).toHaveURL(/\/profile\/account$/)
     await expect(ask).toHaveText("Download my data")
 
     await ask.click()

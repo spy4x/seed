@@ -65,6 +65,9 @@ import { notificationsStore } from "../state/notifications.ts"
 import { DataExportStatus, PictureState, pictureUrl, shownPictureId } from "@domain/identity"
 import { DATA_EXPORT_ANCHOR } from "@ui/profile-export.tsx"
 import { PICTURE_BUTTON_ID } from "@ui/profile-picture.tsx"
+import { ACCOUNT_DELETE_BUTTON_ID } from "@ui/account-delete.tsx"
+import { TOTP_DISABLE_BUTTON_ID } from "@ui/profile-security.tsx"
+import { END_OTHERS_BUTTON_ID } from "@ui/signed-in-devices.tsx"
 import { createPictureStore, pictureCalls } from "../state/profile-picture.ts"
 import { createTelegramStore, telegramHttp } from "../state/telegram.ts"
 import { passwordChangedMessage } from "./password-changed-message.ts"
@@ -88,6 +91,19 @@ const CODE_MISSING = `ProfileView.codeMissing`
 
 /** Adding a passkey needs the server: the card says so while the device is offline. */
 const network = createOnlineStatus()
+
+/**
+ * The controls a `#<id>` on a profile address lands on, by id, and whether each is pressed too.
+ * Pressing only ever opens a confirmation or the file chooser; none acts by itself. Any other hash
+ * is ignored, and so is an id the open section does not draw.
+ */
+const PROFILE_ANCHORS: ReadonlyMap<string, boolean> = new Map([
+  [DATA_EXPORT_ANCHOR, false],
+  [PICTURE_BUTTON_ID, true],
+  [ACCOUNT_DELETE_BUTTON_ID, true],
+  [TOTP_DISABLE_BUTTON_ID, true],
+  [END_OTHERS_BUTTON_ID, true],
+])
 
 /**
  * Wires `ProfileScreen` to this app's session store, the auth calls, the e-mail store and the push
@@ -219,37 +235,47 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     return () => clearInterval(timer)
   }, [exportPreparing])
 
-  // `/profile/account#your-data` (the delete section's link, the palette) lands on the row's control.
+  // `/profile/<section>#<id>` (the delete section's link, the palette) lands on that control, once
+  // the section has drawn it; a button `PROFILE_ANCHORS` marks is pressed too, so its dialog opens.
   // The router's own navigations fire `pushState`, so the palette's command lands here even when
-  // the Account section is already open.
-  const exportRead = dataExport.current.value !== undefined
+  // the section is already open. A section that has not drawn the control (no other device to
+  // sign out) keeps the focus on its heading. Each navigation is a new object, so the same command
+  // picked twice lands twice. Once acted on, it is dropped, from the address too, so neither a
+  // later render nor a return to this history entry acts again.
+  const [anchor, setAnchor] = useState(() => ({ id: location.hash.slice(1) }))
   useEffect(() => {
-    if (section !== "account" || !exportRead) return
-    // After the settings layout has focused the section's heading, which it does on the same turn.
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const focusAnchor = () => {
-      clearTimeout(timer)
-      timer = setTimeout(() => {
-        if (location.hash === `#${DATA_EXPORT_ANCHOR}`) {
-          document.getElementById(DATA_EXPORT_ANCHOR)?.focus()
-        }
-        // The palette's "Change profile picture" opens the chooser too, still within its keypress.
-        if (location.hash === `#${PICTURE_BUTTON_ID}`) {
-          const button = document.getElementById(PICTURE_BUTTON_ID)
-          button?.focus()
-          button?.click()
-        }
-      }, 0)
-    }
-    focusAnchor()
-    addEventListener("pushState", focusAnchor)
-    addEventListener("hashchange", focusAnchor)
+    const note = () => setAnchor({ id: location.hash.slice(1) })
+    addEventListener("pushState", note)
+    addEventListener("hashchange", note)
     return () => {
-      clearTimeout(timer)
-      removeEventListener("pushState", focusAnchor)
-      removeEventListener("hashchange", focusAnchor)
+      removeEventListener("pushState", note)
+      removeEventListener("hashchange", note)
     }
-  }, [section, exportRead])
+  }, [])
+  const devicesRead = devices.sessions.value !== null || devices.error.value !== null
+  const anchorsReady = section === "account"
+    ? dataExport.current.value !== undefined
+    : section === "security"
+    ? devicesRead
+    : section === "danger-zone"
+  useEffect(() => {
+    const press = PROFILE_ANCHORS.get(anchor.id)
+    if (!anchorsReady || press === undefined) return
+    // The settings layout focuses a newly shown section's heading in an effect of this same render.
+    // Preact runs a render's effects in one batch, in an order that changes when a component was
+    // already waiting from an earlier render, so the press waits for the batch to end. Pressed
+    // before that (the `pushState` listener once did), the dialog took the heading as the place
+    // to give the focus back to.
+    const timer = setTimeout(() => {
+      setAnchor({ id: `` })
+      history.replaceState(history.state, ``, location.pathname + location.search)
+      const control = document.getElementById(anchor.id)
+      control?.focus()
+      // Focused first: the dialog gives the focus back to it when it closes.
+      if (press) control?.click()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [anchor, anchorsReady])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
   // A switch from a guest account lands here with `?moved=`, the groups that came along.

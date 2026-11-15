@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 import { matchRoute, useLocation, useRouter, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
-import { pictureUrl, shownPictureId } from "@domain/identity"
+import { pictureUrl, shownPictureId, UserMFAStatus } from "@domain/identity"
 import { homePath, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
@@ -303,6 +303,7 @@ export function AppShell(
           canInstall={install.mode.value === "prompt"}
           slashKey={singleKeys.on.value}
           guest={guest}
+          twoFactor={user.mfa === UserMFAStatus.CONFIGURED}
           benchmark={benchmarkOpen()}
           notes={notes}
         />

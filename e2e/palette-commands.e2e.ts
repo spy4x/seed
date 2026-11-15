@@ -1,17 +1,58 @@
 /**
  * The palette's commands in a real browser: the Theme submenu applies a theme with the palette
  * still open, the palette's look on a phone and a desktop in both palettes, photographed into
- * the test's output folder for the design review, and a group page's own commands per role.
+ * the test's output folder for the design review, a group page's own commands per role, and the
+ * risky account commands, which only open their confirmation.
  */
 import { type APIRequestContext, type BrowserContext, type Page } from "@playwright/test"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { enrolTotp } from "./fixtures/totp.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 const password = "Passw0rd!"
+
+/** The requests that would delete the account, turn two-factor off or sign other devices out. */
+const ACTS = /\/api\/auth\/(account\/delete|totp\/disconnect|sessions\/others)/
+
+/** Records every request `page` makes that acts on the account; the list must stay empty. */
+function watchActs(page: Page): string[] {
+  const acts: string[] = []
+  page.on("request", (request) => {
+    if (ACTS.test(request.url())) acts.push(`${request.method()} ${request.url()}`)
+  })
+  return acts
+}
+
+/**
+ * Types `words` into the palette, checks the first option is `name`, and picks it with Enter. Then
+ * checks the dialog `dialog` opened holding the focus, closes it with Escape, and checks the focus
+ * went back to the button `opener` that opened it, not to the page.
+ */
+async function enterOpensOnly(
+  page: Page,
+  words: string,
+  name: string,
+  dialog: string,
+  opener: string,
+): Promise<void> {
+  const palette = page.locator("[data-e2e=search]")
+  await page.keyboard.press("Control+k")
+  await palette.getByRole("combobox").fill(words)
+  await expect(palette.getByRole("option").first()).toHaveAccessibleName(name)
+  await page.keyboard.press("Enter")
+  await expect(palette).toBeHidden()
+  const confirm = page.locator(`[data-e2e=${dialog}]`)
+  await expect(confirm).toBeVisible()
+  await expect.poll(() => confirm.evaluate((box) => box.contains(document.activeElement)))
+    .toBe(true)
+  await page.keyboard.press("Escape")
+  await expect(confirm).toBeHidden()
+  await expect(page.locator(`#${opener}`)).toBeFocused()
+}
 
 async function cleanup(request: APIRequestContext, email: string): Promise<void> {
   const response = await request.post(`${apiBase}/api/test/cleanup-user`, {
@@ -183,6 +224,96 @@ test.describe("the palette's commands", () => {
     } finally {
       await memberContext?.close()
       for (const email of [owner, member]) await cleanup(request, email)
+    }
+  })
+
+  test("Delete my account and Sign out of all other devices open only their confirmation, and Escape changes nothing", async ({ page, browser, request }) => {
+    test.setTimeout(120_000)
+    const email = `e2e-palette-account-${uuidV7().slice(-8)}@example.com`
+    await cleanup(request, email)
+    let phone: BrowserContext | null = null
+    try {
+      const signedUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
+        headers,
+        data: { email, password },
+      })
+      expect(signedUp.ok(), await signedUp.text()).toBe(true)
+      // Sign-up signed the API request in: sign it out, so the devices are this page and the phone.
+      const apiOut = await request.post(`${apiBase}/api/auth/sign-out`, { headers })
+      expect(apiOut.ok(), await apiOut.text()).toBe(true)
+      phone = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+      const onPhone = await phone.request.post(`${apiBase}/api/auth/password/check`, {
+        headers,
+        data: { login: email, password },
+      })
+      expect(onPhone.ok(), await onPhone.text()).toBe(true)
+      await signIn(page, email, password)
+      const acts = watchActs(page)
+
+      await enterOpensOnly(
+        page,
+        "delete my account",
+        "Delete my account",
+        "account-delete-dialog",
+        "account-delete-open",
+      )
+      await expect(page).toHaveURL("/profile/danger-zone")
+      await enterOpensOnly(
+        page,
+        "end other sessions",
+        "Sign out of all other devices",
+        "sessions-end-others-confirm",
+        "sessions-end-others",
+      )
+      await expect(page).toHaveURL("/profile/security")
+
+      expect(acts).toEqual([])
+      expect((await page.request.get(`${apiBase}/api/auth/me`)).status()).toBe(200)
+      expect((await phone.request.get(`${apiBase}/api/auth/me`)).status()).toBe(200)
+      await expect(page.locator("[data-e2e=sessions] dl > div")).toHaveCount(2)
+    } finally {
+      await phone?.close()
+      await cleanup(request, email)
+    }
+  })
+
+  test("Turn off two-factor sign-in is offered only while it is on, and opens only its confirmation", async ({ page, request }) => {
+    test.setTimeout(120_000)
+    const email = `e2e-palette-totp-${uuidV7().slice(-8)}@example.com`
+    await cleanup(request, email)
+    try {
+      const signedUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
+        headers,
+        data: { email, password },
+      })
+      expect(signedUp.ok(), await signedUp.text()).toBe(true)
+      await signIn(page, email, password)
+      const palette = page.locator("[data-e2e=search]")
+      await page.keyboard.press("Control+k")
+      await palette.getByRole("combobox").fill("two-factor")
+      await expect(palette.getByRole("option", { name: "Sign-in and security" })).toBeVisible()
+      await expect(palette.getByRole("option", { name: "Turn off two-factor sign-in" }))
+        .toHaveCount(0)
+      await page.keyboard.press("Escape")
+
+      await enrolTotp(page.request, apiBase, password)
+      await gotoApp(page, "/groups", page.locator("[data-e2e=shell-ws-status]"))
+      const acts = watchActs(page)
+      await enterOpensOnly(
+        page,
+        "disable 2fa",
+        "Turn off two-factor sign-in",
+        "totp-disable-confirm",
+        "totp-disable",
+      )
+      await expect(page).toHaveURL("/profile/security")
+
+      expect(acts).toEqual([])
+      const me = await (await page.request.get(`${apiBase}/api/auth/me`)).json()
+      // 3: two-factor is still configured.
+      expect(me.mfa, JSON.stringify(me)).toBe(3)
+    } finally {
+      await cleanup(request, email)
     }
   })
 })
