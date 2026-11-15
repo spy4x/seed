@@ -163,12 +163,19 @@ export function createTagsStore(dependencies: TagsDependencies) {
 
   /**
    * Opens the editor to create a tag. What the person typed into an earlier create form stays, as
-   * a note's draft does; an edit form is replaced.
+   * a note's draft does; an edit form is replaced. `name`, given, replaces the typed name, as the
+   * palette's `New tag: "…"` does; the colour picked earlier stays.
    */
-  function startCreate(): void {
-    if (form.value?.id === null) return
+  function startCreate(name?: string): void {
+    const current = form.value
+    if (current?.id === null) {
+      if (name === undefined) return
+      form.value = { ...current, name }
+      formErrors.value = NO_ERRORS
+      return
+    }
     const base = { name: "", color: DEFAULT_TAG_COLOR }
-    form.value = { id: null, ...base, version: 0, base }
+    form.value = { id: null, ...base, name: name ?? "", version: 0, base }
     formErrors.value = NO_ERRORS
   }
 

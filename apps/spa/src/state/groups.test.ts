@@ -236,6 +236,33 @@ describe("groups store", () => {
     expect(store.groups.value).toEqual([])
   })
 
+  it("puts a given name in the new group's form, keeping the rest and dropping the earlier refusal", async () => {
+    const { store } = harness({
+      create: () => Promise.reject(new RealtimeRequestError("forbidden", "Group id is in use")),
+    })
+    store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "Trip", emoji: "🏕️" })
+    await store.create()
+
+    store.startCreate("groceries")
+
+    expect(store.draft(null)).toMatchObject({ name: "groceries", emoji: "🏕️" })
+    expect(store.unsaved(null)).toBe(true)
+    expect(store.editorErrors.value).toEqual({})
+  })
+
+  it("keeps a refused create's text and why when the new group's editor opens after it", async () => {
+    const { store } = harness({
+      create: () => Promise.reject(new RealtimeRequestError("forbidden", "Group id is in use")),
+    })
+    store.startCreate("groceries")
+    await store.create()
+
+    store.openEditor(null)
+
+    expect(store.draft(null).name).toBe("groceries")
+    expect(store.editorErrors.value).toEqual({ form: "Group id is in use" })
+  })
+
   it("says a create needs a connection when the server was not reached", async () => {
     const { store } = harness({ create: () => Promise.reject(new TypeError("fetch failed")) })
     store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "Trip" })
@@ -313,6 +340,16 @@ describe("groups store", () => {
     expect(store.draft("a").name).toBe("Typed")
     store.openEditor("b")
     expect(store.draft("a").name).toBe("a")
+  })
+
+  it("drops a refusal when an editor opens with nothing typed for it", async () => {
+    const { store } = harness({})
+    await store.create()
+    expect(store.editorErrors.value.name).toBe("Enter a name.")
+
+    store.openEditor(null)
+
+    expect(store.editorErrors.value).toEqual({})
   })
 
   it("saves only the name when only the name changed, and keeps the row's members", async () => {

@@ -17,6 +17,9 @@ import { notificationsStore } from "../state/notifications.ts"
 import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
 import { newNoteStore } from "../state/new-note.ts"
+import { tagsStore } from "../state/tags.ts"
+import { toasts } from "../state/toasts.ts"
+import { isolate } from "@spy4x/preact-ui/bdi"
 import { type ActionPages, pageCommands, runActionCommand, spaShortcutRows } from "./shortcuts.ts"
 import { spaRoutePaths } from "./spa-paths.ts"
 import { runChoice } from "./palette-choice.ts"
@@ -274,6 +277,39 @@ export function AppShell(
       selectGroup: (groupId) => selectionStore.select(groupId),
       switchGroup,
       newNote: newNoteStore.show,
+      addNote: async (title) => {
+        const target = current ? { id: current.id, name: current.name } : null
+        const note = await newNoteStore.addNow(title, target)
+        return note?.id ?? null
+      },
+      fillForm: (entity, name) => {
+        if (entity === "group") return groupsStore.startCreate(name)
+        // The tag is made in the current group, which the tags page may not have opened yet.
+        if (current) void tagsStore.open(current.id)
+        tagsStore.startCreate(name)
+      },
+      createFromForm: async (entity) => {
+        if (entity === "tag") {
+          const tag = await tagsStore.save()
+          if (tag) {
+            toasts.success({
+              title: t.t(`TagEditorView.createdTitle`),
+              body: t.t(`TagEditorView.created`, { name: isolate(tag.name) }),
+              dataE2E: "tag-created",
+            })
+          }
+          return tag?.id ?? null
+        }
+        const group = await groupsStore.create()
+        if (group) {
+          toasts.success({
+            title: t.t(`GroupEditor.created`),
+            body: t.t(`GroupEditor.createdBody`, { name: isolate(group.name) }),
+            dataE2E: "group-created",
+          })
+        }
+        return group?.id ?? null
+      },
       runPageCommand,
       // The profile's Appearance section sets it the same way.
       setTheme: (theme) => themeStore.set(theme as Parameters<typeof themeStore.set>[0]),

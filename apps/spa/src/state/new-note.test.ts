@@ -84,6 +84,31 @@ describe("new note store", () => {
     expect(newNote.added.value?.onDevice).toBe(false)
   })
 
+  it("opens with a given title in place of what was left, and keeps what was left without one", () => {
+    const { newNote } = store()
+    newNote.title.value = "Half typed"
+    newNote.show()
+    expect(newNote.title.value).toBe("Half typed")
+    newNote.close()
+    newNote.show("groceries")
+    expect([newNote.open.value, newNote.title.value]).toEqual([true, "groceries"])
+  })
+
+  it("adds a note titled as given without opening the dialog", async () => {
+    const { newNote, calls } = store({ note: note("groceries", 1) })
+    expect((await newNote.addNow("groceries", ACME))?.title).toBe("groceries")
+    expect(calls).toEqual([{ groupId: ACME.id, id: "id-1", title: "groceries" }])
+    expect(newNote.open.value).toBe(false)
+  })
+
+  it("opens the dialog on the title and why when adding at once is refused", async () => {
+    const { newNote } = store({ errors: { form: "Too many notes." } })
+    expect(await newNote.addNow("groceries", ACME)).toBeNull()
+    expect(newNote.open.value).toBe(true)
+    expect(newNote.title.value).toBe("groceries")
+    expect(newNote.errors.value).toEqual({ form: "Too many notes." })
+  })
+
   it("forgets the draft and the dialog on sign-out", async () => {
     const { newNote } = store()
     newNote.show()
