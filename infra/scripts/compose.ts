@@ -19,6 +19,11 @@ import {
 import { ensureProxyNetwork, runContainerCli } from "./proxy-network.ts";
 
 const envFilePath = `./infra/envs/.env`;
+/**
+ * How long the network check's dry run may take. It answers in seconds, but Compose 2.40 waits
+ * forever when a service another one waits on (`migrate`) has no container.
+ */
+export const DRY_RUN_TIMEOUT_MS = 60_000;
 /** The web push keys the API and the backup bind-mount; a start without them cannot succeed. */
 const vapidPath = `./infra/configs/vapid.json`;
 
@@ -32,8 +37,15 @@ export interface ComposeHost {
   ensureProxyNetwork(plan: ComposePlan): Promise<boolean>;
   /** Runs the engine with its output on the terminal and resolves with its exit code. */
   run(engine: string, args: string[]): Promise<number>;
-  /** Runs the engine and returns what it printed; a command that changes nothing. */
-  ask(engine: string, args: string[]): Promise<{ code: number; stdout: string; stderr: string }>;
+  /**
+   * Runs the engine and returns what it printed; a command that changes nothing. With
+   * `timeoutMs`, the engine is stopped once that time has passed, so its exit code is not 0.
+   */
+  ask(
+    engine: string,
+    args: string[],
+    timeoutMs?: number,
+  ): Promise<{ code: number; stdout: string; stderr: string }>;
   /**
    * Whether something listens on that TCP port of this machine. `undefined` when it cannot be
    * told (no permission to bind the address, a port below 1024).
@@ -66,9 +78,9 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
   const plan = planCompose(env, args, envFilePath);
   const compose = (...rest: string[]) => planCompose(env, rest, envFilePath).command;
   /** What a read-only command printed, or `undefined` when it failed or could not run. */
-  const ask = async (...rest: string[]) => {
+  const ask = async (rest: string[], timeoutMs?: number) => {
     try {
-      const result = await host.ask(plan.engine, compose(...rest));
+      const result = await host.ask(plan.engine, compose(...rest), timeoutMs);
       return result.code === 0 ? result : undefined;
     } catch {
       return undefined;
@@ -91,8 +103,8 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
 
   const described = startsWholeProject(args)
     ? parseProject(
-      (await ask("config", "--format", "json"))?.stdout,
-      (await ask("config", "--no-interpolate", "--format", "json"))?.stdout,
+      (await ask(["config", "--format", "json"]))?.stdout,
+      (await ask(["config", "--no-interpolate", "--format", "json"]))?.stdout,
     )
     : undefined;
   // A service kept off (`SPA=false`) is neither started first nor reported as not up.
@@ -103,7 +115,7 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
 
   // A taken port fails the start after Compose has recreated the product's containers.
   const containers = project &&
-    parseContainers((await ask("--profile", "*", "ps", "-a", "--format", "json"))?.stdout);
+    parseContainers((await ask(["--profile", "*", "ps", "-a", "--format", "json"]))?.stdout);
   if (project && containers) {
     const taken = [];
     for (const port of portsToProbe(project.ports, containers)) {
@@ -148,9 +160,15 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
 
   // Compose removes a network whose definition changed and starts the containers it does not
   // recreate without their service names. Nothing is left to restart once they are all removed.
-  // A project with no container yet has no network to recreate, and on a fresh machine its dry
-  // run never returns (seen with Compose 2.40: it waits on services that a dry run never starts).
-  const dryRun = containers?.length === 0 ? undefined : await ask("--dry-run", "up", "-d");
+  // A project with no container yet has no network to recreate. The dry run can hang (Compose
+  // 2.40 waits on services that a dry run never starts), so it has a deadline, and a dry run that
+  // misses it skips the check like one that fails.
+  const dryRun = containers?.length === 0
+    ? undefined
+    : await ask(["--dry-run", "up", "-d"], DRY_RUN_TIMEOUT_MS);
+  if (containers?.length !== 0 && !dryRun) {
+    host.log("The network check's dry run failed or timed out; starting without it.");
+  }
   const networks = networksToRecreate(`${dryRun?.stdout ?? ""}\n${dryRun?.stderr ?? ""}`);
   if (networks.length > 0) {
     host.log(
@@ -194,7 +212,7 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
     host.log("Compose command executed successfully");
     return 0;
   }
-  const after = parseContainers((await ask("ps", "-a", "--format", "json"))?.stdout);
+  const after = parseContainers((await ask(["ps", "-a", "--format", "json"]))?.stdout);
   const down = after ? servicesNotUp(project.services, after) : [];
   host.error(
     [
@@ -232,9 +250,10 @@ if (import.meta.main) {
         stdout: "inherit",
         stderr: "inherit",
       }).output()).code,
-    ask: async (engine, args) => {
+    ask: async (engine, args, timeoutMs) => {
       const text = new TextDecoder();
-      const { code, stdout, stderr } = await new Deno.Command(engine, { args }).output();
+      const signal = timeoutMs === undefined ? undefined : AbortSignal.timeout(timeoutMs);
+      const { code, stdout, stderr } = await new Deno.Command(engine, { args, signal }).output();
       return { code, stdout: text.decode(stdout), stderr: text.decode(stderr) };
     },
     portInUse: async (hostname, port) => {
