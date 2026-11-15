@@ -3,9 +3,14 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 export default {
   "AppShell.attachFiles": "Adjuntar archivos a esta nota",
   "AppShell.copyNoteLink": "Copiar el enlace a esta nota",
+  "AppShell.deleteGroup": "Eliminar este grupo",
   "AppShell.deleteNote": "Eliminar esta nota",
+  "AppShell.deleteTag": "Eliminar esta etiqueta",
   "AppShell.duplicateNote": "Duplicar esta nota",
+  "AppShell.exportGroup": "Exportar este grupo",
+  "AppShell.leaveGroup": "Salir de este grupo",
   "AppShell.moveNote": "Mover esta nota a otro grupo",
+  "AppShell.transferGroup": "Transferir la propiedad de este grupo",
   "AttachmentMessages.load": "No se pudieron cargar los archivos",
   "AttachmentMessages.type":
     "No se puede adjuntar {name}. Solo se admiten imágenes JPEG, PNG, WebP y GIF, y archivos PDF.",

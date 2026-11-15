@@ -3,9 +3,14 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 export default {
   "AppShell.attachFiles": "Attach files to this note",
   "AppShell.copyNoteLink": "Copy link to this note",
+  "AppShell.deleteGroup": "Delete this group",
   "AppShell.deleteNote": "Delete this note",
+  "AppShell.deleteTag": "Delete this tag",
   "AppShell.duplicateNote": "Duplicate this note",
+  "AppShell.exportGroup": "Export this group",
+  "AppShell.leaveGroup": "Leave this group",
   "AppShell.moveNote": "Move this note to another group",
+  "AppShell.transferGroup": "Transfer ownership of this group",
   "AttachmentMessages.load": "Could not load the files",
   "AttachmentMessages.type":
     "{name} can't be attached. Only JPEG, PNG, WebP and GIF images and PDF files are allowed.",

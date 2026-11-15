@@ -3,9 +3,14 @@ import type { Catalog } from "@spy4x/platform/universal/i18n"
 export default {
   "AppShell.attachFiles": "إرفاق ملفات بهذه الملاحظة",
   "AppShell.copyNoteLink": "نسخ رابط هذه الملاحظة",
+  "AppShell.deleteGroup": "حذف هذه المجموعة",
   "AppShell.deleteNote": "حذف هذه الملاحظة",
+  "AppShell.deleteTag": "حذف هذا الوسم",
   "AppShell.duplicateNote": "تكرار هذه الملاحظة",
+  "AppShell.exportGroup": "تصدير هذه المجموعة",
+  "AppShell.leaveGroup": "مغادرة هذه المجموعة",
   "AppShell.moveNote": "نقل هذه الملاحظة إلى مجموعة أخرى",
+  "AppShell.transferGroup": "نقل ملكية هذه المجموعة",
   "AttachmentMessages.load": "تعذّر تحميل الملفات",
   "AttachmentMessages.type":
     "لا يمكن إرفاق {name}. المسموح به فقط صور JPEG وPNG وWebP وGIF وملفات PDF.",

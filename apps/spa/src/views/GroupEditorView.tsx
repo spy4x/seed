@@ -1,7 +1,15 @@
+import { signal, useSignal } from "@preact/signals"
 import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
-import { GroupEditorScreen, GroupTab, groupTabOf } from "@ui/group-editor-screen.tsx"
+import {
+  type GroupAction,
+  type GroupDialog,
+  GroupEditorScreen,
+  groupMenuActions,
+  GroupTab,
+  groupTabOf,
+} from "@ui/group-editor-screen.tsx"
 import { memberLabel } from "@ui/group-members.tsx"
 import { useAppText } from "@ui/i18n.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
@@ -24,8 +32,16 @@ import { toasts } from "../state/toasts.ts"
 import { isSpaPath } from "./spa-paths.ts"
 import { currentLayer } from "../modules.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
+import { afterPalette } from "./palette-attach.ts"
+import type { GroupPageActions } from "./shortcuts.ts"
 
 const network = createOnlineStatus()
+
+/**
+ * What the open group page lets the command palette do: the menu's Export, Transfer ownership,
+ * Leave and Delete that the person can pick now; `null` while no group's page is open.
+ */
+export const groupEditorPageActions = signal<GroupPageActions | null>(null)
 
 /** Whether the app has no network while a device copy is on: the editor says writing waits. */
 function offlineNow(): boolean {
@@ -236,6 +252,35 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
   const movedTo = movedAll && store.groups.value.find((other) => other.id === movedAll.toGroupId)
   const memberRows = ours ? team.members.value : null
   const owner = memberRows?.find((member) => member.role === GroupRole.OWNER)
+  const isLastGroup = store.groups.value.length <= 1
+  const hasSubscription = billingOurs?.subscribed ?? false
+  const offline = offlineNow()
+  const exporting = groupExportStore.exporting.value === groupId
+  const exportGroup = () => void groupExportStore.download(groupId)
+  // The palette offers what the menu lets the person pick now. Export runs at once, as the menu's
+  // does; the others open the menu's dialog through the screen, once the palette has closed.
+  const requestDialog = useSignal<GroupDialog | null>(null)
+  const ready = group
+    ? Object.entries(groupMenuActions({
+      role: group.role,
+      members: memberRows,
+      hasTransfer: true,
+      hasExport: true,
+      isLastGroup,
+      hasSubscription,
+      offline,
+      exporting,
+    })).filter(([, block]) => block === null).map(([action]) => action as GroupAction)
+    : []
+  useEffect(() => {
+    groupEditorPageActions.value = Object.fromEntries(ready.map((action) => [
+      action,
+      action === `export`
+        ? exportGroup
+        : () => afterPalette(document, () => requestDialog.value = action),
+    ]))
+    return () => groupEditorPageActions.value = null
+  }, [groupId, ready.join()])
   return (
     <GroupEditorScreen
       tab={tab}
@@ -252,14 +297,14 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
       errors={store.editorErrors.value}
       dirty={store.unsaved(groupId)}
       saving={working?.groupId === groupId && working.action === "save"}
-      offline={offlineNow()}
+      offline={offline}
       onSave={() => void saveAndAnnounce(store, groupId, toasts, t)}
-      onExport={() => void groupExportStore.download(groupId)}
-      exporting={groupExportStore.exporting.value === groupId}
+      onExport={exportGroup}
+      exporting={exporting}
       exportFailed={groupExportStore.failed.value === groupId}
       onDiscard={() => store.discard()}
-      isLastGroup={store.groups.value.length <= 1}
-      hasSubscription={billingOurs?.subscribed ?? false}
+      isLastGroup={isLastGroup}
+      hasSubscription={hasSubscription}
       members={ours ? team.members.value : null}
       memberCount={ours ? team.memberCount.value ?? undefined : undefined}
       membersError={ours ? team.loadError.value : null}
@@ -322,6 +367,8 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
       transfer={group
         ? (close) => <GroupTransfer groupId={groupId} group={group} onClose={close} />
         : undefined}
+      requestDialog={requestDialog.value}
+      onDialogRequested={() => requestDialog.value = null}
     />
   )
 }

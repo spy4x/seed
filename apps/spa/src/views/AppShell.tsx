@@ -17,7 +17,7 @@ import { notificationsStore } from "../state/notifications.ts"
 import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
 import { newNoteStore } from "../state/new-note.ts"
-import { pageCommands, runNoteCommand, spaShortcutRows } from "./shortcuts.ts"
+import { type ActionPages, pageCommands, runActionCommand, spaShortcutRows } from "./shortcuts.ts"
 import { spaRoutePaths } from "./spa-paths.ts"
 import { runChoice } from "./palette-choice.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
@@ -49,14 +49,28 @@ import { overviewPageActions } from "./OverviewView.tsx"
 import { themeStore } from "../state/theme.ts"
 import { install } from "../install.ts"
 import { noteEditorPageActions } from "./NoteEditorView.tsx"
+import { tagEditorPageActions } from "./TagEditorView.tsx"
+import { groupEditorPageActions } from "./GroupEditorView.tsx"
 import { useAppText } from "@ui/i18n.ts"
+
+/**
+ * The open note, tag or group page's palette actions. With the notes off (`notes`), no note or tag
+ * page offers any.
+ */
+function actionPages(notes: boolean): ActionPages {
+  return {
+    noteEditor: notes ? noteEditorPageActions.value : null,
+    tagEditor: notes ? tagEditorPageActions.value : null,
+    groupEditor: groupEditorPageActions.value,
+  }
+}
 
 /** Runs the page command `id` of `pageCommands` on the open page. */
 function runPageCommand(id: string): void {
   const actions = overviewPageActions.value
   if (id === "overview-range") actions?.openRange()
   if (id === "overview-customise") actions?.openCustomise()
-  runNoteCommand(id, noteEditorPageActions.value)
+  runActionCommand(id, actionPages(notesOn()))
   if (id === "benchmark-run") benchmarkPageActions.value?.run()
   if (id === "benchmark-copy") benchmarkPageActions.value?.copy()
 }
@@ -280,7 +294,7 @@ export function AppShell(
           pageCommands={pageCommands(t, {
             overview: Boolean(overviewPageActions.value),
             benchmark: Boolean(benchmarkPageActions.value),
-            noteEditor: notes ? noteEditorPageActions.value : null,
+            ...actionPages(notes),
           }, rows)}
           onSelect={(choice) => void open(choice)}
           theme={themeStore.preference.value}

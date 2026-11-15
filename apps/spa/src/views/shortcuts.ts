@@ -7,6 +7,7 @@ import {
 } from "@ui/progressive.tsx"
 import { generalRows, SHORTCUT_GROUPS, type ShortcutRow } from "@ui/shortcuts.tsx"
 import type { PageCommand } from "@ui/search-palette.tsx"
+import type { GroupAction } from "@ui/group-editor-screen.tsx"
 import { englishText } from "@ui/message.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 
@@ -128,15 +129,30 @@ export type NoteAction = "attach" | "duplicate" | "move" | "copyLink" | "delete"
 export type NotePageActions = Partial<Record<NoteAction, () => void>>
 
 /**
+ * The open tag page's commands: `delete` while its menu's "Delete tag" can be picked. It opens the
+ * page's confirmation, never deletes.
+ */
+export type TagPageActions = Partial<Record<"delete", () => void>>
+
+/**
+ * The open group page's commands, as its "More actions" menu offers them to the person now. Export
+ * downloads at once, as the menu's does; Transfer, Leave and Delete only open their dialogs.
+ */
+export type GroupPageActions = Partial<Record<GroupAction, () => void>>
+
+/** One action command of a page: its id, the action it runs, its label key and extra words. */
+interface ActionCommand<A extends string> {
+  id: string
+  action: A
+  label: string
+  aliases: readonly string[]
+}
+
+/**
  * The note page's commands in the palette, in the order listed, each shown only while the page
  * offers its action. Besides its English label, each is found by the words in `aliases`.
  */
-const NOTE_COMMANDS: readonly {
-  id: string
-  action: NoteAction
-  label: string
-  aliases: readonly string[]
-}[] = [
+const NOTE_COMMANDS: readonly ActionCommand<NoteAction>[] = [
   { id: "note-attach", action: "attach", label: `AppShell.attachFiles`, aliases: [] },
   {
     id: "note-duplicate",
@@ -164,31 +180,94 @@ const NOTE_COMMANDS: readonly {
   },
 ]
 
-/** Runs the note page's command `id`, if the open note page offers it now. */
-export function runNoteCommand(id: string, actions: NotePageActions | null): void {
-  const command = NOTE_COMMANDS.find((candidate) => candidate.id === id)
-  if (command) actions?.[command.action]?.()
+/** The tag page's command in the palette, as {@link NOTE_COMMANDS}. */
+const TAG_COMMANDS: readonly ActionCommand<"delete">[] = [
+  {
+    id: "tag-delete",
+    action: "delete",
+    label: `AppShell.deleteTag`,
+    aliases: [`remove tag`, `trash`, `удалить метку`, `удалить тег`],
+  },
+]
+
+/** The group page's commands in the palette, in its menu's order, as {@link NOTE_COMMANDS}. */
+const GROUP_COMMANDS: readonly ActionCommand<GroupAction>[] = [
+  {
+    id: "group-transfer",
+    action: "transfer",
+    label: `AppShell.transferGroup`,
+    aliases: [`hand over`, `new owner`, `передать группу`, `передать владение`],
+  },
+  {
+    id: "group-export",
+    action: "export",
+    label: `AppShell.exportGroup`,
+    aliases: [`download`, `backup`, `экспорт`, `скачать группу`],
+  },
+  {
+    id: "group-leave",
+    action: "leave",
+    label: `AppShell.leaveGroup`,
+    aliases: [`quit group`, `exit group`, `покинуть группу`, `уйти из группы`],
+  },
+  {
+    id: "group-delete",
+    action: "delete",
+    label: `AppShell.deleteGroup`,
+    aliases: [`remove group`, `trash`, `удалить группу`],
+  },
+]
+
+/** The pages whose palette commands each run one of the page's actions; `null` while not open. */
+export interface ActionPages {
+  noteEditor: NotePageActions | null
+  tagEditor?: TagPageActions | null
+  groupEditor?: GroupPageActions | null
+}
+
+/** Each open action page's commands that it offers now, with the action each runs. */
+function offeredCommands(
+  open: ActionPages,
+): { id: string; label: string; aliases: readonly string[]; run: () => void }[] {
+  const offered = <A extends string>(
+    commands: readonly ActionCommand<A>[],
+    actions: Partial<Record<A, () => void>> | null | undefined,
+  ) =>
+    commands.flatMap((command) => {
+      const run = actions?.[command.action]
+      return run ? [{ ...command, run }] : []
+    })
+  return [
+    ...offered(NOTE_COMMANDS, open.noteEditor),
+    ...offered(TAG_COMMANDS, open.tagEditor),
+    ...offered(GROUP_COMMANDS, open.groupEditor),
+  ]
+}
+
+/** Runs the open page's action command `id`, if that page offers it now. */
+export function runActionCommand(id: string, open: ActionPages): void {
+  offeredCommands(open).find((command) => command.id === id)?.run()
 }
 
 /**
  * The open page's commands in the palette, if it has any: labelled in the translator's language,
  * found by their English label and their aliases too, and showing the keys of the shortcut row
- * with the same label. On a note page, only the commands `noteEditor` offers.
+ * with the same label. On a note, tag or group page, only the commands that page offers now.
  */
 export function pageCommands(
   t: Translator<string>,
-  open: { overview: boolean; benchmark: boolean; noteEditor: NotePageActions | null },
+  open: { overview: boolean; benchmark: boolean } & ActionPages,
   rows: readonly ShortcutRow[],
 ): PageCommand[] | undefined {
-  const note = open.noteEditor
+  const actions = offeredCommands(open)
   const commands:
     | readonly { id: string; label: string; aliases?: readonly string[] }[]
     | undefined = open.overview
       ? OVERVIEW_COMMANDS
       : open.benchmark
       ? BENCHMARK_COMMANDS
-      : note
-      ? NOTE_COMMANDS.filter((command) => note[command.action])
+      : open.noteEditor || open.tagEditor || open.groupEditor
+      ? actions
       : undefined
   return commands?.map((command) => ({
     id: command.id,
