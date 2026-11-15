@@ -23,7 +23,7 @@ async function cleanup(request: APIRequestContext, email: string) {
 }
 
 test.describe("the admin Jobs module", () => {
-  test("an operator runs the nightly cleanup now and opens its run", async ({ browser, request }) => {
+  test("an operator runs the nightly cleanup now, opens its run, and reads both pages on a phone", async ({ browser, request }) => {
     const operatorEmail = `e2e-jobs-ops-${uuidV7().slice(-8)}@example.com`
     let admin: BrowserContext | null = null
     try {
@@ -70,6 +70,11 @@ test.describe("the admin Jobs module", () => {
       expect(await ops.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         390,
       )
+      // The list page's subtitle wraps instead of losing its end to the header's ellipsis.
+      await ops.goto(`${adminBase}/jobs`)
+      const subtitle = ops.locator("[data-e2e=admin-jobs-subtitle]")
+      await expect(subtitle).toBeVisible()
+      expect(await subtitle.evaluate((p) => p.scrollWidth <= p.clientWidth)).toBe(true)
     } finally {
       await admin?.close()
       await cleanup(request, operatorEmail)

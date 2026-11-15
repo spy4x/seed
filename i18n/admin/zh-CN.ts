@@ -1500,7 +1500,7 @@ export default {
   "AdminJobs.startedAt": "<label>开始于</label> <when></when>",
   "AdminJobs.notYet": "尚未运行",
   "AdminJobs.job": "任务",
-  "AdminJobs.photoOf": "<link>{item}</link>的照片",
+  "AdminJobs.photoOf": "<link>{item}</link>的第{number}张照片",
   "AdminJobs.status": "状态",
   "AdminJobs.attemptsHeader": "尝试次数",
   "AdminJobs.when": "时间",

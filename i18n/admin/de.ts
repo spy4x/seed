@@ -1686,7 +1686,7 @@ export default {
   "AdminJobs.startedAt": "<label>Gestartet</label> <when></when>",
   "AdminJobs.notYet": "Noch nicht",
   "AdminJobs.job": "Job",
-  "AdminJobs.photoOf": "Foto von <link>{item}</link>",
+  "AdminJobs.photoOf": "Foto {number} von <link>{item}</link>",
   "AdminJobs.status": "Status",
   "AdminJobs.attemptsHeader": "Versuche",
   "AdminJobs.when": "Wann",

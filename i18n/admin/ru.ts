@@ -1776,7 +1776,7 @@ export default {
   "AdminJobs.startedAt": "<label>Запущена</label> <when></when>",
   "AdminJobs.notYet": "Ещё нет",
   "AdminJobs.job": "Задача",
-  "AdminJobs.photoOf": "Фото товара <link>{item}</link>",
+  "AdminJobs.photoOf": "Фото {number} товара <link>{item}</link>",
   "AdminJobs.status": "Статус",
   "AdminJobs.attemptsHeader": "Попытки",
   "AdminJobs.when": "Когда",

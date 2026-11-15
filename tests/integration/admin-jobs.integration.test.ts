@@ -423,7 +423,7 @@ Deno.test("jobs: names the person a job is about through its request row", async
   })
 })
 
-Deno.test("jobs: an image job's photo names its item in the catalog's default language", async () => {
+Deno.test("jobs: an image job's photo names its item in the catalog's default language, and its place", async () => {
   await withSchema(async (sql) => {
     const actor = { userId: await operator(sql), requestId: null }
     const catalog = new PostgresCatalog(sql)
@@ -459,8 +459,11 @@ Deno.test("jobs: an image job's photo names its item in the catalog's default la
       ready: false,
       itemId: item.id,
       itemName: `Zip jacket`,
+      position: 0,
     })
     expect(photos.get(shown)?.ready).toBe(true)
+    // The second photo added sits after the cover.
+    expect(photos.get(shown)?.position).toBe(1)
     expect(photos.has(picture)).toBe(false)
     expect((await readJobPhotos(sql, [shown], [`vi`, `en`])).get(shown)?.itemName).toBe(`Áo khoác`)
   })

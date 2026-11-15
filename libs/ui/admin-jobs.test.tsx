@@ -132,7 +132,7 @@ const imageJob: AdminJobDetail = {
   state: AdminJobState.Done,
   errorCode: null,
   sendsMail: false,
-  photo: { id: PHOTO_ID, ready: true, itemId: ITEM_ID, itemName: "Zip jacket" },
+  photo: { id: PHOTO_ID, ready: true, itemId: ITEM_ID, itemName: "Zip jacket", position: 0 },
 }
 
 const list: AdminJobListResponse = {
@@ -477,7 +477,7 @@ describe("an image job", () => {
       `/catalog/${ITEM_ID}`,
       null,
     ])
-    expect(link(rows[0])!.closest("span")!.textContent).toBe("Photo of Zip jacket")
+    expect(link(rows[0])!.closest("span")!.textContent).toBe("Photo 1 of Zip jacket")
     expect(rows.map((row) => row.querySelector("img")?.getAttribute("src") ?? null)).toEqual([
       `/api/admin/catalog/photos/${PHOTO_ID}/thumbnail`,
       null,
@@ -490,6 +490,28 @@ describe("an image job", () => {
       .toBe(`/catalog/${ITEM_ID}`)
     expect(facts.querySelector("img")?.getAttribute("src"))
       .toBe(`/api/admin/catalog/photos/${PHOTO_ID}/thumbnail`)
+  })
+
+  it("numbers each photo of one item, so uploads to one item read apart", async () => {
+    const third = {
+      ...imageJob,
+      id: "01920000-0000-7000-8000-000000000004",
+      photo: { ...imageJob.photo!, position: 2 },
+    }
+    const text = () => find("[data-e2e=admin-job-photo-item]").closest("span")!.textContent
+
+    await mount(jobsPage({ list: { ...list, jobs: [imageJob, third] } }).node)
+    const rows = [imageJob, third].map((job) =>
+      find(`[data-e2e="admin-job-${job.id}"]`).closest("tr")!
+    )
+    expect(
+      rows.map((row) =>
+        row.querySelector("[data-e2e=admin-job-photo-item]")!.closest("span")!.textContent
+      ),
+    ).toEqual(["Photo 1 of Zip jacket", "Photo 3 of Zip jacket"])
+
+    await mount(jobPage({ job: third }).node)
+    expect(text()).toBe("Photo 3 of Zip jacket")
   })
 })
 

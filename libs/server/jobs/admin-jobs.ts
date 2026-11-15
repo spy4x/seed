@@ -211,8 +211,10 @@ export async function readJobPhotos(
   languages: readonly string[],
 ): Promise<Map<string, AdminJobPhoto>> {
   if (imageIds.length === 0) return new Map()
-  const rows = await sql<{ id: string; itemId: string; name: CatalogText; ready: boolean }[]>`
-    SELECT p.id, p.item_id, i.name,
+  const rows = await sql<
+    { id: string; itemId: string; name: CatalogText; ready: boolean; position: number }[]
+  >`
+    SELECT p.id, p.item_id, i.name, p.position,
       EXISTS (SELECT 1 FROM image_variants v WHERE v.image_id = p.id) AS ready
     FROM catalog_photos p JOIN catalog_items i ON i.id = p.item_id
     WHERE p.id = ANY(${imageIds as string[]}::uuid[])
@@ -222,6 +224,7 @@ export async function readJobPhotos(
     ready: row.ready,
     itemId: row.itemId,
     itemName: catalogText(row.name, languages),
+    position: row.position,
   }]))
 }
 

@@ -1570,7 +1570,7 @@ export default {
   "AdminJobs.startedAt": "<label>開始</label> <when></when>",
   "AdminJobs.notYet": "まだです",
   "AdminJobs.job": "ジョブ",
-  "AdminJobs.photoOf": "<link>{item}</link>の写真",
+  "AdminJobs.photoOf": "<link>{item}</link>の{number}枚目の写真",
   "AdminJobs.status": "ステータス",
   "AdminJobs.attemptsHeader": "試行回数",
   "AdminJobs.when": "日時",
