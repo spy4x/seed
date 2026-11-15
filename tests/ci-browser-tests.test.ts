@@ -5,14 +5,15 @@
  * must keep the sign-in and the notes specs: without either, a pull request that breaks that
  * screen shows green again. The one exception is a pull request that changes only Markdown
  * outside the product (`markdown_only` and `internal_markdown` in the workflow): it skips the
- * steps that start the stack, and runs `browser` only when it changes a published guide. The whole
- * suite runs after the merge, on `main`, where a red run is
- * seen but blocks nobody. `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs
- * of the set. Lighthouse measures in a stage of its own, with no other step of the pipeline beside
- * it. A pull request runs it only when it changes a file the website is built from (#821); a push
- * to `main` and a tag always run it, and the e2e steps run whether it ran or not. A pull request
- * measures only the quick pages (#876). The four image builds follow the same pattern: a pull
- * request builds them only when it changes a file that goes into an image.
+ * steps that start the stack, and runs `browser` only when it changes a published guide. A push
+ * to `main` runs only `check`, `secrets` and the images. The whole suite runs in the nightly cron
+ * run on `main`, where a red run is seen but blocks nobody and no push cancels it.
+ * `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs of the set. Lighthouse
+ * measures in a stage of its own, with no other step of the pipeline beside it. A pull request
+ * runs it only when it changes a file the website is built from (#821); the nightly run and a tag
+ * always run it, and the e2e steps run whether it ran or not. A pull request measures only the
+ * quick pages (#876). The four image builds follow the same pattern: a pull request builds them
+ * only when it changes a file that goes into an image.
  */
 
 import { expect } from "@std/expect"
@@ -79,7 +80,7 @@ function pathHolds(path: PathCondition | undefined, changed: string[]): boolean 
  * Whether `step` runs for `event` on `branch` when the commit or pull request changes the files
  * `changed`. A step without `when` runs for every event, and a condition without `branch` holds on
  * every branch. Branch patterns are compared as plain names: this pipeline uses no glob. As in
- * Woodpecker, `path` counts on a pull request and a push only, never on a tag.
+ * Woodpecker, `path` counts on a pull request and a push only, never on a tag or a cron run.
  */
 export function runsFor(
   step: Step,
@@ -230,7 +231,7 @@ Deno.test("Lighthouse measures in a stage of its own on every event that runs it
   // Lab performance falls when another step shares the CPU, and the budget then fails on noise.
   const ci = await workflow()
   const website = [`apps/mpa/routes/index.tsx`]
-  for (const event of [`pull_request`, `push`, `tag`]) {
+  for (const event of [`pull_request`, `cron`, `tag`]) {
     const [step] = blockingSteps(ci, `deno task lighthouse`, event, `main`, website)
     const stage = stages(ci, event, `main`, website).find((names) => names.includes(step))
     expect({ event, stage }).toEqual({ event, stage: [`lighthouse`] })
@@ -256,15 +257,17 @@ Deno.test("a pull request that changes the website, a published guide or the loc
   }
 })
 
-Deno.test("a push to main and a tag run Lighthouse whatever they change", async () => {
+Deno.test("the nightly run and a tag run Lighthouse whatever they change, and a push to main never", async () => {
   const ci = await workflow()
-  for (const event of [`push`, `tag`]) {
+  for (const event of [`cron`, `tag`]) {
     const steps = blockingSteps(ci, `deno task lighthouse`, event, `main`, [`apps/api/x.ts`])
     expect({ event, steps }).toEqual({ event, steps: [`lighthouse`] })
   }
+  const website = [`apps/mpa/routes/index.tsx`]
+  expect(blockingSteps(ci, `deno task lighthouse`, `push`, `main`, website)).toEqual([])
 })
 
-Deno.test("a pull request measures the quick pages, and a push to main and a tag every page", async () => {
+Deno.test("a pull request measures the quick pages, and the nightly run and a tag every page", async () => {
   // run.sh measures every page unless LIGHTHOUSE_PAGES=quick; only a pull request may set it.
   const commands = list((await workflow()).steps?.lighthouse?.commands).map((line) => line.trim())
   const at = commands.indexOf(`deno task lighthouse`)
@@ -282,7 +285,7 @@ const imagesFor = async (event: string, changed: string[]) => {
   return IMAGES.filter((name) => steps[name] && runsFor(steps[name], event, `main`, changed))
 }
 
-Deno.test("a pull request that changes no file of an image builds none, and a push to main and a tag build all four", async () => {
+Deno.test("a pull request that changes no file of an image builds none, a push to main and a tag build all four, and the nightly run none", async () => {
   for (const file of [`docs/screenshots/a.png`, `README.md`, `tests/x.test.ts`, `.claude/x.md`]) {
     expect({ file, images: await imagesFor(`pull_request`, [file]) }).toEqual({ file, images: [] })
   }
@@ -292,6 +295,7 @@ Deno.test("a pull request that changes no file of an image builds none, and a pu
       images: IMAGES,
     })
   }
+  expect(await imagesFor(`cron`, [])).toEqual([])
 })
 
 Deno.test("a pull request that changes an app, a library, a Dockerfile or the lockfile builds all four images", async () => {
@@ -333,14 +337,44 @@ Deno.test("a pull request runs the smoke set in a step that fails the pipeline",
   expect(blockingSteps(await workflow(), SMOKE, "pull_request", "main")).toEqual(["e2e-smoke"])
 })
 
-Deno.test("a push to main runs the whole suite, and a pull request does not wait for it", async () => {
+Deno.test("only the nightly run runs the whole suite, and it skips the smoke set", async () => {
   const ci = await workflow()
-  expect(blockingSteps(ci, SUITE, "push", "main")).toEqual(["e2e-full"])
+  expect(blockingSteps(ci, SUITE, "cron", "main")).toEqual(["e2e-full"])
+  expect(blockingSteps(ci, SMOKE, "cron", "main")).toEqual([])
+  // A push to main would be cancelled by the next merge before the suite ends.
+  expect(blockingSteps(ci, SUITE, "push", "main")).toEqual([])
   expect(blockingSteps(ci, SUITE, "pull_request", "main")).toEqual([])
   // A release waits for this workflow: the whole suite must not stand between a tag and its
   // images, and the smoke set must.
   expect(blockingSteps(ci, SUITE, "tag", "main")).toEqual([])
   expect(blockingSteps(ci, SMOKE, "tag", "main")).toEqual(["e2e-smoke"])
+})
+
+Deno.test("a push to main runs only check, secrets and the four images, whatever it changes", async () => {
+  // Its pull request already ran the rest; the slow steps would be cancelled by the next merge.
+  const ci = await workflow()
+  expect(runsFor(ci, `push`, `main`)).toBe(true)
+  for (const changed of [[], [`apps/api/x.ts`], [`apps/mpa/routes/index.tsx`, `deno.lock`]]) {
+    const ran = stages(ci, `push`, `main`, changed).flat().sort()
+    expect({ changed, ran }).toEqual({ changed, ran: [`check`, `secrets`, ...IMAGES].sort() })
+  }
+})
+
+Deno.test("the nightly run on main runs every check and test step but no image and no smoke set", async () => {
+  const ci = await workflow()
+  expect(runsFor(ci, `cron`, `main`)).toBe(true)
+  const ran = stages(ci, `cron`, `main`).flat().sort()
+  expect(ran).toEqual([
+    `alert-rules`,
+    `backup-restore`,
+    `browser`,
+    `check`,
+    `e2e-full`,
+    `integration`,
+    `lighthouse`,
+    `runtimes`,
+    `secrets`,
+  ])
 })
 
 Deno.test("the browser-test guide and the CI guide name every spec of the smoke set", async () => {
@@ -372,18 +406,19 @@ Deno.test("a pull request that changes only Markdown no app loads runs check and
   expect(blockingSteps(ci, SMOKE, `pull_request`, `main`, MARKDOWN_ONLY)).toEqual([])
 })
 
-Deno.test("a pull request that changes Markdown and any other file, a push to main and a tag run the stack and the smoke set", async () => {
+Deno.test("a pull request that changes Markdown and any other file, the nightly run and a tag run the stack", async () => {
   const ci = await workflow()
   const cases: [string, string[]][] = [
     [`pull_request`, [`README.md`, `apps/api/x.ts`]],
     [`pull_request`, [`libs/server/blog/seed-posts/a.md`]],
     [`pull_request`, [`apps/mpa/lighthouse/posts/a.md`]],
-    [`push`, [`README.md`]],
+    [`cron`, []],
     [`tag`, [`README.md`]],
   ]
   for (const [event, changed] of cases) {
     const ran = stages(ci, event, `main`, changed).flat()
-    const stack = STACK.filter((name) => name !== `e2e-smoke` || event !== `push`)
+    // The nightly run's e2e-full runs every spec of the smoke set.
+    const stack = STACK.filter((name) => name !== `e2e-smoke` || event !== `cron`)
     expect({ event, changed, missing: stack.filter((name) => !ran.includes(name)) })
       .toEqual({ event, changed, missing: [] })
   }
