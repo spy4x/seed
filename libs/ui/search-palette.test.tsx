@@ -190,11 +190,6 @@ async function enter(ctrlKey = false): Promise<void> {
   })
 }
 
-/** The status line under the list: the loading or error words. */
-function status(): string {
-  return find("[data-e2e=search] [role=status]").textContent?.trim() ?? ""
-}
-
 /**
  * How many of the two commands that need the file store ("Download my data", "Change profile
  * picture") the palette lists for "data" and "picture", with `files` as the app passes it.
@@ -611,6 +606,20 @@ describe("SearchPalette", () => {
     expect(quickGroup.getAttribute("aria-disabled")).toBe("true")
   })
 
+  it("lists Download my data offline, dimmed, and does nothing on Enter while it is highlighted", async () => {
+    const { picked } = await mount({ online: false }, () => ({ notes: [], onDevice: true }))
+    await open()
+
+    await type("download my data")
+    const row = find("[data-e2e=search] [role=option][aria-selected=true]")
+    expect([text(row), row.getAttribute("aria-disabled")])
+      .toEqual(["Download my data | Needs a connection", "true"])
+    await enter()
+
+    expect(picked).toEqual([])
+    expect(find("[data-e2e=search] input")).toBeTruthy()
+  })
+
   it("offers a guest Keep your account for the words a person would try, and nobody else", async () => {
     await mount({ guest: true })
     await open()
@@ -742,16 +751,42 @@ describe("SearchPalette", () => {
     expect(listed().some((row) => row.startsWith("Open benchmark"))).toBe(false)
   })
 
-  it("shows the error line when the search fails", async () => {
+  it("shows a failed note search under Notes, in a dimmed row, and still lists the commands", async () => {
     await mount(
       {},
       (query) => query === "" ? { notes: [], onDevice: false } : Promise.reject(new Error("429")),
     )
     await open()
 
-    await type("plan")
+    await type("new")
 
-    expect(status()).toBe("Could not search. Change your search to try again.")
+    const failed = "Could not search. Change your search to try again."
+    expect(listed().slice(-2)).toEqual(["# Notes", failed])
+    expect(find("[data-e2e=search] [role=option][aria-disabled=true]").textContent).toBe(failed)
+    expect(listed()).toContain(`New note | In Home`)
+  })
+
+  it("says a failed note search for typed text in a live region inside the palette, and clears it once a search works", async () => {
+    await mount(
+      {},
+      (query) =>
+        query === "" || query === "new"
+          ? Promise.reject(new Error("429"))
+          : { notes: [PLAN], onDevice: false },
+    )
+    await open()
+    // Inside the dialog: the page outside an open modal dialog is inert, so unheard.
+    const said = () =>
+      find("[data-e2e=search] [role=status][data-e2e=search-notes-status]").textContent
+    // The empty query lists no error row, so nothing is said either.
+    expect(said()).toBe("")
+
+    await type("new")
+    expect(said()).toBe("Could not search. Change your search to try again.")
+
+    await type("plan")
+    expect(listed()).toContain("Weekly plan | Home · …call the bank…")
+    expect(said()).toBe("")
   })
 
   it("draws the app's shortcut keys, a g sequence among them, without failing", async () => {

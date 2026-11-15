@@ -258,8 +258,10 @@ export function shortcutKeys(keys: string | undefined): Pick<PaletteOption, "kbd
  * fits both ("notse") finds the page first. A command the person cannot take is left out
  * ("New note" without a group they may write to, Activity while the rail hides it, "Install app"
  * while the browser offers no install, Notes, Tags, New note, New tag, Import notes and API tokens
- * with the notes off, Download your data and Change profile picture with files off); one that needs
- * the server stays listed offline, with why it cannot run. Each is found by its label, by its
+ * with the notes off, Download my data and Change profile picture with files off); one that needs
+ * the server ({@link SERVER_ONLY}: Import notes, New group, Keep your account, Download my data,
+ * Change profile picture, Delete my account, Turn off two-factor sign-in, Sign out of all other
+ * devices) stays listed offline, dimmed, with why it cannot run. Each is found by its label, by its
  * English label in every language, and by the words a person would try, in English and Russian.
  *
  * @param context The app's state.
@@ -269,7 +271,7 @@ export function paletteCommands(
   context: PaletteContext,
   select: (choice: SearchChoice) => void,
 ): PaletteOption[] {
-  const { t, currentGroup, online, shortcuts } = context
+  const { t, currentGroup, shortcuts } = context
   const heading = {
     page: t.t(`Shortcuts.page`),
     create: t.t(`Search.create`),
@@ -333,25 +335,17 @@ export function paletteCommands(
       })]
       : []),
     ...(inGroup
-      ? [{
-        ...command(
-          "import-notes",
-          `Search.importNotes`,
-          heading.create,
-          page(IMPORT_PATHS.new(NOTE_IMPORT_KIND.id)),
-          { detail: inGroup, aliases: [`import csv`, `upload notes`, `импорт заметок`] },
-        ),
-        // The file goes to the server: listed offline too, so the person learns why it does nothing.
-        disabledReason: online ? undefined : t.t(`Search.needsConnection`),
-      }]
+      ? [command(
+        "import-notes",
+        `Search.importNotes`,
+        heading.create,
+        page(IMPORT_PATHS.new(NOTE_IMPORT_KIND.id)),
+        { detail: inGroup, aliases: [`import csv`, `upload notes`, `импорт заметок`] },
+      )]
       : []),
-    {
-      ...command("new-group", `Search.newGroup`, heading.create, page(GROUP_PATHS.new), {
-        aliases: [`add group`, `create group`, `new team`, `новая группа`, `создать группу`],
-      }),
-      // Made on the server: listed offline too, so the person learns why it does nothing.
-      disabledReason: online ? undefined : t.t(`Search.needsConnection`),
-    },
+    command("new-group", `Search.newGroup`, heading.create, page(GROUP_PATHS.new), {
+      aliases: [`add group`, `create group`, `new team`, `новая группа`, `создать группу`],
+    }),
   ]
 
   const goTo: PaletteOption[] = GO_TO.flatMap((entry) => {
@@ -497,7 +491,9 @@ export function paletteCommands(
     }),
   ]
 
-  return [...thisPage, ...goTo, ...create, ...settings, ...account]
+  return [...thisPage, ...goTo, ...create, ...settings, ...account].map((option) =>
+    SERVER_ONLY.has(option.id) ? needsServer(context, option) : option
+  )
 }
 
 /**
@@ -599,11 +595,38 @@ export function quickCreateRows(context: PaletteContext, query: string): Palette
     ...(writable
       ? [{ ...row("note", `Search.newNote`), detail }, { ...row("tag", `Search.newTag`), detail }]
       : []),
-    {
-      ...row("group", `Search.newGroup`),
-      disabledReason: context.online ? undefined : t.t(`Search.needsConnection`),
-    },
+    needsServer(context, row("group", `Search.newGroup`)),
   ]
+}
+
+/**
+ * The commands only the server can carry out: each makes or changes something there, or opens a
+ * section whose one action calls it. Going to a page and the settings that read the device's data
+ * work offline; so do New note and New tag, queued until the connection is back, and Sign out,
+ * which signs this page out at once and ends the server's session later.
+ */
+const SERVER_ONLY = new Set(
+  [
+    `import-notes`,
+    `new-group`,
+    `keep`,
+    `download-data`,
+    `change-picture`,
+    `delete-account`,
+    `turn-off-two-factor`,
+    `end-other-sessions`,
+  ].map((id) => `action-${id}`),
+)
+
+/**
+ * `option` as the server must run it: offline it stays listed but dimmed, with why, so the person
+ * learns why it does nothing instead of finding it missing.
+ */
+function needsServer(context: PaletteContext, option: PaletteOption): PaletteOption {
+  return {
+    ...option,
+    disabledReason: context.online ? undefined : context.t.t(`Search.needsConnection`),
+  }
 }
 
 /**
