@@ -443,6 +443,25 @@ describe("stats screen states", () => {
     expect(calls).toEqual([["refresh", true]])
   })
 
+  it("names only the time of kept numbers from today, and the date too from an earlier day", async () => {
+    const stale = { ...ready(), stale: true, updatedAt: "2026-10-27T14:40:00.000Z" }
+    const notice = async (timeZone: string) => {
+      await mount(
+        <FormatContext.Provider
+          value={createFormatters({ locale: `en-GB`, timeZone, hourCycle: `h23` })}
+        >
+          <AdminStatsScreen
+            {...props([], { response: stale, now: Date.parse("2026-10-27T20:00:00Z") })}
+          />
+        </FormatContext.Provider>,
+      )
+      return find("[data-e2e=admin-stats-stale]").textContent
+    }
+    // 20:00 in UTC is still the 27th; in Ho Chi Minh City (UTC+7) it is already the 28th.
+    expect(await notice(`UTC`)).toContain("Showing numbers from 14:40.")
+    expect(await notice(`Asia/Ho_Chi_Minh`)).toContain("Showing numbers from 27 Oct 2026, 21:40.")
+  })
+
   it("shows our API's failure with Try again, which reads the shared copy", async () => {
     const calls: unknown[][] = []
     await mount(<AdminStatsScreen {...props(calls, { response: null, error: "Down." })} />)

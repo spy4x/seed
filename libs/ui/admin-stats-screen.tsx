@@ -78,6 +78,8 @@ export interface AdminStatsScreenProps {
   /** Reads again; `fresh` skips the shared copy ("Refresh numbers"). */
   onRefresh: (fresh: boolean) => void
   navigate?: Navigate
+  /** The current time in epoch milliseconds, which says whether kept numbers are from today. */
+  now?: number
 }
 
 /**
@@ -149,7 +151,7 @@ export function AdminStatsScreen(props: AdminStatsScreenProps): JSX.Element {
 
 /** Everything under the header: one state, or the numbers. */
 function StatsBody(props: AdminStatsScreenProps): JSX.Element {
-  const { response, pending, error, onRefresh } = props
+  const { response, pending, error, onRefresh, now = Date.now() } = props
   const t = useAdminText()
   const format = useFormat()
   if (response === null) {
@@ -209,7 +211,12 @@ function StatsBody(props: AdminStatsScreenProps): JSX.Element {
             </Button>
           }
         >
-          {t.t(`AdminStats.stale`, { time: format.time(response.updatedAt) })}
+          {t.t(`AdminStats.stale`, {
+            // Today's numbers name the time; older ones, in the operator's zone, the date too.
+            time: format.date(response.updatedAt) === format.date(now)
+              ? format.time(response.updatedAt)
+              : format.dateTime(response.updatedAt),
+          })}
         </Notice>
       )}
       {error && <ErrorState message={t.t(`AdminStats.loadError`)} />}
