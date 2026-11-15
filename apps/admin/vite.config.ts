@@ -86,7 +86,7 @@ export default defineConfig({
     }],
   },
   // Its own cache, apart from the SPA's dev server (see the SPA's vite.config.ts).
-  cacheDir: fromFileUrl(new URL("./.vite", import.meta.url)),
+  cacheDir: fromFileUrl(new URL("../../node_modules/.cache/admin/.vite", import.meta.url)),
   optimizeDeps: {
     // Found late through the Deno plugin's resolver, each would re-bundle and blank a page that
     // loaded meanwhile; the SPA names them up front for the same reason.
