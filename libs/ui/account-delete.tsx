@@ -87,6 +87,11 @@ export interface AccountDeleteProps {
    * provider sign-in a moment ago instead. Until there is one it shows the way to it and no form.
    */
   providerProof?: ProviderProof | null
+  /**
+   * Whether the card says to download a copy of the data first, with a link to the export; left
+   * out, it does. `false` while files are off, since there is no export to download.
+   */
+  exportLink?: boolean
   navigate?: Navigate
 }
 
@@ -108,6 +113,7 @@ export function AccountDelete(
     onCancel,
     onDelete,
     providerProof,
+    exportLink = true,
     navigate,
   }: AccountDeleteProps,
 ): JSX.Element {
@@ -136,23 +142,25 @@ export function AccountDelete(
           value={
             <span class="flex flex-col gap-1">
               <span>{t.t(`AccountDelete.summary`, { count: ACCOUNT_DELETION_GRACE_DAYS })}</span>
-              <span>
-                <Rich
-                  parts={t.parts(`AccountDelete.copyFirst`)}
-                  tags={{
-                    link: (text) => (
-                      <Link
-                        href={`${profilePath("account")}#${DATA_EXPORT_ANCHOR}`}
-                        navigate={navigate}
-                        class="pc-link"
-                        data-e2e="account-delete-export-link"
-                      >
-                        {text}
-                      </Link>
-                    ),
-                  }}
-                />
-              </span>
+              {exportLink && (
+                <span>
+                  <Rich
+                    parts={t.parts(`AccountDelete.copyFirst`)}
+                    tags={{
+                      link: (text) => (
+                        <Link
+                          href={`${profilePath("account")}#${DATA_EXPORT_ANCHOR}`}
+                          navigate={navigate}
+                          class="pc-link"
+                          data-e2e="account-delete-export-link"
+                        >
+                          {text}
+                        </Link>
+                      ),
+                    }}
+                  />
+                </span>
+              )}
             </span>
           }
           action={

@@ -111,6 +111,11 @@ export interface PaletteContext {
    * Settings has no API tokens, whose API serves the notes only.
    */
   notes?: boolean
+  /**
+   * Whether files are on; left out, they are. Off, "Download your data" and "Change profile
+   * picture" are not listed, since the server can neither build an export nor keep a picture.
+   */
+  files?: boolean
 }
 
 /** The Go to commands: the rail's and the shortcuts' destinations, with the words that find them. */
@@ -250,7 +255,8 @@ export function shortcutKeys(keys: string | undefined): Pick<PaletteOption, "kbd
  * them: This page, Go to, Create, Settings, Account. Go to comes before Create, so a typo that
  * fits both ("notse") finds the page first. A command the person cannot take is left out
  * ("New note" without a group they may write to, Activity while the rail hides it, "Install app"
- * while the browser offers no install, Notes, Tags, New note, New tag and API tokens with the notes off); one that needs the server
+ * while the browser offers no install, Notes, Tags, New note, New tag and API tokens with the notes
+ * off, Download my data and Change profile picture with files off); one that needs the server
  * ({@link SERVER_ONLY}: New group, Keep your account, Download my data, Change profile picture,
  * Delete my account, Turn off two-factor sign-in, Sign out of all other devices) stays listed
  * offline, dimmed, with why it cannot run. Each is found by its label, by its English label in
@@ -376,35 +382,38 @@ export function paletteCommands(
         },
       )
     ),
-    command(
-      "download-data",
-      `Search.downloadData`,
-      heading.settings,
-      page(`${profilePath("account")}#${DATA_EXPORT_ANCHOR}`),
-      {
-        detail: {
-          key: context.notes === false ? `Search.downloadDetailPlain` : `Search.downloadDetail`,
+    // Both need the file store: with files off each could only fail.
+    ...(context.files === false ? [] : [
+      command(
+        "download-data",
+        `Search.downloadData`,
+        heading.settings,
+        page(`${profilePath("account")}#${DATA_EXPORT_ANCHOR}`),
+        {
+          detail: {
+            key: context.notes === false ? `Search.downloadDetailPlain` : `Search.downloadDetail`,
+          },
+          aliases: [
+            `export my data`,
+            `GDPR`,
+            `archive`,
+            `takeout`,
+            `скачать данные`,
+            `экспорт данных`,
+          ],
         },
-        aliases: [
-          `export my data`,
-          `GDPR`,
-          `archive`,
-          `takeout`,
-          `скачать данные`,
-          `экспорт данных`,
-        ],
-      },
-    ),
-    command(
-      "change-picture",
-      `Search.changePicture`,
-      heading.settings,
-      page(`${profilePath("account")}#${PICTURE_BUTTON_ID}`),
-      {
-        detail: pictureRule(context.locale),
-        aliases: [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],
-      },
-    ),
+      ),
+      command(
+        "change-picture",
+        `Search.changePicture`,
+        heading.settings,
+        page(`${profilePath("account")}#${PICTURE_BUTTON_ID}`),
+        {
+          detail: pictureRule(context.locale),
+          aliases: [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],
+        },
+      ),
+    ]),
     command("shortcuts", `Frame.shortcuts`, heading.settings, { kind: "shortcuts" }, {
       aliases: SHORTCUTS_ALIASES,
       kbd: kbdOf(shortcuts, `Shortcuts.show`),

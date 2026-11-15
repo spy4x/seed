@@ -10,14 +10,15 @@ import { adminModuleRoutes } from "./registry.ts"
 const passThrough: MiddlewareHandler<APIContext> = (_c, next) => next()
 
 /**
- * Every module's routes over a context that reads nothing, with the catalog `on` or off and the
- * notes as `notes` says (left out: on).
+ * Every module's routes over a context that reads nothing, with the catalog `on` or off, the
+ * notes as `notes` says (left out: on) and files off when `filesOff` is set.
  */
-function app(on: boolean, notes?: NotesSetup) {
+function app(on: boolean, notes?: NotesSetup, filesOff = false) {
   const context = {
     limit: passThrough,
     catalog: { on, settings: CATALOG_DEFAULT_SETTINGS },
     notes,
+    fileStoreReachable: filesOff ? null : () => Promise.resolve(true),
     websiteStats: { setup: null, missing: [], itemPath: `/{slug}` },
   } as unknown as AdminModuleContext
   const app = new Hono<APIContext>()
@@ -49,6 +50,17 @@ describe(`operator area registry`, () => {
   it(`leaves the notes out of the modules while they are off`, async () => {
     const { ids } = await (await app(false, NOTES_OFF).request(`/modules`)).json()
     expect(ids).not.toContain(`notes`)
+    expect(ids).toContain(`groups`)
+  })
+
+  it(`lists files among the modules while they are on`, async () => {
+    const { ids } = await (await app(false).request(`/modules`)).json()
+    expect(ids).toContain(`files`)
+  })
+
+  it(`leaves files out of the modules while they are off`, async () => {
+    const { ids } = await (await app(false, undefined, true).request(`/modules`)).json()
+    expect(ids).not.toContain(`files`)
     expect(ids).toContain(`groups`)
   })
 })

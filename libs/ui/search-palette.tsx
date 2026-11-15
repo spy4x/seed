@@ -98,6 +98,8 @@ export interface SearchPaletteProps {
    * row or command names notes or tags.
    */
   notes?: boolean
+  /** Whether files are on; left out, they are. Off, no command uploads a file or exports data. */
+  files?: boolean
   /**
    * The product's own records the palette finds, such as accounts or invoices: each source is its
    * own section after the groups and commands. Matched on the device only, never for the empty
@@ -279,6 +281,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       canInstall: props.canInstall ?? false,
       twoFactor: props.twoFactor ?? false,
       notes: props.notes ?? true,
+      files: props.files ?? true,
     }
   }
 

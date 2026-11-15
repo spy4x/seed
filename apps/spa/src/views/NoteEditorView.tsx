@@ -14,7 +14,7 @@ import { sessionState } from "../state/session.ts"
 import { toasts } from "../state/toasts.ts"
 import { tagsStore } from "../state/tags.ts"
 import { selectionStore } from "../state/selection.ts"
-import { OfflineStatus } from "../modules.ts"
+import { filesOn, OfflineStatus } from "../modules.ts"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { isSpaPath } from "./spa-paths.ts"
@@ -61,7 +61,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
       void store.open(groupId, noteId)
       void tagsStore.open(groupId)
       void membersStore.open(groupId)
-      void attachmentsStore.open(groupId, noteId)
+      if (filesOn()) void attachmentsStore.open(groupId, noteId)
     }
   }, [groupId, noteId])
   // Files that waited for the network upload once it is back.
@@ -94,7 +94,10 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   const youId = sessionState.value.user?.id ?? null
   const members = membersStore.groupId.value === groupId ? membersStore.members.value : null
   const canWrite = membership !== undefined && canMutateNotes(membership.role)
-  const attachments = attachmentsStore.groupId.value === groupId ? attachmentsStore : null
+  // With files off the editor draws no Attachments section: every upload would only fail.
+  const attachments = filesOn() && attachmentsStore.groupId.value === groupId
+    ? attachmentsStore
+    : null
   const moveTargets = membership && canMutateNotes(membership.role)
     ? moveTargetsOf(groupsStore.groups.value, membership.id)
     : []
@@ -111,6 +114,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
       noteOpen: shownId !== null && saved !== undefined,
       creating,
       canMove,
+      files: filesOn(),
     }, {
       // Focus lands on the button too, so the person is there once the chooser closes.
       attach: () => clickAfterPalette(document, document.getElementById(ATTACH_BUTTON_ID)),

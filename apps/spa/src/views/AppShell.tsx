@@ -29,6 +29,7 @@ import {
   callQuery,
   canCall,
   currentLayer,
+  filesOn,
   notesOn,
   reviewConflicts,
   type UnsentWait,
@@ -342,6 +343,7 @@ export function AppShell(
           twoFactor={user.mfa === UserMFAStatus.CONFIGURED}
           benchmark={benchmarkOpen()}
           notes={notes}
+          files={filesOn()}
         />
       }
       shortcuts={{

@@ -8,7 +8,9 @@ import { loadRuntimeConfig as loadConfigFile } from "@spy4x/platform/browser/run
  *
  * `realtime` and `offline` switch the WebSocket module and the local-data module off when they are
  * `false` (`apps/spa/src/modules.ts`, ADR 003); both run by default. `notes` turns the notes
- * example off in the same way, with the API's `NOTES=false` (docs/start-a-product.md). `demo` is `true` only while
+ * example off in the same way, with the API's `NOTES=false` (docs/start-a-product.md). `files` is
+ * `false` with the API's `FILES=false`, read exactly as the API reads it (docs/files.md, "Without files"): the app draws no control
+ * that uploads a file or asks for a data export. `demo` is `true` only while
  * the public demo is on (docs/demo.md); any other value leaves it off. `guest` is `false` only
  * when guest accounts are off (docs/guests.md); "Try it now" shows otherwise. `site` is the public
  * website's host (`MPA_DOMAIN`), whose legal pages the line under "Try it now" links to.
@@ -19,6 +21,8 @@ const RuntimeConfigSchema = type({
   "realtime?": moduleSwitch("realtime"),
   "offline?": moduleSwitch("offline"),
   "notes?": moduleSwitch("notes"),
+  // Read as the API's `isFilesOn` reads `FILES`, which compose copies here: off only for `false`.
+  "files?": type("unknown").pipe((value): boolean => String(value).trim() !== "false"),
   "demo?": type("unknown").pipe((value): boolean => String(value) === "true"),
   "guest?": type("unknown").pipe((value): boolean => String(value).toLowerCase() !== "false"),
   "site?": "string",
