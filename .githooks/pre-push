@@ -15,6 +15,10 @@ while read -r _ local_sha _ _; do
 done
 [ -z "$needed" ] && exit 0
 
+# Git exports GIT_DIR and friends to a hook. Left set, every git command the tests run in a temp
+# repository of their own acts on this one instead and rewrites its index.
+unset $(git rev-parse --local-env-vars)
+
 # CI's locale: some tests format dates and numbers differently in another one.
 LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 deno task check
 status=$?
