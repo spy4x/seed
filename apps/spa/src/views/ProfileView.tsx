@@ -239,7 +239,19 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   // the section has drawn it; a button `PROFILE_ANCHORS` marks is pressed too, so its dialog opens.
   // The router's own navigations fire `pushState`, so the palette's command lands here even when
   // the section is already open. A section that has not drawn the control (no other device to
-  // sign out) keeps the focus on its heading.
+  // sign out) keeps the focus on its heading. Each navigation is a new object, so the same command
+  // picked twice lands twice. Once acted on, it is dropped, from the address too, so neither a
+  // later render nor a return to this history entry acts again.
+  const [anchor, setAnchor] = useState(() => ({ id: location.hash.slice(1) }))
+  useEffect(() => {
+    const note = () => setAnchor({ id: location.hash.slice(1) })
+    addEventListener("pushState", note)
+    addEventListener("hashchange", note)
+    return () => {
+      removeEventListener("pushState", note)
+      removeEventListener("hashchange", note)
+    }
+  }, [])
   const devicesRead = devices.sessions.value !== null || devices.error.value !== null
   const anchorsReady = section === "account"
     ? dataExport.current.value !== undefined
@@ -247,31 +259,19 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     ? devicesRead
     : section === "danger-zone"
   useEffect(() => {
-    if (!anchorsReady) return
-    // After the settings layout has focused the section's heading, which it does on the same turn.
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const focusAnchor = () => {
-      clearTimeout(timer)
-      timer = setTimeout(() => {
-        const id = location.hash.slice(1)
-        const press = PROFILE_ANCHORS.get(id)
-        if (press === undefined) return
-        const control = document.getElementById(id)
-        control?.focus()
-        // Focused first: the dialog gives the focus back to it when it closes. The picture's
-        // chooser opens still within the palette's keypress.
-        if (press) control?.click()
-      }, 0)
-    }
-    focusAnchor()
-    addEventListener("pushState", focusAnchor)
-    addEventListener("hashchange", focusAnchor)
-    return () => {
-      clearTimeout(timer)
-      removeEventListener("pushState", focusAnchor)
-      removeEventListener("hashchange", focusAnchor)
-    }
-  }, [section, anchorsReady])
+    const press = PROFILE_ANCHORS.get(anchor.id)
+    if (!anchorsReady || press === undefined) return
+    // An effect, never the `pushState` listener itself: the settings layout focuses a newly shown
+    // section's heading in an effect of the same render, which runs before this one (a child's
+    // effects run first). Pressed from the listener, the dialog opened before that and gave the
+    // focus back to the heading.
+    setAnchor({ id: `` })
+    history.replaceState(history.state, ``, location.pathname + location.search)
+    const control = document.getElementById(anchor.id)
+    control?.focus()
+    // Focused first: the dialog gives the focus back to it when it closes.
+    if (press) control?.click()
+  }, [anchor, anchorsReady])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
   // A switch from a guest account lands here with `?moved=`, the groups that came along.

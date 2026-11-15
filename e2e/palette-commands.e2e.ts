@@ -257,7 +257,7 @@ test.describe("the palette's commands", () => {
         "account-delete-dialog",
         "account-delete-open",
       )
-      await expect(page).toHaveURL("/profile/danger-zone#account-delete-open")
+      await expect(page).toHaveURL("/profile/danger-zone")
       await enterOpensOnly(
         page,
         "end other sessions",
@@ -265,7 +265,7 @@ test.describe("the palette's commands", () => {
         "sessions-end-others-confirm",
         "sessions-end-others",
       )
-      await expect(page).toHaveURL("/profile/security#sessions-end-others")
+      await expect(page).toHaveURL("/profile/security")
 
       expect(acts).toEqual([])
       expect((await page.request.get(`${apiBase}/api/auth/me`)).status()).toBe(200)
@@ -306,7 +306,7 @@ test.describe("the palette's commands", () => {
         "totp-disable-confirm",
         "totp-disable",
       )
-      await expect(page).toHaveURL("/profile/security#totp-disable")
+      await expect(page).toHaveURL("/profile/security")
 
       expect(acts).toEqual([])
       const me = await (await page.request.get(`${apiBase}/api/auth/me`)).json()
