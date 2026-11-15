@@ -62,18 +62,16 @@ variables:
   - &image_when
     - event: pull_request
       path:
-        # What .dockerignore lets into the build context, the Dockerfiles among apps/, and this
-        # file.
-        - apps/**
-        - libs/**
-        - i18n/**
-        - infra/**
-        - docs/*.md
-        - e2e/*
-        - media/demo/*
+        # What decides whether an image builds: the four Dockerfiles, .dockerignore, the
+        # manifest, the lockfile and this file. A source change is built on `main` (see
+        # image-node).
+        - apps/api/dockerfile.node
+        - apps/api/dockerfile.bun
+        - apps/mpa/dockerfile.node
+        - apps/mpa/dockerfile.bun
+        - .dockerignore
         - deno.jsonc
         - deno.lock
-        - .dockerignore
         - .woodpecker/ci.yml
     - event: push
       branch: main
@@ -482,8 +480,8 @@ steps:
 
   image-node:
     # Builds the Node and Bun images of the API (apps/api/dockerfile.node, apps/api/dockerfile.bun,
-    # #748) and of the website (apps/mpa/dockerfile.node, apps/mpa/dockerfile.bun, #623), so a pull
-    # request that breaks a bundle or a Dockerfile fails here, not at the release. Kaniko builds
+    # #748) and of the website (apps/mpa/dockerfile.node, apps/mpa/dockerfile.bun, #623), so a
+    # change that breaks a bundle or a Dockerfile fails here, not at the release. Kaniko builds
     # inside an ordinary container, with no Docker daemon, no volume and no secret, and pushes
     # nothing (`--no-push`), as in release.yml. All four are self-contained, so no base image has
     # to be published first. One step each: kaniko builds in its own root
@@ -491,10 +489,12 @@ steps:
     # Base images come through Google's public Docker Hub mirror (`--registry-mirror`), because
     # anonymous pulls from Docker Hub hit its rate limit and failed all four steps (#923). The
     # mirror needs no login; an image it lacks is pulled from Docker Hub as before.
-    # A pull request builds them only when it changes a file that goes into an image (#876): the
-    # build context that .dockerignore lets in (each Dockerfile copies it whole), the Dockerfiles,
-    # and this file. A push to `main` and a tag always build them; the nightly run builds none,
-    # since the push it runs on built them.
+    # A pull request builds them only when it changes what decides whether an image builds: the
+    # four Dockerfiles, .dockerignore, the manifest, the lockfile and this file. Building them on
+    # every source change cost about a minute of CPU each on a shared host, so a source change
+    # that breaks a bundle is caught by the push to `main` after the merge
+    # (https://github.com/spy4x/ringmaster/issues/296). A push to `main` and a tag always build
+    # them; the nightly run builds none, since the push it runs on built them.
     image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
     when: *image_when
     commands:
