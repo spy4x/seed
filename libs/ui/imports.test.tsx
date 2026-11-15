@@ -172,6 +172,13 @@ function picker(overrides: Partial<ImportNewScreenProps> = {}): VNode {
 }
 
 describe("the import picker", () => {
+  it("knows the notes kind only while the notes are on, and no unknown kind", () => {
+    expect(NOTES.limits.id).toBe(`notes`)
+    expect(importKindView(`notes`, false)).toBeNull()
+    expect(importKindView(`bank`, true)).toBeNull()
+    expect(importKindView(null, true)).toBeNull()
+  })
+
   it("says the kind's limits and hands over a file of its type", async () => {
     const chosen: File[] = []
     await mount(picker({ onFile: (file) => chosen.push(file) }))
