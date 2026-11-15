@@ -7,7 +7,7 @@ of your SaaS, already built: sign-in with a second factor, groups with roles, pe
 billing, realtime, an offline app and an admin area, on Postgres and Docker Compose. MIT-licensed,
 usable today, built in public.
 
-[![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
+[![CI](https://ci.antonshubin.com/api/badges/15/status.svg?events=push,cron)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 <!-- Seed's own site: see docs/start-a-product.md -->
