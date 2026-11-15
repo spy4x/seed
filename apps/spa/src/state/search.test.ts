@@ -178,6 +178,22 @@ describe("the palette's note search", () => {
     expect(ids(await search("budget", signal))).toEqual(["n-1"])
   })
 
+  it("answers a saved note in the group it was moved to, though its date did not change, offline", async () => {
+    const WORK = "group-work"
+    let device: Record<string, NoteItem[]> = { [HOME]: [note("n-1", HOME, "Plan")], [WORK]: [] }
+    const search = createNoteSearch(sources({
+      canCall: () => false,
+      groupIds: () => [HOME, WORK],
+      deviceNotes: (groupId) => Promise.resolve(device[groupId] ?? []),
+    }))
+    const groups = async () => (await search("plan", signal)).notes.map((n) => n.groupId)
+    expect(await groups()).toEqual([HOME])
+
+    device = { [HOME]: [], [WORK]: [note("n-1", WORK, "Plan")] }
+
+    expect(await groups()).toEqual([WORK])
+  })
+
   it("searches the device when a proxy answers for the server", async () => {
     const answer = await createNoteSearch(sources({
       server: () => Promise.reject(new ReadRefused("Bad gateway", 502)),
