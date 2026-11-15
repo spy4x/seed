@@ -26,6 +26,7 @@ describe("refusedAction", () => {
     expect(refusedAction("/api/groups/0190/invitations")).toBe("invite")
     expect(refusedAction("/api/groups/0190/billing/checkout")).toBe("billing")
     expect(refusedAction("/api/groups/import/check")).toBe("upload")
+    expect(refusedAction("/api/groups/0190/imports?kind=notes&name=a.csv")).toBe("upload")
     expect(refusedAction("/api/tokens")).toBe("api-token")
     expect(refusedAction("/api/push?device=1")).toBe("push")
     expect(refusedAction("/api/notes")).toBeNull()

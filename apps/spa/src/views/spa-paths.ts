@@ -55,6 +55,10 @@ export const SPA_ROUTES = {
   // The create-only API token page. Not `/api-tokens/new`: the proxy sends every address that
   // starts with `/api` to the API, so a reload there would never reach the SPA.
   "/tokens/new": { open: false },
+  // A file import's picker (`?kind=notes`), before an import's page, which would take "new" for
+  // its id. The pages name no kind, so they stay routed with the notes off.
+  "/imports/new": { open: false },
+  "/imports/:importId": { open: false },
   // The benchmark: only in a development build and on the public demo (`benchmarkOpen`).
   "/benchmark": { open: false },
   // The profile: the list of its sections, and one section (`/profile/security`).

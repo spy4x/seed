@@ -229,7 +229,9 @@ my data" names the profile and groups only. The app's billing screen shows no pl
 plans in `libs/domain/billing/+lib.ts` still list notes and files (`features`, `limits`), and the
 website's pricing page shows them: write your own. The personal API tokens are hidden, since their
 API serves the notes only: the profile and the palette offer no API tokens, `/tokens/new` shows the
-not-found page and `/profile/api-tokens` opens the profile. The demo still names notes.
+not-found page and `/profile/api-tokens` opens the profile. The notes import is hidden too:
+the notes menu and the palette offer no "Import notes…", and `/imports/new?kind=notes` shows the
+not-found page. The demo still names notes.
 
 Create the first operator on the server; it needs no mail
 ([The first operator](operator-access.md#the-first-operator)):

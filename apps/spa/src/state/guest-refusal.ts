@@ -12,7 +12,7 @@ export function refusedAction(path: string): GuestLimitedAction | null {
   const parts = new URL(path, "http://app.invalid").pathname.split("/")
   if (parts.includes("invitations")) return "invite"
   if (parts.includes("checkout")) return "billing"
-  if (parts.includes("import")) return "upload"
+  if (parts.includes("import") || parts.includes("imports")) return "upload"
   if (parts.includes("tokens")) return "api-token"
   if (parts.includes("push")) return "push"
   if (parts.includes("telegram")) return "telegram"

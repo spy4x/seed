@@ -11,7 +11,12 @@ const USER = 7
  * `calls` records every read in order, so a read of a group that is gone shows up.
  */
 function harness(
-  options: { open: string | null; groupsAfterRead: string[]; settings?: string | null },
+  options: {
+    open: string | null
+    groupsAfterRead: string[]
+    settings?: string | null
+    importing?: string | null
+  },
 ) {
   const calls: string[] = []
   const inbox: string[] = []
@@ -37,6 +42,10 @@ function harness(
     members: {
       groupId: signal(options.settings ?? null),
       refresh: () => Promise.resolve(void calls.push("members")),
+    },
+    imports: {
+      groupId: signal(options.importing ?? null),
+      refresh: () => Promise.resolve(void calls.push("imports")),
     },
     notifications: { refresh: () => Promise.resolve(void inbox.push("notifications")) },
     onboarding: { hint: () => Promise.resolve(void onboarding.push("onboarding")) },
@@ -111,6 +120,16 @@ describe("the pull after a hint", () => {
     await removed.pull({ groupId: "team" })
     expect(removed.calls).not.toContain("members")
   })
+
+  it("reads the open import again for its group's hint only", async () => {
+    const own = harness({ open: null, importing: "team", groupsAfterRead: ["home", "team"] })
+    await own.pull({ groupId: "team" })
+    expect(own.calls).toEqual(["flush", "selection", "groups", "imports"])
+
+    const other = harness({ open: null, importing: "team", groupsAfterRead: ["home", "team"] })
+    await other.pull({ groupId: "home" })
+    expect(other.calls).not.toContain("imports")
+  })
   it("reads the unread count again for this person's own hint, for a start-up and a reconnect", async () => {
     const own = harness({ open: null, groupsAfterRead: ["home"] })
     await own.pull({ groupId: userChangeGroupId(USER) })
@@ -131,7 +150,11 @@ describe("the pull after a hint", () => {
 })
 
 /** A change check over fakes; `sequences` is what the next read of the groups list answers. */
-function checkHarness(open: string | null, settings: string | null = null) {
+function checkHarness(
+  open: string | null,
+  settings: string | null = null,
+  importing: string | null = null,
+) {
   const calls: string[] = []
   const sequences: Record<string, string> = { home: "1", team: "5" }
   const groups = signal<readonly { id: string; changeSequence: string }[]>([])
@@ -155,6 +178,10 @@ function checkHarness(open: string | null, settings: string | null = null) {
     members: {
       groupId: signal(settings),
       refresh: () => Promise.resolve(void calls.push("members")),
+    },
+    imports: {
+      groupId: signal(importing),
+      refresh: () => Promise.resolve(void calls.push("imports")),
     },
     notifications: { refresh: () => Promise.resolve(void calls.push("notifications")) },
   })
@@ -195,6 +222,15 @@ describe("the change check of a page with no socket", () => {
 
     expect(moved).toEqual(["flush", "groups", "notes", "members"])
     expect(settled).toEqual(["flush", "groups"])
+  })
+
+  it("reads the open import again once its group's sequence moved, without a socket", async () => {
+    const { run, sequences } = checkHarness(null, null, "team")
+    await run(true)
+    expect(await run(false)).toEqual(["flush", "groups"])
+    sequences.team = "6"
+
+    expect(await run(false)).toEqual(["flush", "groups", "imports"])
   })
 
   it("leaves the notes alone when another group's sequence moved", async () => {

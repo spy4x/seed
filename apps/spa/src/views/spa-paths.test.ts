@@ -143,12 +143,14 @@ describe("the route order", () => {
         "/tags/new",
         "/notes/new",
         "/tokens/new",
+        "/imports/new",
         "/groups/abc/invitations/new",
       ]
     ) {
       expect(routeFor(path), path).toBe(path.replace("/abc/", "/:groupId/"))
     }
     expect(routeFor("/tags/abc")).toBe("/tags/:tagId")
+    expect(routeFor("/imports/abc")).toBe("/imports/:importId")
     expect(routeFor("/groups/abc")).toBe("/groups/:groupId/:tab?")
   })
 
