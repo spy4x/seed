@@ -54,6 +54,17 @@ export const API_TOKEN_PATHS = {
   new: "/tokens/new",
 } as const
 
+/**
+ * Where a file is imported into the current group (`docs/imports.md`). The addresses name no
+ * kind of record, so a product's own kind takes the same pages.
+ */
+export const IMPORT_PATHS = {
+  /** The file picker for one kind, with the person's recent imports under it. */
+  new: (kind: string) => `/imports/new?kind=${encodeURIComponent(kind)}`,
+  /** One import as it stands: reading, matching the columns, saved or undone. */
+  import: (importId: string) => `/imports/${encodeURIComponent(importId)}`,
+} as const
+
 /** The API reference, a page of the product's website (`apps/mpa/routes/[[lang]]/docs/api.tsx`). */
 export const API_DOCS_PATH = "/docs/api"
 

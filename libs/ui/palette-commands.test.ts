@@ -126,6 +126,16 @@ describe(`the palette's commands`, () => {
     expect(newGroup(false)?.disabledReason).toBe(`Needs a connection`)
   })
 
+  it(`offer Import notes to an editor with the notes on, opening the notes picker`, () => {
+    const importNotes = (overrides: Partial<PaletteContext> = {}) =>
+      paletteCommands(context(overrides), () => {}).find((o) => o.label === `Import notes`)
+    expect(importNotes()?.choice).toEqual({ kind: `page`, href: `/imports/new?kind=notes` })
+    expect(top(`import csv`)).toBe(`Import notes`)
+    expect(importNotes({ online: false })?.disabledReason).toBe(`Needs a connection`)
+    expect(importNotes({ currentGroup: { ...HOME, canWrite: false } })).toBeUndefined()
+    expect(importNotes({ notes: false })).toBeUndefined()
+  })
+
   it(`ask the app to sign out through its own sign-out, never directly`, () => {
     const signOut = paletteCommands(context(), () => {})
       .find((option) => option.label === `Sign out`)

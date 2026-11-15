@@ -8,8 +8,10 @@
 import type { CommandPaletteOption } from "@spy4x/preact-ui/command-palette"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { ThemePreference } from "@domain/identity"
+import { NOTE_IMPORT_KIND } from "@domain/notes"
 import {
   GROUP_PATHS,
+  IMPORT_PATHS,
   NOTE_PATHS,
   OVERVIEW_PATHS,
   profilePath,
@@ -241,7 +243,7 @@ export function shortcutKeys(keys: string | undefined): Pick<PaletteOption, "kbd
  * them: This page, Go to, Create, Settings, Account. Go to comes before Create, so a typo that
  * fits both ("notse") finds the page first. A command the person cannot take is left out
  * ("New note" without a group they may write to, Activity while the rail hides it, "Install app"
- * while the browser offers no install, Notes, Tags, New note, New tag and API tokens with the notes off); one that needs the server stays listed offline, with why
+ * while the browser offers no install, Notes, Tags, New note, New tag, Import notes and API tokens with the notes off); one that needs the server stays listed offline, with why
  * it cannot run. Each is found by its label, by its English label in every language, and by the
  * words a person would try, in English and Russian.
  *
@@ -314,6 +316,19 @@ export function paletteCommands(
         detail: inGroup,
         aliases: [`add tag`, `create tag`, `new label`, `новая метка`, `создать метку`],
       })]
+      : []),
+    ...(inGroup
+      ? [{
+        ...command(
+          "import-notes",
+          `Search.importNotes`,
+          heading.create,
+          page(IMPORT_PATHS.new(NOTE_IMPORT_KIND.id)),
+          { detail: inGroup, aliases: [`import csv`, `upload notes`, `импорт заметок`] },
+        ),
+        // The file goes to the server: listed offline too, so the person learns why it does nothing.
+        disabledReason: online ? undefined : t.t(`Search.needsConnection`),
+      }]
       : []),
     {
       ...command("new-group", `Search.newGroup`, heading.create, page(GROUP_PATHS.new), {
