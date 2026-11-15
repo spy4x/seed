@@ -54,6 +54,8 @@ function readImport(): ImportSummary {
     rowCount: 2,
     savedCount: null,
     errorCount: null,
+    skippedCount: null,
+    options: null,
     failure: null,
     createdAt: at,
     readAt: at,
@@ -80,6 +82,7 @@ function app(userId: number | null = STARTER) {
         Promise.resolve(groupId === GROUP_ID && id === IMPORT_ID ? stored : null),
       listForUser: (_groupId, user) => Promise.resolve(user === STARTER ? [stored] : []),
       file: () => Promise.resolve(FILE),
+      review: () => Promise.reject(new Error(`the notes kind has no review`)),
       requestCommit: (_groupId, _id, _actor, mapping) => {
         writes.push(`commit ${JSON.stringify(mapping)}`)
         return Promise.resolve({ ...stored, status: ImportStatus.COMMITTING })
@@ -161,6 +164,35 @@ describe("uploading a file", () => {
     expect(writes).toEqual([])
   })
 
+  it("refuses options for a kind that reads none, and options past their limits, storing nothing", async () => {
+    const { hono, writes } = app()
+    const many = Object.fromEntries(Array.from({ length: 21 }, (_, i) => [`k${i}`, `v`]))
+    for (
+      const options of [
+        { account: `a` },
+        { account: `a`.repeat(2048) },
+        many,
+        { "1st": `a` },
+        { account: 1 },
+        [`a`],
+      ]
+    ) {
+      const query = new URLSearchParams({
+        kind: `notes`,
+        name: `a.csv`,
+        options: JSON.stringify(options),
+      })
+      const response = await hono.request(`${base}?${query}`, {
+        method: `POST`,
+        headers: origin,
+        body: FILE,
+      })
+      expect([options, response.status, (await apiError(response)).reason])
+        .toEqual([options, 400, `INVALID_REQUEST`])
+    }
+    expect(writes).toEqual([])
+  })
+
   it("asks for a session first", async () => {
     const { hono } = app(null)
     const response = await hono.request(`${base}?kind=notes&name=a.csv`, {
@@ -207,12 +239,14 @@ describe("checking and saving", () => {
       body: JSON.stringify({ mapping: { title: 0, body: 1 } }),
     })
     expect(response.status).toBe(200)
-    expect(await response.json()).toMatchObject({
+    const body = await response.json()
+    expect(body).toMatchObject({
       rowCount: 2,
       valid: 1,
       withErrors: 1,
       rows: [{ row: 2 }],
     })
+    expect(body).not.toHaveProperty(`reviews`)
     expect(writes).toEqual([])
   })
 
@@ -224,6 +258,26 @@ describe("checking and saving", () => {
       body: JSON.stringify({ mapping: { title: 5 } }),
     })
     expect(response.status).toBe(400)
+    expect(writes).toEqual([])
+  })
+
+  it("refuses choices for a field that is not a choice, a row below 1 and a long value before queueing", async () => {
+    const { hono, writes } = app()
+    for (
+      const choices of [
+        { "1": { title: `Picked` } },
+        { "0": { title: `Picked` } },
+        { "1": { title: `a`.repeat(201) } },
+      ]
+    ) {
+      const response = await hono.request(`${base}/${IMPORT_ID}/commit`, {
+        method: `POST`,
+        headers: json,
+        body: JSON.stringify({ mapping: { title: 0 }, choices }),
+      })
+      expect([choices, response.status, (await apiError(response)).reason])
+        .toEqual([choices, 400, `INVALID_REQUEST`])
+    }
     expect(writes).toEqual([])
   })
 

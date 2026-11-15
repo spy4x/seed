@@ -5,6 +5,7 @@ import {
   assertCanSeeImport,
   IMPORT_EVENTS,
   IMPORT_LIST_MAX,
+  type ImportChoices,
   ImportError,
   type ImportMapping,
   ImportStatus,
@@ -16,7 +17,13 @@ import {
   recordGroupChange,
 } from "@server/groups/group-change-log.ts"
 import { enqueueJob } from "@server/jobs/jobs.ts"
-import { type ImportKind, kindOf } from "./import-kind.ts"
+import {
+  type ImportKind,
+  type ImportReview,
+  type ImportReviewContext,
+  kindOf,
+  reviewValues,
+} from "./import-kind.ts"
 
 /** The job that reads an uploaded file. Its row's `aggregateId` is the import's id. */
 export const IMPORT_READ_JOB = "imports.read"
@@ -39,6 +46,8 @@ interface ImportRow extends postgres.Row {
   rowCount: number | null
   savedCount: number | null
   errorCount: number | null
+  skippedCount: number | null
+  optionsJson: string | null
   failure: string | null
   createdAt: Date
   readAt: Date | null
@@ -55,6 +64,8 @@ export interface ImportCreateInput {
   kind: string
   fileName: string
   file: Uint8Array
+  /** The upload's options, for the kind's `readOptions`; `undefined` when there are none. */
+  options?: Record<string, string>
 }
 
 /**
@@ -67,7 +78,9 @@ function columns(sql: postgres.Sql) {
     imports.user_id AS "userId", imports.file_name AS "fileName", imports.file_size AS "fileSize",
     imports.columns::text AS "columnsJson", imports.sample::text AS "sampleJson",
     imports.mapping::text AS "mappingJson", imports.row_count AS "rowCount",
-    imports.saved_count AS "savedCount", imports.error_count AS "errorCount", imports.failure,
+    imports.saved_count AS "savedCount", imports.error_count AS "errorCount",
+    imports.skipped_count AS "skippedCount", imports.options::text AS "optionsJson",
+    imports.failure,
     imports.created_at AS "createdAt", imports.read_at AS "readAt", imports.failed_at AS "failedAt",
     imports.commit_requested_at AS "commitRequestedAt", imports.committed_at AS "committedAt",
     imports.undone_at AS "undoneAt"
@@ -100,6 +113,8 @@ export function toSummary(
     rowCount: row.rowCount,
     savedCount: row.savedCount,
     errorCount: row.errorCount,
+    skippedCount: row.skippedCount,
+    options: JSON.parse(row.optionsJson ?? `null`),
     failure: row.failure,
     createdAt: row.createdAt,
     readAt: row.readAt,
@@ -185,19 +200,29 @@ export class PostgresImportRepository {
     private readonly kinds: readonly ImportKind[],
   ) {}
 
-  /** Stores an upload with its file and queues its read. */
+  /**
+   * Stores an upload with its file and queues its read. A kind with `readOptions` reads the
+   * options here, after the role check, and its answer is stored; it may refuse them.
+   */
   async create(
     input: ImportCreateInput,
     actorId: number,
     kind: ImportKind,
   ): Promise<ImportSummary> {
     return await this.sql.begin(async (tx) => {
-      assertMayAct(await lockRole(tx, input.groupId, actorId), kind, actorId, actorId)
+      const role = assertMayAct(await lockRole(tx, input.groupId, actorId), kind, actorId, actorId)
+      if (input.options !== undefined && !kind.readOptions) throw noOptions(kind)
+      const options = kind.readOptions
+        ? await kind.readOptions(tx, input.options ?? {}, { groupId: input.groupId, actorId, role })
+        : null
       const [row] = await tx<ImportRow[]>`
-        INSERT INTO imports (id, group_id, user_id, kind, status, file_name, file_size, file)
+        INSERT INTO imports (
+          id, group_id, user_id, kind, status, file_name, file_size, file, options
+        )
         VALUES (
           ${input.id}, ${input.groupId}, ${actorId}, ${input.kind}, ${ImportStatus.READING},
-          ${input.fileName}, ${input.file.byteLength}, ${input.file}
+          ${input.fileName}, ${input.file.byteLength}, ${input.file},
+          ${options == null ? null : tx.json(options as postgres.JSONValue)}
         )
         RETURNING ${columns(tx)}
       `
@@ -235,14 +260,28 @@ export class PostgresImportRepository {
   }
 
   /**
-   * Saves a read import under `mapping`: stores the mapping and queues the commit job. Asking again
-   * while it saves, or once it is saved, changes nothing and answers the import as it is.
+   * Runs the kind's `review` over checked values in a read-only transaction: a check's look at the
+   * database, which writes nothing.
+   */
+  async review(
+    kind: ImportKind,
+    values: readonly unknown[],
+    context: ImportReviewContext,
+  ): Promise<ImportReview[]> {
+    return await this.sql.begin(`read only`, (tx) => reviewValues(kind, tx, values, context))
+  }
+
+  /**
+   * Saves a read import under `mapping` and the person's `choices`: stores both and queues the
+   * commit job. Asking again while it saves, or once it is saved, changes nothing and answers the
+   * import as it is.
    */
   async requestCommit(
     groupId: string,
     id: string,
     actorId: number,
     mapping: ImportMapping,
+    choices?: ImportChoices,
   ): Promise<ImportSummary> {
     return await this.sql.begin(async (tx) => {
       const { row } = await this.lockVisible(tx, groupId, id, actorId)
@@ -252,6 +291,7 @@ export class PostgresImportRepository {
       if (row.status !== ImportStatus.READY) throw notReady(row.status)
       const [updated] = await tx<ImportRow[]>`
         UPDATE imports SET status = ${ImportStatus.COMMITTING}, mapping = ${tx.json(mapping)},
+          choices = ${choices === undefined ? null : tx.json(choices)},
           commit_requested_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING ${columns(tx)}
@@ -285,6 +325,8 @@ export class PostgresImportRepository {
         groupId,
         actorId,
         role,
+        options: JSON.parse(row.optionsJson ?? `null`),
+        choices: [],
         changeSequence: sequence,
         // An undo adds nothing, so no cap applies.
         allowances: UNLIMITED.limits,
@@ -318,6 +360,11 @@ export class PostgresImportRepository {
     const kind = kindOf(this.kinds, row.kind)
     return { row, role: assertMayAct(role, kind, row.userId, actorId), kind }
   }
+}
+
+/** The refusal of options for a kind that reads none. */
+export function noOptions(kind: ImportKind): ImportError {
+  return new ImportError("INVALID_REQUEST", `${kind.label} import takes no options`)
 }
 
 /** The refusal of a step the import's status does not allow. */

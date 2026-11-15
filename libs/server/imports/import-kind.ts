@@ -6,6 +6,7 @@ import {
   IMPORT_FILE_MAX_BYTES,
   IMPORT_ROW_ERRORS_MAX,
   type ImportCheckResult,
+  type ImportChoices,
   ImportError,
   type ImportField,
   type ImportMapping,
@@ -22,6 +23,33 @@ export interface ImportRead {
   mapping: ImportMapping
 }
 
+/** Who uploads, for a kind's `readOptions`, in the upload's transaction. */
+export interface ImportOptionsContext {
+  groupId: string
+  actorId: number
+  /** Their role, read in this transaction, known to create the kind's records. */
+  role: GroupRole
+}
+
+/** What a kind's `review` needs: the import, who acts and the stored options. */
+export interface ImportReviewContext {
+  importId: string
+  groupId: string
+  /** The person who checks, or the uploader on a save. */
+  actorId: number
+  role: GroupRole
+  /** What `readOptions` answered at the upload, `null` for none. */
+  options: unknown
+}
+
+/** What a kind's review says of one checked value. */
+export interface ImportReview {
+  /** Why a save leaves the row out, in words (such as "Saved before"), or `null` to save it. */
+  skip: string | null
+  /** Values proposed for the kind's choice fields; the person's choices override them. */
+  suggestions: Record<string, string>
+}
+
 /** What a kind's `commit` and `undo` need, in the flow's own transaction. */
 export interface ImportContext {
   importId: string
@@ -30,6 +58,13 @@ export interface ImportContext {
   actorId: number
   /** Their role, read again in this transaction. */
   role: GroupRole
+  /** What `readOptions` answered at the upload, `null` for none. */
+  options: unknown
+  /**
+   * On a save, one entry per value, in the same order: the review's suggestions overlaid with the
+   * person's choices for that row. The kind checks them itself. Empty on an undo.
+   */
+  choices: readonly Readonly<Record<string, string>>[]
   /** The group change recorded for this step; stamp every written row with it. */
   changeSequence: string
   /**
@@ -65,8 +100,33 @@ export interface ImportKind<V = unknown> {
    * the person can act on. The bytes are a stranger's: refuse what is past the kind's limits.
    */
   read(bytes: Uint8Array): Result<ImportRead, string> | Promise<Result<ImportRead, string>>
-  /** Checks one row under `mapping`: the value to write, or each problem in words. */
-  check(row: ImportRow, mapping: ImportMapping): Result<V, string[]>
+  /**
+   * Checks one row under `mapping`: the value to write, or each problem in words. `options` is
+   * what `readOptions` answered, `null` for none.
+   */
+  check(row: ImportRow, mapping: ImportMapping, options?: unknown): Result<V, string[]>
+  /**
+   * Optional. Reads the upload's `options` query inside the upload's transaction, after the role
+   * check, and answers what is stored and handed to every later step. Throws `ImportError` to
+   * refuse, such as `ITEM_NOT_FOUND` for a record of another group. Without it, an upload with
+   * options is refused.
+   */
+  readOptions?(
+    tx: postgres.TransactionSql,
+    raw: Readonly<Record<string, string>>,
+    context: ImportOptionsContext,
+  ): Promise<unknown>
+  /**
+   * Optional. Looks at the database for every checked value: one {@link ImportReview} per value,
+   * in the same order. A check answers them; the save runs it again in its own transaction and
+   * leaves out the skipped rows, so a second save of the same file can skip what the first wrote.
+   * A check runs it in a read-only transaction.
+   */
+  review?(
+    tx: postgres.TransactionSql,
+    values: readonly V[],
+    context: ImportReviewContext,
+  ): Promise<ImportReview[]>
   /**
    * Writes every value, in the flow's transaction, and answers the new records' ids. Throwing
    * rolls the whole save back, so a batch is saved whole or not at all.
@@ -88,7 +148,8 @@ const FIELD_KEY = /^[a-zA-Z][a-zA-Z0-9_]*$/
 
 /**
  * A kind, checked: its id is lower case words joined by `-`, it accepts at least one ending, its
- * size cap is a whole number up to {@link IMPORT_FILE_MAX_BYTES}, and its field keys are unique.
+ * size cap is a whole number up to {@link IMPORT_FILE_MAX_BYTES}, its field keys are unique, and no
+ * required field is a choice.
  *
  * @throws RangeError naming what is wrong.
  */
@@ -109,6 +170,10 @@ export function importKind<V>(kind: ImportKind<V>): ImportKind {
     !keys.every((key) => FIELD_KEY.test(key))
   ) {
     throw new RangeError(`import kind ${kind.id}: fields need unique keys such as "title"`)
+  }
+  const both = kind.fields.find((field) => field.required && field.choice)
+  if (both) {
+    throw new RangeError(`import kind ${kind.id}: required field ${both.key} cannot be a choice`)
   }
   return Object.freeze({ ...kind }) as ImportKind
 }
@@ -159,14 +224,17 @@ export function checkRows(
   kind: ImportKind,
   rows: readonly ImportRow[],
   mapping: ImportMapping,
-): { values: unknown[]; result: ImportCheckResult } {
+  options: unknown = null,
+): { values: unknown[]; valueRows: number[]; result: ImportCheckResult } {
   const values: unknown[] = []
+  const valueRows: number[] = []
   const refused: ImportCheckResult["rows"] = []
   let withErrors = 0
   rows.forEach((row, index) => {
-    const checked = kind.check(row, mapping)
+    const checked = kind.check(row, mapping, options)
     if (checked.ok) {
       values.push(checked.value)
+      valueRows.push(index + 1)
       return
     }
     withErrors++
@@ -176,6 +244,67 @@ export function checkRows(
   })
   return {
     values,
+    valueRows,
     result: { rowCount: rows.length, valid: values.length, withErrors, rows: refused },
   }
+}
+
+/**
+ * Refuses, with `INVALID_REQUEST` in words, choices for a field the kind does not mark `choice`
+ * or for a row past the file's `rowCount` (row numbers below 1 never pass the body's schema).
+ */
+export function assertChoices(kind: ImportKind, choices: ImportChoices, rowCount: number): void {
+  for (const [row, fields] of Object.entries(choices)) {
+    if (Number(row) < 1 || Number(row) > rowCount) {
+      throw new ImportError("INVALID_REQUEST", `The file has no row ${row}`)
+    }
+    for (const key of Object.keys(fields)) {
+      if (!kind.fields.some((field) => field.key === key && field.choice)) {
+        throw new ImportError("INVALID_REQUEST", `${kind.label} have no field "${key}" to choose`)
+      }
+    }
+  }
+}
+
+/**
+ * Runs the kind's `review` over `values`: one answer per value, in order.
+ *
+ * @throws Error when the kind answers a different number of reviews, a fault in the kind.
+ */
+export async function reviewValues(
+  kind: ImportKind,
+  tx: postgres.TransactionSql,
+  values: readonly unknown[],
+  context: ImportReviewContext,
+): Promise<ImportReview[]> {
+  if (!kind.review) throw new Error(`import kind ${kind.id} has no review`)
+  const reviews = await kind.review(tx, values, context)
+  if (reviews.length !== values.length) {
+    throw new Error(
+      `import kind ${kind.id}: review answered ${reviews.length} rows for ${values.length}`,
+    )
+  }
+  return reviews
+}
+
+/**
+ * The values a save writes and what its kind's `commit` gets with each: the rows the review did
+ * not skip, each with its suggestions overlaid with the person's `choices` for its row. Without
+ * reviews nothing is skipped and only the choices count. Choices for other rows are ignored.
+ */
+export function valuesToSave(
+  values: readonly unknown[],
+  valueRows: readonly number[],
+  reviews: readonly ImportReview[] | null,
+  choices: ImportChoices,
+): { values: unknown[]; choices: Record<string, string>[]; skipped: number } {
+  const kept: unknown[] = []
+  const chosen: Record<string, string>[] = []
+  values.forEach((value, index) => {
+    const review = reviews?.[index]
+    if (review?.skip != null) return
+    kept.push(value)
+    chosen.push({ ...review?.suggestions, ...choices[String(valueRows[index])] })
+  })
+  return { values: kept, choices: chosen, skipped: values.length - kept.length }
 }

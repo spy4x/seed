@@ -8,6 +8,7 @@ import {
   IMPORT_FILE_MAX_BYTES,
   ImportCheckQuery,
   type ImportCheckResult,
+  importCommitBodySchema,
   ImportCommitCommand,
   ImportCreateCommand,
   ImportError,
@@ -19,6 +20,7 @@ import {
   importUpload,
   importUploadQuerySchema,
   parseImportFileName,
+  parseImportOptions,
   parseImportRequest,
 } from "@domain/imports"
 import { readFeatureJson } from "@api/services/json-body.ts"
@@ -41,12 +43,14 @@ export interface ImportsRouteDependencies {
  * A group's imports, mounted at `/api/groups/:groupId/imports` (docs/imports.md). HTTP only, never
  * the socket: a file is an upload. Who may see and act is decided by the handlers, never here.
  *
- * - `POST /?kind=<kind>&name=<file name>` takes the file as the body, at most
- *   `IMPORT_FILE_MAX_BYTES`; 201 with the import, which a job then reads.
+ * - `POST /?kind=<kind>&name=<file name>&options=<JSON>` takes the file as the body, at most
+ *   `IMPORT_FILE_MAX_BYTES`; 201 with the import, which a job then reads. `options` is optional,
+ *   for a kind that reads them.
  * - `GET /` lists the person's own imports in the group, newest first.
  * - `GET /:importId` answers one import with its preview.
- * - `POST /:importId/check` takes `{ mapping }` and answers every refused row, capped; saves nothing.
- * - `POST /:importId/commit` takes `{ mapping }` and queues the save; 202 with the import.
+ * - `POST /:importId/check` takes `{ mapping }` and answers every refused row, capped, and the
+ *   kind's review of the valid rows when it has one; saves nothing.
+ * - `POST /:importId/commit` takes `{ mapping, choices? }` and queues the save; 202 with the import.
  * - `POST /:importId/undo` removes the records the save made.
  *
  * Writes need the web app's origin and accept an `Idempotency-Key` header.
@@ -70,6 +74,7 @@ export function createImportsRoute(dependencies: ImportsRouteDependencies): Hono
         name: c.req.query("name"),
       })
       const fileName = parseImportFileName(query.name)
+      const options = parseImportOptions(c.req.query("options"))
       const file = await importUpload(await readFile(c))
       const created = await dependencies.create(
         new ImportCreateCommand({
@@ -78,6 +83,7 @@ export function createImportsRoute(dependencies: ImportsRouteDependencies): Hono
           kind: query.kind,
           fileName,
           file,
+          options,
           requestId: c.get("requestId"),
           idempotencyKey: c.req.header("idempotency-key"),
         }),
@@ -99,11 +105,12 @@ export function createImportsRoute(dependencies: ImportsRouteDependencies): Hono
     })
     .post("/:importId/commit", requireSameOrigin, async (c) => {
       const ref = refOf(c)
-      const { mapping } = parseImportRequest(importMappingBodySchema, await readJson(c))
+      const { mapping, choices } = parseImportRequest(importCommitBodySchema, await readJson(c))
       const result = await dependencies.commit(
         new ImportCommitCommand({
           ...ref,
           mapping,
+          choices,
           requestId: c.get("requestId"),
           idempotencyKey: c.req.header("idempotency-key"),
         }),
