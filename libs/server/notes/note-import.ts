@@ -1,7 +1,7 @@
 import { type } from "arktype"
 import { assertRoomFor } from "@domain/billing"
 import { canMutateNotes } from "@domain/groups"
-import { NoteError, parseNoteRequest } from "@domain/notes"
+import { NOTE_IMPORT_KIND, NoteError, parseNoteRequest } from "@domain/notes"
 import {
   type CsvParseError,
   decodeTextFile,
@@ -18,13 +18,13 @@ import {
 } from "./postgres-note-repository.ts"
 
 /** The most rows one notes file holds, the header not counted. */
-export const NOTE_IMPORT_MAX_ROWS = 5_000
+export const NOTE_IMPORT_MAX_ROWS = NOTE_IMPORT_KIND.maxRows
 
 /** The most columns a notes file may have. */
 export const NOTE_IMPORT_MAX_COLUMNS = 50
 
 /** The largest notes file, in bytes. */
-export const NOTE_IMPORT_MAX_BYTES = 2 * 1024 * 1024
+export const NOTE_IMPORT_MAX_BYTES = NOTE_IMPORT_KIND.maxBytes
 
 /** The longest cell, in characters: a note's body. */
 const MAX_CELL = 10_000
@@ -45,9 +45,9 @@ const noteRowSchema = type({ title: `string`, body: `string` })
  * moves the batch's notes to the trash.
  */
 export const noteImportKind = importKind<{ title: string; body: string }>({
-  id: `notes`,
+  id: NOTE_IMPORT_KIND.id,
   label: `Notes`,
-  accept: [`.csv`, `.txt`],
+  accept: NOTE_IMPORT_KIND.accept,
   maxBytes: NOTE_IMPORT_MAX_BYTES,
   fields: [
     { key: `title`, label: `Title`, required: true },

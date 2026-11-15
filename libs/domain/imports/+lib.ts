@@ -76,6 +76,22 @@ export const IMPORT_EVENTS = {
   undone: "import.undone",
 } as const
 
+/**
+ * What the apps know of a kind before a file is chosen: its id and the files it takes. The server
+ * kind reads its own limits from the same value, so the picker refuses exactly what the API
+ * would.
+ */
+export interface ImportKindLimits {
+  /** The kind's id in the upload, such as `notes`. */
+  id: string
+  /** File name endings it takes, lower case with the dot, as `<input accept>` reads them. */
+  accept: readonly string[]
+  /** The largest file it takes, in bytes, at most {@link IMPORT_FILE_MAX_BYTES}. */
+  maxBytes: number
+  /** The most rows a file may hold, the header not counted. */
+  maxRows: number
+}
+
 /** One field a row of a kind can map to. */
 export interface ImportField {
   /** The field's key in a mapping, such as `title`. */
