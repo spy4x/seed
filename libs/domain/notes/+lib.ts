@@ -1,6 +1,7 @@
 import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
+import type { ImportKindLimits } from "@domain/imports"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
@@ -43,6 +44,18 @@ export const NOTE_TAG_MAX = 20
  * deleted for more days than this.
  */
 export const NOTE_RESTORE_DAYS = 30
+
+/**
+ * The notes import kind's limits (`docs/imports.md`): a `.csv` or `.txt` file of at most 2 MiB
+ * and 5,000 rows. The server's kind (`libs/server/notes/note-import.ts`) and the import page
+ * both read them.
+ */
+export const NOTE_IMPORT_KIND: ImportKindLimits = {
+  id: `notes`,
+  accept: [`.csv`, `.txt`],
+  maxBytes: 2 * 1024 * 1024,
+  maxRows: 5_000,
+}
 
 /** The most notes one move takes: a request for more is refused, not cut short. */
 export const NOTE_MOVE_MAX = 100

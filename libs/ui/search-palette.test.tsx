@@ -254,6 +254,7 @@ describe("SearchPalette", () => {
       "# Create",
       "New note | In Home",
       "New tag | In Home",
+      "Import notes | In Home",
       "New group",
       "# Settings",
       "Theme | System",

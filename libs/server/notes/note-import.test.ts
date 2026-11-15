@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { GroupRole } from "@domain/groups"
-import { NOTE_TITLE_MAX_LENGTH } from "@domain/notes"
+import { NOTE_IMPORT_KIND, NOTE_TITLE_MAX_LENGTH } from "@domain/notes"
 import { checkRows } from "@server/imports/import-kind.ts"
 import { NOTE_IMPORT_MAX_COLUMNS, NOTE_IMPORT_MAX_ROWS, noteImportKind } from "./note-import.ts"
 
@@ -24,6 +24,15 @@ async function read(bytes: Uint8Array) {
   if (!result.ok) throw new Error(`not read: ${result.error}`)
   return result.value
 }
+
+describe("the notes kind's limits", () => {
+  it("takes the files the SPA's picker offers: the same id, types and size", () => {
+    expect(noteImportKind.id).toBe(NOTE_IMPORT_KIND.id)
+    expect(noteImportKind.accept).toEqual(NOTE_IMPORT_KIND.accept)
+    expect(noteImportKind.maxBytes).toBe(NOTE_IMPORT_KIND.maxBytes)
+    expect(NOTE_IMPORT_MAX_ROWS).toBe(NOTE_IMPORT_KIND.maxRows)
+  })
+})
 
 describe("reading a notes file", () => {
   it("reads a header, guesses each field's column from its name and keeps the rows", async () => {

@@ -18,7 +18,7 @@ import { Modal } from "@spy4x/preact-ui/modal"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
 import type { PlanRefusal } from "@domain/billing"
 import { canMutateNotes, type GroupRole } from "@domain/groups"
-import { NOTE_RESTORE_DAYS } from "@domain/notes"
+import { NOTE_IMPORT_KIND, NOTE_RESTORE_DAYS } from "@domain/notes"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
@@ -26,7 +26,14 @@ import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Message, messageText } from "./message.ts"
 import { NoteTags, type TagRow } from "./tag-parts.tsx"
-import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
+import {
+  IMPORT_PATHS,
+  type Navigate,
+  NOTE_PATHS,
+  SCREEN_PATHS,
+  ScreenForm,
+  TAG_PATHS,
+} from "./progressive.tsx"
 import {
   defaultDirection,
   filterNotes,
@@ -456,6 +463,15 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             {canSelect && !selecting && !deletedMode && (
               <DropdownItem onClick={() => setSelecting(true)} dataE2E="notes-select">
                 {t.t(`Notes.select`)}
+              </DropdownItem>
+            )}
+            {group.canWrite && !selecting && (
+              <DropdownItem
+                href={IMPORT_PATHS.new(NOTE_IMPORT_KIND.id)}
+                navigate={navigate}
+                dataE2E="notes-import"
+              >
+                {t.t(`Notes.import`)}
               </DropdownItem>
             )}
             <DropdownItem href={TAG_PATHS.list} navigate={navigate} dataE2E="notes-tags">

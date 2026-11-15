@@ -360,6 +360,18 @@ describe("NotesScreen", () => {
     }
   })
 
+  it("offers Import notes in the menu to an editor, leading to the notes picker, and never to a viewer", async () => {
+    await mount(<NotesScreen {...listDefaults} />)
+    await click("[data-e2e=notes-menu]")
+    expect(find("[data-e2e=notes-import]").textContent).toBe("Import notes…")
+    expect(find("[data-e2e=notes-import]").getAttribute("href")).toBe("/imports/new?kind=notes")
+
+    await rerender(<NotesScreen {...listDefaults} group={viewerOfTeam} />)
+    // The menu stays open across the new props, so its other items still show.
+    expect(count("[data-e2e=notes-tags]")).toBe(1)
+    expect(count("[data-e2e=notes-import]")).toBe(0)
+  })
+
   it("shows a viewer the notes with no way to add, move or delete one", async () => {
     const html = renderToString(<NotesScreen {...listDefaults} group={viewerOfTeam} />)
 

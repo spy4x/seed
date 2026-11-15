@@ -26,6 +26,8 @@ AdminTour.guaranteeLogged	c7e2112b26d27012
 AdminTour.guaranteePrivate	463928190d858d53
 AdminTour.heroLead	14188406fed64e49
 AdminTour.heroTitle	b461790c3c567c48
+AdminTour.imports	7df60b64e7ef61e3
+AdminTour.importsText	3c159484f7567a38
 AdminTour.jobs	2f17a0f8d518e491
 AdminTour.jobsText	d2cc1f01a9c57749
 AdminTour.meta	c42fcae7d473ed98
@@ -299,6 +301,7 @@ FeatureExport.fact1	a8fa38b7a564fd1e
 FeatureExport.fact2	2bc07b51a371a18b
 FeatureExport.fact3	71736d6ec821f485
 FeatureExport.fact4	332f5f8778761636
+FeatureExport.fact5	87df573d37bdfa53
 FeatureExport.lead	036e491b4b3f4e3a
 FeatureExport.nav	d9eb6fc6e185ea1c
 FeatureExport.title	2803704286b5afc2
@@ -661,7 +664,7 @@ HomeStatus.account	46066626f2468d77
 HomeStatus.admin	6d2bfaf94b3b8c7f
 HomeStatus.attachments	3a32784710abb236
 HomeStatus.billing	6e73a0a721466ef6
-HomeStatus.export	7dde7f8db444ae7d
+HomeStatus.export	8becd44783926beb
 HomeStatus.eyebrow	bea026a656036a8c
 HomeStatus.follow	88c9a2dcf8348d03
 HomeStatus.groups	6b5980f8a663cfa0

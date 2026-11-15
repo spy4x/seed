@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check import-kind.ts registry.ts postgres-import-repository.ts import-jobs.ts",
+    "check": "deno check import-kind.ts registry.ts postgres-import-repository.ts import-jobs.ts admin-imports.ts",
     "test": "deno test import-kind.test.ts"
   }
 }

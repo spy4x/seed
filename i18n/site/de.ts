@@ -158,7 +158,8 @@ export default {
     "Gastkonten: die App mit einem Klick ausprobieren und das Konto behalten, indem man eine Anmeldemethode hinzufügt",
   "HomeStatus.groups":
     "Gruppen mit Mitgliedern, Rollen, Einladungen und Übertragung an einen neuen Inhaber",
-  "HomeStatus.export": "Eine Gruppe als Datei exportieren und als neue Gruppe importieren",
+  "HomeStatus.export":
+    "Eine Gruppe als Datei exportieren und als neue Gruppe importieren, dazu Notizen aus einer CSV importieren",
   "HomeStatus.attachments": "Bilder und PDFs an Notizen, im Rahmen des jeweiligen Tarifs",
   "HomeStatus.billing": "Abrechnung pro Mitglied mit Testphasen, über Stripe",
   "HomeStatus.account":
@@ -432,6 +433,8 @@ export default {
   "FeatureExport.fact3":
     "Jede Notiz und jeder Tag bekommt eine neue ID, deshalb kollidiert ein Import nie mit dem, was schon da ist",
   "FeatureExport.fact4": "Jedes Aggregat meldet seinen eigenen Teil der Datei an",
+  "FeatureExport.fact5":
+    "Notizen kommen auch aus einer CSV: Spalten zuordnen, jede abgelehnte Zeile sehen, als ein Paket speichern und in einem Schritt rückgängig machen",
   "FeatureExport.code": "Code des Exports lesen",
   "FeatureLanguages.nav": "Sprachen",
   "FeatureLanguages.title": "Von Anfang an in neun Sprachen",
@@ -716,6 +719,9 @@ export default {
   "AdminTour.jobs": "Jobs",
   "AdminTour.jobsText":
     "Jeder Hintergrund-Job. Starte einen fehlgeschlagenen neu oder brich ihn ab.",
+  "AdminTour.imports": "Importe",
+  "AdminTour.importsText":
+    "Die Datei-Importe aller Gruppen: Zahlen, Dauer und der Grund eines Fehlers. Nie der Inhalt der Datei.",
   "AdminTour.system": "System",
   "AdminTour.systemText": "Der Zustand von Datenbank, Cache, Job-Warteschlange und Backup.",
   "AdminTour.tokens": "API-Tokens",

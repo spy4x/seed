@@ -76,6 +76,22 @@ export const IMPORT_EVENTS = {
   undone: "import.undone",
 } as const
 
+/**
+ * What the apps know of a kind before a file is chosen: its id and the files it takes. The server
+ * kind reads its own limits from the same value, so the picker refuses exactly what the API
+ * would.
+ */
+export interface ImportKindLimits {
+  /** The kind's id in the upload, such as `notes`. */
+  id: string
+  /** File name endings it takes, lower case with the dot, as `<input accept>` reads them. */
+  accept: readonly string[]
+  /** The largest file it takes, in bytes, at most {@link IMPORT_FILE_MAX_BYTES}. */
+  maxBytes: number
+  /** The most rows a file may hold, the header not counted. */
+  maxRows: number
+}
+
 /** One field a row of a kind can map to. */
 export interface ImportField {
   /** The field's key in a mapping, such as `title`. */
@@ -401,3 +417,106 @@ export class ImportListQuery implements Query<ImportListPayload, { imports: Impo
   constructor(public data: ImportListPayload) {}
 }
 // #endregion Commands and queries
+
+// #region Operator area
+/** A status chip of the admin list; `all` is every import. */
+export type AdminImportStatusFilter =
+  | `all`
+  | `failed`
+  | `reading`
+  | `ready`
+  | `committing`
+  | `committed`
+  | `undone`
+
+/** The chips in their order: failures first, since they are what an operator looks for. */
+export const ADMIN_IMPORT_STATUS_FILTERS: readonly AdminImportStatusFilter[] = [
+  `all`,
+  `failed`,
+  `reading`,
+  `ready`,
+  `committing`,
+  `committed`,
+  `undone`,
+]
+
+/** The status each chip holds; `all` holds every one. */
+export const ADMIN_IMPORT_FILTER_STATUS: Readonly<
+  Record<AdminImportStatusFilter, ImportStatus | null>
+> = {
+  all: null,
+  failed: ImportStatus.FAILED,
+  reading: ImportStatus.READING,
+  ready: ImportStatus.READY,
+  committing: ImportStatus.COMMITTING,
+  committed: ImportStatus.COMMITTED,
+  undone: ImportStatus.UNDONE,
+}
+
+/** How many imports one page of the admin list holds. */
+export const ADMIN_IMPORTS_PAGE_SIZE = 50
+
+/** The admin list's chip and page, as the address and the API's query carry them. */
+export interface AdminImportFilter {
+  status: AdminImportStatusFilter
+  /** 1-based. */
+  page: number
+}
+
+/**
+ * Reads the admin list's filter from query parameters (`status`, `page`). A value it does not
+ * understand falls back to the default, so a hand-edited address still shows a list.
+ */
+export function parseAdminImportFilter(params: URLSearchParams): AdminImportFilter {
+  const raw = params.get(`status`) as AdminImportStatusFilter | null
+  const status = raw && ADMIN_IMPORT_STATUS_FILTERS.includes(raw) ? raw : `all`
+  const page = Number(params.get(`page`))
+  return { status, page: Number.isInteger(page) && page >= 1 && page <= 100_000 ? page : 1 }
+}
+
+/** The query string of `filter`, leaving out every part at its default. No leading `?`. */
+export function adminImportFilterQuery(filter: AdminImportFilter): string {
+  const params = new URLSearchParams()
+  if (filter.status !== `all`) params.set(`status`, filter.status)
+  if (filter.page > 1) params.set(`page`, String(filter.page))
+  return params.toString()
+}
+
+/**
+ * One import as an operator sees it: where it is, its counts and its timing. Never the file, its
+ * name, its cells, or the options and choices a person gave: those are the group's data.
+ */
+export interface AdminImportRow {
+  id: string
+  group: { id: string; name: string }
+  kind: string
+  status: ImportStatus
+  /** The person who uploaded it. */
+  uploaderId: number
+  rowCount: number | null
+  savedCount: number | null
+  errorCount: number | null
+  skippedCount: number | null
+  /** Why reading or saving failed, in the kind's words. */
+  failure: string | null
+  createdAt: string
+  readAt: string | null
+  failedAt: string | null
+  commitRequestedAt: string | null
+  committedAt: string | null
+  undoneAt: string | null
+  /** From upload to read (or to a failed read), in milliseconds; `null` while reading. */
+  readMs: number | null
+  /** From the save's start to its end (or its failure), in milliseconds; `null` until then. */
+  saveMs: number | null
+}
+
+/** One page of the admin list and the count of each chip. */
+export interface AdminImportListResponse {
+  imports: AdminImportRow[]
+  counts: Record<AdminImportStatusFilter, number>
+  total: number
+  page: number
+  pageSize: number
+}
+// #endregion Operator area

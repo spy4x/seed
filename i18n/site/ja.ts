@@ -157,7 +157,8 @@ export default {
   "HomeStatus.guests":
     "ゲストアカウント：ワンクリックでアプリを試せて、ログイン方法を追加すればアカウントをそのまま使い続けられます",
   "HomeStatus.groups": "メンバー、ロール、招待、オーナー権限の譲渡に対応したグループ",
-  "HomeStatus.export": "グループのファイルへのエクスポートと、新しいグループとしてのインポート",
+  "HomeStatus.export":
+    "グループのファイルへのエクスポート、新しいグループとしてのインポート、CSVからのメモのインポート",
   "HomeStatus.attachments": "メモへの画像やPDFの添付（各プランの容量内）",
   "HomeStatus.billing": "Stripeによるメンバー単位の課金と無料トライアル",
   "HomeStatus.account":
@@ -418,6 +419,8 @@ export default {
   "FeatureExport.fact3":
     "メモとタグにはすべて新しいIDが振られるので、インポートしても既存のデータと衝突しません",
   "FeatureExport.fact4": "各集約がファイル内の自分の担当部分を登録します",
+  "FeatureExport.fact5":
+    "メモはCSVからもインポートできます。列を対応づけ、拒否された行をすべて確認し、1つのまとまりとして保存し、1回の操作で取り消せます",
   "FeatureExport.code": "エクスポートのコードを読む",
   "FeatureLanguages.nav": "言語",
   "FeatureLanguages.title": "最初から9言語に対応",
@@ -684,6 +687,9 @@ export default {
   "AdminTour.auditText": "すべてのログイン、変更、オペレーターの操作。CSVでエクスポート可能。",
   "AdminTour.jobs": "ジョブ",
   "AdminTour.jobsText": "すべてのバックグラウンドジョブ。失敗したジョブの再実行やキャンセル。",
+  "AdminTour.imports": "インポート",
+  "AdminTour.importsText":
+    "全グループのファイルのインポート。件数、所要時間、失敗の理由を確認できます。ファイルの中身は表示しません。",
   "AdminTour.system": "システム",
   "AdminTour.systemText": "データベース、キャッシュ、ジョブキュー、バックアップの状態。",
   "AdminTour.tokens": "APIトークン",
