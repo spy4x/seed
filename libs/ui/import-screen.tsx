@@ -527,7 +527,8 @@ export function RefusedRows(
     <>
       {rows.length > 0 && (
         <Table
-          class="mt-3"
+          // The library holds a table 300 px tall for a list; a few refused rows need no room.
+          class="mt-3 min-h-0"
           caption={t.t(`Import.further`)}
           captionClass="sr-only"
           headerSlot={
