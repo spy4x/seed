@@ -128,11 +128,18 @@ test.describe("the admin audit log", () => {
       const phoneLine = rows.first().locator("[data-e2e=admin-audit-people-phone]")
       await expect(phoneLine).toContainText(targetEmail)
       const domain = await phoneLine.evaluate((line) => {
-        const text = [...line.querySelectorAll("bdi")].flatMap((bdi) => [...bdi.childNodes])
-          .find((node) => node.nodeType === Node.TEXT_NODE && node.textContent === "example.com")
-        if (!text) return null
+        // The address ends the name, so its domain is the last characters of the name's last
+        // text node, however the name is split into nodes.
+        const name = [...line.querySelectorAll("bdi")].find((bdi) => bdi.textContent?.includes("@"))
+        const text = name?.lastChild
+        if (
+          !text || text.nodeType !== Node.TEXT_NODE || !text.textContent?.endsWith("example.com")
+        ) {
+          return null
+        }
         const range = document.createRange()
-        range.selectNodeContents(text)
+        range.setStart(text, text.textContent.length - "example.com".length)
+        range.setEnd(text, text.textContent.length)
         return {
           lines: range.getClientRects().length,
           right: Math.ceil(line.closest("tr")!.getBoundingClientRect().right),
