@@ -15,6 +15,9 @@ import { useAppText } from "./i18n.ts"
 /** The message shown when ending a session failed without a message of its own. */
 export const SESSIONS_FAILURE = `SignedInDevices.failed`
 
+/** The id of "Sign out of all other devices", which the palette's command of that name presses. */
+export const END_OTHERS_BUTTON_ID = "sessions-end-others"
+
 export interface SignedInDevicesProps {
   /** This device first, then the rest; `null` while the list is not known yet. */
   sessions: readonly SignedInDevice[] | null
@@ -105,6 +108,7 @@ export function SignedInDevices(
           <Button
             type="button"
             variant="secondary"
+            id={END_OTHERS_BUTTON_ID}
             data-e2e="sessions-end-others"
             busy={pending}
             busyLabel={t.t(`SignedInDevices.signingOut`)}

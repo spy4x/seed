@@ -13,6 +13,7 @@ import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { GUEST_DELETE_WORD, type GuestLimitedAction } from "@domain/identity"
 import { Rich } from "@spy4x/preact-ui/i18n"
+import { ACCOUNT_DELETE_BUTTON_ID } from "./account-delete.tsx"
 import { GUEST_PATHS } from "./guest-screens.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -116,6 +117,7 @@ export function GuestAccountDelete(
               variant="secondary"
               size="sm"
               class={TOUCH_TARGET}
+              id={ACCOUNT_DELETE_BUTTON_ID}
               data-e2e="guest-delete-open"
               onClick={() => setOpen(true)}
             >

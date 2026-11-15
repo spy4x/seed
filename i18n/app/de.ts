@@ -1727,6 +1727,7 @@ export default {
   "Search.downloadDetail": "Eine ZIP-Datei mit deinem Profil, deinen Gruppen und Notizen",
   "Search.downloadDetailPlain": "Eine ZIP-Datei mit deinem Profil und deinen Gruppen",
   "Search.changePicture": "Profilbild ändern",
+  "Search.turnOffTwoFactor": "Zwei-Faktor-Schutz ausschalten",
   "Shortcuts.general": "Allgemein",
   "Shortcuts.goTo": "Gehe zu",
   "Shortcuts.newNote": "Unter „Neue Notiz“",

@@ -1579,6 +1579,7 @@ export default {
   "Search.downloadDetail": "プロフィール、グループ、メモをまとめたZIP",
   "Search.downloadDetailPlain": "プロフィールとグループをまとめたZIP",
   "Search.changePicture": "プロフィール写真を変更",
+  "Search.turnOffTwoFactor": "2段階認証をオフにする",
   "Shortcuts.general": "全般",
   "Shortcuts.goTo": "移動",
   "Shortcuts.newNote": "新しいメモで",

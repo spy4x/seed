@@ -1821,6 +1821,7 @@ export default {
   "Search.downloadDetail": "Un fichier ZIP de votre profil, de vos groupes et de vos notes",
   "Search.downloadDetailPlain": "Un fichier ZIP de votre profil et de vos groupes",
   "Search.changePicture": "Changer de photo de profil",
+  "Search.turnOffTwoFactor": "Désactiver la double authentification",
   "Shortcuts.general": "Général",
   "Shortcuts.goTo": "Aller à",
   "Shortcuts.newNote": "Dans Nouvelle note",
