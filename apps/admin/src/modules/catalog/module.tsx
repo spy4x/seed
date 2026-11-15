@@ -94,6 +94,9 @@ function ItemView(
   }, [editor.item])
   const catalog = state.catalog.value
   const tracking = catalog?.tracking === true
+  // `files` in the API's module list; until it is read the editor draws as with files on.
+  const moduleIds = context.moduleIds.value
+  const files = moduleIds === null || moduleIds.has(`files`)
   // The share links' numbers come after the item, so the editor never waits for them.
   useEffect(() => {
     if (tracking && editor.item) void state.readItemStats(editor.item.id)
@@ -120,7 +123,7 @@ function ItemView(
           if (await state.deleteItem()) go(ADMIN_CATALOG_PATHS.list)
         }}
         photos={editor.photos}
-        onUpload={(files) => void state.upload(files)}
+        onUpload={files ? (chosen) => void state.upload(chosen) : undefined}
         onPhotoMove={(from, to) => void state.movePhoto(from, to)}
         onPhotoSave={(photoId, change) => void state.savePhoto(photoId, change)}
         onPhotoRemove={(photoId) => void state.removePhoto(photoId)}

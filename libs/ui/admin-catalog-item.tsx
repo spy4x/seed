@@ -256,7 +256,11 @@ export interface AdminCatalogItemScreenProps {
   onHide: () => void
   onDelete: () => void
   photos: CatalogPhotosState
-  onUpload: (files: File[]) => void
+  /**
+   * Uploads the chosen photos. Left out while files are off (`FILES=false`): the card shows the
+   * item's photos with no Add photos button and no upload rule, since an upload could only fail.
+   */
+  onUpload?: (files: File[]) => void
   onPhotoMove: (from: number, to: number) => void
   onPhotoSave: (photoId: string, change: { alt: CatalogText; colourId: string | null }) => void
   onPhotoRemove: (photoId: string) => void
@@ -517,16 +521,22 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
           <Colours {...{ props, edit }} />
           <Sizes {...{ props, edit }} />
           <Availability {...{ props, edit }} />
-          {item ? <Photos {...props} item={item} /> : (
-            <Card>
-              <CardHeader title={t.t(`AdminCatalogItem.photos`)} headingLevel={2} />
-              <CardBody>
-                <p class="text-sm text-muted" data-e2e="catalog-item-photos-later">
-                  {t.t(`AdminCatalogItem.photosLater`)}
-                </p>
-              </CardBody>
-            </Card>
-          )}
+          {
+            /* A new item gets photos once saved; with files off it never gets any, so an item without
+              photos draws no Photos card that would ask for some. */
+          }
+          {item
+            ? (props.onUpload || item.photos.length > 0) && <Photos {...props} item={item} />
+            : props.onUpload && (
+              <Card>
+                <CardHeader title={t.t(`AdminCatalogItem.photos`)} headingLevel={2} />
+                <CardBody>
+                  <p class="text-sm text-muted" data-e2e="catalog-item-photos-later">
+                    {t.t(`AdminCatalogItem.photosLater`)}
+                  </p>
+                </CardBody>
+              </Card>
+            )}
 
           {item && props.shareLinks && (
             <ShareLinks
@@ -1270,7 +1280,7 @@ const PHOTO_STATE_WORDS: Record<CatalogPhoto[`state`], string | null> = {
  * a ring and a badge, and its thumbnail's name says it is the cover.
  */
 function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX.Element {
-  const { item, photos, settings } = props
+  const { item, photos, settings, onUpload } = props
   const t = useAdminText()
   const languages = settings.languages
   const [editing, setEditing] = useState<CatalogPhoto | null>(null)
@@ -1307,7 +1317,7 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
       <CardHeader
         title={t.t(`AdminCatalogItem.photos`)}
         headingLevel={2}
-        action={!full && (
+        action={onUpload && !full && (
           <FileInput
             id="catalog-item-photos"
             appearance="button"
@@ -1317,19 +1327,21 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
             label={t.t(`AdminCatalogItem.addPhotos`)}
             busy={photos.uploading > 0}
             busyLabel={t.t(`AdminCatalogItem.uploading`, { count: photos.uploading })}
-            onFiles={props.onUpload}
-            onReject={(refused) => props.onUpload(refused.map((rejection) => rejection.file))}
+            onFiles={onUpload}
+            onReject={(refused) => onUpload(refused.map((rejection) => rejection.file))}
           />
         )}
       />
       <CardBody>
         <Stack>
-          <p class="text-sm text-muted">
-            {t.t(`AdminCatalogItem.photosRule`, {
-              size: CATALOG_PHOTO_MAX_BYTES / 1024 / 1024,
-              count: CATALOG_PHOTOS_MAX,
-            })}
-          </p>
+          {onUpload && (
+            <p class="text-sm text-muted">
+              {t.t(`AdminCatalogItem.photosRule`, {
+                size: CATALOG_PHOTO_MAX_BYTES / 1024 / 1024,
+                count: CATALOG_PHOTOS_MAX,
+              })}
+            </p>
+          )}
           <ErrorState message={photos.error} />
           {item.photos.length > 0 && (
             <div ref={list}>

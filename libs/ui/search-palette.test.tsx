@@ -195,6 +195,21 @@ function status(): string {
   return find("[data-e2e=search] [role=status]").textContent?.trim() ?? ""
 }
 
+/**
+ * How many of the two commands that need the file store ("Download my data", "Change profile
+ * picture") the palette lists for "data" and "picture", with `files` as the app passes it.
+ */
+async function fileCommandsFound(files?: boolean): Promise<number> {
+  await mount({ files })
+  await open()
+  await type("data")
+  const data = listed()
+  await type("picture")
+  return [...data, ...listed()].filter((row) =>
+    /^(Download my data|Change profile picture)\b/.test(row)
+  ).length
+}
+
 describe("SearchPalette", () => {
   it("draws no trigger of its own, and opens on Ctrl K and on /", async () => {
     await mount()
@@ -527,6 +542,14 @@ describe("SearchPalette", () => {
     await type("download")
 
     expect(listed()).toContain("Download my data | A ZIP of your profile and groups")
+  })
+
+  it("lists Download my data and Change profile picture while files are on", async () => {
+    expect(await fileCommandsFound()).toBe(2)
+  })
+
+  it("with files off, lists neither Download my data nor Change profile picture", async () => {
+    expect(await fileCommandsFound(false)).toBe(0)
   })
 
   it("with the notes off, offers only New group from a query nothing else matches", async () => {

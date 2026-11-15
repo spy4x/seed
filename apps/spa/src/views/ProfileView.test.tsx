@@ -696,6 +696,47 @@ describe("ProfileView", () => {
     }
   })
 
+  it("draws no picture row, data export, its read or the delete card's export link with files off, and draws them on", async () => {
+    const reads: string[] = []
+    const refuse = globalThis.fetch
+    globalThis.fetch = (input, init) => {
+      reads.push(String(input))
+      return refuse(input, init)
+    }
+    const has = (hook: string) => root!.querySelector(`[data-e2e=${hook}]`) !== null
+    const visit = async () => {
+      reads.length = 0
+      await open("/profile/account", ROUTED)
+      await settle()
+      const account = {
+        picture: has("profile-picture-row"),
+        dataExport: has("data-export-row"),
+        read: reads.some((url) => url.endsWith("/api/account/data-export")),
+      }
+      await act(() => render(null, root!))
+      root!.remove()
+      await open("/profile/danger-zone", ROUTED)
+      await settle()
+      const seen = { ...account, exportLink: has("account-delete-export-link") }
+      await act(() => render(null, root!))
+      root!.remove()
+      root = null
+      return seen
+    }
+
+    try {
+      const on = await visit()
+      configureModules({ files: false })
+      const off = await visit()
+
+      expect(on).toEqual({ picture: true, dataExport: true, read: true, exportLink: true })
+      expect(off).toEqual({ picture: false, dataExport: false, read: false, exportLink: false })
+    } finally {
+      globalThis.fetch = refuse
+      configureModules({})
+    }
+  })
+
   it("says the data file holds the profile and groups, without notes, with the notes off", async () => {
     const state = () => root!.querySelector("[data-e2e=data-export-state]")?.textContent ?? ""
     await open("/profile/account", <ProfileView section="account" />)

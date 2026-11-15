@@ -9,6 +9,8 @@ SPA_REALTIME realtime
 SPA_OFFLINE offline
 # The notes example (docs/start-a-product.md): `false` with the API's `NOTES=false` hides its screens.
 SPA_NOTES notes
+# Files (docs/files.md): compose sets it from the API's `FILES`; `false` hides every upload control.
+SPA_FILES files
 # The public demo (docs/demo.md): `true` shows the demo line on the sign-in and sign-up pages.
 SPA_DEMO demo
 # Guest accounts (docs/guests.md): `false` hides "Try it now"; unset or anything else shows it.

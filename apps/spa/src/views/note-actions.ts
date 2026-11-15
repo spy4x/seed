@@ -12,16 +12,24 @@ import type { NotePageActions } from "./shortcuts.ts"
  * Attach wherever an editor writes (an open note or the create page), Copy link on any open note,
  * readers included, and Duplicate, Delete and, with another group to go to, Move on an open note an
  * editor can change. A note page with no note open (loading, not found, or the notice that the
- * note is in another group) offers nothing.
+ * note is in another group) offers nothing. With `files: false` Attach is never offered; left out,
+ * files are on.
  */
 export function offeredNoteActions(
-  page: { canWrite: boolean; noteOpen: boolean; creating: boolean; canMove: boolean },
+  page: {
+    canWrite: boolean
+    noteOpen: boolean
+    creating: boolean
+    canMove: boolean
+    files?: boolean
+  },
   run: Required<NotePageActions>,
 ): NotePageActions {
-  const { attach, copyLink, duplicate, move } = run
-  if (!page.noteOpen) return page.creating && page.canWrite ? { attach } : {}
+  const { copyLink, duplicate, move } = run
+  const attach = page.files === false ? {} : { attach: run.attach }
+  if (!page.noteOpen) return page.creating && page.canWrite ? attach : {}
   if (!page.canWrite) return { copyLink }
-  return { attach, duplicate, ...page.canMove ? { move } : {}, copyLink, delete: run.delete }
+  return { ...attach, duplicate, ...page.canMove ? { move } : {}, copyLink, delete: run.delete }
 }
 
 /** The toasts a note action shows. */
