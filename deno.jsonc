@@ -336,11 +336,11 @@
       "description": "Type check; prints only errors"
     },
     "test": {
-      "command": "deno run --allow-run=deno,git --allow-env=CI infra/scripts/test.ts",
+      "command": "deno run --allow-run=deno,git --allow-env=CI,CI_PIPELINE_EVENT,CI_COMMIT_TARGET_BRANCH infra/scripts/test.ts",
       "description": "Unit tests in parallel; prints failures and one summary line. Paths run only those files; CI=true or --verbose prints everything"
     },
     "test:integration": {
-      "command": "deno run --allow-run=deno infra/scripts/test-integration.ts",
+      "command": "deno run --allow-run=deno,git --allow-env=CI_PIPELINE_EVENT,CI_COMMIT_TARGET_BRANCH infra/scripts/test-integration.ts",
       "description": "Integration tests against your Postgres and Valkey. Paths run only those files; none runs tests/integration"
     },
     "e2e": {

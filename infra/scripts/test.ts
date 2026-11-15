@@ -9,6 +9,8 @@
  * - File or folder paths (`deno task test apps/api/routes/auth.test.ts --filter=429`): runs them
  *   with their group's permissions and prints everything. Other `-` arguments go to `deno test`.
  * - A full run first fails, naming each one, when a test file in the repository is in no group.
+ * - On a Woodpecker pull request, a full run tests only the files whose imports reach a change
+ *   (`relatedFlags` below).
  */
 
 /** One `deno test` run: its permission flags and the files and folders it tests. */
@@ -209,11 +211,15 @@ export const GROUPS: TestGroup[] = [
   { flags: [`--allow-read=i18n,apps,libs`], paths: [`i18n`] },
 ]
 
-/** The `deno test` arguments of a group, for the given paths (all of the group's by default). */
+/**
+ * The `deno test` arguments of a group, for the given paths (all of the group's by default). The
+ * `related` flags apply only to a group that `selectable` allows; any other runs whole.
+ */
 export function testArgs(
   group: TestGroup,
   paths = group.paths,
   extra: string[] = [],
+  related: string[] = [],
 ): string[] {
   const ignore = group.ignore?.length ? [`--ignore=${group.ignore.join(`,`)}`] : []
   return [
@@ -223,6 +229,7 @@ export function testArgs(
     ...group.flags,
     ...ignore,
     ...extra,
+    ...selectable(group) ? related : [],
     ...paths,
   ]
 }
@@ -251,15 +258,132 @@ export function ungrouped(files: string[]): string[] {
 }
 
 /**
+ * Changes the import graph cannot see, besides any `deno.json` or `deno.jsonc`: files tests read
+ * from disk, and what sets up the run. A pull request that changes one runs every test.
+ */
+export const RUN_ALL = [
+  `deno.lock`,
+  `package.json`,
+  `.woodpecker`,
+  `libs/server/db/migrations`,
+  `libs/server/db/schema.sql`,
+  `libs/server/blog/seed-posts`,
+  `e2e/fixtures`,
+  `apps/mpa/testdata`,
+  `infra/scripts/test.ts`,
+  `infra/scripts/test-integration.ts`,
+]
+
+/** Whether a change to `path` runs every test. */
+export function runsAll(path: string): boolean {
+  return /(^|\/)deno\.jsonc?$/.test(path) || RUN_ALL.some((root) => covers(root, path))
+}
+
+/**
+ * Whether a pull request may run only the files of `group` whose imports reach a change: it runs no
+ * program and reads nothing from disk but what `runsAll`, so its imports are all it depends on.
+ */
+export function selectable(group: TestGroup): boolean {
+  return group.flags.every((flag) =>
+    flag.startsWith(`--allow-env`) ||
+    flag.startsWith(`--allow-read=`) && flag.slice(`--allow-read=`.length).split(`,`).every(runsAll)
+  )
+}
+
+/** A file a pull request changes, and whether its head deleted it. */
+export interface Change {
+  path: string
+  deleted: boolean
+}
+
+/** The changes in the output of `git diff --name-status --no-renames -z`. */
+export function changesOf(output: string): Change[] {
+  const fields = output.split(`\0`)
+  const changes: Change[] = []
+  for (let i = 0; i + 1 < fields.length; i += 2) {
+    changes.push({ path: fields[i + 1], deleted: fields[i] === `D` })
+  }
+  return changes
+}
+
+/** Why every test runs for `changes`, or undefined when only the files they reach need to. */
+export function runAllReason(changes: Change[]): string | undefined {
+  const unseen = changes.find((change) => runsAll(change.path))
+  if (unseen) return `${unseen.path} changed, which the import graph cannot see`
+  if (!changes.some((change) => !change.deleted)) return `no changed file is left to trace`
+}
+
+/** Runs `git <args>` and returns its stdout; throws with its stderr when it fails. */
+async function git(args: string[]): Promise<string> {
+  const { success, stdout, stderr } = await new Deno.Command(`git`, { args }).output()
+  const decoder = new TextDecoder()
+  if (!success) throw new Error(`git ${args[0]} failed: ${decoder.decode(stderr).trim()}`)
+  return decoder.decode(stdout)
+}
+
+/**
+ * The `--related` flags that limit a Woodpecker pull request's tests to the files whose imports
+ * reach a change, or none to run every test; on a pull request, with a note for the log that
+ * says which.
+ *
+ * The changes are the diff between the head and the target branch's tip. That needs no shared
+ * history, which Woodpecker's one-commit clone lacks, and it also counts the target's newer
+ * changes: a test whose imports reach neither runs the same code the target already passed.
+ * Any failure on the way runs every test. `env` and `run` stand in for the process's in tests.
+ */
+export async function relatedFlags(
+  env = (name: string) => Deno.env.get(name),
+  run = git,
+): Promise<{ flags: string[]; note?: string }> {
+  const target = env(`CI_PIPELINE_EVENT`) === `pull_request` && env(`CI_COMMIT_TARGET_BRANCH`)
+  if (!target) return { flags: [] }
+  const ref = `refs/remotes/origin/${target}`
+  let reason: string | undefined
+  let changes: Change[] = []
+  try {
+    await run([`fetch`, `--no-tags`, `origin`, `+refs/heads/${target}:${ref}`])
+    changes = changesOf(await run([`diff`, `--name-status`, `--no-renames`, `-z`, ref, `HEAD`]))
+    reason = runAllReason(changes)
+  } catch (error) {
+    reason = (error as Error).message
+  }
+  if (reason) return { flags: [], note: `every test runs: ${reason}` }
+  return {
+    flags: changes.filter((change) => !change.deleted).map((change) => `--related=${change.path}`),
+    note: `only the tests whose imports reach the ${changes.length} changed files run`,
+  }
+}
+
+/**
+ * The number of test files `deno test` ran, read from its `running N tests from` lines and, under
+ * `--parallel`, which prints none, from the `./file => test` prefix of its result lines.
+ */
+export function filesRun(output: string): number {
+  const lines = output.replace(ANSI, ``)
+    .matchAll(/^(?:running \d+ tests? from (\S+)|(\.\/\S+) => )/gm)
+  return new Set(Array.from(lines, ([, serial, parallel]) => serial ?? parallel)).size
+}
+
+/** The log line that says how many of `total` test files ran and how many were skipped. */
+export function filesLine(task: string, run: number, total: number): string {
+  return `${task}: ${run} of ${total} test files ran; ${total - run} skipped, ` +
+    `their imports reach no change`
+}
+
+/**
  * Every `*.test.ts` and `*.test.tsx` file git tracks or would track: new files count, and ignored
  * folders (`node_modules`, `.volumes`, build output) do not.
  */
-async function testFiles(): Promise<string[]> {
-  const { success, stdout, stderr } = await new Deno.Command(`git`, {
-    args: [`ls-files`, `-z`, `-co`, `--exclude-standard`, `*.test.ts`, `*.test.tsx`],
-  }).output()
-  if (!success) throw new Error(`git ls-files failed: ${new TextDecoder().decode(stderr)}`)
-  return new TextDecoder().decode(stdout).split(`\0`).filter(Boolean)
+export async function testFiles(): Promise<string[]> {
+  const files = await git([
+    `ls-files`,
+    `-z`,
+    `-co`,
+    `--exclude-standard`,
+    `*.test.ts`,
+    `*.test.tsx`,
+  ])
+  return files.split(`\0`).filter(Boolean)
 }
 
 /** Test and step counts read from `deno test` summary lines. */
@@ -379,16 +503,22 @@ async function runPaths(paths: string[], extra: string[]): Promise<number> {
   return code
 }
 
-/** Runs every group, a few at a time, and prints failures and one summary line, or everything. */
-async function runAll(extra: string[], verbose: boolean): Promise<number> {
-  const missing = ungrouped(await testFiles())
+/**
+ * Runs every group, a few at a time, and prints failures and one summary line, or everything. The
+ * `related` flags limit the groups that `selectable` allows.
+ */
+async function runAll(extra: string[], verbose: boolean, related: string[]): Promise<number> {
+  const files = await testFiles()
+  const missing = ungrouped(files)
   if (missing.length) {
     console.error(`No test group covers these files; add each to a group in infra/scripts/test.ts:`)
     for (const file of missing.sort()) console.error(`  ${file}`)
     return 2
   }
   const started = performance.now()
-  const run = (group: TestGroup) => () => capture(testArgs(group, group.paths, extra))
+  const args = (group: TestGroup) =>
+    testArgs(group, group.paths, extra, related)
+  const run = (group: TestGroup) => () => capture(args(group))
   const parallel = GROUPS.filter((group) => !group.serial)
   const serial = GROUPS.filter((group) => group.serial)
   const results = await pool(parallel.map(run), JOBS)
@@ -400,9 +530,13 @@ async function runAll(extra: string[], verbose: boolean): Promise<number> {
     if (success) return
     if (!verbose) console.log(failuresOf(output))
     failed++
-    console.log(`\nFailed: deno ${testArgs(order[index], order[index].paths, extra).join(` `)}\n`)
+    console.log(`\nFailed: deno ${args(order[index]).join(` `)}\n`)
   })
-  const totals = totalsOf(results.map(({ output }) => output).join(`\n`))
+  const output = results.map((result) => result.output).join(`\n`)
+  if (related.length) {
+    console.log(filesLine(`test`, filesRun(output), files.filter((file) => groupOf(file)).length))
+  }
+  const totals = totalsOf(output)
   const seconds = Math.round((performance.now() - started) / 1000)
   const counts = `${totals.passed} passed (${totals.steps} steps) | ${totals.failed} failed` +
     (totals.ignored ? ` | ${totals.ignored} ignored` : ``)
@@ -419,5 +553,8 @@ if (import.meta.main) {
   const verbose = Deno.args.includes(`--verbose`) || Deno.env.get(`CI`) === `true`
   const extra = Deno.args.filter((arg) => arg.startsWith(`-`) && arg !== `--verbose`)
   const paths = Deno.args.filter((arg) => !arg.startsWith(`-`))
-  Deno.exit(paths.length ? await runPaths(paths, extra) : await runAll(extra, verbose))
+  if (paths.length) Deno.exit(await runPaths(paths, extra))
+  const { flags, note } = await relatedFlags()
+  if (note) console.log(`test: ${note}`)
+  Deno.exit(await runAll(extra, verbose, flags))
 }
