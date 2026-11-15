@@ -1,5 +1,6 @@
 import type { JSX } from "preact"
-import { useRef } from "preact/hooks"
+import { createPortal } from "preact/compat"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { useFormat } from "@spy4x/preact-ui/format"
 import {
   CommandPalette,
@@ -55,7 +56,9 @@ export interface SearchPaletteProps {
   /**
    * The notes for a query of at least {@link NOTE_QUERY_MIN} characters, best first; for the empty
    * query, the current group's most recent ones. `signal` aborts when the answer is no longer
-   * wanted. A rejection shows a dimmed error row under Notes; the rest of the list stays.
+   * wanted. A rejection for a typed query shows a dimmed error row under Notes, announced to a
+   * screen reader, and the rest of the list stays; for the empty query nothing shows: the recent
+   * notes are left out and the commands list as usual.
    */
   searchNotes: (query: string, signal: AbortSignal) => Promise<SearchNotesAnswer>
   /** Every group the person belongs to now. */
@@ -207,6 +210,12 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   // Sizes in an action's detail follow the person's region format, as their dates do.
   const region = useRef(``)
   region.current = useFormat().locale
+  // The palette's own status line says nothing for a failed note search, since the rest of the
+  // list is still answered, so this line says it. It sits inside the palette's dialog: the page
+  // outside an open modal dialog is inert, and a screen reader would not hear a change there.
+  const [notesError, setNotesError] = useState(``)
+  const [dialog, setDialog] = useState<HTMLDialogElement | null>(null)
+  useEffect(() => setDialog(root.current?.querySelector(`dialog`) ?? null), [])
 
   const search = async (query: string, signal: AbortSignal): Promise<PaletteOption[]> => {
     const { groups, currentGroup } = latest.current
@@ -223,6 +232,8 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
         return { notes: [], onDevice: false }
       })
       : { notes: [], onDevice: false }
+    // Said only when the error row is listed: for the empty query it is not.
+    if (!signal.aborted) setNotesError(failed && text !== `` ? t.t(`Search.error`) : ``)
     // The recent notes are all the current group's, so only a query's rows name their group.
     const namesGroup = text !== "" && groups.length > 1
     const groupName = new Map(groups.map((group) => [group.id, group.name]))
@@ -297,6 +308,10 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
         dataE2E="search"
         class="hidden"
       />
+      {dialog && createPortal(
+        <p role="status" data-e2e="search-notes-status" class="sr-only">{notesError}</p>,
+        dialog,
+      )}
     </div>
   )
 }
@@ -336,9 +351,9 @@ function recordRows(sources: readonly PaletteRecordSource[], query: string): Pal
 /**
  * A dimmed row under the notes heading that says why no note is listed: the query is too short to
  * search notes, the search `failed`, or `noneOnDevice`, only this device's notes were searched and
- * none matched, so the person searches again online before creating a duplicate. None for the empty query or with the
- * notes off. It is disabled and listed last, so a runnable row such as `New note: "…"` keeps the
- * highlight and Enter never picks it.
+ * none matched, so the person searches again online before creating a duplicate. None for the
+ * empty query or with the notes off. It is disabled and listed last, so a runnable row such as
+ * `New note: "…"` keeps the highlight and Enter never picks it.
  */
 function notesHint(
   t: Translator<string>,
@@ -348,8 +363,11 @@ function notesHint(
   failed: boolean,
 ): PaletteOption[] {
   if (text === "" || !notesOn) return []
-  const hint = (label: string, heading: string): PaletteOption[] => // An empty reason disables the row without a second line: its label already says why.
-  [{ id: `notes-hint`, label, group: t.t(heading), disabledReason: `` }]
+  // An empty reason disables the row; its label already says why.
+  const hint = (
+    label: string,
+    heading: string,
+  ): PaletteOption[] => [{ id: `notes-hint`, label, group: t.t(heading), disabledReason: `` }]
   if (Array.from(text).length < NOTE_QUERY_MIN) {
     return hint(t.t(`Search.tooShort`, { count: NOTE_QUERY_MIN }), `Search.notes`)
   }

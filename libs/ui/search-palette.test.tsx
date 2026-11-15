@@ -190,11 +190,6 @@ async function enter(ctrlKey = false): Promise<void> {
   })
 }
 
-/** The status line under the list: the loading or error words. */
-function status(): string {
-  return find("[data-e2e=search] [role=status]").textContent?.trim() ?? ""
-}
-
 /**
  * How many of the two commands that need the file store ("Download my data", "Change profile
  * picture") the palette lists for "data" and "picture", with `files` as the app passes it.
@@ -768,7 +763,28 @@ describe("SearchPalette", () => {
     expect(listed().slice(-2)).toEqual(["# Notes", failed])
     expect(find("[data-e2e=search] [role=option][aria-disabled=true]").textContent).toBe(failed)
     expect(listed()).toContain(`New note | In Home`)
-    expect(status()).not.toBe(failed)
+  })
+
+  it("says a failed note search in a live region inside the palette, and clears it once a search works", async () => {
+    await mount(
+      {},
+      (query) =>
+        query === "new"
+          ? Promise.reject(new Error("429"))
+          : { notes: query === "" ? [] : [PLAN], onDevice: false },
+    )
+    await open()
+    // Inside the dialog: the page outside an open modal dialog is inert, so unheard.
+    const said = () =>
+      find("[data-e2e=search] [role=status][data-e2e=search-notes-status]").textContent
+    expect(said()).toBe("")
+
+    await type("new")
+    expect(said()).toBe("Could not search. Change your search to try again.")
+
+    await type("plan")
+    expect(listed()).toContain("Weekly plan | Home · …call the bank…")
+    expect(said()).toBe("")
   })
 
   it("draws the app's shortcut keys, a g sequence among them, without failing", async () => {
