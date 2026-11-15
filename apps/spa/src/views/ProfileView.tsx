@@ -93,19 +93,17 @@ const CODE_MISSING = `ProfileView.codeMissing`
 const network = createOnlineStatus()
 
 /**
- * The controls a `#<id>` on a profile address lands on, by id: the section that draws each, and
- * whether it is pressed too. Pressing only ever opens a confirmation; none acts by itself. Any
- * other hash is ignored.
+ * The controls a `#<id>` on a profile address lands on, by id, and whether each is pressed too.
+ * Pressing only ever opens a confirmation or the file chooser; none acts by itself. Any other hash
+ * is ignored, and so is an id the open section does not draw.
  */
-const PROFILE_ANCHORS: ReadonlyMap<string, { section: ProfileSectionId; press: boolean }> = new Map(
-  [
-    [DATA_EXPORT_ANCHOR, { section: "account", press: false }],
-    [PICTURE_BUTTON_ID, { section: "account", press: true }],
-    [ACCOUNT_DELETE_BUTTON_ID, { section: "danger-zone", press: true }],
-    [TOTP_DISABLE_BUTTON_ID, { section: "security", press: true }],
-    [END_OTHERS_BUTTON_ID, { section: "security", press: true }],
-  ],
-)
+const PROFILE_ANCHORS: ReadonlyMap<string, boolean> = new Map([
+  [DATA_EXPORT_ANCHOR, false],
+  [PICTURE_BUTTON_ID, true],
+  [ACCOUNT_DELETE_BUTTON_ID, true],
+  [TOTP_DISABLE_BUTTON_ID, true],
+  [END_OTHERS_BUTTON_ID, true],
+])
 
 /**
  * Wires `ProfileScreen` to this app's session store, the auth calls, the e-mail store and the push
@@ -238,7 +236,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   }, [exportPreparing])
 
   // `/profile/<section>#<id>` (the delete section's link, the palette) lands on that control, once
-  // the section has drawn it; a button in `PRESSED_ANCHORS` is pressed too, so its dialog opens.
+  // the section has drawn it; a button `PROFILE_ANCHORS` marks is pressed too, so its dialog opens.
   // The router's own navigations fire `pushState`, so the palette's command lands here even when
   // the section is already open. A section that has not drawn the control (no other device to
   // sign out) keeps the focus on its heading.
@@ -249,20 +247,20 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     ? devicesRead
     : section === "danger-zone"
   useEffect(() => {
-    if (!section || !anchorsReady) return
+    if (!anchorsReady) return
     // After the settings layout has focused the section's heading, which it does on the same turn.
     let timer: ReturnType<typeof setTimeout> | undefined
     const focusAnchor = () => {
       clearTimeout(timer)
       timer = setTimeout(() => {
         const id = location.hash.slice(1)
-        const anchor = PROFILE_ANCHORS.get(id)
-        if (anchor?.section !== section) return
+        const press = PROFILE_ANCHORS.get(id)
+        if (press === undefined) return
         const control = document.getElementById(id)
         control?.focus()
         // Focused first: the dialog gives the focus back to it when it closes. The picture's
         // chooser opens still within the palette's keypress.
-        if (anchor.press) control?.click()
+        if (press) control?.click()
       }, 0)
     }
     focusAnchor()

@@ -567,10 +567,11 @@ describe("ProfileView", () => {
       onlyReads(calls)
     })
 
-    it("presses nothing for an id of another section, or one no section draws", async () => {
+    it("opens nothing for an id the open section does not draw, or one that is no palette target", async () => {
       for (const id of ["account-delete-open", "__proto__", "constructor", "password-new"]) {
         await land("security", id, { mfa: UserMFAStatus.CONFIGURED })
         expect(openDialogs(), id).toEqual([])
+        expect(document.activeElement?.id, id).not.toBe(id)
         await act(() => render(null, root!))
         root!.remove()
         root = null
