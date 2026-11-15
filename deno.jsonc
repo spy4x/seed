@@ -456,9 +456,10 @@
     "@spy4x/email": "jsr:@spy4x/email@1.127.0",
     "@spy4x/net": "jsr:@spy4x/net@1.127.0",
     "@spy4x/billing": "jsr:@spy4x/billing@1.127.0",
-    // The version preact-components 14.8.0 imports, so Seed's own imports and theirs share one copy
-    // and the screens' `Formatters` match theirs. It moves with preact-components.
+    // The versions preact-components 14.8.0 imports, so Seed's own imports and theirs share one
+    // copy and the screens' `Formatters` match theirs. They move with preact-components.
     "@spy4x/time": "jsr:@spy4x/time@1.126.0",
+    "@spy4x/search": "jsr:@spy4x/search@1.126.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",

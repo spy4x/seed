@@ -2484,6 +2484,7 @@
       "jsr:@spy4x/preact-theme@14.8.0",
       "jsr:@spy4x/preact-ui@14.8.0",
       "jsr:@spy4x/realtime@1.127.0",
+      "jsr:@spy4x/search@1.126.0",
       "jsr:@spy4x/server@1.127.0",
       "jsr:@spy4x/time@1.126.0",
       "jsr:@spy4x/validation@1.127.0",
