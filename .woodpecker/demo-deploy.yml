@@ -7,7 +7,7 @@
 # every push: the images are built on the server, which other projects share, and a day's merges
 # ship in one build.
 #
-# `main` is protected and each merge passed CI, so this runs no `ci.yml` first. The step is the
+# `main` is protected and each merge passed CI, so this runs no `ci.yml` or `ci-browser.yml` first. The step is the
 # example's: it decrypts the env files with the repository's age key and runs `deno task deploy`.
 # Its secrets hold that key and an SSH key that can run Docker on the server, which is as good as
 # root there, so they are enabled for the cron and manual events only: a pull request never sees

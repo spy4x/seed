@@ -1,0 +1,327 @@
+# The browser steps of continuous integration: `browser`, `lighthouse`, `e2e-smoke` and the
+# nightly `e2e-full`, split out of ci.yml so they run at the same time as its steps, each workflow
+# in its own checkout with its own services (https://github.com/spy4x/ringmaster/issues/297).
+# Runs on every pull request, every tag (release.yml waits for it) and the nightly cron run on
+# `main` (docs/woodpecker-ci-setup.md, "The nightly run"). A push to `main` runs no browser step,
+# so it does not create this workflow, and a deploy on a push (deploy.yml.example) waits for
+# ci.yml alone. The nightly run takes the slow steps, `e2e-full` and the full Lighthouse run; a
+# pull request and a tag skip `e2e-full`.
+#
+# A pull request whose title starts with `[WIP]` runs wip.yml instead, and neither this workflow
+# nor ci.yml. The filter below is ci.yml's (the top of ci.yml says how it works): a title edit that
+# drops `[WIP]` is a `pull_request_metadata` event, so every step that runs on `pull_request` has a
+# twin condition for it. Branch protection requires both `ci/woodpecker/pr/ci` and
+# `ci/woodpecker/pr/ci-browser`, so a commit pushed while the title starts with `[WIP]` cannot
+# merge.
+#
+# Woodpecker runs the steps in stages: a step starts only when every step of the stage before has
+# ended, not only the ones it depends on. Steps that must run one after another in the shared
+# checkout are therefore commands of one step (`browser`), not a chain of steps.
+#
+# Deno 2.9.7 is the version ci.yml uses. Playwright 1.57.0 is the version `deno task e2e` runs
+# (deno.jsonc); the e2e image tag must match it, because the browser build inside the image is
+# tied to that version.
+#
+# YAML anchors do not cross files, so `markdown_only` and the two services are copies of
+# ci.yml's: ci.yml is the source.
+
+when:
+  - event: pull_request
+    evaluate: 'not (CI_COMMIT_MESSAGE startsWith "[WIP]")'
+  # `CI_PIPELINE_EVENT_REASON` joins the reasons with commas; GitHub sends one per event.
+  - event: pull_request_metadata
+    evaluate: 'CI_PIPELINE_EVENT_REASON contains "edited" && not (CI_COMMIT_MESSAGE startsWith "[WIP]")'
+  - event: tag
+  - event: cron
+
+variables:
+  # Markdown that only `check` (in ci.yml), Lighthouse and the browser tests read. A pull request
+  # that changes only these skips `e2e-smoke`. A copy of ci.yml's list.
+  - &markdown_only
+    - "*.md"
+    - "**/README.md"
+    - docs/**/*.md
+    - i18n/*.md
+    - .github/**
+    - .claude/**
+  # The same without the guides in docs/*.md, for `browser`: the website renders them and
+  # e2e/mpa/docs.mpa.ts tests them (a phone-width table, headings, links, code blocks).
+  - &internal_markdown
+    - "*.md"
+    - "**/README.md"
+    - docs/*/**/*.md
+    - i18n/*.md
+    - .github/**
+    - .claude/**
+  # Every `pull_request` condition here and in the steps has a `pull_request_metadata` twin with
+  # the same `path` (see the top). Woodpecker applies `path` to both events, and GitHub lists the
+  # pull request's changed files on both; were none listed, the step would run, which is safe.
+  - &browser_when
+    - event: pull_request
+      path:
+        exclude: *internal_markdown
+    - event: pull_request_metadata
+      path:
+        exclude: *internal_markdown
+    - event: cron
+    - event: tag
+
+steps:
+  ready:
+    # Runs on every event of this workflow, whatever changed: a pull request that changes only
+    # Markdown skips every other step here, and a workflow left with no step posts no status, so
+    # the `ci/woodpecker/pr/ci-browser` check branch protection requires would never arrive. The
+    # image is the one `check` in ci.yml pulls, so the host has it and the step takes seconds.
+    image: denoland/deno:2.9.7@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+    commands:
+      - echo "ci-browser runs the browser steps whose files changed"
+    depends_on: []
+
+  browser:
+    # Three checks that share the checkout, one after another in this one step (see the top of
+    # this file):
+    # - build: the SPA builds for production (apps/spa/dist).
+    # - e2e-mpa: the MPA's browser tests. With JavaScript turned off, a visitor subscribes to the
+    #   newsletter, confirms and unsubscribes through the mailed links. e2e/mpa/run.sh migrates,
+    #   starts the API, the worker and the MPA, on a host apart from the app's, in a database of
+    #   its own (`template_e2e`). `DB_NAME` below is only the database the scripts connect to
+    #   first.
+    # - e2e-spa: the SPA behind nginx, as production serves it: the security headers nginx.conf
+    #   adds, and a signed-in walk that fails on anything the content security policy refuses.
+    #   Vite, which the other e2e runs use, sends no such headers. Steps have no container tool, so
+    #   e2e/spa/run.sh installs the built SPA into this container's own nginx
+    #   (`SPA_SERVER=nginx`) instead of building the image, in a database of its own
+    #   (`template_e2e_spa`).
+    # Why not three steps: build and e2e-spa both build the SPA into apps/spa/dist; the run
+    # scripts keep the API's vapid.json in the repository root while they run; and each starts a
+    # worker on the one Valkey service, where a worker would take another stack's jobs.
+    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    when: *browser_when
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: tester
+      DB_PASS: ci-throwaway
+      DB_NAME: template_test
+      KV_HOSTNAME: valkey
+      KV_PORT: "6379"
+      KV_PASSWORD: ci-throwaway
+    commands:
+      # npm's newest `deno` package lags the binary, so take the pinned release itself.
+      - |
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip nginx
+          unzip -q -o /tmp/deno.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/deno
+      - deno --version
+      - deno install --frozen
+      - deno task build
+      # Postgres first runs a temporary server that listens on a unix socket only, so a TCP
+      # connection means the real one is up (docs/handoff.md, trap 3). Valkey has no such phase.
+      - |
+          deno eval '
+          for (const [hostname, port] of [["postgres", 5432], ["valkey", 6379]]) {
+            for (let i = 0; ; i++) {
+              try {
+                (await Deno.connect({ hostname, port })).close()
+                break
+              } catch {
+                if (i >= 120) {
+                  console.error(`$${hostname} did not accept connections within 60 s`)
+                  Deno.exit(1)
+                }
+                await new Promise((resolve) => setTimeout(resolve, 500))
+              }
+            }
+          }
+          '
+      - e2e/mpa/run.sh
+      - SPA_SERVER=nginx e2e/spa/run.sh
+    depends_on: []
+
+  lighthouse:
+    # The public website's Lighthouse budget ("Design gate" in the global agent rules). In
+    # Lighthouse mobile, every page apps/mpa/lighthouse/lighthouserc.json lists scores at least 95
+    # for performance and 100 for accessibility, best practices and SEO, the median of three runs.
+    # apps/mpa/lighthouse/run.sh serves the built MPA behind nginx with gzip, as the CDN serves it
+    # in production.
+    # A stage of its own in this workflow, after `browser` and `ready` and before the e2e steps,
+    # because lab performance falls when other work shares the CPU: beside `integration`, the home
+    # page scored 0.74 to 0.97 on code that scores 0.99 on an idle machine. ci.yml's steps run in
+    # another workflow and may still share the host with it. It builds the MPA itself, so it
+    # measures no leftover of an earlier step.
+    # A pull request measures only the pages in apps/mpa/lighthouse/quick.ts, one run each
+    # (`LIGHTHOUSE_PAGES=quick`, #876), against the same scores: 1.3 minutes in its first run
+    # (#877). The nightly run and a tag measure every page three times, which took a median of
+    # 13.4 minutes: the full run is nightly, so a speed regression shows on `main` within a day.
+    # A pull request runs it only when it changes a file the built website comes from (#821): the
+    # MPA, what its module graph imports (libs/ui, libs/domain, four libs/server members, the
+    # catalogs, the guides docs-list.ts publishes), the two API files of its stand-in blog API, and
+    # the manifests, the lockfile and this file. The nightly run and a tag always run it. Woodpecker
+    # applies `path` to pull requests and pushes only, and runs the step when the forge lists no
+    # changed file.
+    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    when:
+      - event: pull_request
+        path: &lighthouse_paths
+          - apps/mpa/**
+          - libs/ui/**
+          - libs/domain/**
+          - libs/server/blog/**
+          - libs/server/jobs/**
+          - libs/server/mail/**
+          - libs/server/subscribers/**
+          - apps/api/routes/blog.ts
+          - apps/api/services/error-response.ts
+          - i18n/**
+          - docs/*.md
+          - deno.json
+          - deno.jsonc
+          - deno.lock
+          - package.json
+          - .woodpecker/ci-browser.yml
+      - event: pull_request_metadata
+        path: *lighthouse_paths
+      - event: cron
+      - event: tag
+    commands:
+      # npm's newest `deno` package lags the binary, so take the pinned release itself.
+      - |
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip nginx
+          unzip -q -o /tmp/deno.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/deno
+      - deno --version
+      - deno install --frozen
+      - deno task mpa:build
+      # The commands share one shell, so the variable reaches the next one.
+      - case "$${CI_PIPELINE_EVENT}" in pull_request | pull_request_metadata) export LIGHTHOUSE_PAGES=quick ;; esac
+      - deno task lighthouse
+    # After `ready`, which always runs, so Lighthouse never shares a stage with it, and after
+    # `browser` when it runs: a pull request that changes only i18n/*.md skips `browser`, and
+    # Woodpecker drops an optional dependency on a skipped step instead of failing the pipeline.
+    depends_on:
+      - ready
+      - name: browser
+        optional: true
+
+  e2e-smoke:
+    # The product's browser tests a pull request must pass: the smoke set, `SMOKE_SPECS` in
+    # infra/scripts/e2e-local-plan.ts (sign-in, the profile, notes, groups). The script is the one
+    # `deno task e2e:local` runs on a developer's machine. `E2E_SERVICES=environment` makes it use
+    # the Postgres and Valkey services below instead of starting containers, in a database of its
+    # own (`template_e2e_app`); it waits for both itself. It starts the API, the worker, the Vite
+    # dev server and a proxy that serves them at http://app.localhost:<port>. A tag runs the set
+    # too, because release.yml waits for this workflow. A pull request that changes only the Markdown
+    # in `markdown_only` at the top skips it: the smoke set opens no guide. The nightly run skips
+    # it, because its `e2e-full` runs every spec of the set.
+    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    when:
+      - event: pull_request
+        path:
+          exclude: *markdown_only
+      - event: pull_request_metadata
+        path:
+          exclude: *markdown_only
+      - event: tag
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: tester
+      DB_PASS: ci-throwaway
+      DB_NAME: template_test
+      KV_HOSTNAME: valkey
+      KV_PORT: "6379"
+      KV_PASSWORD: ci-throwaway
+      E2E_SERVICES: environment
+    commands:
+      # npm's newest `deno` package lags the binary, so take the pinned release itself.
+      - |
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
+          unzip -q -o /tmp/deno.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/deno
+      - deno --version
+      # Chromium resolves *.localhost itself. The requests a spec makes outside the browser ask the
+      # system resolver, which in this container does not know the name.
+      - echo "127.0.0.1 app.localhost" >> /etc/hosts
+      # Playwright stops after three failed tests. When sign-in itself is broken every test fails,
+      # each after 30 s, and the step would otherwise run into the script's limit of 25 minutes.
+      - deno task e2e:local --smoke --max-failures=3
+    # After `browser`: the run scripts keep the API's vapid.json in the shared checkout while they
+    # run, and each starts a worker on the one Valkey service, where a worker would take another
+    # stack's jobs. After `lighthouse`, which measures alone, when it runs: a pull request that
+    # cannot change the website skips it, and Woodpecker drops an optional dependency on a skipped
+    # step instead of failing the pipeline over it.
+    depends_on:
+      - name: browser
+        optional: true
+      - name: lighthouse
+        optional: true
+
+  e2e-full:
+    # Every browser test of the product (`e2e/*.e2e.ts`): only the nightly run on `main` runs it,
+    # so it never stands between a pull request and its merge, nor between a tag and its images,
+    # and no push cancels it. A red run here is the sign that a merge broke a screen the smoke set
+    # does not open.
+    # The specs that start the app with no network need the built SPA behind nginx; a step has no
+    # container tool, so `E2E_BUILT=nginx` installs the build into this container's own nginx, as
+    # e2e/spa/run.sh does.
+    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    when:
+      - event: cron
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: tester
+      DB_PASS: ci-throwaway
+      DB_NAME: template_test
+      KV_HOSTNAME: valkey
+      KV_PORT: "6379"
+      KV_PASSWORD: ci-throwaway
+      E2E_SERVICES: environment
+      E2E_BUILT: nginx
+      # The deadline of one Playwright pass, in seconds. The whole suite runs on one Playwright
+      # worker and took 20 to 23 minutes of the script's default 25, so a slow run, or one failed
+      # test with its retries, ran out of time. This step started 22 to 26 minutes in, and the
+      # offline pass after this one takes about 2, so a run to this deadline ended at about minute
+      # 60 to 64: Woodpecker's 60-minute limit killed pipelines 1537 and 1544 before the script's
+      # own timeout message. The repository's Woodpecker timeout, set on the CI server rather than
+      # in this file, is therefore 75 minutes (#751).
+      E2E_LOCAL_TIMEOUT: "2100"
+    commands:
+      # npm's newest `deno` package lags the binary, so take the pinned release itself.
+      - |
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
+          unzip -q -o /tmp/deno.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/deno
+      - deno --version
+      - apt-get install -y -qq --no-install-recommends nginx
+      - echo "127.0.0.1 app.localhost" >> /etc/hosts
+      # Stops after ten failed tests in a pass, for the same reason as in e2e-smoke.
+      - deno task e2e:local --max-failures=10
+    # As e2e-smoke. The nightly run always runs lighthouse.
+    depends_on:
+      - browser
+      - name: lighthouse
+        optional: true
+
+services:
+  # Copies of ci.yml's services; the reasons for the Postgres settings are there.
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: tester
+      POSTGRES_PASSWORD: ci-throwaway
+      POSTGRES_DB: template_test
+    commands:
+      - docker-entrypoint.sh postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+  valkey:
+    image: valkey/valkey:8.1
+    commands:
+      - valkey-server --requirepass ci-throwaway

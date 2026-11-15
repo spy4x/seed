@@ -2,12 +2,12 @@
 # The Lighthouse check of the public website (`deno task lighthouse`): every page in
 # lighthouserc.json must score, in Lighthouse mobile, at least 95 for performance and 100 for
 # accessibility, best practices and SEO, the median of three runs ("Design gate" in the global
-# agent rules). `LIGHTHOUSE_PAGES=quick`, which pull requests set (.woodpecker/ci.yml), measures
+# agent rules). `LIGHTHOUSE_PAGES=quick`, which pull requests set (.woodpecker/ci-browser.yml), measures
 # only the pages in quick.ts, one run each, against the same scores; `all`, the default, measures
 # every page. Starts the blog API stand-in (blog-api.ts) on 48412, the built MPA (`deno task
 # mpa:build` first) on port 48410, nginx with gzip in
 # front of it on 48411 (nginx.conf), and Lighthouse CI. Reports land in .lighthouseci/.
-# CI runs this script (.woodpecker/ci.yml); run it the same way on a machine, from the repository
+# CI runs this script (.woodpecker/ci-browser.yml); run it the same way on a machine, from the repository
 # root. Needs nginx, and a Chromium: `CHROME_PATH`, or the newest one Playwright installed.
 set -euo pipefail
 

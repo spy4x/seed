@@ -32,7 +32,9 @@
 # Every runtime variable is written `$$`, so Woodpecker leaves it for the shell. Images are pinned
 # by digest, so a moved tag cannot change what runs next to the token.
 
-depends_on: [ci]
+# Waits for both CI workflows of the tag: ci.yml and the browser steps in ci-browser.yml, which
+# run at the same time. Woodpecker skips this workflow when either fails.
+depends_on: [ci, ci-browser]
 
 when:
   - event: tag

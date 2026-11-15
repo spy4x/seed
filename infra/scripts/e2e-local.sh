@@ -56,7 +56,7 @@
 #   NOTES=false SPA_NOTES=false deno task e2e:local e2e/notes-off.e2e.ts
 # `FILES=false` runs the API without a file store, and the SPA gets `SPA_FILES` from it (docs/files.md).
 #
-# CI runs this script too (.woodpecker/ci.yml), in a container that is thrown away afterwards and
+# CI runs this script too (.woodpecker/ci-browser.yml), in a container that is thrown away afterwards and
 # has no container tool. Two variables stand in for the containers there:
 #   - `E2E_SERVICES=environment`: Postgres and Valkey are already running and named by `DB_HOST`,
 #     `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `KV_HOSTNAME`, `KV_PORT` and `KV_PASSWORD`. The
