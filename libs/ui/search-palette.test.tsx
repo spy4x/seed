@@ -12,7 +12,6 @@ import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters, type Formatters } from "@spy4x/time/format"
 import { GroupRole } from "@domain/groups"
 import {
-  emptyLabel,
   openSearch,
   type PaletteRecord,
   type SearchChoice,
@@ -25,8 +24,6 @@ import { I18nContext } from "@spy4x/preact-ui/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
 
-/** The `app` catalog's English, as a screen without a provider reads it. */
-const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
 /** The `app` catalog in Russian, as the SPA reads it for a person who chose Russian. */
 const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translation: appRu }] })
 
@@ -154,7 +151,46 @@ function text(row: Element): string {
     .join(" | ")
 }
 
-/** The status line under the list: the empty, loading or error words. */
+/**
+ * Types `value` without waiting a fixed time; pair it with {@link until} for what the answer
+ * shows.
+ */
+async function fill(value: string): Promise<void> {
+  const field = find<HTMLInputElement>("[data-e2e=search] input")
+  field.value = value
+  await act(() => {
+    field.dispatchEvent(new window.Event("input", { bubbles: true }) as unknown as Event)
+  })
+}
+
+/** Waits until `check` holds, failing after two seconds with what the list showed. */
+async function until(check: () => boolean): Promise<void> {
+  const deadline = Date.now() + 2000
+  while (!check()) {
+    if (Date.now() > deadline) throw new Error(`timed out; the list shows ${listed().join(" / ")}`)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 10)))
+  }
+}
+
+/** `text` as a quick-create row shows it: isolated, so its direction cannot reorder the label. */
+function isolated(text: string): string {
+  return `\u2068${text}\u2069`
+}
+
+/** Presses Enter, or Ctrl Enter with `ctrlKey`, in the palette's field. */
+async function enter(ctrlKey = false): Promise<void> {
+  await act(() => {
+    find("[data-e2e=search] input").dispatchEvent(
+      new window.KeyboardEvent("keydown", {
+        key: "Enter",
+        ctrlKey,
+        bubbles: true,
+      }) as unknown as Event,
+    )
+  })
+}
+
+/** The status line under the list: the loading or error words. */
 function status(): string {
   return find("[data-e2e=search] [role=status]").textContent?.trim() ?? ""
 }
@@ -338,31 +374,128 @@ describe("SearchPalette", () => {
     expect(listed()[1]).toBe("Weekly plan | …call the bank…")
   })
 
-  it("heads the notes from the device as such, and says so when nothing matches", async () => {
-    await mount(
-      {},
-      (query) => query === "zz" ? { notes: [], onDevice: true } : { notes: [PLAN], onDevice: true },
-    )
+  it("heads the notes from the device as such", async () => {
+    await mount({}, () => ({ notes: [PLAN], onDevice: true }))
     await open()
 
     await type("plan")
-    expect(listed()[0]).toBe("# Notes on this device")
 
-    await type("zz")
-    expect(listed()).toEqual([])
-    expect(status()).toBe(
-      "Nothing on this device matches “zz”. Search again when you're back online.",
-    )
+    expect(listed()[0]).toBe("# Notes on this device")
   })
 
-  it("repeats a long query cut to forty characters when nothing matches", async () => {
+  it("offers New note, New tag and New group from any text nothing else matches, under Create", async () => {
     await mount({}, () => ({ notes: [], onDevice: false }))
     await open()
 
-    await type(`${"x".repeat(45)}`)
+    await fill("groceries")
+    await until(() => listed()[0] === "# Create")
 
-    expect(status()).toBe(`Nothing matches “${"x".repeat(40)}…”.`)
-    expect(emptyLabel(EN, "  ab  ", false)).toBe("Nothing matches “ab”.")
+    expect(listed()).toEqual([
+      "# Create",
+      `New note: “${isolated("groceries")}” | In Home`,
+      `New tag: “${isolated("groceries")}” | In Home`,
+      `New group: “${isolated("groceries")}”`,
+    ])
+  })
+
+  it("says offline that only this device was searched when no note matched, in a dimmed row that never takes the highlight", async () => {
+    const { picked } = await mount({}, () => ({ notes: [], onDevice: true }))
+    const hint = () => document.querySelector("[data-e2e=search] [role=option][aria-disabled=true]")
+    const sentence =
+      "Nothing on this device matches “snorkel”. Search again when you're back online."
+    await open()
+
+    await fill("snorkel")
+    await until(() => listed().includes(sentence))
+
+    expect(listed().slice(-2)).toEqual(["# Notes on this device", sentence])
+    expect(hint()?.textContent).toBe(sentence)
+    expect(hint()?.getAttribute("aria-selected")).toBe("false")
+    expect(text(find("[data-e2e=search] [role=option][aria-selected=true]"))).toBe(
+      `New note: “${isolated("snorkel")}” | In Home`,
+    )
+    await act(() => {
+      hint()!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+    })
+    expect(picked).toEqual([])
+    expect(find("[data-e2e=search] input")).toBeTruthy()
+  })
+
+  it("says nothing about the device online when no note matched", async () => {
+    await mount({}, () => ({ notes: [], onDevice: false }))
+    await open()
+
+    await fill("snorkel")
+    await until(() => listed()[0] === "# Create")
+
+    expect(listed().some((row) => row.startsWith("Nothing"))).toBe(false)
+    expect(document.querySelector("[data-e2e=search] [role=option][aria-disabled=true]")).toBeNull()
+  })
+
+  it("says a query too short to search notes needs another character, in a dimmed row", async () => {
+    const { asked } = await mount({}, () => ({ notes: [], onDevice: true }))
+    await open()
+
+    await fill("s")
+    await until(() => listed().includes("Type at least 2 characters to search notes."))
+
+    expect(listed().slice(-2)).toEqual(["# Notes", "Type at least 2 characters to search notes."])
+    expect(find("[data-e2e=search] [role=option][aria-disabled=true]").textContent).toBe(
+      "Type at least 2 characters to search notes.",
+    )
+    expect(asked).not.toContain("s")
+    expect(listed().some((row) => row.startsWith("Nothing"))).toBe(false)
+  })
+
+  it("shows a long query cut to forty characters in its rows, an emoji counting as one, and hands back all of it", async () => {
+    const { picked } = await mount({}, () => ({ notes: [], onDevice: false }))
+    const long = `${"🛒".repeat(41)} שלום`
+    await open()
+
+    await fill(long)
+    await until(() => listed()[0] === "# Create")
+    await enter()
+
+    expect(listed()[1]).toBe(`New note: “${isolated(`${"🛒".repeat(40)}…`)}” | In Home`)
+    expect(picked).toEqual([{ kind: "quick-create", entity: "note", title: long }])
+  })
+
+  it("shows markup-like text as typed, never as markup", async () => {
+    await mount({}, () => ({ notes: [], onDevice: false }))
+    await open()
+
+    await fill(`<img src=x onerror=alert(1)>`)
+    await until(() => listed()[0] === "# Create")
+
+    expect(listed()[1]).toBe(`New note: “${isolated(`<img src=x onerror=alert(1)>`)}” | In Home`)
+    expect(document.querySelector("[data-e2e=search] img")).toBeNull()
+  })
+
+  it("offers no quick-create row for a query of spaces only", async () => {
+    await mount()
+    await open()
+
+    await fill("   ")
+    // The empty query's answer: the recent notes first.
+    await until(() =>
+      listed()[0] === "# Notes" && listed().includes("Weekly plan | …call the bank…")
+    )
+
+    expect(listed().some((row) => row.includes("“"))).toBe(false)
+  })
+
+  it("opens the create form on Enter on a quick-create row, and creates at once on Ctrl Enter", async () => {
+    const { picked } = await mount({}, () => ({ notes: [], onDevice: false }))
+    for (const ctrlKey of [false, true]) {
+      await open()
+      await fill("  groceries ")
+      await until(() => listed()[0] === "# Create")
+      await enter(ctrlKey)
+    }
+    expect(picked).toEqual([
+      { kind: "quick-create", entity: "note", title: "groceries" },
+      { kind: "quick-create", entity: "note", title: "groceries", now: true },
+    ])
   })
 
   it("with the notes off, never asks for notes and lists no notes, tags or note commands", async () => {
@@ -396,13 +529,14 @@ describe("SearchPalette", () => {
     expect(listed()).toContain("Download my data | A ZIP of your profile and groups")
   })
 
-  it("with the notes off, says nothing matches a one-character query instead of asking for notes", async () => {
+  it("with the notes off, offers only New group from a query nothing else matches", async () => {
     await mount({ notes: false })
     await open()
 
-    await type("7")
+    await fill("7")
+    await until(() => listed()[0] === "# Create")
 
-    expect(status()).toBe("Nothing matches “7”.")
+    expect(listed()).toEqual(["# Create", `New group: “${isolated("7")}”`])
   })
 
   it("does not search notes for a single character, but still matches groups", async () => {
@@ -415,18 +549,19 @@ describe("SearchPalette", () => {
     expect(listed()).toContain("Acme Studio | Viewer")
   })
 
-  it("asks for a second character, instead of saying no note matches, when one character finds nothing", async () => {
-    await mount()
+  it("offers the quick-create rows for one character, which searches no notes", async () => {
+    const { asked } = await mount()
     await open()
 
     // A letter can start a word in the other layout or alphabet ("q" is "й"), a digit cannot.
-    await type("7")
+    await fill("7")
+    await until(() => listed()[0] === "# Create")
 
-    expect(listed()).toEqual([])
-    expect(status()).toBe("Type at least 2 characters to search notes.")
+    expect(asked).toEqual([""])
+    expect(listed()[0]).toBe("# Create")
   })
 
-  it("offers no new note or tag in a group the person may only read, and dims New group offline", async () => {
+  it("offers no new note or tag, typed or not, in a group the person may only read, and dims New group offline", async () => {
     await mount({
       currentGroup: { id: STUDIO.id, name: STUDIO.name, canWrite: false },
       online: false,
@@ -442,6 +577,14 @@ describe("SearchPalette", () => {
       .find((candidate) => text(candidate).startsWith("New group"))!
     expect([newGroup.getAttribute("aria-disabled"), text(newGroup)])
       .toEqual(["true", "New group | Needs a connection"])
+
+    await fill("groceries")
+    await until(() => listed().some((row) => row.startsWith("New group:")))
+    const quick = listed().filter((row) => row.includes("groceries"))
+    expect(quick).toEqual([`New group: “${isolated("groceries")}” | Needs a connection`])
+    const quickGroup = [...document.querySelectorAll("[role=option]")]
+      .find((candidate) => text(candidate).startsWith("New group:"))!
+    expect(quickGroup.getAttribute("aria-disabled")).toBe("true")
   })
 
   it("offers a guest Keep your account for the words a person would try, and nobody else", async () => {

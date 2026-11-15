@@ -1,5 +1,5 @@
 import type { JSX } from "preact"
-import { useRef, useState } from "preact/hooks"
+import { useRef } from "preact/hooks"
 import { useFormat } from "@spy4x/preact-ui/format"
 import {
   CommandPalette,
@@ -19,6 +19,8 @@ import {
   paletteCommands,
   type PaletteOption,
   pickedChoice,
+  quickCreateRows,
+  quoted,
   type SearchChoice,
 } from "./palette-commands.ts"
 import { useAppText } from "./i18n.ts"
@@ -152,10 +154,7 @@ export const NOTE_QUERY_MIN = 2
 /** How many of the current group's notes the palette lists before anything is typed. */
 export const RECENT_NOTES = 5
 
-/** The most characters of the query the no-results line repeats. */
-const QUOTED_MAX = 40
-
-/** The palette's fixed words, the admin's too; the no-results line is set per answer. */
+/** The palette's fixed words, the admin's too. */
 export function paletteLabels(
   t: Translator<string>,
 ): Pick<CommandPaletteLabels, "search" | "placeholder" | "close" | "loading" | "error"> {
@@ -166,29 +165,6 @@ export function paletteLabels(
     loading: t.t(`Search.loading`),
     error: t.t(`Search.error`),
   }
-}
-
-/** `query` trimmed and cut to {@link QUOTED_MAX} characters, an emoji counting as one. */
-export function quoted(query: string): string {
-  const characters = Array.from(query.trim())
-  return characters.length > QUOTED_MAX
-    ? `${characters.slice(0, QUOTED_MAX).join("")}…`
-    : characters.join("")
-}
-
-/**
- * The no-results line for a query too short to search notes: groups and actions were matched, the
- * notes were not, so it must not say that no note matches.
- */
-function shortQueryLabel(t: Translator<string>): string {
-  return t.t(`Search.tooShort`, { count: NOTE_QUERY_MIN })
-}
-
-/** The no-results line for `query`, which says where the search looked. */
-export function emptyLabel(t: Translator<string>, query: string, onDevice: boolean): string {
-  return onDevice
-    ? t.t(`Search.emptyOnDevice`, { query: quoted(query) })
-    : t.t(`Search.empty`, { query: quoted(query) })
 }
 
 /**
@@ -204,8 +180,12 @@ export function emptyLabel(t: Translator<string>, query: string, onDevice: boole
  * person's groups and the commands that match, ranked together as the palette ranks a submenu
  * (`matchOptions`: aliases, word order, one typo, the other keyboard layout and alphabet), so the
  * strongest match is the first row after the notes and its heading comes first. Then each of the
- * product's `records` sources that matches, under its own heading.
- * When the notes come from the device, their heading and the no-results line say so. Enter on a
+ * product's `records` sources that matches, under its own heading. Any typed text also gets the
+ * Create section's quick-create rows ({@link quickCreateRows}): Enter opens the create form with
+ * the text filled in, and Ctrl Enter (⌘Enter) creates the item and opens it.
+ * When the notes come from the device, their heading says so, and when none of them matched, a
+ * dimmed row says that only this device was searched; a query too short to search notes gets a
+ * dimmed row that says so too ({@link notesHint}). Enter on a
  * group makes it the current one, and Ctrl Enter (⌘Enter) opens its settings. Theme opens a
  * submenu whose rows change the theme at once and keep the palette open.
  */
@@ -217,7 +197,6 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     ),
   )
   const t = useAppText()
-  const [empty, setEmpty] = useState(emptyLabel(t, "", false))
   // The search runs inside the palette, after a render; it reads the latest props through this.
   const latest = useRef(props)
   latest.current = props
@@ -258,13 +237,16 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     // first; the palette lists each heading where its first row falls.
     const rows = [...groupRows, ...paletteCommands(context(t), select)]
     const matched = matchOptions(rows, text, rows.length)
-    // A stale answer is dropped by the palette; its words must not replace the current ones.
-    if (!signal.aborted) {
-      setEmpty(
-        asksNotes || !notesOn ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t),
-      )
-    }
-    return [...notes, ...matched, ...recordRows(latest.current.records ?? [], text)]
+    // Built from the query, so they list for any text; under Create, after the plain commands.
+    const quickCreate = quickCreateRows(context(t), text)
+    const hint = notesHint(t, text, notesOn, asksNotes && answer.onDevice && notes.length === 0)
+    return [
+      ...notes,
+      ...matched,
+      ...quickCreate,
+      ...recordRows(latest.current.records ?? [], text),
+      ...hint,
+    ]
   }
   /** A pick made inside a submenu, with the palette still open. */
   const select = (choice: SearchChoice) => latest.current.onSelect(choice)
@@ -296,7 +278,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
           option.choice && props.onSelect(pickedChoice(option.choice, details.alternative))}
         // Bound above, so they work while the trigger is hidden.
         hotkeys={[]}
-        labels={{ ...paletteLabels(t), empty }}
+        labels={paletteLabels(t)}
         dataE2E="search"
         class="hidden"
       />
@@ -334,6 +316,30 @@ function recordRows(sources: readonly PaletteRecordSource[], query: string): Pal
         choice: { kind: "page", href: entry.href },
       }))
   )
+}
+
+/**
+ * A dimmed row under the notes heading that says why no note is listed: the query is too short to
+ * search notes, or `noneOnDevice`, only this device's notes were searched and none matched, so the
+ * person searches again online before creating a duplicate. None for the empty query or with the
+ * notes off. It is disabled and listed last, so a runnable row such as `New note: "…"` keeps the
+ * highlight and Enter never picks it.
+ */
+function notesHint(
+  t: Translator<string>,
+  text: string,
+  notesOn: boolean,
+  noneOnDevice: boolean,
+): PaletteOption[] {
+  if (text === "" || !notesOn) return []
+  const hint = (label: string, heading: string): PaletteOption[] => // An empty reason disables the row without a second line: its label already says why.
+  [{ id: `notes-hint`, label, group: t.t(heading), disabledReason: `` }]
+  if (Array.from(text).length < NOTE_QUERY_MIN) {
+    return hint(t.t(`Search.tooShort`, { count: NOTE_QUERY_MIN }), `Search.notes`)
+  }
+  return noneOnDevice
+    ? hint(t.t(`Search.emptyOnDevice`, { query: quoted(text) }), `Search.notesOnDevice`)
+    : []
 }
 
 /** A note row's second line: the group, when the person has several, then the snippet. */
