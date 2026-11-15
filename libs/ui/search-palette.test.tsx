@@ -765,18 +765,19 @@ describe("SearchPalette", () => {
     expect(listed()).toContain(`New note | In Home`)
   })
 
-  it("says a failed note search in a live region inside the palette, and clears it once a search works", async () => {
+  it("says a failed note search for typed text in a live region inside the palette, and clears it once a search works", async () => {
     await mount(
       {},
       (query) =>
-        query === "new"
+        query === "" || query === "new"
           ? Promise.reject(new Error("429"))
-          : { notes: query === "" ? [] : [PLAN], onDevice: false },
+          : { notes: [PLAN], onDevice: false },
     )
     await open()
     // Inside the dialog: the page outside an open modal dialog is inert, so unheard.
     const said = () =>
       find("[data-e2e=search] [role=status][data-e2e=search-notes-status]").textContent
+    // The empty query lists no error row, so nothing is said either.
     expect(said()).toBe("")
 
     await type("new")
