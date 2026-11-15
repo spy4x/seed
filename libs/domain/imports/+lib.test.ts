@@ -125,7 +125,9 @@ describe("an upload's options", () => {
   })
 
   it("refuses text that is not JSON, an array, a number value and a key that is no field key", () => {
-    for (const raw of [`{`, `["a"]`, `"a"`, `null`, `{"a":1}`, `{"1a":"x"}`, `{"__proto__":"x"}`]) {
+    for (
+      const raw of [`{`, `[]`, `["a"]`, `"a"`, `null`, `{"a":1}`, `{"1a":"x"}`, `{"__proto__":"x"}`]
+    ) {
       expect([raw, codeOf(() => parseImportOptions(raw))]).toEqual([raw, `INVALID_REQUEST`])
     }
   })

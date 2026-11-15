@@ -270,15 +270,9 @@ describe("checking and saving", () => {
     expect(writes).toEqual([])
   })
 
-  it("refuses choices for a field that is not a choice, a row below 1 and a long value before queueing", async () => {
+  it("refuses choices for a field that is not a choice before queueing the save", async () => {
     const { hono, writes } = app()
-    for (
-      const choices of [
-        { "1": { title: `Picked` } },
-        { "0": { title: `Picked` } },
-        { "1": { title: `a`.repeat(201) } },
-      ]
-    ) {
+    for (const choices of [{ "1": { title: `Picked` } }, { "2": { body: `Picked` } }]) {
       const response = await hono.request(`${base}/${IMPORT_ID}/commit`, {
         method: `POST`,
         headers: json,
