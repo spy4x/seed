@@ -67,7 +67,17 @@ An empty `S3_ENDPOINT` cannot mean off: Compose fills it with the bundled Garage
 `FILES=false` the API and the worker start without any `S3_*` setting, and `/api/health` leaves the
 store out of its checks. Every upload, download and data export answers 409 with the reason
 `FILES_OFF` and "Files are not set up on this server.", and the admin app's System page shows the
-file store as off. The SPA and the admin app still show their upload buttons.
+file store as off.
+
+The apps hide every control that could only fail. Compose passes `FILES` to the SPA as
+`SPA_FILES`, so its `/config.json` says `files: false`, and the API's `GET /api/admin/modules`
+leaves out `files`:
+
+- **The SPA** shows no profile picture row, no "Your data" export row and no link to it on the
+  delete card, no Attachments section in the note editor, and no "Change profile picture",
+  "Download your data" or "Attach files" command in the palette.
+- **The admin app** shows no photo upload on a catalog item and no Files tab on a group's page.
+  Photos an item already has stay listed. Until the module list is read, it draws as with files on.
 
 ## Settings
 

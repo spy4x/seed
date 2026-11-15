@@ -102,7 +102,7 @@ that let anyone become an administrator.
 
 | Variable                               | What it does                                                                              | Example       | Guide             |
 | -------------------------------------- | ----------------------------------------------------------------------------------------- | ------------- | ----------------- |
-| `FILES`                                | On unless `false`, which runs without a store and needs none of the `S3_*` settings.      | empty         | [Files](files.md#without-files) |
+| `FILES`                                | On unless `false`, which runs without a store, needs none of the `S3_*` settings and hides the apps' upload controls. | empty         | [Files](files.md#without-files) |
 | `S3_ENDPOINT`                          | Where the API reaches the store. Empty: this project's Garage.                            | empty         | [Files](files.md) |
 | `S3_PUBLIC_ENDPOINT`                   | Where browsers reach it, in the links the API signs. Empty: `https://<DOMAIN>`.           | empty         | [Files](files.md) |
 | `S3_REGION`                            | The store's region.                                                                       | `garage`      | [Files](files.md) |
