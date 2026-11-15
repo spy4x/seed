@@ -89,12 +89,12 @@ const settle = () =>
   })
 
 /** Opens the catalog item editor on `path` with `moduleIds` as the API's list (`null`: not read). */
-async function open(path: string, moduleIds: ReadonlySet<string> | null) {
+async function open(path: string, moduleIds: ReadonlySet<string> | null, item = ITEM) {
   const request = ((asked: string) => {
     const data = asked === `/api/admin/catalog`
       ? CATALOG
       : asked === `/api/admin/catalog/items/${ID}`
-      ? { item: ITEM }
+      ? { item }
       : null
     return Promise.resolve(
       data
@@ -158,6 +158,17 @@ describe(`the catalog item editor with files on, off and not known yet`, () => {
   it(`offers no photo upload or upload rule with files off, and still shows the item's photos`, async () => {
     await open(`/catalog/${ID}`, OFF)
     expect(photos()).toEqual({ upload: false, rule: false, shown: 1, later: false })
+  })
+
+  it(`draws no Photos card for an item without photos with files off`, async () => {
+    const card = async (moduleIds: ReadonlySet<string> | null) => {
+      await open(`/catalog/${ID}`, moduleIds, { ...ITEM, photos: [] })
+      const shown = document.querySelector(`[data-e2e=catalog-item-no-photos]`) !== null
+      await act(() => render(null, root!))
+      return shown
+    }
+
+    expect([await card(ON), await card(null), await card(OFF)]).toEqual([true, true, false])
   })
 
   it(`says a new item gets photos once saved only while files are on or not known yet`, async () => {

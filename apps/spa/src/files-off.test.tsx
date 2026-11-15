@@ -143,14 +143,18 @@ async function editorHasAttachments(): Promise<boolean> {
 }
 
 describe("the files switch", () => {
-  it("is on unless the configuration says false or 0", async () => {
+  it("is off only for false, as the API reads FILES", async () => {
     const read = async (body: string) => {
       configureModules(await loadRuntimeConfig(serving(body)))
       return filesOn()
     }
 
     expect([await read(`{}`), await read(`{"files":"true"}`)]).toEqual([true, true])
-    expect([await read(`{"files":"false"}`), await read(`{"files":"0"}`)]).toEqual([false, false])
+    expect([await read(`{"files":"false"}`), await read(`{"files":" false "}`)]).toEqual([
+      false,
+      false,
+    ])
+    expect([await read(`{"files":"0"}`), await read(`{"files":"FALSE"}`)]).toEqual([true, true])
   })
 })
 
