@@ -539,8 +539,9 @@ interface LinkedOptions {
   parentNoteId: string
 }
 
-/** What the test kind's `commit` was handed, per save. */
+/** What the test kind's `commit` and `undo` were handed, per call. */
 interface CommitSeen {
+  step: `commit` | `undo`
   options: unknown
   choices: readonly Readonly<Record<string, string>>[]
 }
@@ -589,14 +590,17 @@ function linkedKind(seen: CommitSeen[]): ImportKind {
       }))
     },
     async commit(tx, values, context) {
-      seen.push({ options: context.options, choices: context.choices })
+      seen.push({ step: `commit`, options: context.options, choices: context.choices })
       const notes = values.map((value, index) => ({
         title: value.title,
         body: context.choices[index].tag ?? ``,
       }))
       return await noteImportKind.commit(tx, notes, context)
     },
-    undo: noteImportKind.undo,
+    async undo(tx, ids, context) {
+      seen.push({ step: `undo`, options: context.options, choices: context.choices })
+      await noteImportKind.undo(tx, ids, context)
+    },
   })
 }
 
@@ -675,8 +679,16 @@ Deno.test("imports with options: the stored options come back on the import, and
     const read = await uploadedLinked(sql, [linkedKind([])], groupId, editor, { parentNoteId }, `A`)
 
     expect(read).toMatchObject({ status: ImportStatus.READY, options: { parentNoteId } })
-    const notes = await uploaded(sql, groupId, editor, csv(`Plain`))
-    expect(notes).toMatchObject({ options: null, skippedCount: null })
+    const notesId = await saved(sql, groupId, editor, `Plain`)
+    const notes = await handlers(sql).get(
+      new ImportGetQuery({ actor: actor(editor), groupId, importId: notesId }),
+    )
+    expect(notes).toMatchObject({
+      status: ImportStatus.COMMITTED,
+      savedCount: 1,
+      options: null,
+      skippedCount: null,
+    })
   })
 })
 
@@ -778,6 +790,7 @@ Deno.test("imports with a review: the skipped row is not saved, and a choice rea
       { title: `Suggested`, body: `auto Suggested` },
     ])
     expect(seen).toEqual([{
+      step: `commit`,
       options: { parentNoteId },
       choices: [{ tag: `picked` }, { tag: `auto Suggested` }],
     }])
@@ -790,6 +803,39 @@ Deno.test("imports with a review: the skipped row is not saved, and a choice rea
       skippedCount: 1,
       errorCount: 0,
     })
+
+    await handlers(sql, kinds).undo(
+      new ImportUndoCommand({ actor: actor(editor), groupId, importId: read.id }),
+    )
+    expect(seen[1]).toEqual({ step: `undo`, options: { parentNoteId }, choices: [] })
+    expect(await liveTitles(sql, groupId)).toEqual([`Have`])
+  })
+})
+
+Deno.test("imports with a review: a check's review runs read-only, so a kind cannot write while it previews", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Parent`)
+    const writer = importKind({
+      ...linkedKind([]),
+      async review(tx, values) {
+        await tx`UPDATE notes SET title = 'Changed' WHERE group_id = ${groupId}`
+        return values.map(() => ({ skip: null, suggestions: {} }))
+      },
+    })
+    const read = await uploadedLinked(sql, [writer], groupId, editor, { parentNoteId }, `A`)
+
+    await expect(
+      handlers(sql, [writer]).check(
+        new ImportCheckQuery({
+          actor: actor(editor),
+          groupId,
+          importId: read.id,
+          mapping: { title: 0 },
+        }),
+      ),
+    ).rejects.toThrow(`read-only transaction`)
+    expect(await liveTitles(sql, groupId)).toEqual([`Parent`])
   })
 })
 
