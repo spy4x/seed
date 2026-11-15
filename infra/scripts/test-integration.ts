@@ -42,7 +42,8 @@ export function integrationArgs(args: string[], related: string[] = []): string[
 
 if (import.meta.main) {
   const explicit = Deno.args.some((arg) => !arg.startsWith(`-`))
-  const related = explicit ? [] : await relatedFlags(`test:integration`)
+  const { flags: related, note } = explicit ? { flags: [], note: `` } : await relatedFlags()
+  if (note) console.log(`test:integration: ${note}`)
   const child = new Deno.Command(`deno`, {
     args: integrationArgs(Deno.args, related),
     env: { ENV: `test` },

@@ -313,7 +313,8 @@ async function git(args: string[]): Promise<string> {
 
 /**
  * The `--related` flags that limit a Woodpecker pull request's tests to the files whose imports
- * reach a change, or none to run every test, with a line in the log that says which.
+ * reach a change, or none to run every test; on a pull request, with a note for the log that
+ * says which.
  *
  * The changes are the diff between the head and the target branch's tip. That needs no shared
  * history, which Woodpecker's one-commit clone lacks, and it also counts the target's newer
@@ -321,12 +322,11 @@ async function git(args: string[]): Promise<string> {
  * Any failure on the way runs every test. `env` and `run` stand in for the process's in tests.
  */
 export async function relatedFlags(
-  task: string,
   env = (name: string) => Deno.env.get(name),
   run = git,
-): Promise<string[]> {
+): Promise<{ flags: string[]; note?: string }> {
   const target = env(`CI_PIPELINE_EVENT`) === `pull_request` && env(`CI_COMMIT_TARGET_BRANCH`)
-  if (!target) return []
+  if (!target) return { flags: [] }
   const ref = `refs/remotes/origin/${target}`
   let reason: string | undefined
   let changes: Change[] = []
@@ -337,18 +337,21 @@ export async function relatedFlags(
   } catch (error) {
     reason = (error as Error).message
   }
-  if (reason) {
-    console.log(`${task}: every test runs: ${reason}`)
-    return []
+  if (reason) return { flags: [], note: `every test runs: ${reason}` }
+  return {
+    flags: changes.filter((change) => !change.deleted).map((change) => `--related=${change.path}`),
+    note: `only the tests whose imports reach the ${changes.length} changed files run`,
   }
-  console.log(`${task}: only the tests whose imports reach the ${changes.length} changed files`)
-  return changes.filter((change) => !change.deleted).map((change) => `--related=${change.path}`)
 }
 
-/** The number of test files `deno test` ran, read from its `running N tests from` lines. */
+/**
+ * The number of test files `deno test` ran, read from its `running N tests from` lines and, under
+ * `--parallel`, which prints none, from the `./file => test` prefix of its result lines.
+ */
 export function filesRun(output: string): number {
-  const files = output.replace(ANSI, ``).matchAll(/^running \d+ tests? from (\S+)/gm)
-  return new Set(Array.from(files, ([, file]) => file)).size
+  const lines = output.replace(ANSI, ``)
+    .matchAll(/^(?:running \d+ tests? from (\S+)|(\.\/\S+) => )/gm)
+  return new Set(Array.from(lines, ([, serial, parallel]) => serial ?? parallel)).size
 }
 
 /** The log line that says how many of `total` test files ran and how many were skipped. */
@@ -362,7 +365,14 @@ export function filesLine(task: string, run: number, total: number): string {
  * folders (`node_modules`, `.volumes`, build output) do not.
  */
 export async function testFiles(): Promise<string[]> {
-  const files = await git([`ls-files`, `-z`, `-co`, `--exclude-standard`, `*.test.ts`, `*.test.tsx`])
+  const files = await git([
+    `ls-files`,
+    `-z`,
+    `-co`,
+    `--exclude-standard`,
+    `*.test.ts`,
+    `*.test.tsx`,
+  ])
   return files.split(`\0`).filter(Boolean)
 }
 
@@ -533,9 +543,8 @@ if (import.meta.main) {
   const verbose = Deno.args.includes(`--verbose`) || Deno.env.get(`CI`) === `true`
   const extra = Deno.args.filter((arg) => arg.startsWith(`-`) && arg !== `--verbose`)
   const paths = Deno.args.filter((arg) => !arg.startsWith(`-`))
-  Deno.exit(
-    paths.length
-      ? await runPaths(paths, extra)
-      : await runAll(extra, verbose, await relatedFlags(`test`)),
-  )
+  if (paths.length) Deno.exit(await runPaths(paths, extra))
+  const { flags, note } = await relatedFlags()
+  if (note) console.log(`test: ${note}`)
+  Deno.exit(await runAll(extra, verbose, flags))
 }

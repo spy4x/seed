@@ -21,14 +21,14 @@ const PR = { CI_PIPELINE_EVENT: `pull_request`, CI_COMMIT_TARGET_BRANCH: `main` 
 async function related(
   env: Record<string, string | undefined>,
   git: { fetch?: Error; diff: string | Error },
-): Promise<{ flags: string[]; calls: string[][] }> {
+): Promise<{ flags: string[]; note?: string; calls: string[][] }> {
   const calls: string[][] = []
-  const flags = await relatedFlags(`test`, (name) => env[name], (args) => {
+  const result = await relatedFlags((name) => env[name], (args) => {
     calls.push(args)
-    const result = args[0] === `fetch` ? git.fetch ?? `` : git.diff
-    return result instanceof Error ? Promise.reject(result) : Promise.resolve(result)
+    const output = args[0] === `fetch` ? git.fetch ?? `` : git.diff
+    return output instanceof Error ? Promise.reject(output) : Promise.resolve(output)
   })
-  return { flags, calls }
+  return { ...result, calls }
 }
 
 Deno.test("runs every test when a change is one the import graph cannot see", () => {
@@ -83,10 +83,12 @@ Deno.test("reads changed and deleted files from git's name-status output", () =>
 })
 
 Deno.test("tests only what a pull request's changes reach, against its target's tip", async () => {
-  const { flags, calls } = await related(PR, {
+  const { flags, note, calls } = await related(PR, {
     diff: `M\0apps/spa/src/views/a.tsx\0D\0libs/ui/old.tsx\0`,
   })
+  // A deleted file is no module to trace; the files that imported it changed too.
   expect(flags).toEqual([`--related=apps/spa/src/views/a.tsx`])
+  expect(note).toBe(`only the tests whose imports reach the 2 changed files run`)
   expect(calls).toEqual([
     [`fetch`, `--no-tags`, `origin`, `+refs/heads/main:refs/remotes/origin/main`],
     [`diff`, `--name-status`, `--no-renames`, `-z`, `refs/remotes/origin/main`, `HEAD`],
@@ -106,12 +108,16 @@ Deno.test("tests everything without asking git when the run is not a pull reques
   }
 })
 
-Deno.test("tests everything when git cannot fetch the target or diff, or nothing changed", async () => {
+Deno.test("tests everything when git fails or nothing is left to trace", async () => {
   const diff = `M\0apps/a.ts\0`
-  expect((await related(PR, { fetch: new Error(`offline`), diff })).flags).toEqual([])
-  expect((await related(PR, { diff: new Error(`no such ref`) })).flags).toEqual([])
-  expect((await related(PR, { diff: `` })).flags).toEqual([])
-  expect((await related(PR, { diff: `M\0deno.lock\0M\0apps/a.ts\0` })).flags).toEqual([])
+  for (
+    const [git, note] of [
+      [{ fetch: new Error(`git fetch failed: offline`), diff }, `git fetch failed: offline`],
+      [{ diff: new Error(`git diff failed: bad ref`) }, `git diff failed: bad ref`],
+      [{ diff: `` }, `no changed file is left to trace`],
+      [{ diff: `M\0deno.lock\0${diff}` }, `deno.lock changed, which the import graph cannot see`],
+    ] as const
+  ) expect(await related(PR, git)).toMatchObject({ flags: [], note: `every test runs: ${note}` })
 })
 
 Deno.test("counts each test file that ran once, and the ones skipped", () => {
@@ -121,8 +127,13 @@ Deno.test("counts each test file that ran once, and the ones skipped", () => {
     `running 0 tests from ./c.test.ts`,
     `a test that prints running 1 test from ./d.test.ts ... ok (1ms)`,
     `running 2 tests from ./a.test.ts`,
+    // Under --parallel, deno test names each test's file instead.
+    `\x1b[0m\x1b[38;5;245m./e.test.ts =>\x1b[0m one ... ok (1ms)`,
+    `./e.test.ts => two ... ok (1ms)`,
+    `./a.test.ts => three ... ok (1ms)`,
+    `fails => ./f.test.ts:2:6`,
   ].join(`\n`)
-  expect(filesRun(output)).toBe(3)
+  expect(filesRun(output)).toBe(4)
   expect(filesLine(`test`, 3, 10)).toBe(
     `test: 3 of 10 test files ran; 7 skipped, their imports reach no change`,
   )
