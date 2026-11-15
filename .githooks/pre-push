@@ -1,0 +1,22 @@
+#!/bin/sh
+# Refuses a push while `deno task check` is red, so CI never fails on what the local check reports.
+# It checks the working tree, not the pushed commit. Install: `deno task hooks:install`.
+# Git passes one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
+needed=
+while read -r _ local_sha _ _; do
+  # A deletion's local sha is all zeros.
+  case $local_sha in *[!0]*) ;; *) continue ;; esac
+  # No change against main (an empty claim commit) needs no check.
+  if git rev-parse --verify -q origin/main >/dev/null &&
+    git diff --quiet "origin/main...$local_sha"; then
+    continue
+  fi
+  needed=1
+done
+[ -z "$needed" ] && exit 0
+
+# CI's locale: some tests format dates and numbers differently in another one.
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 deno task check
+status=$?
+[ $status -ne 0 ] && echo "Push refused: check is red. Run \`deno task check\` to see why." >&2
+exit $status

@@ -40,8 +40,7 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `e2e:local`                  | The same browser tests against a stack of their own                                             |
 | `e2e:report`                 | Opens the report of the last browser test run                                                   |
 | `load`, `load:group`         | Load tests against the local stack ([capacity](capacity.md))                                    |
-| `hooks:install`              | Installs a git hook that runs `check` before every commit                                       |
-| `hooks:pre-commit`           | What that hook runs                                                                             |
+| `hooks:install`              | Turns on `.githooks/pre-push` in every worktree: it runs `check` and refuses a red push         |
 | **Apps**                     |                                                                                                 |
 | `build`                      | Builds the SPA for production                                                                   |
 | `api:dev`, `api:prod`        | Starts the API, with or without reloading on change. Compose runs them                          |
@@ -71,6 +70,11 @@ those, with their permissions and all their output: `deno task test apps/api/rou
 --filter=429`. `--verbose`, or `CI=true` as in CI, prints the whole output of every run. The test
 groups and their permissions are in `infra/scripts/test.ts`. A full run fails at once, naming the
 file, when a test file is in no group, so a new test never skips silently.
+
+`deno task hooks:install` sets `core.hooksPath`, which git keeps in the config every worktree
+shares, so run it once. Before each push the hook runs `deno task check` in CI's locale
+(`en_US.UTF-8`) on the working tree, not on the pushed commit, and refuses the push when it fails.
+It skips a branch deletion and a branch with no change against `origin/main`.
 
 Each app also has tasks of its own, in its `deno.json`. Run one from the root with
 `deno task --cwd apps/<app> <task>`. The website's `screenshots` and `loops` tasks record its

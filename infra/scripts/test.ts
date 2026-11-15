@@ -200,6 +200,11 @@ export const GROUPS: TestGroup[] = [
   // Looks for Dockerfiles in every directory.
   { flags: [`--allow-read=.`], paths: [`tests/dockerfiles.test.ts`] },
   { flags: [], paths: [`tests/load/group-plan.test.ts`] },
+  // Pushes from a git repository of its own in a temp folder, with a fake deno first on PATH.
+  {
+    flags: [`--allow-read`, `--allow-write`, `--allow-run=git`, `--allow-env=PATH`],
+    paths: [`tests/pre-push-hook.test.ts`],
+  },
   // The catalogs, and the apps' and libraries' sources for the keys they name.
   { flags: [`--allow-read=i18n,apps,libs`], paths: [`i18n`] },
 ]
