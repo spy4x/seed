@@ -55,6 +55,7 @@ import { useFormat, When } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
+import { SCROLLING_TABS } from "./tab-row.ts"
 import { isolate, Isolated } from "@spy4x/preact-ui/bdi"
 import { zoneLabel } from "@spy4x/time/tz"
 import { type AdminPageCommand, adminPageCommand } from "./admin-palette-commands.ts"
@@ -441,7 +442,7 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         onChange={props.onTab}
         lazy
         label={t.t(`AdminGroup.about`)}
-        listClass="flex-nowrap overflow-x-auto pb-px"
+        {...SCROLLING_TABS}
         panelClass="pt-4"
         tabDataE2E="admin-group-tab"
       />

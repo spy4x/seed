@@ -45,6 +45,7 @@ import { AdminPreferencesGroup } from "./preferences.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAdminText } from "./i18n.ts"
+import { SCROLLING_TABS } from "./tab-row.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
 import { type AdminPageCommand, adminPageCommand } from "./admin-palette-commands.ts"
 
@@ -554,8 +555,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
       {
         /*
         One row that scrolls sideways: eight tabs wrapped onto three rows on a phone. The arrow keys
-        still move between them, and focus scrolls the chosen tab into view. The bottom padding keeps
-        the active tab's underline inside the scroll box.
+        still move between them, and focus scrolls the chosen tab into view (`SCROLLING_TABS`).
       */
       }
       <Tabs
@@ -564,7 +564,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
         onChange={props.onTab}
         lazy
         label={t.t(`AdminUser.tabs`)}
-        listClass="flex-nowrap overflow-x-auto pb-px"
+        {...SCROLLING_TABS}
         panelClass="pt-4"
         tabDataE2E="admin-user-tab"
       />

@@ -35,6 +35,7 @@ import { GroupMark } from "./group-appearance.tsx"
 import { type GroupRow, roleName } from "./groups-screen.tsx"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "./i18n.ts"
+import { SCROLLING_TABS } from "./tab-row.ts"
 import { type GroupMemberRow, GroupMembersSection, type MemberError } from "./group-members.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
@@ -691,7 +692,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
             navigate?.(GROUP_TAB_PATHS[id.replace("group-tab-", "") as GroupTab](group.id))}
           lazy
           label={t.t(`GroupEditor.tabsLabel`, { name: group.name })}
-          listClass="flex-nowrap overflow-x-auto pb-px"
+          {...SCROLLING_TABS}
           panelClass="pt-6"
           tabDataE2E="group-tab"
         />

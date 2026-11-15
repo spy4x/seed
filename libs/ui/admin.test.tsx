@@ -435,6 +435,16 @@ function userProps(calls: unknown[][], props: Partial<AdminUserScreenProps> = {}
 }
 
 describe("one person in the admin app", () => {
+  it("draws each tab's focus ring inside the tab, where the sideways-scrolling row cannot cut it", async () => {
+    await mount(<AdminUserScreen {...userProps([])} />)
+    expect(document.querySelector("[role=tablist]")?.className).toContain("overflow-x-auto")
+    for (const tab of document.querySelectorAll("[role=tab]")) {
+      expect(tab.className).toContain("focus-visible:ring-inset")
+      expect(tab.className).toContain("focus-visible:ring-offset-0")
+      expect(tab.className).not.toContain("focus-visible:ring-offset-2")
+    }
+  })
+
   it("shows the person in a header card and their account on the Overview tab", async () => {
     await mount(<AdminUserScreen {...userProps([])} />)
 
