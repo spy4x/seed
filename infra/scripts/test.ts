@@ -185,7 +185,7 @@ export const GROUPS: TestGroup[] = [
   },
   {
     flags: [
-      `--allow-read=.woodpecker/ci.yml,e2e,docs/browser-tests.md,docs/woodpecker-ci-setup.md`,
+      `--allow-read=.woodpecker/ci.yml,.woodpecker/wip.yml,e2e,docs/browser-tests.md,docs/woodpecker-ci-setup.md`,
     ],
     paths: [`tests/ci-browser-tests.test.ts`],
   },

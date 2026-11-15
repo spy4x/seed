@@ -4,6 +4,17 @@
 # rest. The nightly run takes the slow steps, `e2e-full` and the full Lighthouse run, which a
 # later push would otherwise cancel; a pull request and a tag skip `e2e-full`.
 #
+# A pull request whose title starts with `[WIP]` runs wip.yml instead (`check` and `secrets` only,
+# #1058). Woodpecker sets `CI_COMMIT_MESSAGE` to the pull request's title on `pull_request` and
+# `pull_request_metadata`. Removing `[WIP]` from the title is a `pull_request_metadata` event with
+# the reason `edited`, so it starts this workflow without a push; every step that runs on
+# `pull_request` therefore has a twin condition for `pull_request_metadata`, or a title edit would
+# report `ci/woodpecker/pr/ci` green after a short run. A body edit is `edited` too and re-runs
+# this workflow on a ready pull request: rare, and accepted. A commit pushed while the title starts
+# with `[WIP]` gets no `ci/woodpecker/pr/ci` status, which branch protection requires, so it cannot
+# merge. Putting `[WIP]` back without a push runs nothing and keeps the head's earlier status, so
+# it does not block a merge.
+#
 # Woodpecker reads every `*.yml` in this folder as its own workflow. A product turns on deploys on
 # every push to main by copying `deploy.yml.example` (docs/woodpecker-ci-setup.md).
 #
@@ -18,6 +29,10 @@
 
 when:
   - event: pull_request
+    evaluate: 'not (CI_COMMIT_MESSAGE startsWith "[WIP]")'
+  # `CI_PIPELINE_EVENT_REASON` joins the reasons with commas; GitHub sends one per event.
+  - event: pull_request_metadata
+    evaluate: 'CI_PIPELINE_EVENT_REASON contains "edited" && not (CI_COMMIT_MESSAGE startsWith "[WIP]")'
   - event: push
     branch: main
   - event: tag
@@ -46,8 +61,14 @@ variables:
     - i18n/*.md
     - .github/**
     - .claude/**
+  # Every `pull_request` condition here and in the steps has a `pull_request_metadata` twin with
+  # the same `path` (see the top). Woodpecker applies `path` to both events, and GitHub lists the
+  # pull request's changed files on both; were none listed, the step would run, which is safe.
   - &stack_when
     - event: pull_request
+      path:
+        exclude: *markdown_only
+    - event: pull_request_metadata
       path:
         exclude: *markdown_only
     - event: cron
@@ -56,15 +77,17 @@ variables:
     - event: pull_request
       path:
         exclude: *internal_markdown
+    - event: pull_request_metadata
+      path:
+        exclude: *internal_markdown
     - event: cron
     - event: tag
   # When the four image steps run: see image-node.
   - &image_when
     - event: pull_request
-      path:
-        # What decides whether an image builds: the four Dockerfiles, .dockerignore, the
-        # manifest, the lockfile and this file. A source change is built on `main` (see
-        # image-node).
+      # What decides whether an image builds: the four Dockerfiles, .dockerignore, the manifest,
+      # the lockfile and this file. A source change is built on `main` (see image-node).
+      path: &image_paths
         - apps/api/dockerfile.node
         - apps/api/dockerfile.bun
         - apps/mpa/dockerfile.node
@@ -73,6 +96,8 @@ variables:
         - deno.jsonc
         - deno.lock
         - .woodpecker/ci.yml
+    - event: pull_request_metadata
+      path: *image_paths
     - event: push
       branch: main
     - event: tag
@@ -112,7 +137,7 @@ steps:
             git config --unset-all remote.origin.partialclonefilter || true
             deep="--unshallow --refetch"
           fi
-          if [ "$${CI_PIPELINE_EVENT}" = pull_request ]; then
+          if [ "$${CI_PIPELINE_EVENT}" = pull_request ] || [ "$${CI_PIPELINE_EVENT}" = pull_request_metadata ]; then
             target="refs/remotes/origin/$${CI_COMMIT_TARGET_BRANCH}"
             git fetch --no-tags $${deep} origin "+refs/heads/$${CI_COMMIT_TARGET_BRANCH}:$${target}"
             base="$(git merge-base "$${target}" HEAD)" || {
@@ -280,7 +305,7 @@ steps:
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
       - event: pull_request
-        path:
+        path: &lighthouse_paths
           - apps/mpa/**
           - libs/ui/**
           - libs/domain/**
@@ -297,6 +322,8 @@ steps:
           - deno.lock
           - package.json
           - .woodpecker/ci.yml
+      - event: pull_request_metadata
+        path: *lighthouse_paths
       - event: cron
       - event: tag
     commands:
@@ -311,7 +338,7 @@ steps:
       - deno install --frozen
       - deno task mpa:build
       # The commands share one shell, so the variable reaches the next one.
-      - if [ "$${CI_PIPELINE_EVENT}" = pull_request ]; then export LIGHTHOUSE_PAGES=quick; fi
+      - case "$${CI_PIPELINE_EVENT}" in pull_request | pull_request_metadata) export LIGHTHOUSE_PAGES=quick ;; esac
       - deno task lighthouse
     # The four after `check` are optional: a pull request that changes only Markdown skips them,
     # and Lighthouse still runs, after `check` and alone, when a changed guide is part of the
@@ -340,6 +367,9 @@ steps:
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     when:
       - event: pull_request
+        path:
+          exclude: *markdown_only
+      - event: pull_request_metadata
         path:
           exclude: *markdown_only
       - event: tag

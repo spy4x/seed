@@ -15,7 +15,10 @@
  * quick pages (#876). A pull request builds the four images only when it changes what decides
  * whether an image builds: the four Dockerfiles, `.dockerignore`, `deno.jsonc`, `deno.lock` and
  * the workflow. A source change that breaks a bundle is caught by the push to `main`, which, like
- * a tag, always builds them (https://github.com/spy4x/ringmaster/issues/296).
+ * a tag, always builds them (https://github.com/spy4x/ringmaster/issues/296). A pull request
+ * titled `[WIP]` runs only `check` and `secrets` (`.woodpecker/wip.yml`, copies of ci.yml's), and
+ * removing `[WIP]` from the title (`pull_request_metadata`) runs the same steps as a pull request
+ * (#1058).
  */
 
 import { expect } from "@std/expect"
@@ -43,6 +46,7 @@ interface Condition {
   event?: string | string[]
   branch?: string | string[]
   path?: PathCondition
+  evaluate?: string
 }
 
 /** A `depends_on` entry: a step's name, or an object that may mark the dependency optional. */
@@ -82,7 +86,8 @@ function pathHolds(path: PathCondition | undefined, changed: string[]): boolean 
  * Whether `step` runs for `event` on `branch` when the commit or pull request changes the files
  * `changed`. A step without `when` runs for every event, and a condition without `branch` holds on
  * every branch. Branch patterns are compared as plain names: this pipeline uses no glob. As in
- * Woodpecker, `path` counts on a pull request and a push only, never on a tag or a cron run.
+ * Woodpecker, `path` counts on a pull request (with its title edits) and a push only, never on a
+ * tag or a cron run. `evaluate` is not read: its tests compare the expressions themselves.
  */
 export function runsFor(
   step: Step,
@@ -95,7 +100,7 @@ export function runsFor(
   return conditions.some((condition) => {
     const events = list(condition.event)
     const branches = list(condition.branch)
-    const pathCounts = event === `pull_request` || event === `push`
+    const pathCounts = [`pull_request`, `pull_request_metadata`, `push`].includes(event)
     return (events.length === 0 || events.includes(event)) &&
       (branches.length === 0 || branches.includes(branch)) &&
       (!pathCounts || pathHolds(condition.path, changed))
@@ -269,12 +274,13 @@ Deno.test("the nightly run and a tag run Lighthouse whatever they change, and a 
   expect(blockingSteps(ci, `deno task lighthouse`, `push`, `main`, website)).toEqual([])
 })
 
-Deno.test("a pull request measures the quick pages, and the nightly run and a tag every page", async () => {
-  // run.sh measures every page unless LIGHTHOUSE_PAGES=quick; only a pull request may set it.
+Deno.test("a pull request and its title edit measure the quick pages, and the nightly run and a tag every page", async () => {
+  // run.sh measures every page unless LIGHTHOUSE_PAGES=quick; only a pull request and its title
+  // edit may set it.
   const commands = list((await workflow()).steps?.lighthouse?.commands).map((line) => line.trim())
   const at = commands.indexOf(`deno task lighthouse`)
   expect(commands.slice(at - 1, at)).toEqual([
-    `if [ "$\${CI_PIPELINE_EVENT}" = pull_request ]; then export LIGHTHOUSE_PAGES=quick; fi`,
+    `case "$\${CI_PIPELINE_EVENT}" in pull_request | pull_request_metadata) export LIGHTHOUSE_PAGES=quick ;; esac`,
   ])
   expect(commands.filter((line) => line.includes(`LIGHTHOUSE_PAGES`))).toHaveLength(1)
 })
@@ -443,4 +449,56 @@ Deno.test("a pull request that changes only a published guide runs the browser t
   const order = stages(ci, `pull_request`, `main`, [`docs/capacity.md`])
   expect(stageOf(order, `lighthouse`)).toBeGreaterThan(stageOf(order, `check`))
   expect(order.flat().filter((name) => STACK.includes(name))).toEqual([`browser`])
+})
+
+const WIP = `.woodpecker/wip.yml`
+const WIP_TITLE = `CI_COMMIT_MESSAGE startsWith "[WIP]"`
+
+Deno.test("a title edit that drops [WIP] runs the same steps as a pull request, whatever it changes", async () => {
+  // A step without the `pull_request_metadata` twin would be skipped, and the short run would
+  // still report the required `ci/woodpecker/pr/ci` check green.
+  const ci = await workflow()
+  const cases = [
+    [],
+    [`apps/api/x.ts`],
+    [`apps/mpa/routes/index.tsx`],
+    [`docs/capacity.md`],
+    [`README.md`],
+    [`apps/api/dockerfile.node`],
+    [`tests/x.test.ts`],
+  ]
+  for (const changed of cases) {
+    const edit = stages(ci, `pull_request_metadata`, `main`, changed)
+    expect({ changed, edit }).toEqual({
+      changed,
+      edit: stages(ci, `pull_request`, `main`, changed),
+    })
+  }
+})
+
+Deno.test("ci.yml runs on a pull request or a title edit only without [WIP], and wip.yml only with it", async () => {
+  const conditions = (workflow: Step) =>
+    list(workflow.when).map(({ event, evaluate }) => ({ event, evaluate }))
+  const pullRequest = (workflow: Step) =>
+    conditions(workflow).filter(({ event }) => `${event}`.startsWith(`pull_request`))
+  expect(pullRequest(await workflow())).toEqual([
+    { event: `pull_request`, evaluate: `not (${WIP_TITLE})` },
+    {
+      event: `pull_request_metadata`,
+      evaluate: `CI_PIPELINE_EVENT_REASON contains "edited" && not (${WIP_TITLE})`,
+    },
+  ])
+  expect(conditions(parse(await read(WIP)) as Step)).toEqual([
+    { event: `pull_request`, evaluate: WIP_TITLE },
+  ])
+})
+
+Deno.test("wip.yml runs exactly ci.yml's check and secrets steps", async () => {
+  // YAML anchors do not cross files, so wip.yml holds copies; a fix in ci.yml must reach both.
+  const ci = (await workflow()).steps ?? {}
+  const wip = (parse(await read(WIP)) as { steps?: Record<string, Step> }).steps ?? {}
+  expect(Object.keys(wip)).toEqual([`check`, `secrets`])
+  for (const name of [`check`, `secrets`]) {
+    expect({ name, step: wip[name] }).toEqual({ name, step: ci[name] })
+  }
 })
