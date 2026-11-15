@@ -587,12 +587,14 @@ describe("SearchPalette", () => {
     expect(quickGroup.getAttribute("aria-disabled")).toBe("true")
   })
 
-  it("lists Download my data offline, dimmed, and Enter never opens it", async () => {
+  it("lists Download my data offline, dimmed, and does nothing on Enter while it is highlighted", async () => {
     const { picked } = await mount({ online: false }, () => ({ notes: [], onDevice: true }))
     await open()
 
-    await fill("download my data")
-    await until(() => listed().includes("Download my data | Needs a connection"))
+    await type("download my data")
+    const row = find("[data-e2e=search] [role=option][aria-selected=true]")
+    expect([text(row), row.getAttribute("aria-disabled")])
+      .toEqual(["Download my data | Needs a connection", "true"])
     await enter()
 
     expect(picked).toEqual([])
