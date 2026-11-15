@@ -138,6 +138,15 @@ Deno.test("the api and worker containers receive the files switch", async () => 
   expect(await environmentOf("worker")).toContain("FILES")
 })
 
+// Without it `FILES=false` in `.env` would leave the SPA drawing upload controls that only fail: the
+// operator sets one variable, and the SPA's `/config.json` gets it as `files` (public-env.allow).
+Deno.test("the spa container takes its files switch from the API's FILES", async () => {
+  const compose = parse(await Deno.readTextFile(COMPOSE)) as {
+    services?: Record<string, { environment?: string[] }>
+  }
+  expect(compose.services?.spa?.environment).toContain("SPA_FILES=${FILES:-}")
+})
+
 // Without it `NOTES=false` in `.env` would leave the notes API on: the API never sees it.
 Deno.test("the api container receives the notes switch", async () => {
   expect(await environmentOf("api")).toContain("NOTES")

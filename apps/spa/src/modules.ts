@@ -77,20 +77,32 @@ const switches: ModuleSwitches = { realtime: true, offline: true }
 let notes = true
 
 /**
+ * Whether the server keeps files (`SPA_FILES`, which compose sets from the API's `FILES`). Off, the
+ * app draws no control that uploads a file or asks for a data export, since each would only fail.
+ */
+let files = true
+
+/**
  * Reads the switches from the runtime configuration. Called once, before the first render. A
  * switch is off only when the configuration says so (`runtime-config.ts` reads the file's text).
  */
 export function configureModules(
-  config: Pick<RuntimeConfig, "realtime" | "offline" | "notes">,
+  config: Pick<RuntimeConfig, "realtime" | "offline" | "notes" | "files">,
 ): void {
   switches.realtime = config.realtime !== false
   switches.offline = config.offline !== false
   notes = config.notes !== false
+  files = config.files !== false
 }
 
 /** Whether the notes example is on: the one read of `SPA_NOTES` for the views. */
 export function notesOn(): boolean {
   return notes
+}
+
+/** Whether files are on: the one read of `SPA_FILES` for the views. */
+export function filesOn(): boolean {
+  return files
 }
 
 /** The switches as they are now. */
