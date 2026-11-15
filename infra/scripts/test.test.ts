@@ -1,6 +1,132 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { failuresOf, groupOf, GROUPS, testArgs, totalsOf, ungrouped } from "./test.ts"
+import {
+  changesOf,
+  failuresOf,
+  filesLine,
+  filesRun,
+  groupOf,
+  GROUPS,
+  relatedFlags,
+  runAllReason,
+  selectable,
+  testArgs,
+  totalsOf,
+  ungrouped,
+} from "./test.ts"
+
+const PR = { CI_PIPELINE_EVENT: `pull_request`, CI_COMMIT_TARGET_BRANCH: `main` }
+
+/** Calls `relatedFlags` with `env` and a git whose `diff` prints `diff`, or that throws. */
+async function related(
+  env: Record<string, string | undefined>,
+  git: { fetch?: Error; diff: string | Error },
+): Promise<{ flags: string[]; calls: string[][] }> {
+  const calls: string[][] = []
+  const flags = await relatedFlags(`test`, (name) => env[name], (args) => {
+    calls.push(args)
+    const result = args[0] === `fetch` ? git.fetch ?? `` : git.diff
+    return result instanceof Error ? Promise.reject(result) : Promise.resolve(result)
+  })
+  return { flags, calls }
+}
+
+Deno.test("runs every test when a change is one the import graph cannot see", () => {
+  for (
+    const path of [
+      `deno.lock`,
+      `deno.jsonc`,
+      `apps/api/deno.json`,
+      `package.json`,
+      `.woodpecker/ci.yml`,
+      `libs/server/db/migrations/2026_11_03_0001_users_onboarding.sql`,
+      `libs/server/db/schema.sql`,
+      `libs/server/blog/seed-posts/en/hello.md`,
+      `e2e/fixtures/app.ts`,
+      `apps/mpa/testdata/post-figures/a.json`,
+      `infra/scripts/test.ts`,
+      `infra/scripts/test-integration.ts`,
+    ]
+  ) {
+    const view = { path: `apps/spa/src/views/notes.tsx`, deleted: false }
+    expect(runAllReason([view, { path, deleted: false }])).toContain(path)
+  }
+  expect(runAllReason([{ path: `apps/spa/src/views/notes.tsx`, deleted: false }])).toBeUndefined()
+})
+
+Deno.test("runs every test when no changed file is left to trace", () => {
+  expect(runAllReason([])).toBe(`no changed file is left to trace`)
+  expect(runAllReason([{ path: `libs/ui/old.tsx`, deleted: true }])).toBe(
+    `no changed file is left to trace`,
+  )
+})
+
+Deno.test("limits only the groups whose files depend on nothing but their imports", () => {
+  // Every other group reads the source tree from disk or runs a program, so it always runs whole.
+  // Two tests read only files whose change runs every test: deno.jsonc and deno.lock, migrations.
+  expect(GROUPS.filter(selectable).flatMap((group) => group.paths)).toEqual([
+    ...GROUPS[0].paths,
+    ...groupOf(`apps/spa/src/offline/index.test.ts`)!.paths,
+    `tests/dependency-age.test.ts`,
+    `tests/migration-names.test.ts`,
+    `tests/load/group-plan.test.ts`,
+  ])
+})
+
+Deno.test("reads changed and deleted files from git's name-status output", () => {
+  expect(changesOf(`M\0apps/a.ts\0D\0libs/b.ts\0A\0c d.ts\0`)).toEqual([
+    { path: `apps/a.ts`, deleted: false },
+    { path: `libs/b.ts`, deleted: true },
+    { path: `c d.ts`, deleted: false },
+  ])
+  expect(changesOf(``)).toEqual([])
+})
+
+Deno.test("tests only what a pull request's changes reach, against its target's tip", async () => {
+  const { flags, calls } = await related(PR, {
+    diff: `M\0apps/spa/src/views/a.tsx\0D\0libs/ui/old.tsx\0`,
+  })
+  expect(flags).toEqual([`--related=apps/spa/src/views/a.tsx`])
+  expect(calls).toEqual([
+    [`fetch`, `--no-tags`, `origin`, `+refs/heads/main:refs/remotes/origin/main`],
+    [`diff`, `--name-status`, `--no-renames`, `-z`, `refs/remotes/origin/main`, `HEAD`],
+  ])
+})
+
+Deno.test("tests everything without asking git when the run is not a pull request's", async () => {
+  for (
+    const env of [
+      {},
+      { CI_PIPELINE_EVENT: `push`, CI_COMMIT_TARGET_BRANCH: `main` },
+      { CI_PIPELINE_EVENT: `cron` },
+      { CI_PIPELINE_EVENT: `pull_request` },
+    ]
+  ) {
+    expect(await related(env, { diff: `M\0apps/a.ts\0` })).toEqual({ flags: [], calls: [] })
+  }
+})
+
+Deno.test("tests everything when git cannot fetch the target or diff, or nothing changed", async () => {
+  const diff = `M\0apps/a.ts\0`
+  expect((await related(PR, { fetch: new Error(`offline`), diff })).flags).toEqual([])
+  expect((await related(PR, { diff: new Error(`no such ref`) })).flags).toEqual([])
+  expect((await related(PR, { diff: `` })).flags).toEqual([])
+  expect((await related(PR, { diff: `M\0deno.lock\0M\0apps/a.ts\0` })).flags).toEqual([])
+})
+
+Deno.test("counts each test file that ran once, and the ones skipped", () => {
+  const output = [
+    `\x1b[0m\x1b[38;5;245mrunning 2 tests from ./a.test.ts\x1b[0m`,
+    `running 1 test from ./b.test.ts`,
+    `running 0 tests from ./c.test.ts`,
+    `a test that prints running 1 test from ./d.test.ts ... ok (1ms)`,
+    `running 2 tests from ./a.test.ts`,
+  ].join(`\n`)
+  expect(filesRun(output)).toBe(3)
+  expect(filesLine(`test`, 3, 10)).toBe(
+    `test: 3 of 10 test files ran; 7 skipped, their imports reach no change`,
+  )
+})
 
 Deno.test("runs a file with the permissions of the group that tests it", () => {
   const changelog = groupOf(`apps/mpa/changelog-start.test.ts`)!
