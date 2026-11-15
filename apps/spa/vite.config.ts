@@ -161,6 +161,10 @@ export default defineConfig({
     // no bundle names its map, and dockerfile.prod uploads the maps and keeps them out of nginx.
     sourcemap: `hidden`,
   },
+  // Vite's default cache is the repository root's node_modules/.vite, which the admin app's dev
+  // server uses too: whichever starts second rewrites the other's pre-bundled dependencies, and a
+  // page asking for one it dropped gets "Outdated Optimize Dep" and stays blank. One cache each.
+  cacheDir: fromFileUrl(new URL("../../node_modules/.vite/spa", import.meta.url)),
   optimizeDeps: {
     // These come in through the Deno plugin's resolver, which the dev server's dependency scan
     // does not follow: tailwind-merge (through the JSR package @spy4x/preact-cn) and
