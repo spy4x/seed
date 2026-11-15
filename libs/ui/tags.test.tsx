@@ -588,6 +588,51 @@ describe("TagEditorScreen", () => {
     expect(remove.calls).toHaveLength(1)
   })
 
+  it("opens the delete confirmation when the app asks, deletes only on confirm, and Cancel returns focus to More actions", async () => {
+    const remove = spy<[]>()
+    const requested = spy<[]>()
+    await mount(<TagEditorScreen {...editHome} onDelete={remove.fn} />)
+    await rerender(
+      <TagEditorScreen
+        {...editHome}
+        onDelete={remove.fn}
+        requestDialog="delete"
+        onDialogRequested={requested.fn}
+      />,
+    )
+
+    expect(find("[data-e2e=tag-delete-dialog]").textContent).toContain(`Delete tag "Home"?`)
+    expect(remove.calls).toEqual([])
+    expect(requested.calls).toHaveLength(1)
+    await clickText("Cancel", "[data-e2e=tag-delete-dialog]")
+    expect(remove.calls).toEqual([])
+    expect(focused()).toBe("tag-editor-menu")
+
+    // The app clears its request, and the next one opens the confirmation again.
+    await rerender(<TagEditorScreen {...editHome} onDelete={remove.fn} requestDialog={null} />)
+    await rerender(<TagEditorScreen {...editHome} onDelete={remove.fn} requestDialog="delete" />)
+    await clickText("Delete tag", "[data-e2e=tag-delete-dialog]")
+    expect(remove.calls).toHaveLength(1)
+  })
+
+  it("opens no confirmation the menu does not offer, and still clears the request", async () => {
+    const requested = spy<[]>()
+    const asks: Record<string, TagEditorScreenProps> = {
+      "a viewer": { ...editHome, group: viewerOfTeam },
+      "the create page": { ...tagEditorDefaults, onDelete: () => {} },
+      "no delete": { ...editHome, onDelete: undefined },
+      "a delete in flight": { ...editHome, deleting: true },
+    }
+    for (const [name, props] of Object.entries(asks)) {
+      await mount(<TagEditorScreen {...props} />)
+      await rerender(
+        <TagEditorScreen {...props} requestDialog="delete" onDialogRequested={requested.fn} />,
+      )
+      expect(count("[data-e2e=tag-delete-dialog]"), name).toBe(0)
+    }
+    expect(requested.calls).toHaveLength(4)
+  })
+
   it("says the tag does not exist, with the way back to the tags", async () => {
     await mount(<TagEditorScreen {...tagEditorDefaults} notFound />)
     const missing = find("[data-e2e=tag-not-found]")

@@ -232,6 +232,59 @@ export interface GroupEditorScreenProps {
   exporting?: boolean
   /** The last export failed: the page says so above the form, with "Try again". */
   exportFailed?: boolean
+  /**
+   * A dialog of the menu to open, such as the command palette's Delete: it opens, with focus first
+   * on the "More actions" button so closing the dialog returns there, only while the menu offers
+   * that item and it can be picked ({@link groupMenuActions}); otherwise nothing opens. The page
+   * then calls `onDialogRequested`, so the app clears the request and the next one opens it again.
+   */
+  requestDialog?: GroupDialog | null
+  onDialogRequested?: () => void
+}
+
+/** A "More actions" item the command palette reaches too. */
+export type GroupAction = "transfer" | "export" | "leave" | "delete"
+
+/** A dialog of the menu that the app may open: see `requestDialog`. */
+export type GroupDialog = Exclude<GroupAction, "export">
+
+/** Why a menu item shows but cannot be picked; the menu says so under it, except while exporting. */
+export type GroupActionBlock = "subscription" | "lastGroup" | "offline" | "exporting"
+
+/**
+ * The menu's Transfer, Export, Leave and Delete for the person's role and the group's state. An
+ * action the menu shows maps to `null` when it can be picked, or to why it is disabled; one it
+ * hides is left out. Transfer is the owner's while someone can take the group, Export the owner's,
+ * Leave everyone's but the owner's, and Delete the owner's. The last group cannot be left or
+ * deleted, and a live subscription blocks Transfer and Delete. The page's menu and the app's
+ * palette both read this, so they never disagree.
+ *
+ * @param page.hasTransfer The app passes the transfer dialog's body (`transfer`).
+ * @param page.hasExport The app passes `onExport`.
+ */
+export function groupMenuActions(page: {
+  role: GroupRole
+  members: readonly GroupMemberRow[] | null
+  hasTransfer: boolean
+  hasExport: boolean
+  isLastGroup: boolean
+  hasSubscription: boolean
+  offline: boolean
+  exporting: boolean
+}): Partial<Record<GroupAction, GroupActionBlock | null>> {
+  const subscription = page.hasSubscription ? "subscription" : null
+  const lastGroup = page.isLastGroup ? "lastGroup" : null
+  const actions: Partial<Record<GroupAction, GroupActionBlock | null>> = {}
+  // Only the owner has candidates: `transferCandidates` asks `canTransfer`, which needs the owner.
+  if (page.hasTransfer && transferCandidates(page.role, page.members).length > 0) {
+    actions.transfer = subscription
+  }
+  if (page.hasExport && canExportGroup(page.role)) {
+    actions.export = page.offline ? "offline" : page.exporting ? "exporting" : null
+  }
+  if (canLeave(page.role)) actions.leave = lastGroup
+  if (canDelete(page.role)) actions.delete = lastGroup ?? subscription
+  return actions
 }
 
 /** Which of the header menu's dialogs is open. */
@@ -371,12 +424,48 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     header.current?.querySelector<HTMLElement>("[data-e2e=group-menu]")?.focus()
   }, [handedOver])
 
-  // Only the owner has candidates: `transferCandidates` asks `canTransfer`, which needs the owner.
-  const canHandOver = transfer !== undefined &&
-    transferCandidates(group.role, members).length > 0
-  const subscriptionBlocks = hasSubscription ? t.t(`GroupEditor.cancelSubscriptionFirst`) : null
-  const onlyGroup = t.t(`GroupEditor.onlyGroup`)
-  const deleteBlocked = isLastGroup ? onlyGroup : subscriptionBlocks
+  const actions = groupMenuActions({
+    role: group.role,
+    members,
+    hasTransfer: transfer !== undefined,
+    hasExport: onExport !== undefined,
+    isLastGroup,
+    hasSubscription,
+    offline,
+    exporting,
+  })
+  const canHandOver = actions.transfer !== undefined
+  const hints: Record<GroupActionBlock, string | null> = {
+    subscription: t.t(`GroupEditor.cancelSubscriptionFirst`),
+    lastGroup: t.t(`GroupEditor.onlyGroup`),
+    offline: t.t(`GroupEditor.offline`),
+    exporting: null,
+  }
+  const hint = (action: GroupAction) => {
+    const block = actions[action]
+    return block ? hints[block] : null
+  }
+  const openLeave = () => {
+    leaveOpened()
+    setDialog(Dialog.LEAVE)
+  }
+  const openDelete = () => {
+    deleteOpened()
+    setDialog(Dialog.DELETE)
+  }
+  // A dialog the app asks for opens as its menu item would, and only while that item can be
+  // picked. Focus goes to the menu first, so closing the dialog returns it there, not to the page.
+  const request = props.requestDialog
+  useEffect(() => {
+    if (!request) return
+    if (actions[request] === null) {
+      header.current?.querySelector<HTMLElement>("[data-e2e=group-menu]")?.focus()
+      if (request === `transfer`) setDialog(Dialog.TRANSFER)
+      if (request === `leave`) openLeave()
+      if (request === `delete`) openDelete()
+    }
+    props.onDialogRequested?.()
+  }, [request])
 
   const canMoveAll = onMoveAll !== undefined && moveTargets.length > 0 &&
     canMutateNotes(group.role)
@@ -393,27 +482,27 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     canHandOver && (
       <DropdownItem
         key="transfer"
-        disabled={subscriptionBlocks !== null}
+        disabled={actions.transfer !== null}
         dataE2E="group-transfer-open"
         onClick={() => setDialog(Dialog.TRANSFER)}
       >
         <MenuText
           text={t.t(`GroupEditor.transfer`)}
-          hint={subscriptionBlocks}
+          hint={hint(`transfer`)}
           hintDataE2E="group-transfer-why"
         />
       </DropdownItem>
     ),
-    onExport && canExportGroup(group.role) && (
+    actions.export !== undefined && (
       <DropdownItem
         key="export"
-        disabled={offline || exporting}
+        disabled={actions.export !== null}
         dataE2E="group-export"
         onClick={onExport}
       >
         <MenuText
           text={exporting ? t.t(`GroupEditor.exporting`) : t.t(`GroupEditor.export`)}
-          hint={offline ? t.t(`GroupEditor.offline`) : null}
+          hint={hint(`export`)}
           hintDataE2E="group-export-why"
         />
       </DropdownItem>
@@ -429,38 +518,32 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     ),
   ].filter(Boolean)
   const ending = [
-    canLeave(group.role) && (
+    actions.leave !== undefined && (
       <DropdownItem
         key="leave"
         danger
-        disabled={isLastGroup}
+        disabled={actions.leave !== null}
         dataE2E="group-leave-open"
-        onClick={() => {
-          leaveOpened()
-          setDialog(Dialog.LEAVE)
-        }}
+        onClick={openLeave}
       >
         <MenuText
           text={t.t(`GroupEditor.leave`)}
-          hint={isLastGroup ? onlyGroup : null}
+          hint={hint(`leave`)}
           hintDataE2E="group-leave-why"
         />
       </DropdownItem>
     ),
-    canDelete(group.role) && (
+    actions.delete !== undefined && (
       <DropdownItem
         key="delete"
         danger
-        disabled={deleteBlocked !== null}
+        disabled={actions.delete !== null}
         dataE2E="group-delete-open"
-        onClick={() => {
-          deleteOpened()
-          setDialog(Dialog.DELETE)
-        }}
+        onClick={openDelete}
       >
         <MenuText
           text={t.t(`GroupEditor.delete`)}
-          hint={deleteBlocked}
+          hint={hint(`delete`)}
           hintDataE2E="group-delete-why"
         />
       </DropdownItem>
@@ -614,7 +697,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         />
       </div>
 
-      {dialog === Dialog.TRANSFER && canHandOver && (
+      {dialog === Dialog.TRANSFER && canHandOver && transfer && (
         <Modal
           open
           title={
@@ -657,11 +740,10 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
             onMove={onMoveAll}
             onTargetChange={onMoveAllTargetChange}
             onCancel={close}
-            onDelete={canDelete(group.role) && deleteBlocked === null
+            onDelete={actions.delete === null
               ? () => {
                 onMoveAllClose?.()
-                deleteOpened()
-                setDialog(Dialog.DELETE)
+                openDelete()
               }
               : undefined}
           />
