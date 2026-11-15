@@ -1441,6 +1441,8 @@ export default {
   "ProfileAccount.noneUsername": "Нет. Вы входите по логину.",
   "ProfileAccount.none": "Нет.",
   "ProfileAccount.noneProvider": "Нет. {provider} не передал подтверждённую почту.",
+  "ProfileAccount.loadingEmail": "Загружаем ваш e-mail",
+  "ProfileAccount.pendingEmail": "Новый адрес <email>{email}</email> ждёт кода подтверждения.",
   "ProfileExport.asking": "Запрашиваем…",
   "ProfileExport.never":
     "ZIP-архив с профилем, группами и заметками в файлах JSON и CSV. Подготовка займёт несколько минут — когда всё будет готово, пришлём письмо.",

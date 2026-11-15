@@ -1269,6 +1269,8 @@ export default {
   "ProfileAccount.noneUsername": "None. You sign in with your username.",
   "ProfileAccount.none": "None.",
   "ProfileAccount.noneProvider": "None. {provider} didn't share a verified email.",
+  "ProfileAccount.loadingEmail": "Loading your email",
+  "ProfileAccount.pendingEmail": "New address <email>{email}</email> is waiting for its code.",
   "ProfileExport.asking": "Requesting…",
   "ProfileExport.never":
     "A ZIP of your profile, groups and notes as JSON and CSV files. It takes a few minutes, and we'll email you when it's ready.",

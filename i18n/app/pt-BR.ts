@@ -1372,6 +1372,8 @@ export default {
   "ProfileAccount.noneUsername": "Nenhum. Você entra com seu nome de usuário.",
   "ProfileAccount.none": "Nenhum.",
   "ProfileAccount.noneProvider": "Nenhum. O {provider} não compartilhou um e-mail confirmado.",
+  "ProfileAccount.loadingEmail": "Carregando seu e-mail",
+  "ProfileAccount.pendingEmail": "O novo endereço <email>{email}</email> está aguardando o código.",
   "ProfileExport.asking": "Pedindo…",
   "ProfileExport.never":
     "Um ZIP com seu perfil, grupos e notas em arquivos JSON e CSV. Leva alguns minutos, e avisamos por e-mail quando estiver pronto.",

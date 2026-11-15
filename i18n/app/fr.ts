@@ -1423,6 +1423,8 @@ export default {
   "ProfileAccount.noneUsername": "Aucune. Vous vous connectez avec votre nom d’utilisateur.",
   "ProfileAccount.none": "Aucune.",
   "ProfileAccount.noneProvider": "Aucune. {provider} n’a pas partagé d’adresse e-mail vérifiée.",
+  "ProfileAccount.loadingEmail": "Chargement de votre adresse e-mail",
+  "ProfileAccount.pendingEmail": "La nouvelle adresse <email>{email}</email> attend son code.",
   "ProfileExport.asking": "Demande en cours…",
   "ProfileExport.never":
     "Un fichier ZIP contenant votre profil, vos groupes et vos notes aux formats JSON et CSV. Cela prend quelques minutes, et nous vous enverrons un e-mail quand il sera prêt.",

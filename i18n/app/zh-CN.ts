@@ -1118,6 +1118,8 @@ export default {
   "ProfileAccount.noneUsername": "无。你使用用户名登录。",
   "ProfileAccount.none": "无。",
   "ProfileAccount.noneProvider": "无。{provider} 没有提供经过验证的邮箱。",
+  "ProfileAccount.loadingEmail": "正在加载你的邮箱",
+  "ProfileAccount.pendingEmail": "新邮箱<email>{email}</email>正在等待验证码。",
   "ProfileExport.asking": "正在申请…",
   "ProfileExport.never":
     "一个 ZIP 文件，包含你的个人资料、群组和笔记（JSON 和 CSV 格式）。准备需要几分钟，完成后我们会发邮件通知你。",

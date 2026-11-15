@@ -1220,6 +1220,9 @@ export default {
   "ProfileAccount.none": "なし。",
   "ProfileAccount.noneProvider":
     "なし。{provider}から確認済みのメールアドレスが共有されませんでした。",
+  "ProfileAccount.loadingEmail": "メールアドレスを読み込んでいます",
+  "ProfileAccount.pendingEmail":
+    "新しいメールアドレス<email>{email}</email>はコードの入力待ちです。",
   "ProfileExport.asking": "リクエストしています…",
   "ProfileExport.never":
     "プロフィール、グループ、メモをJSONとCSVファイルにまとめたZIPです。作成には数分かかり、準備ができたらメールでお知らせします。",

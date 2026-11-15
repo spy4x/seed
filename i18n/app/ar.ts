@@ -1496,6 +1496,8 @@ export default {
   "ProfileAccount.noneUsername": "لا يوجد. أنت تسجّل الدخول باسم المستخدم.",
   "ProfileAccount.none": "لا يوجد.",
   "ProfileAccount.noneProvider": "لا يوجد. لم يشارك {provider} بريدًا إلكترونيًا مؤكَّدًا.",
+  "ProfileAccount.loadingEmail": "جارٍ تحميل بريدك الإلكتروني",
+  "ProfileAccount.pendingEmail": "العنوان الجديد <email>{email}</email> بانتظار رمزه.",
   "ProfileExport.asking": "جارٍ الطلب…",
   "ProfileExport.never":
     "ملف ZIP يضم ملفك الشخصي ومجموعاتك وملاحظاتك بصيغتي JSON وCSV. يستغرق تجهيزه بضع دقائق، وسنراسلك بالبريد حين يجهز.",

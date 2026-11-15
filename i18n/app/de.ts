@@ -1340,6 +1340,8 @@ export default {
   "ProfileAccount.none": "Keine.",
   "ProfileAccount.noneProvider":
     "Keine. {provider} hat keine bestätigte E-Mail-Adresse übermittelt.",
+  "ProfileAccount.loadingEmail": "Deine E-Mail-Adresse wird geladen",
+  "ProfileAccount.pendingEmail": "Die neue Adresse <email>{email}</email> wartet auf ihren Code.",
   "ProfileExport.asking": "Wird angefordert …",
   "ProfileExport.never":
     "Eine ZIP-Datei mit deinem Profil, deinen Gruppen und Notizen als JSON- und CSV-Dateien. Das dauert ein paar Minuten, und wir schicken dir eine E-Mail, sobald sie fertig ist.",
