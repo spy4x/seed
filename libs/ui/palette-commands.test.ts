@@ -214,8 +214,8 @@ describe(`the quick-create rows`, () => {
   })
 
   it(`end a cut text at its last word, with no space before the "…"`, () => {
-    const [note] = quickCreateRows(context(), `${`a`.repeat(35)} trip and more`)
-    expect(note.label).toBe(`New note: “${shown(`${`a`.repeat(35)} trip…`)}”`)
+    const [note] = quickCreateRows(context(), `${`a`.repeat(34)} trip and more`)
+    expect(note.label).toBe(`New note: “${shown(`${`a`.repeat(34)} trip…`)}”`)
   })
 
   it(`use the language's own quotes`, () => {
