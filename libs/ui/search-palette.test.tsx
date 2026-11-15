@@ -587,6 +587,18 @@ describe("SearchPalette", () => {
     expect(quickGroup.getAttribute("aria-disabled")).toBe("true")
   })
 
+  it("lists Download my data offline, dimmed, and Enter never opens it", async () => {
+    const { picked } = await mount({ online: false }, () => ({ notes: [], onDevice: true }))
+    await open()
+
+    await fill("download my data")
+    await until(() => listed().includes("Download my data | Needs a connection"))
+    await enter()
+
+    expect(picked).toEqual([])
+    expect(find("[data-e2e=search] input")).toBeTruthy()
+  })
+
   it("offers a guest Keep your account for the words a person would try, and nobody else", async () => {
     await mount({ guest: true })
     await open()
