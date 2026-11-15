@@ -1023,6 +1023,15 @@ describe(`the group page's palette commands`, () => {
     expect(ids({ shown: true, notes: false })).not.toContain(`group-tab-files`)
     expect(ids({ shown: false, notes: true })).toEqual([])
   })
+
+  it(`offers no Files with files off, and offers it when the page leaves files out`, () => {
+    const ids = (files?: boolean) =>
+      adminGroupPageCommands(ADMIN_ENGLISH, { shown: true, notes: true, files }, () => {})
+        .map((command) => command.id)
+    expect(ids(false)).not.toContain(`group-tab-files`)
+    expect(ids(false)).toContain(`group-tab-members`)
+    expect(ids()).toContain(`group-tab-files`)
+  })
 })
 
 describe(`the person page's groups`, () => {

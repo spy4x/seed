@@ -92,16 +92,17 @@ const GROUP_TAB_KEYS: Record<typeof ADMIN_GROUP_TABS[number], string> = {
 
 /**
  * The group page's commands for the admin palette: one per tab the page shows, each running what
- * clicking the tab runs. No Files while the notes are off, as the page draws no Files tab then, and
- * none while the group is not shown.
+ * clicking the tab runs. No Files while the notes or files are off, as the page draws no Files tab
+ * then, and none while the group is not shown. `files` left out: on.
  */
 export function adminGroupPageCommands(
   t: Translator<string>,
-  page: { shown: boolean; notes: boolean },
+  page: { shown: boolean; notes: boolean; files?: boolean },
   onTab: (tab: string) => void,
 ): AdminPageCommand[] {
   if (!page.shown) return []
-  return ADMIN_GROUP_TABS.filter((id) => id !== `files` || page.notes).map((id) =>
+  const filesTab = page.notes && page.files !== false
+  return ADMIN_GROUP_TABS.filter((id) => id !== `files` || filesTab).map((id) =>
     adminPageCommand(t, `group-tab-${id}`, GROUP_TAB_KEYS[id], () => onTab(id), [`tab`, `вкладка`])
   )
 }
@@ -209,6 +210,11 @@ export interface AdminGroupScreenProps {
    * on.
    */
   notes?: boolean
+  /**
+   * Whether files are on (`FILES`). Off, the Files tab is left out, since without a store a file
+   * can be neither shown nor removed, and `tab: "files"` shows the Members tab. Left out: on.
+   */
+  filesOn?: boolean
   navigate?: Navigate
 }
 
@@ -269,7 +275,7 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
       label: <TabLabel text={t.t(`AdminGroup.invitations`)} count={pending.length} />,
       content: <Invitations {...props} detail={detail} deleted={deleted} />,
     },
-    ...(props.notes === false ? [] : [{
+    ...(props.notes === false || props.filesOn === false ? [] : [{
       id: `files`,
       label: <TabLabel text={t.t(`AdminGroup.files`)} count={counts.files} />,
       content: <Files {...props} detail={detail} deleted={deleted} />,

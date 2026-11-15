@@ -1,7 +1,8 @@
 /**
- * One group's page in the admin app with the notes on, off and not known yet, driven in a browser
- * DOM (happy-dom): which API calls it makes and what it draws. With the notes off the API mounts
- * no widget or file route, so the page must ask for none.
+ * One group's page in the admin app with the notes and files on, off and not known yet, driven in a
+ * browser DOM (happy-dom): which API calls it makes and what it draws. With the notes off the API
+ * mounts no widget or file route, so the page must ask for none; with files off there is no store,
+ * so the page shows no Files tab and asks for no files.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
@@ -168,13 +169,23 @@ describe(`one group's page in the admin app`, () => {
   })
 
   it(`asks for every note widget and the files with the notes on, and counts notes, tags and files`, async () => {
-    const { paths } = await openGroup(new Set([`groups`, `notes`]))
+    const { paths } = await openGroup(new Set([`groups`, `notes`, `files`]))
 
     expect(widgetIds(paths)).toEqual(NOTE_WIDGET_IDS)
     expect(asked(paths, `/files`)).toHaveLength(1)
     expect(noWidgetsCard()).toBe(null)
     expect(hasFilesTab()).toBe(true)
     expect(countTerms()).toEqual(expect.arrayContaining([`Notes`, `Tags`, `Files`]))
+  })
+
+  it(`asks for no files and shows no Files tab with files off, keeping the notes and their counts`, async () => {
+    const { paths } = await openGroup(new Set([`groups`, `notes`]))
+
+    expect(widgetIds(paths)).toEqual(NOTE_WIDGET_IDS)
+    expect(asked(paths, `/files`)).toHaveLength(0)
+    expect(hasFilesTab()).toBe(false)
+    expect(document.querySelector(`[role=tabpanel] [data-e2e=admin-group-members]`)).not.toBe(null)
+    expect(countTerms()).toEqual(expect.arrayContaining([`Notes`, `Tags`]))
   })
 
   it(`asks for nothing of the notes until the module list is read, drawing them as loading`, async () => {
@@ -186,7 +197,7 @@ describe(`one group's page in the admin app`, () => {
     expect(countTerms()).toEqual(expect.arrayContaining([`Notes`, `Tags`, `Files`]))
 
     await act(() => {
-      modules.value = new Set([`groups`, `notes`])
+      modules.value = new Set([`groups`, `notes`, `files`])
     })
     await settle()
 
