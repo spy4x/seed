@@ -387,12 +387,8 @@
 
     // #region Git Hooks
     "hooks:install": {
-      "command": "deno run -R=deno.json,deno.jsonc,.git/hooks/ -W=.git/hooks/ jsr:@hongminhee/deno-task-hooks@0.1.2",
-      "description": "Installs a git hook that runs check before every commit"
-    },
-    "hooks:pre-commit": {
-      "command": "deno task check",
-      "description": "What the pre-commit hook runs"
+      "command": "git config core.hooksPath .githooks",
+      "description": "Turns on .githooks/pre-push, which refuses a push while check is red, in every worktree"
     }
     // #endregion Git Hooks
   },
