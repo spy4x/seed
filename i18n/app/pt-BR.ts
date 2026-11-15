@@ -1352,6 +1352,7 @@ export default {
     "Você está offline, então nada foi salvo. Tente de novo quando estiver online.",
   "Preferences.failedInvalid": "Escolha cada opção na lista.",
   "Preferences.updatedElsewhere": "Preferências atualizadas em outro dispositivo.",
+  "Preferences.saved": "Salvo",
   "SeatPriceConfirm.hint":
     "Cada novo membro acrescenta {price} por mês, então mais um membro faz o grupo passar de {now} para {next}. A diferença do resto deste período vem na próxima fatura.",
   "SeatPriceConfirm.hintYear":

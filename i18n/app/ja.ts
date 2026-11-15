@@ -1199,6 +1199,7 @@ export default {
     "オフラインのため、何も保存されませんでした。オンラインに戻ってから、もう一度お試しください。",
   "Preferences.failedInvalid": "それぞれの値をリストから選んでください。",
   "Preferences.updatedElsewhere": "別のデバイスから設定が更新されました。",
+  "Preferences.saved": "保存しました",
   "SeatPriceConfirm.hint":
     "メンバーが1人増えるごとに月額{price}が加算されるため、あと1人加わるとグループの料金は{now}から{next}になります。今の期間の残りの差額は、次回の請求書で請求されます。",
   "SeatPriceConfirm.hintYear":

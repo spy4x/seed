@@ -1402,6 +1402,7 @@ export default {
     "Vous êtes hors ligne : rien n’a été enregistré. Réessayez une fois de retour en ligne.",
   "Preferences.failedInvalid": "Choisissez chaque valeur dans sa liste.",
   "Preferences.updatedElsewhere": "Préférences mises à jour depuis un autre appareil.",
+  "Preferences.saved": "Enregistré",
   "SeatPriceConfirm.hint":
     "Chaque nouveau membre ajoute {price} par mois : un membre de plus fait passer le groupe de {now} à {next}. La différence pour le reste de la période sera facturée sur la prochaine facture.",
   "SeatPriceConfirm.hintYear":

@@ -1319,6 +1319,7 @@ export default {
     "Du bist offline, deshalb wurde nichts gespeichert. Versuche es noch einmal, wenn du wieder online bist.",
   "Preferences.failedInvalid": "Wähle jeden Wert aus seiner Liste.",
   "Preferences.updatedElsewhere": "Einstellungen wurden auf einem anderen Gerät geändert.",
+  "Preferences.saved": "Gespeichert",
   "SeatPriceConfirm.hint":
     "Jedes neue Mitglied kostet {price} mehr im Monat – mit einem weiteren Mitglied steigt der Preis der Gruppe also von {now} auf {next}. Die Differenz für den Rest dieses Zeitraums steht auf der nächsten Rechnung.",
   "SeatPriceConfirm.hintYear":

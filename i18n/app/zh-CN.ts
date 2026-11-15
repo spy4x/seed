@@ -1098,6 +1098,7 @@ export default {
   "Preferences.failedOffline": "你已离线，没有保存任何内容。恢复网络后请重试。",
   "Preferences.failedInvalid": "请从列表中选择每一项的值。",
   "Preferences.updatedElsewhere": "偏好设置已在另一台设备上更新。",
+  "Preferences.saved": "已保存",
   "SeatPriceConfirm.hint":
     "每增加一位成员，每月多 {price}，因此再加一位成员会让群组的费用从 {now} 变为 {next}。本期剩余时间的差额会计入下一张发票。",
   "SeatPriceConfirm.hintYear":
