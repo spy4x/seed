@@ -60,8 +60,9 @@ export function toAdminImportRow(raw: Raw): AdminImportRow {
     commitRequestedAt: iso(raw.commitRequestedAt),
     committedAt: iso(raw.committedAt),
     undoneAt: iso(raw.undoneAt),
-    // A read that failed ends at its failure; a save that failed, at its own.
-    readMs: between(raw.createdAt, raw.readAt ?? (saving ? null : raw.failedAt)),
+    // A read that failed ends at its failure; a save that failed, at its own. A save needs a read
+    // import, so a save always has `readAt`.
+    readMs: between(raw.createdAt, raw.readAt ?? raw.failedAt),
     saveMs: saving ? between(raw.commitRequestedAt, raw.committedAt ?? raw.failedAt) : null,
   }
 }
