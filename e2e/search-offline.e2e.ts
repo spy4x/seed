@@ -64,7 +64,7 @@ test.describe("search with no network", () => {
   // Signs up, loads the app twice so the service worker holds it, and starts it again offline.
   test.describe.configure({ timeout: 60_000 })
 
-  test("searches the notes on this device and says so", async ({ browser, request }) => {
+  test("searches the notes on this device and says so, and offers to create what nothing matches", async ({ browser, request }) => {
     const user = "e2e_search_offline@example.com"
     await cleanup(request, user)
     const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
@@ -85,10 +85,21 @@ test.describe("search with no network", () => {
       await expect(palette.getByRole("group").first()).toContainText("Notes on this device")
       await expect(palette.getByRole("option").filter({ hasText: "Packing list" })).toBeVisible()
 
+      // Nothing matches: the Create rows offer it, a note on the device, a group not offline.
       await field.fill("snorkel")
-      await expect(palette.locator("[data-e2e=search-status]")).toHaveText(
-        "Nothing on this device matches “snorkel”. Search again when you're back online.",
-      )
+      const options = palette.getByRole("option")
+      await expect(options.first()).toHaveAccessibleName(/^New note: “\u2068?snorkel\u2069?”/)
+      await expect(palette.getByRole("group").first()).toContainText("Create")
+      const group = options.filter({ hasText: "New group" })
+      await expect(group).toHaveAttribute("aria-disabled", "true")
+      await expect(group).toContainText("Needs a connection")
+      // Only the device was searched: a dimmed row says so, so the person does not make a twin.
+      const hint = options.filter({
+        hasText: "Nothing on this device matches “snorkel”. Search again when you're back online.",
+      })
+      await expect(hint).toBeVisible()
+      await expect(hint).toHaveAttribute("aria-disabled", "true")
+      await expect(hint).toHaveAttribute("aria-selected", "false")
     } finally {
       await context.close()
       await cleanup(request, user)

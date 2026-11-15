@@ -109,6 +109,33 @@ describe("tags store", () => {
     expect(store.form.value?.name).toBe("Draft")
   })
 
+  it("puts a given name in the create form, keeping its colour and dropping the earlier refusal", async () => {
+    const { store } = harness({ create: () => Promise.reject(refused("TAG_NAME_TAKEN")) })
+    await store.open(groupId)
+    store.startCreate("alpha")
+    store.change({ ...store.form.value!, color: "#15803d" })
+    await store.save()
+    expect(store.formErrors.value.name).toBe(TAG_MESSAGES.nameTaken)
+
+    store.startCreate("groceries")
+
+    expect(store.form.value).toMatchObject({ id: null, name: "groceries", color: "#15803d" })
+    expect(store.formErrors.value.name).toBeNull()
+    expect(store.unsaved.value).toBe(true)
+  })
+
+  it("keeps a refused create's name and why when the create page opens after it", async () => {
+    const { store } = harness({ create: () => Promise.reject(refused("TAG_NAME_TAKEN")) })
+    await store.open(groupId)
+    store.startCreate("alpha")
+    await store.save()
+
+    store.startCreate()
+
+    expect(store.form.value?.name).toBe("alpha")
+    expect(store.formErrors.value.name).toBe(TAG_MESSAGES.nameTaken)
+  })
+
   it("keeps the create form when the group changes, and creates the tag in the new group", async () => {
     const { store, calls } = harness()
     await store.open(groupId)

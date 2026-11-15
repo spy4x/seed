@@ -16,6 +16,7 @@ import {
   type PaletteContext,
   type PaletteOption,
   pickedChoice,
+  quickCreateRows,
   type SearchChoice,
 } from "./palette-commands.ts"
 
@@ -171,5 +172,69 @@ describe(`a group row`, () => {
 
   it(`is found by "switch to" and its name`, () => {
     expect(matchOptions([row], `switch to acme`)).toEqual([row])
+  })
+})
+
+describe(`the quick-create rows`, () => {
+  /** Each row's label, detail and why it cannot run, for `query` in `overrides`' state. */
+  const rows = (query: string, overrides: Partial<PaletteContext> = {}) =>
+    quickCreateRows(context(overrides), query).map((
+      row,
+    ) => [row.label, row.detail ?? null, row.disabledReason ?? null])
+  const shown = (text: string) => `\u2068${text}\u2069`
+
+  it(`offer a note, a tag and a group named after the trimmed query, under Create`, () => {
+    const made = quickCreateRows(context(), `  groceries `)
+    expect(rows(`  groceries `)).toEqual([
+      [`New note: “${shown(`groceries`)}”`, `In Home`, null],
+      [`New tag: “${shown(`groceries`)}”`, `In Home`, null],
+      [`New group: “${shown(`groceries`)}”`, null, null],
+    ])
+    expect(made.map((row) => [row.group, row.choice])).toEqual([
+      [`Create`, { kind: `quick-create`, entity: `note`, title: `groceries` }],
+      [`Create`, { kind: `quick-create`, entity: `tag`, title: `groceries` }],
+      [`Create`, { kind: `quick-create`, entity: `group`, title: `groceries` }],
+    ])
+  })
+
+  it(`are not offered for an empty query or one of spaces only`, () => {
+    expect([rows(``), rows(` \t `)]).toEqual([[], []])
+  })
+
+  it(`offer only the group without a current group, in a read-only group, and with the notes off`, () => {
+    const groupOnly = [[`New group: “${shown(`milk`)}”`, null, null]]
+    expect(rows(`milk`, { currentGroup: null })).toEqual(groupOnly)
+    expect(rows(`milk`, { currentGroup: { ...HOME, canWrite: false } })).toEqual(groupOnly)
+    expect(rows(`milk`, { notes: false })).toEqual(groupOnly)
+  })
+
+  it(`keep the group listed offline, dimmed with why it cannot run, and the note and tag as they are`, () => {
+    expect(rows(`milk`, { online: false })).toEqual([
+      [`New note: “${shown(`milk`)}”`, `In Home`, null],
+      [`New tag: “${shown(`milk`)}”`, `In Home`, null],
+      [`New group: “${shown(`milk`)}”`, null, `Needs a connection`],
+    ])
+  })
+
+  it(`show at most forty characters of the text but hand back all of it`, () => {
+    const long = `${`a`.repeat(39)}🛒🛒 tail`
+    const [note] = quickCreateRows(context(), long)
+    expect(note.label).toBe(`New note: “${shown(`${`a`.repeat(39)}🛒…`)}”`)
+    expect(note.choice).toEqual({ kind: `quick-create`, entity: `note`, title: long })
+  })
+
+  it(`end a cut text at its last word, with no space before the "…"`, () => {
+    const [note] = quickCreateRows(context(), `${`a`.repeat(34)} trip and more`)
+    expect(note.label).toBe(`New note: “${shown(`${`a`.repeat(34)} trip…`)}”`)
+  })
+
+  it(`use the language's own quotes`, () => {
+    expect(rows(`молоко`, { t: RU })[0][0]).toBe(`Новая заметка: «${shown(`молоко`)}»`)
+  })
+
+  it(`create at once on Ctrl Enter, and open the form on Enter`, () => {
+    const choice: SearchChoice = { kind: `quick-create`, entity: `tag`, title: `milk` }
+    expect(pickedChoice(choice, false)).toEqual(choice)
+    expect(pickedChoice(choice, true)).toEqual({ ...choice, now: true })
   })
 })

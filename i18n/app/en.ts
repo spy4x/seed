@@ -1690,7 +1690,6 @@ export default {
     "one": "Type at least {count} character to search notes.",
     "other": "Type at least {count} characters to search notes.",
   },
-  "Search.empty": "Nothing matches “{query}”.",
   "Search.emptyOnDevice":
     "Nothing on this device matches “{query}”. Search again when you're back online.",
   "Search.notes": "Notes",
@@ -1711,6 +1710,7 @@ export default {
   "Search.newTag": "New tag",
   "Search.importNotes": "Import notes",
   "Search.newGroup": "New group",
+  "Search.withText": "{label}: “{text}”",
   "Search.openOverview": "Open overview",
   "Search.openNotifications": "Open notifications",
   "Search.openProfile": "Open profile",

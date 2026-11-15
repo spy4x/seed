@@ -1892,7 +1892,6 @@ export default {
     "many": "Saisissez au moins {count} caractères pour rechercher des notes.",
     "other": "Saisissez au moins {count} caractères pour rechercher des notes.",
   },
-  "Search.empty": "Rien ne correspond à « {query} ».",
   "Search.emptyOnDevice":
     "Rien sur cet appareil ne correspond à « {query} ». Relancez la recherche une fois de retour en ligne.",
   "Search.notes": "Notes",
@@ -1914,6 +1913,7 @@ export default {
   "Search.newTag": "Nouvelle étiquette",
   "Search.importNotes": "Importer des notes",
   "Search.newGroup": "Nouveau groupe",
+  "Search.withText": "{label} : « {text} »",
   "Search.openOverview": "Ouvrir la vue d’ensemble",
   "Search.openNotifications": "Ouvrir les notifications",
   "Search.openProfile": "Ouvrir le profil",

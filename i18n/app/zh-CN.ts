@@ -1488,7 +1488,6 @@ export default {
   "Search.tooShort": {
     "other": "至少输入 {count} 个字符才能搜索笔记。",
   },
-  "Search.empty": "没有与“{query}”匹配的结果。",
   "Search.emptyOnDevice": "这台设备上没有与“{query}”匹配的内容。恢复网络后请重新搜索。",
   "Search.notes": "笔记",
   "Search.notesOnDevice": "这台设备上的笔记",
@@ -1508,6 +1507,7 @@ export default {
   "Search.newTag": "新建标签",
   "Search.importNotes": "导入笔记",
   "Search.newGroup": "新建群组",
+  "Search.withText": "{label}：“{text}”",
   "Search.openOverview": "打开概览",
   "Search.openNotifications": "打开通知",
   "Search.openProfile": "打开个人资料",

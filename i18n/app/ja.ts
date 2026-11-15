@@ -1628,7 +1628,6 @@ export default {
   "Search.tooShort": {
     "other": "メモを検索するには{count}文字以上入力してください。",
   },
-  "Search.empty": "「{query}」に一致する項目はありません。",
   "Search.emptyOnDevice":
     "このデバイスには「{query}」に一致するものはありません。オンラインに戻ってから、もう一度検索してください。",
   "Search.notes": "メモ",
@@ -1650,6 +1649,7 @@ export default {
   "Search.newTag": "新しいタグ",
   "Search.importNotes": "メモをインポート",
   "Search.newGroup": "新しいグループ",
+  "Search.withText": "{label}：「{text}」",
   "Search.openOverview": "概要を開く",
   "Search.openNotifications": "通知を開く",
   "Search.openProfile": "プロフィールを開く",

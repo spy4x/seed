@@ -1919,7 +1919,6 @@ export default {
     "many": "Чтобы искать по заметкам, введите хотя бы {count} символов.",
     "other": "Чтобы искать по заметкам, введите хотя бы {count} символа.",
   },
-  "Search.empty": "По запросу «{query}» ничего не нашлось.",
   "Search.emptyOnDevice":
     "На этом устройстве по запросу «{query}» ничего нет. Поищите снова, когда появится сеть.",
   "Search.notes": "Заметки",
@@ -1940,6 +1939,7 @@ export default {
   "Search.newTag": "Новая метка",
   "Search.importNotes": "Импорт заметок",
   "Search.newGroup": "Новая группа",
+  "Search.withText": "{label}: «{text}»",
   "Search.openOverview": "Открыть обзор",
   "Search.openNotifications": "Открыть уведомления",
   "Search.openProfile": "Открыть профиль",
