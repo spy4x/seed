@@ -1439,6 +1439,7 @@ export default {
   "Search.downloadDetail": "包含你的个人资料、群组和笔记的 ZIP 文件",
   "Search.downloadDetailPlain": "包含你的个人资料和群组的 ZIP 文件",
   "Search.changePicture": "更换头像",
+  "Search.turnOffTwoFactor": "关闭双重验证",
   "Shortcuts.general": "通用",
   "Shortcuts.goTo": "前往",
   "Shortcuts.newNote": "在新建笔记中",

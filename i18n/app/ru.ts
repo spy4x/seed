@@ -1836,6 +1836,7 @@ export default {
   "Search.downloadDetail": "ZIP-архив с профилем, группами и заметками",
   "Search.downloadDetailPlain": "ZIP-архив с профилем и группами",
   "Search.changePicture": "Сменить фото профиля",
+  "Search.turnOffTwoFactor": "Отключить двухфакторную защиту",
   "Shortcuts.general": "Общие",
   "Shortcuts.goTo": "Переход",
   "Shortcuts.newNote": "В окне «Новая заметка»",

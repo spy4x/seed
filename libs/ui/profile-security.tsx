@@ -38,6 +38,9 @@ const FIELD_ORDER = [
   "twoFactorProof",
 ] as const satisfies readonly (keyof ProfileValues)[]
 
+/** The id of "Turn off" two-factor, which the palette's "Turn off two-factor sign-in" presses. */
+export const TOTP_DISABLE_BUTTON_ID = "totp-disable"
+
 /** Where a provider sign-in started from this section returns to. */
 const HERE = profilePath("security")
 
@@ -255,6 +258,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   variant="ghost"
                   size="sm"
                   class={TOUCH_TARGET}
+                  id={TOTP_DISABLE_BUTTON_ID}
                   data-e2e="totp-disable"
                   disabled={pending.totp}
                   onClick={() => setConfirmingDisable(true)}

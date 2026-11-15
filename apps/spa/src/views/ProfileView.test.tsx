@@ -121,7 +121,7 @@ async function open(path: string, view: VNode) {
   root = window.document.createElement("div") as unknown as HTMLElement
   window.document.body.appendChild(root as never)
   await act(() => render(<Router hook={hook}>{view}</Router>, root!))
-  return { history, go: (to: string) => act(() => navigate(to)) }
+  return { history, navigate, go: (to: string) => act(() => navigate(to)) }
 }
 
 /** The page as the app routes it, so a move between its addresses keeps it mounted. */
@@ -476,6 +476,182 @@ describe("ProfileView", () => {
     } finally {
       globalThis.fetch = refuse
     }
+  })
+
+  describe("a palette address that names a risky button", () => {
+    const device = {
+      id: 7,
+      deviceName: "Firefox on Linux",
+      ipHint: "203.0.113.*",
+      createdAt: "2026-10-01T08:00:00.000Z",
+      lastUsedAt: "2026-10-04T08:00:00.000Z",
+      current: true,
+    }
+    const phone = { ...device, id: 9, deviceName: "Safari on iPhone", current: false }
+    // `land` sets two-factor, the API's answers and the address for its test only: the suite's
+    // account, its refusing `fetch` and the address are put back after each.
+    let user = sessionState.value.user
+    let refuse = globalThis.fetch
+    beforeAll(() => {
+      user = sessionState.value.user
+      refuse = globalThis.fetch
+    })
+    afterEach(() => {
+      sessionState.value = { ...sessionState.value, user }
+      globalThis.fetch = refuse
+      history.replaceState(null, "", "/")
+    })
+
+    /**
+     * Opens `/profile/<section>#<id>` with the signed-in devices `sessions` and two-factor `mfa`.
+     * Returns every request the page makes, as `METHOD path`, while the test runs, and `move`,
+     * which goes to another `/profile/<section>#<id>` the way the palette does: the router's
+     * `pushState`, outside `act`, so the page's effects run on the browser's own timing.
+     */
+    async function land(
+      section: string,
+      id: string,
+      { sessions = [device, phone], mfa = UserMFAStatus.NOT_CONFIGURED } = {},
+    ) {
+      const calls: string[] = []
+      globalThis.fetch = (input, init) => {
+        const url = new URL(String(input), "http://app.localhost/")
+        calls.push(`${init?.method ?? "GET"} ${url.pathname}`)
+        return url.pathname === "/api/auth/sessions"
+          ? Promise.resolve(Response.json({ sessions }))
+          : refuse(input, init)
+      }
+      sessionState.value = { ...sessionState.value, user: { ...sessionState.value.user!, mfa } }
+      history.replaceState(null, "", `/profile/${section}#${id}`)
+      const { navigate } = await open(`/profile/${section}`, ROUTED)
+      await settle()
+      await settle()
+      /**
+       * Navigates as the palette does. With `opens`, waits up to 3 s for a dialog to open, since a
+       * loaded CI machine needs more turns than one frame; without, waits a fixed 300 ms.
+       */
+      const move = async (to: string, hash: string, opens = true) => {
+        history.pushState(null, "", `/profile/${to}#${hash}`)
+        navigate(`/profile/${to}`)
+        dispatchEvent(new Event("pushState"))
+        // Longer than Preact's wait for a frame (35 ms) before it runs effects.
+        const deadline = Date.now() + (opens ? 3_000 : 300)
+        do {
+          await new Promise((done) => setTimeout(done, 50))
+          await settle()
+        } while (Date.now() < deadline && !(opens && root!.querySelector("dialog[open]")))
+      }
+      return { calls, move }
+    }
+
+    /** Presses Cancel in the open dialog. */
+    const cancel = () =>
+      act(() =>
+        [...root!.querySelectorAll<HTMLElement>("dialog[open] button")]
+          .find((button) => button.textContent === "Cancel")!.click()
+      )
+
+    /** The `data-e2e` hooks of the dialogs open now. */
+    const openDialogs = () =>
+      [...root!.querySelectorAll("dialog[open]")].map((open) => open.getAttribute("data-e2e"))
+
+    /**
+     * Asserts the page only read, a while after landing: nothing deleted, turned off or signed
+     * out, not even by a press that came after the dialog opened.
+     */
+    const onlyReads = async (calls: string[]) => {
+      await settle()
+      await settle()
+      expect(calls.filter((call) => !call.startsWith("GET "))).toEqual([])
+    }
+
+    it("#account-delete-open opens the deletion confirmation, focused, and deletes nothing", async () => {
+      const { calls } = await land("danger-zone", "account-delete-open")
+
+      expect(openDialogs()).toEqual(["account-delete-dialog"])
+      expect(document.activeElement?.id).toBe("account-delete-open")
+      await onlyReads(calls)
+    })
+
+    it("#totp-disable opens the turn-off confirmation, focused, while two-factor is on", async () => {
+      const { calls } = await land("security", "totp-disable", { mfa: UserMFAStatus.CONFIGURED })
+
+      expect(openDialogs()).toEqual(["totp-disable-confirm"])
+      expect(document.activeElement?.id).toBe("totp-disable")
+      await onlyReads(calls)
+    })
+
+    it("#sessions-end-others opens its confirmation, focused, and signs nothing out", async () => {
+      const { calls } = await land("security", "sessions-end-others")
+
+      expect(openDialogs()).toEqual(["sessions-end-others-confirm"])
+      expect(document.activeElement?.id).toBe("sessions-end-others")
+      await onlyReads(calls)
+    })
+
+    it("#sessions-end-others with no other device opens no dialog", async () => {
+      const { calls } = await land("security", "sessions-end-others", { sessions: [device] })
+
+      expect(openDialogs()).toEqual([])
+      await onlyReads(calls)
+    })
+
+    it("presses the next section's button only after that section's heading took the focus, so Cancel gives the focus back to the button", async () => {
+      const { calls, move } = await land("danger-zone", "account-delete-open")
+      await cancel()
+      expect(document.activeElement?.id).toBe("account-delete-open")
+
+      await move("security", "sessions-end-others")
+      expect(openDialogs()).toEqual(["sessions-end-others-confirm"])
+      await cancel()
+
+      expect(openDialogs()).toEqual([])
+      expect(document.activeElement?.id).toBe("sessions-end-others")
+      await onlyReads(calls)
+    })
+
+    it("opens the dialog again when the same command is picked a second time", async () => {
+      const { move } = await land("security", "sessions-end-others")
+      await cancel()
+
+      await move("security", "sessions-end-others")
+
+      expect(openDialogs()).toEqual(["sessions-end-others-confirm"])
+    })
+
+    it("drops the hash once acted on, so coming back to the page does not open the dialog again", async () => {
+      const { calls } = await land("security", "sessions-end-others")
+      await cancel()
+      await act(() => render(null, root!))
+      root!.remove()
+
+      // Back to this history entry: the page mounts again on the address it left.
+      await open(location.pathname, ROUTED)
+      await settle()
+      await settle()
+
+      expect(openDialogs()).toEqual([])
+      expect(location.pathname + location.hash).toBe("/profile/security")
+      await onlyReads(calls)
+    })
+
+    it("lands on nothing for an id the section does not draw, one it draws that no command names, or a hash like #__proto__", async () => {
+      for (const id of ["account-delete-open", "__proto__", "constructor"]) {
+        await land("security", id, { mfa: UserMFAStatus.CONFIGURED })
+        expect(openDialogs(), id).toEqual([])
+        expect(document.activeElement?.id, id).not.toBe(id)
+        await act(() => render(null, root!))
+        root!.remove()
+        root = null
+      }
+      // The section's heading has an id on the page, but no command lands on it.
+      const { move } = await land("danger-zone", "")
+      const heading = root!.querySelector("h2[id]")!.id
+      expect(heading).not.toBe("")
+      await move("danger-zone", heading, false)
+      expect(document.activeElement?.id).not.toBe(heading)
+      expect(openDialogs()).toEqual([])
+    })
   })
 
   it("sends an address with no such section back to /profile", async () => {

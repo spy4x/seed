@@ -24,6 +24,12 @@ import { SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFormat } from "@spy4x/preact-ui/format"
 import type { Formatters } from "@spy4x/time/format"
 
+/**
+ * The id of "Delete my account", which the palette's "Delete my account" focuses and presses: the
+ * same id on a guest's button, since a page draws only one of the two.
+ */
+export const ACCOUNT_DELETE_BUTTON_ID = "account-delete-open"
+
 /** What the person has typed into the deletion dialog. */
 export interface AccountDeleteValues {
   password: string
@@ -155,6 +161,7 @@ export function AccountDelete(
               variant="outline"
               size="sm"
               class={`${TOUCH_TARGET} text-danger`}
+              id={ACCOUNT_DELETE_BUTTON_ID}
               data-e2e="account-delete-open"
               onClick={() => {
                 setOpen(true)

@@ -89,6 +89,8 @@ export interface SearchPaletteProps {
   guest?: boolean
   /** Whether "Open benchmark" is listed: development builds and the public demo only. */
   benchmark?: boolean
+  /** Whether two-factor sign-in is on: "Turn off two-factor sign-in" is listed only then. */
+  twoFactor?: boolean
   /**
    * Whether the notes example is on; left out, it is. Off, `searchNotes` is never called and no
    * row or command names notes or tags.
@@ -281,6 +283,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       guest: props.guest ?? false,
       benchmark: props.benchmark ?? false,
       canInstall: props.canInstall ?? false,
+      twoFactor: props.twoFactor ?? false,
       notes: props.notes ?? true,
     }
   }
