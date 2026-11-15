@@ -262,6 +262,15 @@ describe("stats screen", () => {
     expect(calls).toEqual([["source", "zalo-a"], ["source", "fb-market"], ["source", null]])
   })
 
+  it("puts the source picker, named Source, in the chart's header beside the summary", async () => {
+    await mount(<AdminStatsScreen {...props([])} />)
+    const header = find("[data-e2e=admin-stats-chart] .pc-card-header")
+    const select = find<HTMLSelectElement>("[data-e2e=admin-stats-source]")
+    expect(header.contains(select)).toBe(true)
+    expect(header.textContent).toContain("140 visits")
+    expect(select.getAttribute("aria-label")).toBe("Source")
+  })
+
   it("draws the period picker beside the title from sm up, and under the header on a phone", async () => {
     await mount(<AdminStatsScreen {...props([])} />)
     const holders = [...document.querySelectorAll("[role=radiogroup]")].map((group) =>

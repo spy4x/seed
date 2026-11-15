@@ -11,7 +11,6 @@ import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Field } from "@spy4x/preact-ui/field"
 import { Select } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
@@ -546,33 +545,39 @@ function VisitsChart(
   const named = report.sources.filter((row) => row.slug !== null)
   return (
     <Card data-e2e="admin-stats-chart">
+      {
+        /* The source picker sits in the header, not above the chart, so the page's answer fits the
+          first screen; on a phone the header wraps under the title. */
+      }
       <CardHeader
+        class="flex-wrap gap-x-4 gap-y-2"
         title={t.t(weekly ? `AdminStats.chartTitleWeekly` : `AdminStats.chartTitle`)}
         headingLevel={2}
         action={
-          <span class="text-sm text-muted">
-            {t.t(`AdminStats.chartSummary`, { total: format.number(total), count: report.days })}
-          </span>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span class="text-sm text-muted">
+              {t.t(`AdminStats.chartSummary`, { total: format.number(total), count: report.days })}
+            </span>
+            {named.length > 0 && (
+              <div class="w-48">
+                <Select
+                  name="source"
+                  aria-label={t.t(`AdminStats.source`)}
+                  data-e2e="admin-stats-source"
+                  options={[
+                    { value: ``, label: t.t(`AdminStats.allSources`) },
+                    ...named.map((row) => ({ value: row.slug!, label: row.name })),
+                  ]}
+                  value={source ?? ``}
+                  onChange={(event) =>
+                    onSource((event.currentTarget as HTMLSelectElement).value || null)}
+                />
+              </div>
+            )}
+          </div>
         }
       />
       <CardBody>
-        {named.length > 0 && (
-          <div class="mb-3 max-w-xs">
-            <Field id="admin-stats-source" label={t.t(`AdminStats.source`)}>
-              <Select
-                name="source"
-                data-e2e="admin-stats-source"
-                options={[
-                  { value: ``, label: t.t(`AdminStats.allSources`) },
-                  ...named.map((row) => ({ value: row.slug!, label: row.name })),
-                ]}
-                value={source ?? ``}
-                onChange={(event) =>
-                  onSource((event.currentTarget as HTMLSelectElement).value || null)}
-              />
-            </Field>
-          </div>
-        )}
         <LineChart
           series={[
             { name: t.t(`AdminStats.visits`), points: current.map(({ x, y }) => ({ x, y })) },
