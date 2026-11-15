@@ -23,6 +23,7 @@ import { isolate } from "@spy4x/preact-ui/bdi"
 import { type ActionPages, pageCommands, runActionCommand, spaShortcutRows } from "./shortcuts.ts"
 import { spaRoutePaths } from "./spa-paths.ts"
 import { runChoice } from "./palette-choice.ts"
+import { afterPalette } from "./palette-attach.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
 import type { SessionUser } from "../state/session.ts"
 import {
@@ -276,7 +277,8 @@ export function AppShell(
       currentGroupId: selectionStore.groupId.value,
       selectGroup: (groupId) => selectionStore.select(groupId),
       switchGroup,
-      newNote: newNoteStore.show,
+      // Opened once the palette has closed, so the dialog's Close gives focus back to a real control.
+      newNote: (title) => afterPalette(document, () => newNoteStore.show(title)),
       addNote: async (title) => {
         const target = current ? { id: current.id, name: current.name } : null
         const note = await newNoteStore.addNow(title, target)
