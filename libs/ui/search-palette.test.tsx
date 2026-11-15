@@ -733,6 +733,9 @@ describe("SearchPalette records", () => {
     await type("savings")
     expect(under("Accounts")).toEqual(["Savings account | $1,200"])
     expect(under("Goals")).toEqual(["Savings goal"])
+    // The highlighted row is named by its element id, so no two rows may share one.
+    const ids = [...document.querySelectorAll("[role=option]")].map((row) => row.id)
+    expect(new Set(ids).size).toBe(ids.length)
 
     await pick("Savings goal")
     expect(picked).toEqual([{ kind: "page", href: "/goals/a1" }])
