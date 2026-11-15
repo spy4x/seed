@@ -1476,6 +1476,7 @@ export default {
   "Preferences.failedOffline": "أنت دون اتصال، لذا لم يُحفظ شيء. حاول مجددًا حين تعود متصلًا.",
   "Preferences.failedInvalid": "اختر كل قيمة من قائمتها.",
   "Preferences.updatedElsewhere": "حُدّثت الإعدادات من جهاز آخر.",
+  "Preferences.saved": "تم الحفظ",
   "SeatPriceConfirm.hint":
     "كل عضو جديد يضيف {price} شهريًا، فعضو واحد إضافي يرفع تكلفة المجموعة من {now} إلى {next}. يُضاف الفرق عن بقية هذه الفترة إلى الفاتورة التالية.",
   "SeatPriceConfirm.hintYear":
@@ -1495,6 +1496,8 @@ export default {
   "ProfileAccount.noneUsername": "لا يوجد. أنت تسجّل الدخول باسم المستخدم.",
   "ProfileAccount.none": "لا يوجد.",
   "ProfileAccount.noneProvider": "لا يوجد. لم يشارك {provider} بريدًا إلكترونيًا مؤكَّدًا.",
+  "ProfileAccount.loadingEmail": "جارٍ تحميل بريدك الإلكتروني",
+  "ProfileAccount.pendingEmail": "العنوان الجديد <email>{email}</email> بانتظار رمزه.",
   "ProfileExport.asking": "جارٍ الطلب…",
   "ProfileExport.never":
     "ملف ZIP يضم ملفك الشخصي ومجموعاتك وملاحظاتك بصيغتي JSON وCSV. يستغرق تجهيزه بضع دقائق، وسنراسلك بالبريد حين يجهز.",

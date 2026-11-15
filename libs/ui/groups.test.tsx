@@ -995,6 +995,16 @@ describe("GroupEditorScreen tabs", () => {
   const tabs = () => [...root!.querySelectorAll("[role=tab]")].map((tab) => tab.textContent)
   const selected = () => root!.querySelector("[role=tab][aria-selected=true]")?.textContent
 
+  it("draws each tab's focus ring inside the tab, where the sideways-scrolling row cannot cut it", async () => {
+    await mount(<GroupEditorScreen {...defaults} />)
+    expect(document.querySelector("[role=tablist]")?.className).toContain("overflow-x-auto")
+    for (const tab of document.querySelectorAll("[role=tab]")) {
+      expect(tab.className).toContain("focus-visible:ring-inset")
+      expect(tab.className).toContain("focus-visible:ring-offset-0")
+      expect(tab.className).not.toContain("focus-visible:ring-offset-2")
+    }
+  })
+
   it("draws General, Members, Billing and Activity, with the open tab's content only", async () => {
     await mount(<GroupEditorScreen {...defaults} />)
     expect(tabs()).toEqual(["General", "Members", "Billing", "Activity"])

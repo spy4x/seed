@@ -882,6 +882,15 @@ describe("ProfileScreen", () => {
     expect(isOpen("password-dialog")).toBe(false)
   })
 
+  it("shows a loading bar for the address in the header until it arrives", async () => {
+    await mount(<ProfileScreen {...profileDefaults} section="account" email={null} />)
+    expect(find("[data-e2e=profile-intro] [data-e2e=email-loading]")).not.toBeNull()
+
+    await rerender(<ProfileScreen {...profileDefaults} section="account" />)
+    expect(document.querySelector("[data-e2e=profile-intro] [data-e2e=email-loading]")).toBeNull()
+    expect(find("[data-e2e=profile-intro]").textContent).toContain("ada@example.com")
+  })
+
   it("links every section at its own address and marks the open one", async () => {
     await mount(<ProfileScreen {...profileDefaults} />)
 
@@ -1928,6 +1937,32 @@ describe("the e-mail address on the Account section", () => {
       const classes = find(`[data-e2e=${hook}]`).classList
       expect([hook, classes.contains("min-h-11")]).toEqual([hook, true])
     }
+  })
+
+  it("shows a named loading bar, not a dash, until the address arrives", async () => {
+    await mount(account({ status: null }))
+    expect(find("[data-e2e=email-loading]").getAttribute("aria-label")).toBe("Loading your email")
+    expect(document.querySelector("[data-e2e=email-current]")).toBeNull()
+
+    await rerender(account({ status: proven }))
+    expect(document.querySelector("[data-e2e=email-loading]")).toBeNull()
+    expect(find("[data-e2e=email-current]").textContent).toBe("ann@example.com")
+  })
+
+  it("names the new address that waits for its code under the current one", async () => {
+    await mount(account({ status: { ...proven, pending: "new.lee@example.com" } }))
+    expect(find("[data-e2e=email-current]").textContent).toBe("ann@example.com")
+    const line = find("[data-e2e=email-pending]")
+    expect(line.textContent).toBe("New address new.lee@example.com is waiting for its code.")
+    expect(line.querySelector("bdi")?.textContent).toBe("new.lee@example.com")
+
+    await rerender(account({ status: proven }))
+    expect(document.querySelector("[data-e2e=email-pending]")).toBeNull()
+  })
+
+  it("names the waiting address of a username account adding its first one", async () => {
+    await mount(account({ status: { email: null, proven: false, pending: "ann@example.com" } }))
+    expect(find("[data-e2e=email-pending]").textContent).toContain("ann@example.com")
   })
 
   it("tells a username account that the address replaces the username for sign-in", async () => {

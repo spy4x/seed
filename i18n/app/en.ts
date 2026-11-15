@@ -1249,6 +1249,7 @@ export default {
     "You're offline, so nothing was saved. Try again when you're back online.",
   "Preferences.failedInvalid": "Pick each value from its list.",
   "Preferences.updatedElsewhere": "Preferences updated from another device.",
+  "Preferences.saved": "Saved",
   "SeatPriceConfirm.hint":
     "Each new member adds {price} a month, so one more member takes the group from {now} to {next}. The difference for the rest of this period is billed on the next invoice.",
   "SeatPriceConfirm.hintYear":
@@ -1268,6 +1269,8 @@ export default {
   "ProfileAccount.noneUsername": "None. You sign in with your username.",
   "ProfileAccount.none": "None.",
   "ProfileAccount.noneProvider": "None. {provider} didn't share a verified email.",
+  "ProfileAccount.loadingEmail": "Loading your email",
+  "ProfileAccount.pendingEmail": "New address <email>{email}</email> is waiting for its code.",
   "ProfileExport.asking": "Requesting…",
   "ProfileExport.never":
     "A ZIP of your profile, groups and notes as JSON and CSV files. It takes a few minutes, and we'll email you when it's ready.",

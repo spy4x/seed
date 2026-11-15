@@ -38,7 +38,7 @@ export function showsEmailBanner(status: EmailStatus | null): boolean {
  * An address that a narrow screen wraps after its `@` and before its dots, never mid-word:
  * `ada@<wbr>example<wbr>.com`. A part too long for a whole line still breaks anywhere.
  */
-function breakableAddress(email: string): JSX.Element[] {
+export function breakableAddress(email: string): JSX.Element[] {
   return email.split(/(?<=@)|(?=\.)/).map((part, index) => (
     <Fragment key={index}>
       {index > 0 && <wbr />}

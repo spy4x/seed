@@ -198,6 +198,33 @@ describe(`RegionSection`, () => {
     expect($(`[data-e2e="preferences-other-zone"]`)).toBeNull()
   })
 
+  it(`says "Saved" in a polite status once a save goes through, until the next one starts`, async () => {
+    const saved = () => $(`[data-e2e="preferences-saved"]`)!
+    await mount(setup().region)
+    expect(saved().getAttribute(`role`)).toBe(`status`)
+    expect(saved().textContent).toBe(``)
+
+    await rerender(setup({ pending: true }).region)
+    expect(saved().textContent).toBe(``)
+    await rerender(setup().region)
+    expect(saved().textContent).toBe(`Saved`)
+
+    await rerender(setup({ pending: true }).region)
+    expect(saved().textContent).toBe(``)
+  })
+
+  it(`says nothing saved when the save failed or another device saved first`, async () => {
+    const saved = () => $(`[data-e2e="preferences-saved"]`)!.textContent
+    await mount(setup({ pending: true }).region)
+    await rerender(setup({ error: `network` }).region)
+    expect(saved()).toBe(``)
+
+    const won: Preferences = { ...DEFAULT_PREFERENCES, hourCycle: `h23` }
+    await rerender(setup({ pending: true }).region)
+    await rerender(setup({ conflict: { version: 1, value: won } }).region)
+    expect(saved()).toBe(``)
+  })
+
   it(`says a change from another device to a screen reader`, async () => {
     await mount(setup({ announcement: `Preferences updated from another device.` }).region)
 

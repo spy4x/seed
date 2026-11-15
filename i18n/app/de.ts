@@ -1319,6 +1319,7 @@ export default {
     "Du bist offline, deshalb wurde nichts gespeichert. Versuche es noch einmal, wenn du wieder online bist.",
   "Preferences.failedInvalid": "Wähle jeden Wert aus seiner Liste.",
   "Preferences.updatedElsewhere": "Einstellungen wurden auf einem anderen Gerät geändert.",
+  "Preferences.saved": "Gespeichert",
   "SeatPriceConfirm.hint":
     "Jedes neue Mitglied kostet {price} mehr im Monat – mit einem weiteren Mitglied steigt der Preis der Gruppe also von {now} auf {next}. Die Differenz für den Rest dieses Zeitraums steht auf der nächsten Rechnung.",
   "SeatPriceConfirm.hintYear":
@@ -1339,6 +1340,8 @@ export default {
   "ProfileAccount.none": "Keine.",
   "ProfileAccount.noneProvider":
     "Keine. {provider} hat keine bestätigte E-Mail-Adresse übermittelt.",
+  "ProfileAccount.loadingEmail": "Deine E-Mail-Adresse wird geladen",
+  "ProfileAccount.pendingEmail": "Die neue Adresse <email>{email}</email> wartet auf ihren Code.",
   "ProfileExport.asking": "Wird angefordert …",
   "ProfileExport.never":
     "Eine ZIP-Datei mit deinem Profil, deinen Gruppen und Notizen als JSON- und CSV-Dateien. Das dauert ein paar Minuten, und wir schicken dir eine E-Mail, sobald sie fertig ist.",

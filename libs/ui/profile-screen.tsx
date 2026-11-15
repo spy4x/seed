@@ -28,7 +28,7 @@ import {
   themeName,
 } from "./preferences.tsx"
 import type { PictureRowProps } from "./profile-picture.tsx"
-import { AccountSection } from "./profile-account.tsx"
+import { AccountSection, EmailLoading } from "./profile-account.tsx"
 import type { DataExportRowProps } from "./profile-export.tsx"
 import { PushDevicesSection } from "./profile-notifications.tsx"
 import { TelegramLink, type TelegramLinkProps } from "./profile-telegram.tsx"
@@ -342,6 +342,7 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
             {email?.email && (
               <span class="truncate text-sm text-muted" translate={false}>{email.email}</span>
             )}
+            {email === null && !props.guest && !props.onRetryEmail && <EmailLoading />}
           </div>
         </div>
       }

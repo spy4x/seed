@@ -1360,6 +1360,7 @@ export default {
     "Estás sin conexión, así que no se guardó nada. Vuelve a intentarlo cuando vuelvas a tener conexión.",
   "Preferences.failedInvalid": "Elige cada valor de su lista.",
   "Preferences.updatedElsewhere": "Se actualizaron las preferencias desde otro dispositivo.",
+  "Preferences.saved": "Guardado",
   "SeatPriceConfirm.hint":
     "Cada miembro nuevo suma {price} al mes, así que con un miembro más el grupo pasa de {now} a {next}. La diferencia por lo que queda de este periodo se cobra en la próxima factura.",
   "SeatPriceConfirm.hintYear":
@@ -1379,6 +1380,9 @@ export default {
   "ProfileAccount.noneUsername": "Ninguno. Inicias sesión con tu nombre de usuario.",
   "ProfileAccount.none": "Ninguno.",
   "ProfileAccount.noneProvider": "Ninguno. {provider} no compartió un correo verificado.",
+  "ProfileAccount.loadingEmail": "Cargando tu correo electrónico",
+  "ProfileAccount.pendingEmail":
+    "La nueva dirección <email>{email}</email> está esperando su código.",
   "ProfileExport.asking": "Solicitando…",
   "ProfileExport.never":
     "Un ZIP con tu perfil, tus grupos y tus notas en archivos JSON y CSV. Tarda unos minutos y te avisaremos por correo cuando esté listo.",

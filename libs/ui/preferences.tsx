@@ -10,6 +10,7 @@ import { RadioChips } from "@spy4x/preact-ui/radio-chips"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFormat, When } from "@spy4x/preact-ui/format"
+import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { createFormatters, regionHourCycle } from "@spy4x/time/format"
 import { type LocaleOption, localeOptions } from "@spy4x/time/locale"
 import { zoneCity, zoneLabel, zoneOffsetLabel } from "@spy4x/time/tz"
@@ -163,7 +164,7 @@ const CLOCKS = [`format`, `h12`, `h23`] as const
  * time in the person's settings, and a person whose device is in another zone is offered it.
  */
 export function RegionSection(props: PreferencesProps): JSX.Element {
-  const { value, version, device, conflict, otherZone, error, now, onSave } = props
+  const { value, version, device, conflict, otherZone, pending, error, now, onSave } = props
   const format = useFormat()
   const t = useAppText()
   const language = t.language
@@ -181,6 +182,15 @@ export function RegionSection(props: PreferencesProps): JSX.Element {
   useEffect(() => {
     if (conflict) notice.current?.focus()
   }, [conflict])
+
+  // "Saved" once a save goes through, until the next one starts. A refused or failed save shows
+  // its notice or error instead.
+  const [succeeded, setSucceeded] = useState(false)
+  useSucceeded(pending, Boolean(error || conflict), () => setSucceeded(true))
+  useEffect(() => {
+    if (pending) setSucceeded(false)
+  }, [pending])
+  const saved = succeeded && !error && !conflict
 
   const regionItems = useMemo<RegionItem[]>(() => [
     {
@@ -298,6 +308,10 @@ export function RegionSection(props: PreferencesProps): JSX.Element {
           onChange={(next) => save({ hourCycle: next === `h12` || next === `h23` ? next : null })}
         />
         <ErrorState message={error && t.t(FAILURE_KEYS[error])} />
+        {/* Always in the page, so a screen reader hears the word when it appears. */}
+        <p role="status" class="min-h-5 text-sm text-muted" data-e2e="preferences-saved">
+          {saved && t.t(`Preferences.saved`)}
+        </p>
       </Stack>
       <p class="sr-only" aria-live="polite" data-e2e="preferences-announcement">
         {props.announcement && t.t(`Preferences.updatedElsewhere`)}

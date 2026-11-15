@@ -12,6 +12,7 @@ import { SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { type EmailStatus, emailToVerify } from "@domain/identity"
 import {
+  breakableAddress,
   type EmailChangeProps,
   EmailDialog,
   EmailState,
@@ -282,26 +283,69 @@ export function AccountSection(
   )
 }
 
-/** The address and whether it is proven, or a placeholder while it is not known. */
+/**
+ * The address and whether it is proven, or a placeholder while it is not known. A new address
+ * waiting for its code is named under it.
+ */
 function EmailValue(
   { email, provider }: { email: EmailStatus | null; provider: string | null },
 ): JSX.Element {
   const t = useAppText()
-  if (!email) return <span>…</span>
-  if (email.email === null) {
-    return (
-      <span data-e2e="email-current">
-        {provider === null ? t.t(`ProfileAccount.noneUsername`) : provider === ""
-          // A passkey carries no address.
-          ? t.t(`ProfileAccount.none`)
-          : t.t(`ProfileAccount.noneProvider`, { provider })}
-      </span>
-    )
-  }
+  if (!email) return <EmailLoading />
   return (
-    <span class="flex flex-wrap items-center gap-2">
-      <span class="wrap-anywhere" data-e2e="email-current" translate={false}>{email.email}</span>
-      <EmailState proven={email.proven} />
+    <span class="flex flex-col gap-1">
+      {email.email === null
+        ? (
+          <span data-e2e="email-current">
+            {provider === null ? t.t(`ProfileAccount.noneUsername`) : provider === ""
+              // A passkey carries no address.
+              ? t.t(`ProfileAccount.none`)
+              : t.t(`ProfileAccount.noneProvider`, { provider })}
+          </span>
+        )
+        : (
+          <span class="flex flex-wrap items-center gap-2">
+            <span class="wrap-anywhere" data-e2e="email-current" translate={false}>
+              {email.email}
+            </span>
+            <EmailState proven={email.proven} />
+          </span>
+        )}
+      {email.pending && (
+        <span class="text-sm text-muted" data-e2e="email-pending">
+          <Rich
+            parts={t.parts(`ProfileAccount.pendingEmail`, { email: email.pending })}
+            tags={{
+              email: (text) => (
+                <span class="wrap-anywhere text-foreground" translate={false}>
+                  <bdi>{breakableAddress(text)}</bdi>
+                </span>
+              ),
+            }}
+          />
+        </span>
+      )}
+    </span>
+  )
+}
+
+/**
+ * A one-line bar where the address goes while it loads, named "Loading your email" for a screen
+ * reader.
+ */
+export function EmailLoading(): JSX.Element {
+  const t = useAppText()
+  return (
+    <span
+      role="status"
+      aria-label={t.t(`ProfileAccount.loadingEmail`)}
+      class="flex h-5 items-center"
+      data-e2e="email-loading"
+    >
+      <span
+        aria-hidden="true"
+        class="block h-4 w-48 max-w-full animate-pulse rounded bg-track motion-reduce:animate-none"
+      />
     </span>
   )
 }

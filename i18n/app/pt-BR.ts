@@ -1352,6 +1352,7 @@ export default {
     "Você está offline, então nada foi salvo. Tente de novo quando estiver online.",
   "Preferences.failedInvalid": "Escolha cada opção na lista.",
   "Preferences.updatedElsewhere": "Preferências atualizadas em outro dispositivo.",
+  "Preferences.saved": "Salvo",
   "SeatPriceConfirm.hint":
     "Cada novo membro acrescenta {price} por mês, então mais um membro faz o grupo passar de {now} para {next}. A diferença do resto deste período vem na próxima fatura.",
   "SeatPriceConfirm.hintYear":
@@ -1371,6 +1372,8 @@ export default {
   "ProfileAccount.noneUsername": "Nenhum. Você entra com seu nome de usuário.",
   "ProfileAccount.none": "Nenhum.",
   "ProfileAccount.noneProvider": "Nenhum. O {provider} não compartilhou um e-mail confirmado.",
+  "ProfileAccount.loadingEmail": "Carregando seu e-mail",
+  "ProfileAccount.pendingEmail": "O novo endereço <email>{email}</email> está aguardando o código.",
   "ProfileExport.asking": "Pedindo…",
   "ProfileExport.never":
     "Um ZIP com seu perfil, grupos e notas em arquivos JSON e CSV. Leva alguns minutos, e avisamos por e-mail quando estiver pronto.",
