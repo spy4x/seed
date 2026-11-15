@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { type ComposeHost, runCompose } from "./compose.ts"
+import { type ComposeHost, DRY_RUN_TIMEOUT_MS, runCompose } from "./compose.ts"
 import type { PostgresDataFacts } from "./postgres-data.ts"
 
 const ENV = { ENV: "prod", PROJECT: "app" }
@@ -41,8 +41,16 @@ const row = (service: string, state: string, port = 0) =>
 function host(
   facts: Partial<PostgresDataFacts>,
   answers: Answers = {},
-): ComposeHost & { ran: string[]; asked: string[]; probed: string[]; errors: string[] } {
+): ComposeHost & {
+  ran: string[];
+  asked: string[];
+  /** The deadline each read-only command was given, by command. */
+  deadlines: Record<string, number | undefined>;
+  probed: string[];
+  errors: string[];
+} {
   const ran: string[] = [];
+  const deadlines: Record<string, number | undefined> = {};
   const asked: string[] = [];
   const probed: string[] = [];
   const errors: string[] = [];
@@ -50,6 +58,7 @@ function host(
   return {
     ran,
     asked,
+    deadlines,
     probed,
     errors,
     readEnv: () => Promise.resolve(ENV),
@@ -71,9 +80,10 @@ function host(
       ran.push(tail(args));
       return Promise.resolve(answers.exit?.(tail(args)) ?? 0);
     },
-    ask: (_engine, args) => {
+    ask: (_engine, args, timeoutMs) => {
       const line = tail(args);
       asked.push(line);
+      deadlines[line] = timeoutMs;
       const stdout = line === "config --format json"
         ? answers.config
         : line === "config --no-interpolate --format json"
@@ -194,6 +204,16 @@ Deno.test("a project with no container yet starts without the dry run, which nev
   expect(await runCompose(["up", "-d"], h)).toBe(0);
   expect(h.asked).not.toContain("--dry-run up -d");
   expect(h.ran).toEqual(["proxy network", "build deno-base", "up -d db migrate api spa", "up -d"]);
+});
+
+Deno.test("the dry run has a deadline, and one that misses it still starts the project", async () => {
+  // The fake answers a missed deadline as the real host does: a non-zero exit, nothing printed.
+  const h = host({}, { config: CONFIG, ps: row("api", "running") });
+  expect(await runCompose(["up", "-d", "--build"], h)).toBe(0);
+  expect(h.deadlines["--dry-run up -d"]).toBe(DRY_RUN_TIMEOUT_MS);
+  expect(h.deadlines["config --format json"]).toBeUndefined();
+  expect(h.ran).toEqual(["proxy network", "build deno-base", PRODUCT, "up -d --build"]);
+  expect(h.errors).toEqual([]);
 });
 
 Deno.test("a start that names a service, and any other command, asks the engine nothing first", async () => {
