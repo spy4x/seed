@@ -262,6 +262,24 @@ describe("stats screen", () => {
     expect(calls).toEqual([["source", "zalo-a"], ["source", "fb-market"], ["source", null]])
   })
 
+  it("scrolls the chart into view from a source row, smoothly unless motion is reduced", async () => {
+    const own = globalThis.matchMedia
+    try {
+      for (const reduced of [false, true]) {
+        globalThis.matchMedia = ((query: string) => ({
+          matches: reduced && query === "(prefers-reduced-motion: reduce)",
+        })) as typeof globalThis.matchMedia
+        await mount(<AdminStatsScreen {...props([])} />)
+        const scrolls: unknown[] = []
+        find("[data-e2e=admin-stats-chart]").scrollIntoView = (options) => scrolls.push(options)
+        await clickOn(button("Zalo A", find("[data-e2e=admin-stats-sources-list]")))
+        expect(scrolls).toEqual([{ behavior: reduced ? "auto" : "smooth", block: "nearest" }])
+      }
+    } finally {
+      globalThis.matchMedia = own
+    }
+  })
+
   it("puts the source picker, named Source, in the chart's header beside the summary", async () => {
     await mount(<AdminStatsScreen {...props([])} />)
     const header = find("[data-e2e=admin-stats-chart] .pc-card-header")

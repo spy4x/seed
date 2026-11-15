@@ -1,5 +1,5 @@
-import type { JSX } from "preact"
-import { useEffect, useState } from "preact/hooks"
+import type { JSX, RefObject } from "preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { changeText } from "@spy4x/preact-charts/change"
 import { Kpi, type KpiChange, KpiGrid } from "@spy4x/preact-charts/kpi"
 import { LineChart } from "@spy4x/preact-charts/line-chart"
@@ -370,6 +370,14 @@ function Report(
   const format = useFormat()
   const days = report.days
   const channels = report.channels.map((channel) => channel.name)
+  const chart = useRef<HTMLDivElement>(null)
+  // A source row is under the chart: on a phone the chart is a screen above, so the press scrolls
+  // it into view to show what changed. Smooth unless the operator asked for reduced motion.
+  const showSource = (slug: string) => {
+    onSource(slug)
+    const reduced = globalThis.matchMedia?.(`(prefers-reduced-motion: reduce)`).matches ?? false
+    chart.current?.scrollIntoView?.({ behavior: reduced ? `auto` : `smooth`, block: `nearest` })
+  }
 
   if (report.visits.current === 0) {
     return (
@@ -441,7 +449,7 @@ function Report(
         </p>
       </section>
 
-      <VisitsChart report={report} source={source} onSource={onSource} />
+      <VisitsChart report={report} source={source} onSource={onSource} chartRef={chart} />
 
       <section aria-labelledby="admin-stats-sources-title" data-e2e="admin-stats-sources-list">
         <h2 id="admin-stats-sources-title" class="text-lg font-semibold">
@@ -467,7 +475,7 @@ function Report(
                 values: [row.orderClicks, row.rate],
                 lowSample: row.lowSample,
                 note: row.slug === null ? t.t(`AdminStats.noSourceHint`) : undefined,
-                onSelect: row.slug === null ? undefined : () => onSource(row.slug),
+                onSelect: row.slug === null ? undefined : () => showSource(row.slug!),
               }))}
             />
             {!report.hasSources && (
@@ -525,10 +533,11 @@ function Report(
 }
 
 function VisitsChart(
-  { report, source, onSource }: {
+  { report, source, onSource, chartRef }: {
     report: WebsiteStatsReport
     source: string | null
     onSource: (source: string | null) => void
+    chartRef: RefObject<HTMLDivElement>
   },
 ): JSX.Element {
   const t = useAdminText()
@@ -544,7 +553,7 @@ function VisitsChart(
   const total = report.perDay.reduce((sum, entry) => sum + entry.visits, 0)
   const named = report.sources.filter((row) => row.slug !== null)
   return (
-    <Card data-e2e="admin-stats-chart">
+    <Card ref={chartRef} data-e2e="admin-stats-chart">
       {
         /* The source picker sits in the header, not above the chart, so the page's answer fits the
           first screen; on a phone the header wraps under the title. */
