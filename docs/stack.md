@@ -465,8 +465,8 @@ Docker Compose for both local development and single-node production. Scaling is
 vertical, through per-service resource limits.
 
 CI is Woodpecker: `.woodpecker/ci.yml` on every pull request, push to `main`, version tag and
-nightly cron run on `main`. Its
-steps are listed once, in [woodpecker-ci-setup.md](woodpecker-ci-setup.md). A `v*` tag also
+nightly cron run on `main`, and the browser steps in `.woodpecker/ci-browser.yml`, at the same
+time, on all of them but a push to `main`. Their steps are listed once, in [woodpecker-ci-setup.md](woodpecker-ci-setup.md). A `v*` tag also
 publishes the images (`.woodpecker/release.yml`). A product can deploy every push to `main`
 (`.woodpecker/deploy.yml.example`).
 
