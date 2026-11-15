@@ -108,12 +108,14 @@ function GroupView(
   // read. Off, the API mounts no widget or file route, so none is asked for. Until it is read the
   // page draws as with the notes on but asks for nothing, so neither setting sees a failed request
   // and the notes-on page does not change shape when the list arrives.
+  // Files (`files` in the same list) the same way: off, there is no store, so no Files tab.
   const moduleIds = context.moduleIds.value
   const notes = moduleIds === null ? null : moduleIds.has(`notes`)
+  const filesOn = moduleIds === null ? null : moduleIds.has(`files`)
   const widgets = overviewWidgets(notes !== false)
   useEffect(() => {
-    if (groupId !== null && notes === true) state.loadFiles(groupId, fileFilter)
-  }, [groupId, fileFilter, notes])
+    if (groupId !== null && notes === true && filesOn === true) state.loadFiles(groupId, fileFilter)
+  }, [groupId, fileFilter, notes, filesOn])
   const group = state.group.value
   const dialog = state.dialog.value
   const files = state.files.value
@@ -162,7 +164,7 @@ function GroupView(
   usePageCommands(
     adminGroupPageCommands(
       t,
-      { shown: current && group.detail !== null, notes: notes !== false },
+      { shown: current && group.detail !== null, notes: notes !== false, files: filesOn !== false },
       onTab,
     ),
   )
@@ -210,6 +212,7 @@ function GroupView(
         />
       )}
       notes={notes !== false}
+      filesOn={filesOn !== false}
       navigate={context.navigate}
     />
   )

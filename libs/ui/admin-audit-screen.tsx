@@ -571,6 +571,22 @@ function PersonCell(
 }
 
 /**
+ * A name that is an e-mail address with a line break allowed after its `@`, so a narrow line
+ * breaks there rather than inside the domain ("example.c" / "om"). Any other name as it is.
+ */
+function breakAfterAt(text: string): string | JSX.Element {
+  const at = text.lastIndexOf(`@`)
+  if (at < 1) return text
+  return (
+    <>
+      {text.slice(0, at + 1)}
+      <wbr />
+      {text.slice(at + 1)}
+    </>
+  )
+}
+
+/**
  * The people of an entry inside its Event cell on a phone, which hides the About and Done by
  * columns: "About Ada · by Olga", or only the name when they did it themselves. Plain text: the
  * links are the columns', which a phone hides.
@@ -580,14 +596,14 @@ function PhonePeople({ entry }: { entry: AdminAuditEntry }): JSX.Element | null 
   const name = (person: AdminAuditPerson | null) =>
     person?.name ?? (entry.source === "account" ? t.t(`AdminAudit.deletedAccount`) : null)
   const who = (text: string) => (
-    <bdi class="font-medium text-foreground" translate={false}>{text}</bdi>
+    <bdi class="font-medium text-foreground" translate={false}>{breakAfterAt(text)}</bdi>
   )
   // An operator's billing action is about a group, which no person stands for.
   const about = entry.person === null && entry.group ? entry.group.name : name(entry.person)
   const by = selfDone(entry) ? null : name(entry.actor)
   if (!about && !by) return null
   return (
-    <span class="text-muted wrap-anywhere sm:hidden" data-e2e="admin-audit-people-phone">
+    <span class="text-muted wrap-break-word sm:hidden" data-e2e="admin-audit-people-phone">
       {about && <Rich parts={t.parts(`AdminAudit.phoneAbout`, { about })} tags={{ who }} />}
       {about && by && " · "}
       {by && <Rich parts={t.parts(`AdminAudit.phoneBy`, { by })} tags={{ who }} />}

@@ -222,7 +222,6 @@ export function AdminUsersScreen(
             <ToggleChips
               mode="single"
               label={t.t(`AdminUsers.status`)}
-              class="flex-nowrap sm:flex-wrap"
               options={[
                 { value: `active`, label: t.t(`AdminUsers.active`) },
                 { value: `blocked`, label: t.t(`AdminUsers.blocked`) },
@@ -236,7 +235,6 @@ export function AdminUsersScreen(
             <ToggleChips
               mode="single"
               label={t.t(`AdminUsers.account`)}
-              class="flex-nowrap sm:flex-wrap"
               // Guest accounts, made with one click and no sign-in method, or every other.
               options={[
                 { value: `guest`, label: t.t(`AdminUsers.guests`) },
@@ -257,7 +255,6 @@ export function AdminUsersScreen(
             <ToggleChips
               mode="single"
               label={t.t(`AdminUsers.role`)}
-              class="flex-nowrap sm:flex-wrap"
               options={ROLES.map((role) => ({ value: String(role), label: roleLabel(t, role) }))}
               value={filter.role === null ? null : String(filter.role)}
               onChange={(value) =>
@@ -394,12 +391,9 @@ function FilterChips(
   { label, dataE2E, children }: { label: string; dataE2E: string; children: JSX.Element },
 ): JSX.Element {
   return (
-    // One row that scrolls sideways on a phone rather than wrapping onto a second line, as the
-    // billing page's chips do; from `sm` it wraps.
-    <div
-      class="-mx-4 flex max-w-[calc(100%+2rem)] items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0"
-      data-e2e={dataE2E}
-    >
+    // Wraps onto a second line at every width: a row that scrolled sideways on a phone cut the
+    // last chip ("Administrator") with no sign that more was there.
+    <div class="flex flex-wrap items-center gap-2" data-e2e={dataE2E}>
       <span class="shrink-0 text-sm text-muted" aria-hidden="true">{label}</span>
       {children}
     </div>

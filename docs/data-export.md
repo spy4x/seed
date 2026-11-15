@@ -11,7 +11,8 @@ data". The file is built in the background and kept for a few days
 
 **You need:** the file store running, with its settings in the env file ([files.md](files.md)).
 With files off (`FILES=false`, [files.md](files.md#without-files)), asking for an export or
-downloading one answers 409 with the reason `FILES_OFF`; the newest export still reads.
+downloading one answers 409 with the reason `FILES_OFF`; the newest export still reads. The SPA
+then shows no export row and the palette no "Download your data".
 
 ## What happens
 

@@ -1169,6 +1169,8 @@ services:
       - SPA_REALTIME=${SPA_REALTIME:-}
       - SPA_OFFLINE=${SPA_OFFLINE:-}
       - SPA_NOTES=${SPA_NOTES:-}
+      # The API's own switch, so `FILES=false` also hides the upload controls (docs/files.md).
+      - SPA_FILES=${FILES:-}
       # The public demo (docs/demo.md) shows its line on the sign-in and sign-up pages.
       - SPA_DEMO=${DEMO_MODE:-}
       - SPA_GUEST=${GUEST_MODE:-}

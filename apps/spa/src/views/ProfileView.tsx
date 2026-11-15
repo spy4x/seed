@@ -77,7 +77,7 @@ import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { providerProofOf } from "@ui/provider-proof.tsx"
 import { createDevicesStore } from "../state/devices.ts"
 import { createSignInMethodsStore } from "../state/sign-in-methods.ts"
-import { localReads, notesOn } from "../modules.ts"
+import { filesOn, localReads, notesOn } from "../modules.ts"
 import { groupsStore } from "../state/groups.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { preferencesState } from "../state/preferences.ts"
@@ -219,7 +219,8 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     void methods.load()
     // With the notes off the personal-token API is not mounted: nothing to read.
     if (notesOn()) void tokens.load()
-    void dataExport.load()
+    // With files off the export answers `FILES_OFF`: its row is not drawn, so nothing to read.
+    if (filesOn()) void dataExport.load()
     void telegram.load()
   }, [session.user?.id, session.isMfaRequired])
 
@@ -785,31 +786,36 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       }}
       onRegisterPush={registerPush}
       onRemovePush={removePush}
-      picture={{
-        name: [session.user?.firstName, session.user?.lastName].filter(Boolean).join(" ") ||
-          emailStore.status.value?.email || "",
-        src: picture.preview.value ?? pictureUrl(shownPictureId(session.user)),
-        hasPicture: Boolean(session.user?.pictureId),
-        state: session.user?.pictureState === PictureState.Preparing
-          ? "preparing"
-          : session.user?.pictureState === PictureState.Refused
-          ? "refused"
-          : null,
-        status: picture.status.value,
-        error: picture.error.value,
-        announcement: picture.announcement.value,
-        onChoose: (file) => void picture.choose(file),
-        onReject: picture.reject,
-        onRemove: () => void picture.remove(),
-      }}
-      dataExport={{
-        exportState: dataExport.current.value,
-        pending: dataExport.pending.value,
-        error: dataExport.error.value,
-        onRequest: () => void dataExport.request(),
-        notes: notesOn(),
-        downloadHref: DATA_EXPORT_DOWNLOAD_PATH,
-      }}
+      // With files off neither row is drawn: a picture or an export could only fail.
+      picture={filesOn()
+        ? {
+          name: [session.user?.firstName, session.user?.lastName].filter(Boolean).join(" ") ||
+            emailStore.status.value?.email || "",
+          src: picture.preview.value ?? pictureUrl(shownPictureId(session.user)),
+          hasPicture: Boolean(session.user?.pictureId),
+          state: session.user?.pictureState === PictureState.Preparing
+            ? "preparing"
+            : session.user?.pictureState === PictureState.Refused
+            ? "refused"
+            : null,
+          status: picture.status.value,
+          error: picture.error.value,
+          announcement: picture.announcement.value,
+          onChoose: (file) => void picture.choose(file),
+          onReject: picture.reject,
+          onRemove: () => void picture.remove(),
+        }
+        : undefined}
+      dataExport={filesOn()
+        ? {
+          exportState: dataExport.current.value,
+          pending: dataExport.pending.value,
+          error: dataExport.error.value,
+          onRequest: () => void dataExport.request(),
+          notes: notesOn(),
+          downloadHref: DATA_EXPORT_DOWNLOAD_PATH,
+        }
+        : undefined}
       telegram={{
         status: telegram.status.value,
         code: telegram.code.value,
@@ -832,6 +838,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
           setDeleteErrors(NO_DELETE_ERRORS)
         },
         onDelete: () => void submitDelete(),
+        exportLink: filesOn(),
       }}
       navigate={navigate}
     />

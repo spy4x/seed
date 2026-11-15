@@ -54,6 +54,7 @@
 # server the proxy answers with what that script writes. `e2e/notes-off.e2e.ts` runs only then;
 # other specs expect the notes on.
 #   NOTES=false SPA_NOTES=false deno task e2e:local e2e/notes-off.e2e.ts
+# `FILES=false` runs the API without a file store, and the SPA gets `SPA_FILES` from it (docs/files.md).
 #
 # CI runs this script too (.woodpecker/ci.yml), in a container that is thrown away afterwards and
 # has no container tool. Two variables stand in for the containers there:
@@ -319,6 +320,9 @@ export S3_ENDPOINT=http://127.0.0.1:$FILES_PORT S3_PUBLIC_ENDPOINT=http://app.lo
 export S3_REGION=garage S3_BUCKET=e2e-files S3_ACCESS_KEY_ID=GK000000000000000000000000
 S3_SECRET_ACCESS_KEY=$(openssl rand -hex 32)
 export S3_SECRET_ACCESS_KEY
+# The SPA takes its files switch from the API's, as compose sets it: `FILES=false` alone hides the
+# upload controls in whichever server below writes `/config.json`.
+export SPA_FILES="${FILES:-}"
 export RATE_LIMITER_WINDOW_MS=60000
 export RATE_LIMITER_STRICT_LIMIT=1000
 export RATE_LIMITER_LIMIT=5000

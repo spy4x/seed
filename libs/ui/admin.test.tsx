@@ -352,13 +352,13 @@ describe("the admin user list", () => {
     expect(has(".border-dashed")).toBe(false)
   })
 
-  it("keeps each chip row on one line that scrolls sideways on a phone, and caps the search", async () => {
+  it("wraps each chip row onto a second line instead of hiding chips off-screen, and caps the search", async () => {
     await mount(<AdminUsersScreen {...listProps([])} />)
 
     for (const row of ["[data-e2e=admin-users-blocked]", "[data-e2e=admin-users-role]"]) {
-      expect(find(row).className).toContain("overflow-x-auto")
-      expect(find(row).className).toContain("sm:flex-wrap")
-      expect(find(`${row} [role=group]`).className).toContain("flex-nowrap")
+      expect(find(row).className).toContain("flex-wrap")
+      expect(find(row).className).not.toContain("overflow-x-auto")
+      expect(find(`${row} [role=group]`).className).not.toContain("flex-nowrap")
     }
     expect(find("[data-e2e=admin-users-search]").closest(".basis-60")?.className).toContain(
       "sm:max-w-md",
