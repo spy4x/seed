@@ -339,7 +339,7 @@ export function EmailLoading(): JSX.Element {
     <span
       role="status"
       aria-label={t.t(`ProfileAccount.loadingEmail`)}
-      class="block py-0.5"
+      class="flex h-5 items-center"
       data-e2e="email-loading"
     >
       <span
