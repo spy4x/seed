@@ -4,6 +4,7 @@
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
+import { FakeTime } from "@std/testing/time"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
@@ -16,7 +17,7 @@ import {
   AuthAuditEventType,
   UserRole,
 } from "@domain/identity"
-import { ADMIN_PATHS, AdminSignInScreen } from "./admin-frame.tsx"
+import { ADMIN_PATHS, ADMIN_SEARCH_DELAY, AdminSignInScreen } from "./admin-frame.tsx"
 import { AdminUsersScreen, type AdminUsersScreenProps } from "./admin-users-screen.tsx"
 import { AdminUserScreen, type AdminUserScreenProps, auditTone } from "./admin-user-screen.tsx"
 import {
@@ -122,6 +123,31 @@ async function submit(selector: string): Promise<void> {
   })
 }
 
+/** The filter bar's search field. */
+const SEARCH = "[data-e2e=filter-search]"
+
+/** Opens the filter bar's menu `id` and chooses the item whose text is `label`. */
+async function choose(id: string, label: string): Promise<void> {
+  await click(`[data-e2e=filter-${id}]`)
+  const item = [...document.querySelectorAll<HTMLElement>("[role=menuitemradio]")]
+    .find((candidate) => candidate.textContent?.trim() === label)
+  if (!item) throw new Error(`the ${id} menu has no ${label}`)
+  await act(() => {
+    item.dispatchEvent(
+      new window.MouseEvent("click", { bubbles: true, cancelable: true }) as unknown as Event,
+    )
+  })
+}
+
+/** Presses Enter in the field `selector`. */
+async function enter(selector: string): Promise<void> {
+  await act(() => {
+    find(selector).dispatchEvent(
+      new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }) as unknown as Event,
+    )
+  })
+}
+
 function focused(): string | null | undefined {
   const element = document.activeElement
   return element?.getAttribute("data-e2e") ?? element?.tagName
@@ -153,65 +179,88 @@ function listProps(calls: unknown[][], props: Partial<AdminUsersScreenProps> = {
     list: { users: [ada, grace], total: 30, page: 1, pageSize: 25 },
     pending: false,
     error: null,
-    onSearch: (filter) => void calls.push(["search", filter]),
+    onSearch: (filter, replace) =>
+      void calls.push(replace ? ["search", filter, replace] : ["search", filter]),
     onPage: (page) => void calls.push(["page", page]),
     ...props,
   } satisfies AdminUsersScreenProps
 }
 
 describe("the admin user list", () => {
-  it("sends the typed words back on page 1, keeping the filters and the sort", async () => {
+  it("sends the typed words once the typing pauses, on page 1, keeping filters and sort", async () => {
     const calls: unknown[][] = []
     const filter = { ...ADMIN_NO_FILTER, role: UserRole.OPERATOR, blocked: "blocked", page: 2 }
+    using time = new FakeTime()
     await mount(
       <AdminUsersScreen {...listProps(calls, { filter: filter as AdminUserFilter })} />,
     )
-    await type("[data-e2e=admin-users-search]", "  ada love ")
-    await submit("[data-e2e=admin-users-submit]")
+    await type(SEARCH, "  ada")
+    await type(SEARCH, "  ada love ")
+    await act(() => time.tick(ADMIN_SEARCH_DELAY - 1))
+    expect(calls).toEqual([])
+    await act(() => time.tick(1))
 
-    expect(calls).toEqual([["search", { ...filter, query: "ada love", page: 1 }]])
+    // Typing replaces the address instead of adding a history entry per pause.
+    expect(calls).toEqual([["search", { ...filter, query: "ada love", page: 1 }, true]])
   })
 
-  it("filters at once when a status or role chip is pressed, back on page 1", async () => {
+  it("keeps a trailing space in the field when the trimmed search comes back", async () => {
+    const calls: unknown[][] = []
+    using time = new FakeTime()
+    await mount(<AdminUsersScreen {...listProps(calls)} />)
+    await type(SEARCH, "ada ")
+    await act(() => time.tick(ADMIN_SEARCH_DELAY))
+    const sent = calls[0]?.[1] as AdminUserFilter
+    expect(sent.query).toBe("ada")
+    await mount(<AdminUsersScreen {...listProps(calls, { filter: sent })} />)
+
+    expect(find<HTMLInputElement>(SEARCH).value).toBe("ada ")
+  })
+
+  it("filters at once when a status or role is chosen, back on page 1", async () => {
     const calls: unknown[][] = []
     await mount(
       <AdminUsersScreen {...listProps(calls, { filter: { ...ADMIN_NO_FILTER, page: 3 } })} />,
     )
-    await press("[data-e2e=admin-users-blocked]", "Blocked")
-    await press("[data-e2e=admin-users-role]", "Operator")
+    await choose("blocked", "Blocked")
+    await choose("account", "Guests")
+    await choose("role", "Operator")
 
     expect(calls).toEqual([
       ["search", { ...ADMIN_NO_FILTER, blocked: "blocked", page: 1 }],
+      ["search", { ...ADMIN_NO_FILTER, account: "guest", page: 1 }],
       ["search", { ...ADMIN_NO_FILTER, role: UserRole.OPERATOR, page: 1 }],
     ])
   })
 
-  it("drops a chip's filter when its pressed chip is pressed again", async () => {
+  it("shows a chosen role as a chip whose remove button drops that filter", async () => {
     const calls: unknown[][] = []
     const filter: AdminUserFilter = { ...ADMIN_NO_FILTER, role: UserRole.OPERATOR }
     await mount(<AdminUsersScreen {...listProps(calls, { filter })} />)
-    expect(find("[data-e2e=admin-users-role] [aria-pressed=true]").textContent).toBe("Operator")
-    await press("[data-e2e=admin-users-role]", "Operator")
+    expect(find("[data-e2e=filter-role]").getAttribute("aria-label")).toBe("Role: Operator")
+    await click("[aria-label='Remove the Operator filter']")
 
     expect(calls).toEqual([["search", { ...filter, role: null, page: 1 }]])
   })
 
-  it("clears every filter but keeps the sort, and offers Clear only while one is set", async () => {
+  it("clears every filter but keeps the search and sort, and offers Clear only while one is set", async () => {
     const calls: unknown[][] = []
     await mount(<AdminUsersScreen {...listProps(calls)} />)
-    expect(has("[data-e2e=admin-users-clear]")).toBe(false)
+    expect(has("[data-e2e=filter-clear]")).toBe(false)
 
     const filter: AdminUserFilter = {
       ...ADMIN_NO_FILTER,
       query: "ada",
       blocked: "active",
+      account: "full",
       sort: [{ key: "role", direction: "asc" }],
     }
     await mount(<AdminUsersScreen {...listProps(calls, { filter })} />)
-    await click("[data-e2e=admin-users-clear]")
+    await click("[data-e2e=filter-clear]")
 
     expect(calls).toEqual([["search", {
       ...ADMIN_NO_FILTER,
+      query: "ada",
       sort: [{ key: "role", direction: "asc" }],
     }]])
   })
@@ -271,7 +320,7 @@ describe("the admin user list", () => {
     expect(row(42).querySelector("[data-e2e=admin-user-blocked]")).toBe(null)
   })
 
-  it("asks the app for the next page and then moves focus to the list's heading", async () => {
+  it("asks the app for the next page and then moves focus to the list", async () => {
     const calls: unknown[][] = []
     await mount(<AdminUsersScreen {...listProps(calls)} />)
     const next = [...document.querySelectorAll("nav button")]
@@ -287,58 +336,60 @@ describe("the admin user list", () => {
         {...listProps(calls, { list: { users: [ada], total: 30, page: 2, pageSize: 25 } })}
       />,
     )
-    expect(focused()).toBe("admin-users-count")
+    expect(focused()).toBe("admin-users-list")
   })
 
   it("leaves focus where it was when the first page arrives after loading", async () => {
     await mount(<AdminUsersScreen {...listProps([], { list: null })} />)
-    find("[data-e2e=admin-users-search]").focus()
+    find(SEARCH).focus()
     await mount(<AdminUsersScreen {...listProps([])} />)
-    expect(focused()).toBe("admin-users-search")
+    expect(focused()).toBe("filter-search")
   })
 
   it("keeps focus in the search field when a search from page 2 brings back page 1", async () => {
     const calls: unknown[][] = []
     const onPage2 = { list: { users: [ada], total: 30, page: 2, pageSize: 25 } }
     await mount(<AdminUsersScreen {...listProps(calls, onPage2)} />)
-    await type("[data-e2e=admin-users-search]", "ada")
-    find("[data-e2e=admin-users-search]").focus()
-    await submit("[data-e2e=admin-users-submit]")
+    find(SEARCH).focus()
+    await type(SEARCH, "ada")
+    await enter(SEARCH)
     await mount(
       <AdminUsersScreen {...listProps(calls, { filter: { ...ADMIN_NO_FILTER, query: "ada" } })} />,
     )
     expect(calls[0]?.[0]).toBe("search")
-    expect(focused()).toBe("admin-users-search")
+    expect(focused()).toBe("filter-search")
   })
 
   it("shows the address's search in the field when history goes back to it", async () => {
     await mount(
       <AdminUsersScreen {...listProps([], { filter: { ...ADMIN_NO_FILTER, query: "ada" } })} />,
     )
-    // A half-typed query makes the field dirty, so its default value no longer shows.
-    await type("[data-e2e=admin-users-search]", "half-typed")
+    using _time = new FakeTime()
+    await type(SEARCH, "half-typed")
     await mount(
       <AdminUsersScreen {...listProps([], { filter: { ...ADMIN_NO_FILTER, query: "grace" } })} />,
     )
-    expect(find<HTMLInputElement>("[data-e2e=admin-users-search]").value).toBe("grace")
+    expect(find<HTMLInputElement>(SEARCH).value).toBe("grace")
   })
 
   it("keeps the search field usable while a search is pending, so focus stays in it", async () => {
     await mount(<AdminUsersScreen {...listProps([], { pending: true })} />)
-    const field = find<HTMLInputElement>("[data-e2e=admin-users-search]")
+    const field = find<HTMLInputElement>(SEARCH)
     expect(field.closest("fieldset")?.disabled ?? false).toBe(false)
     expect(field.matches(":disabled")).toBe(false)
   })
 
-  it("gives the list's count the house focus ring", async () => {
+  it("gives the list the house focus ring, and shows the count in the filter bar", async () => {
     await mount(<AdminUsersScreen {...listProps([])} />)
-    expect(find("[data-e2e=admin-users-count]").className.split(" ")).toEqual(
+    expect(find("[data-e2e=admin-users-list]").className.split(" ")).toEqual(
       expect.arrayContaining([
         "focus-visible:outline-hidden",
         "focus-visible:ring-2",
         "focus-visible:ring-focus",
       ]),
     )
+    expect(find("[data-e2e=admin-users-filters] [data-e2e=admin-users-count]").textContent)
+      .toBe("30 people")
   })
 
   it("says so when nobody matches, without a dashed box", async () => {
@@ -350,19 +401,6 @@ describe("the admin user list", () => {
     expect(find("[data-e2e=admin-users-list]").textContent).toContain("Nobody matches")
     expect(has("[data-e2e^=admin-user-4]")).toBe(false)
     expect(has(".border-dashed")).toBe(false)
-  })
-
-  it("wraps each chip row onto a second line instead of hiding chips off-screen, and caps the search", async () => {
-    await mount(<AdminUsersScreen {...listProps([])} />)
-
-    for (const row of ["[data-e2e=admin-users-blocked]", "[data-e2e=admin-users-role]"]) {
-      expect(find(row).className).toContain("flex-wrap")
-      expect(find(row).className).not.toContain("overflow-x-auto")
-      expect(find(`${row} [role=group]`).className).not.toContain("flex-nowrap")
-    }
-    expect(find("[data-e2e=admin-users-search]").closest(".basis-60")?.className).toContain(
-      "sm:max-w-md",
-    )
   })
 
   it("shows a loading state until the list comes, and the API's message when it fails", async () => {

@@ -5,6 +5,7 @@
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
+import { FakeTime } from "@std/testing/time"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
@@ -29,6 +30,7 @@ import {
   transferCandidates,
 } from "./admin-groups-detail.tsx"
 import { AdminUserScreen, type AdminUserScreenProps } from "./admin-user-screen.tsx"
+import { ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft, ZONE_LABEL } from "./i18n-testing.ts"
@@ -116,6 +118,40 @@ async function submit(selector: string): Promise<void> {
   })
 }
 
+/** The filter bar's search field. */
+const SEARCH = `[data-e2e=filter-search]`
+
+/** Sets the field `selector` to `value`, as typing does. */
+async function type(selector: string, value: string): Promise<void> {
+  const field = find<HTMLInputElement>(selector)
+  field.value = value
+  await act(() => {
+    field.dispatchEvent(new window.Event(`input`, { bubbles: true }) as unknown as Event)
+  })
+}
+
+/** Presses Enter in the field `selector`. */
+async function enter(selector: string): Promise<void> {
+  await act(() => {
+    find(selector).dispatchEvent(
+      new window.KeyboardEvent(`keydown`, { key: `Enter`, bubbles: true }) as unknown as Event,
+    )
+  })
+}
+
+/** Opens the filter bar's menu `id` and chooses the item whose text is `label`. */
+async function choose(id: string, label: string): Promise<void> {
+  await click(`[data-e2e=filter-${id}]`)
+  const item = [...document.querySelectorAll<HTMLElement>(`[role=menuitemradio]`)]
+    .find((candidate) => candidate.textContent?.trim() === label)
+  if (!item) throw new Error(`the ${id} menu has no ${label}`)
+  await act(() => {
+    item.dispatchEvent(
+      new window.MouseEvent(`click`, { bubbles: true, cancelable: true }) as unknown as Event,
+    )
+  })
+}
+
 function focused(): string | null | undefined {
   const element = document.activeElement
   return element?.getAttribute(`data-e2e`) ?? element?.tagName
@@ -145,14 +181,16 @@ function listProps(calls: unknown[][], props: Partial<AdminGroupsListScreenProps
     list: { groups: [family], total: 30, page: 1, pageSize: 25 },
     pending: false,
     error: null,
-    onSearch: (filter) => void calls.push([`search`, filter]),
+    onSearch: (filter, replace) =>
+      void calls.push(replace ? [`search`, filter, replace] : [`search`, filter]),
     onPage: (page) => void calls.push([`page`, page]),
     ...props,
   } satisfies AdminGroupsListScreenProps
 }
 
 describe(`the admin group list`, () => {
-  it(`sends the typed words back on page 1, keeping the status and the sort`, async () => {
+  it(`sends the typed words once the typing pauses, on page 1, keeping the status and sort`, async () => {
+    using time = new FakeTime()
     const calls: unknown[][] = []
     const filter = {
       ...ADMIN_GROUP_NO_FILTER,
@@ -162,9 +200,14 @@ describe(`the admin group list`, () => {
     }
     await mount(<AdminGroupsListScreen {...listProps(calls, { filter })} />)
 
-    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `  ada  `
-    await submit(`[data-e2e=admin-groups-submit]`)
-    expect(calls).toEqual([[`search`, { ...filter, query: `ada`, page: 1 }]])
+    await type(SEARCH, `  a`)
+    await type(SEARCH, `  ada  `)
+    await act(() => time.tick(ADMIN_SEARCH_DELAY - 1))
+    expect(calls).toEqual([])
+    await act(() => time.tick(1))
+
+    // Typing replaces the address instead of adding a history entry per pause.
+    expect(calls).toEqual([[`search`, { ...filter, query: `ada`, page: 1 }, true]])
   })
 
   it(`groups the member and note counts in the operator's region format`, async () => {
@@ -223,16 +266,16 @@ describe(`the admin group list`, () => {
     for (const place of [5, 7]) expect(tableClass()).not.toContain(hidden(place))
   })
 
-  it(`filters by a pressed status chip at once and drops it when pressed again`, async () => {
+  it(`filters by a chosen status at once and drops it with its chip's remove button`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupsListScreen {...listProps(calls)} />)
-    await press(`[data-e2e=admin-groups-status]`, `In trash`)
+    await choose(`status`, `In trash`)
     await mount(
       <AdminGroupsListScreen
         {...listProps(calls, { filter: { ...ADMIN_GROUP_NO_FILTER, status: `deleted` } })}
       />,
     )
-    await press(`[data-e2e=admin-groups-status]`, `In trash`)
+    await click(`[aria-label='Remove the In trash filter']`)
     expect(calls).toEqual([
       [`search`, { ...ADMIN_GROUP_NO_FILTER, status: `deleted`, page: 1 }],
       [`search`, { ...ADMIN_GROUP_NO_FILTER, status: `any`, page: 1 }],
@@ -304,10 +347,10 @@ describe(`the admin group list`, () => {
     expect(cells.some((cell) => cell.querySelector(`.truncate`) !== null)).toBe(false)
   })
 
-  it(`moves focus to the count after a page change, not on the first page`, async () => {
+  it(`moves focus to the list after a page change, not on the first page`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupsListScreen {...listProps(calls)} />)
-    expect(focused()).not.toBe(`admin-groups-count`)
+    expect(focused()).not.toBe(`admin-groups-list`)
     await press(`nav`, `2`)
     expect(calls).toEqual([[`page`, 2]])
     await mount(
@@ -315,23 +358,23 @@ describe(`the admin group list`, () => {
         {...listProps(calls, { list: { groups: [family], total: 30, page: 2, pageSize: 25 } })}
       />,
     )
-    expect(focused()).toBe(`admin-groups-count`)
+    expect(focused()).toBe(`admin-groups-list`)
   })
 
   it(`keeps focus in the search field when a search from page 2 brings back page 1`, async () => {
     const calls: unknown[][] = []
     const onPage2 = { list: { groups: [family], total: 30, page: 2, pageSize: 25 } }
     await mount(<AdminGroupsListScreen {...listProps(calls, onPage2)} />)
-    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `ada`
-    find(`[data-e2e=admin-groups-search]`).focus()
-    await submit(`[data-e2e=admin-groups-submit]`)
+    find(SEARCH).focus()
+    await type(SEARCH, `ada`)
+    await enter(SEARCH)
     await mount(
       <AdminGroupsListScreen
         {...listProps(calls, { filter: { ...ADMIN_GROUP_NO_FILTER, query: `ada` } })}
       />,
     )
     expect(calls[0]?.[0]).toBe(`search`)
-    expect(focused()).toBe(`admin-groups-search`)
+    expect(focused()).toBe(`filter-search`)
   })
 
   it(`shows the address's search in the field when history goes back to it`, async () => {
@@ -340,32 +383,34 @@ describe(`the admin group list`, () => {
         {...listProps([], { filter: { ...ADMIN_GROUP_NO_FILTER, query: `ada` } })}
       />,
     )
-    // A half-typed query makes the field dirty, so its default value no longer shows.
-    find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value = `half-typed`
+    using _time = new FakeTime()
+    await type(SEARCH, `half-typed`)
     await mount(
       <AdminGroupsListScreen
         {...listProps([], { filter: { ...ADMIN_GROUP_NO_FILTER, query: `family` } })}
       />,
     )
-    expect(find<HTMLInputElement>(`[data-e2e=admin-groups-search]`).value).toBe(`family`)
+    expect(find<HTMLInputElement>(SEARCH).value).toBe(`family`)
   })
 
   it(`keeps the search field usable while a search is pending, so focus stays in it`, async () => {
     await mount(<AdminGroupsListScreen {...listProps([], { pending: true })} />)
-    const field = find<HTMLInputElement>(`[data-e2e=admin-groups-search]`)
+    const field = find<HTMLInputElement>(SEARCH)
     expect(field.closest(`fieldset`)?.disabled ?? false).toBe(false)
     expect(field.matches(`:disabled`)).toBe(false)
   })
 
-  it(`gives the list's count the house focus ring`, async () => {
+  it(`gives the list the house focus ring, and shows the count in the filter bar`, async () => {
     await mount(<AdminGroupsListScreen {...listProps([])} />)
-    expect(find(`[data-e2e=admin-groups-count]`).className.split(` `)).toEqual(
+    expect(find(`[data-e2e=admin-groups-list]`).className.split(` `)).toEqual(
       expect.arrayContaining([
         `focus-visible:outline-hidden`,
         `focus-visible:ring-2`,
         `focus-visible:ring-focus`,
       ]),
     )
+    expect(find(`[data-e2e=admin-groups-filters] [data-e2e=admin-groups-count]`).textContent)
+      .toBe(`30 groups`)
   })
 
   it(`shows a loading state, the API's message when it fails, and an empty one`, async () => {

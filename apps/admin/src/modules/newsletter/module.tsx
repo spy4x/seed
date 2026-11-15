@@ -83,11 +83,11 @@ function NewsletterView({ context }: { context: AdminContext }): JSX.Element {
   const dialog = state.dialog.value
   const t = useAdminText()
   usePageCommands(newsletterPageCommands(t, state.exporting.value, () => state.exportCsv()))
-  const go = (next: AdminSubscriberFilter) => {
+  const go = (next: AdminSubscriberFilter, replace?: boolean) => {
     state.query.value = next.query
     // A new search alone leaves the address as it is: no history entry that only repeats it.
     const href = newsletterHref(next, tab)
-    if (href !== newsletterHref(filter, tab)) context.navigate(href)
+    if (href !== newsletterHref(filter, tab)) context.navigate(href, { replace })
   }
   return (
     <AdminNewsletterScreen

@@ -99,8 +99,8 @@ test.describe("the admin app's API tokens", () => {
       await ops.getByRole("navigation", { name: "Admin sections" })
         .getByRole("link", { name: "API tokens" }).click()
       await expect(ops.locator("[data-e2e=admin-api-tokens-title]")).toBeVisible()
-      await ops.locator("[data-e2e=admin-api-tokens-state]").getByRole("button", { name: /^Live/ })
-        .click()
+      await ops.locator("[data-e2e=admin-api-tokens-filters] [data-e2e=filter-state]").click()
+      await ops.getByRole("menuitemradio", { name: /^Live/ }).click()
       await expect(ops).toHaveURL(`${adminBase}/api-tokens?state=live`)
       const row = ops.locator("[data-e2e=admin-api-tokens-list] tr", { hasText: tokenName })
       await expect(row).toContainText(personEmail)
@@ -118,9 +118,8 @@ test.describe("the admin app's API tokens", () => {
       expect(refused.status()).toBe(401)
 
       // The owner's name opens their tokens tab, where the token now shows revoked.
-      await ops.locator("[data-e2e=admin-api-tokens-state]").getByRole("button", {
-        name: /^Revoked/,
-      }).click()
+      await ops.locator("[data-e2e=admin-api-tokens-filters] [data-e2e=filter-state]").click()
+      await ops.getByRole("menuitemradio", { name: /^Revoked/ }).click()
       await ops.locator("[data-e2e=admin-api-tokens-list] tr", { hasText: tokenName })
         .getByRole("link").click()
       await expect(ops).toHaveURL(/\/users\/\d+\?tab=api-tokens$/)

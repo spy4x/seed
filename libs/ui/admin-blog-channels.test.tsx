@@ -169,14 +169,35 @@ async function openMenu(index: number): Promise<string[]> {
 }
 
 describe("the sharing channels list", () => {
-  it("names each channel, says the Dev.to key is missing, and hides the chips with nothing archived", async () => {
+  it("names each channel, says the Dev.to key is missing, and hides the filter bar with nothing archived", async () => {
     await mount(<AdminBlogChannelsScreen {...listProps([])} />)
     const names = [...document.querySelectorAll("[data-e2e=blog-channel-edit]")]
       .map((link) => link.textContent)
     expect(names).toEqual(["r/selfhosted", "Dev.to"])
     expect(row(1).querySelector("[data-e2e=blog-channel-key-missing]")?.textContent)
       .toContain("DEVTO_API_KEY")
-    expect(document.querySelectorAll("[data-e2e=blog-channels-filter]").length).toBe(0)
+    expect(document.querySelectorAll("[data-e2e=blog-channels-filters]").length).toBe(0)
+  })
+
+  it("shows the archived channels through a toggle with their count, and back", async () => {
+    const calls: unknown[][] = []
+    const list = { ...LIST, channels: [{ ...REDDIT, archivedAt: NOW }, DEVTO] }
+    await mount(<AdminBlogChannelsScreen {...listProps(calls, { list })} />)
+    expect(
+      document.querySelectorAll("[data-e2e=blog-channels-filters] [data-e2e=filter-search]").length,
+    )
+      .toBe(0)
+    const toggle = () => find("[data-e2e=blog-channels-filters] button[aria-pressed]")
+    expect(toggle().textContent?.trim()).toBe("Archived 1")
+    expect(toggle().getAttribute("aria-pressed")).toBe("false")
+    await clickOn(toggle())
+
+    await mount(<AdminBlogChannelsScreen {...listProps(calls, { list, archived: true })} />)
+    expect(toggle().getAttribute("aria-pressed")).toBe("true")
+    expect([...document.querySelectorAll("[data-e2e=blog-channel-edit]")].map((l) => l.textContent))
+      .toEqual(["r/selfhosted"])
+    await clickOn(toggle())
+    expect(calls).toEqual([["archived", true], ["archived", false]])
   })
 
   it("offers Delete only on a channel without shares, and archives through the menu", async () => {

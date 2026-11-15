@@ -52,8 +52,7 @@ async function openAdmin(admin: BrowserContext, email: string): Promise<Page> {
 }
 
 async function search(ops: Page, query: string): Promise<void> {
-  await ops.locator("[data-e2e=admin-users-search]").fill(query)
-  await ops.locator("[data-e2e=admin-users-submit]").click()
+  await ops.locator("[data-e2e=admin-users-filters] [data-e2e=filter-search]").fill(query)
   await expect(ops).toHaveURL(new RegExp(`\\?q=${encodeURIComponent(query)}`))
   await expect(ops.locator("[data-e2e=admin-users-list] tbody tr")).toHaveCount(1)
 }
@@ -151,14 +150,14 @@ test.describe("the people actions of the admin app", () => {
       await expect(trail).toContainText("Password-reset email sent by an operator")
       await expect(trail).toContainText("Sessions ended")
 
-      // On a phone every row of the list page fits the screen: the role chips wrap rather than
-      // cut "Administrator" off at the edge.
+      // On a phone the list page fits the screen, and the Role menu offers every role.
       await ops.setViewportSize({ width: 390, height: 800 })
       await ops.goto(`${adminBase}/users?q=${encodeURIComponent(targetEmail)}`)
       await expect(ops.locator("[data-e2e=admin-users-list] tbody tr")).toHaveCount(1)
-      const administrator = ops.locator("[data-e2e=admin-users-role]")
-        .getByRole("button", { name: "Administrator" })
+      await ops.locator("[data-e2e=filter-role]").click()
+      const administrator = ops.getByRole("menuitemradio", { name: "Administrator" })
       await expect(administrator).toBeInViewport({ ratio: 1 })
+      await ops.keyboard.press("Escape")
       const overflow = await ops.evaluate(() => {
         const width = document.documentElement.clientWidth
         const rows = document.querySelectorAll(

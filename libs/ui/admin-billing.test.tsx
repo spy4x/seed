@@ -1,10 +1,11 @@
 /**
  * The admin app's billing screens, driven in a browser DOM (happy-dom): what the list's
- * figures, chips and rows show, what a customer's page offers to whom, what each confirmed action
+ * figures, filters and rows show, what a customer's page offers to whom, what each confirmed action
  * sends, and what a dialog says when the result is unknown.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
+import { FakeTime } from "@std/testing/time"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
@@ -27,6 +28,7 @@ import {
   AdminBillingListScreen,
   type AdminBillingListScreenProps,
 } from "./admin-billing-list.tsx"
+import { ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
 import {
   AdminBillingCustomerScreen,
   type AdminBillingCustomerScreenProps,
@@ -117,6 +119,34 @@ async function submit(selector: string): Promise<void> {
   })
 }
 
+/** The filter bar's search field. */
+const SEARCH = `[data-e2e=filter-search]`
+
+/** Sets the field `selector` to `value`, as typing does. */
+async function type(selector: string, value: string): Promise<void> {
+  const field = find<HTMLInputElement>(selector)
+  field.value = value
+  await act(() => {
+    field.dispatchEvent(new window.Event(`input`, { bubbles: true }) as unknown as Event)
+  })
+}
+
+/**
+ * Opens the filter bar's menu `id` and chooses the item whose text is `text`: its label, then
+ * its count when it shows one.
+ */
+async function choose(id: string, text: string): Promise<void> {
+  await click(`[data-e2e=filter-${id}]`)
+  const item = [...document.querySelectorAll<HTMLElement>(`[role=menuitemradio]`)]
+    .find((candidate) => candidate.textContent?.trim() === text)
+  if (!item) throw new Error(`the ${id} menu has no ${text}`)
+  await act(() => {
+    item.dispatchEvent(
+      new window.MouseEvent(`click`, { bubbles: true, cancelable: true }) as unknown as Event,
+    )
+  })
+}
+
 const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
 const OTHER_ID = `0199c3a0-0000-7000-8000-000000000002`
 const NOW = new Date(`2026-10-17T12:00:00.000Z`)
@@ -182,7 +212,8 @@ function listProps(calls: unknown[][], props: Partial<AdminBillingListScreenProp
     pending: false,
     error: null,
     now: NOW,
-    onSearch: (filter) => void calls.push([`search`, filter]),
+    onSearch: (filter, replace) =>
+      void calls.push(replace ? [`search`, filter, replace] : [`search`, filter]),
     onPage: (page) => void calls.push([`page`, page]),
     onRetry: () => void calls.push([`retry`]),
     plans: TEST_PLANS,
@@ -202,16 +233,43 @@ describe(`the admin billing list`, () => {
     )
   })
 
-  it(`shows each chip's count and filters by a pressed chip on page 1`, async () => {
+  it(`shows each status's count in its menu and filters by a chosen one on page 1`, async () => {
     const calls: unknown[][] = []
     const third = { ...ADMIN_BILLING_NO_FILTER, page: 3 }
     await mount(<AdminBillingListScreen {...listProps(calls, { filter: third })} />)
-    await press(`[data-e2e=admin-billing-status]`, `Past due 3`)
-    find<HTMLInputElement>(`[data-e2e=admin-billing-search]`).value = `  ada  `
-    await submit(`[data-e2e=admin-billing-submit]`)
+    await choose(`status`, `Past due3`)
     expect(calls).toEqual([
       [`search`, { ...ADMIN_BILLING_NO_FILTER, status: `past_due`, page: 1 }],
-      [`search`, { ...ADMIN_BILLING_NO_FILTER, query: `ada`, page: 1 }],
+    ])
+  })
+
+  it(`sends the typed words once the typing pauses, on page 1, replacing the address`, async () => {
+    using time = new FakeTime()
+    const calls: unknown[][] = []
+    const third = { ...ADMIN_BILLING_NO_FILTER, status: `trial` as const, page: 3 }
+    await mount(<AdminBillingListScreen {...listProps(calls, { filter: third })} />)
+    await type(SEARCH, `  a`)
+    await type(SEARCH, `  ada  `)
+    await act(() => time.tick(ADMIN_SEARCH_DELAY - 1))
+    expect(calls).toEqual([])
+    await act(() => time.tick(1))
+    expect(calls).toEqual([[`search`, { ...third, query: `ada`, page: 1 }, true]])
+  })
+
+  it(`draws Paying, the default, as no filter, and returns to it from a chip or Clear filters`, async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBillingListScreen {...listProps(calls)} />)
+    expect(has(`[data-e2e=filter-clear]`)).toBe(false)
+    expect(has(`[aria-label='Remove the Paying filter']`)).toBe(false)
+
+    const trial = { ...ADMIN_BILLING_NO_FILTER, query: `ada`, status: `trial` as const }
+    await mount(<AdminBillingListScreen {...listProps(calls, { filter: trial })} />)
+    await click(`[aria-label='Remove the Trial filter']`)
+    await click(`[data-e2e=filter-clear]`)
+    // Clearing the filters keeps the search, as every admin list does.
+    expect(calls).toEqual([
+      [`search`, { ...trial, status: `paying`, page: 1 }],
+      [`search`, { ...trial, status: `paying`, page: 1 }],
     ])
   })
 
@@ -279,7 +337,7 @@ describe(`the admin billing list`, () => {
     const setup = find(`[data-e2e=admin-billing-setup]`)
     expect(setup.getAttribute(`href`)).toBe(ADMIN_BILLING_SETUP_URL)
     expect(setup.getAttribute(`target`)).toBe(`_blank`)
-    expect(has(`[data-e2e=admin-billing-search]`)).toBe(false)
+    expect(has(`[data-e2e=admin-billing-filters]`)).toBe(false)
     expect(has(`[data-e2e=admin-billing-figures]`)).toBe(false)
   })
 
@@ -292,7 +350,7 @@ describe(`the admin billing list`, () => {
       `H2`,
     ])
     expect(has(`[data-e2e=admin-billing-none] h2`)).toBe(true)
-    expect(has(`[data-e2e=admin-billing-search]`)).toBe(false)
+    expect(has(`[data-e2e=admin-billing-filters]`)).toBe(false)
     const pricing = find(`[data-e2e=admin-billing-pricing]`)
     expect(pricing.getAttribute(`href`)).toBe(`https://www.example.com/pricing`)
     expect(pricing.getAttribute(`target`)).toBe(`_blank`)
@@ -327,35 +385,27 @@ describe(`the admin billing list`, () => {
     expect(calls).toEqual([[`retry`]])
   })
 
-  it(`says "Searching…" only while its own search runs, not while the first list loads`, async () => {
+  it(`moves focus to the list once a new page arrives, and leaves it in the search field`, async () => {
     const calls: unknown[][] = []
+    const many = { ...page([customer()]), total: 30 }
+    const list = () => find(`[data-e2e=admin-billing-list]`)
     await mount(<AdminBillingListScreen {...listProps(calls, { list: null, pending: true })} />)
-    const button = () => find(`[data-e2e=admin-billing-submit]`).textContent?.trim()
-    expect(button()).toBe(`Search`)
+    await mount(<AdminBillingListScreen {...listProps(calls, { list: many })} />)
+    expect(document.activeElement === list()).toBe(false)
 
-    await mount(<AdminBillingListScreen {...listProps(calls)} />)
-    await submit(`[data-e2e=admin-billing-submit]`)
-    await mount(<AdminBillingListScreen {...listProps(calls, { pending: true })} />)
-    expect(button()).toBe(`Searching…`)
-  })
+    await press(`nav`, `2`)
+    expect(calls).toEqual([[`page`, 2]])
+    await mount(<AdminBillingListScreen {...listProps(calls, { list: many, pending: true })} />)
+    await mount(<AdminBillingListScreen {...listProps(calls, { list: { ...many, page: 2 } })} />)
+    expect(document.activeElement === list()).toBe(true)
 
-  it(`moves focus to the count once the list of a search or a chip arrives`, async () => {
-    const calls: unknown[][] = []
-    const count = () => find(`[data-e2e=admin-billing-count]`)
-    await mount(<AdminBillingListScreen {...listProps(calls, { list: null, pending: true })} />)
-    await mount(<AdminBillingListScreen {...listProps(calls)} />)
-    expect(document.activeElement === count()).toBe(false)
-
-    await submit(`[data-e2e=admin-billing-submit]`)
-    await mount(<AdminBillingListScreen {...listProps(calls, { pending: true })} />)
+    find<HTMLElement>(SEARCH).focus()
+    await choose(`status`, `Trial7`)
+    await mount(<AdminBillingListScreen {...listProps(calls, { list: many, pending: true })} />)
     await mount(<AdminBillingListScreen {...listProps(calls, { list: page([]) })} />)
-    expect(document.activeElement === count()).toBe(true)
-    expect(count().textContent).toBe(`0 groups`)
-
-    find<HTMLElement>(`[data-e2e=admin-billing-search]`).focus()
-    await press(`[data-e2e=admin-billing-status]`, `Trial 7`)
-    await mount(<AdminBillingListScreen {...listProps(calls, { list: page([customer()]) })} />)
-    expect(document.activeElement === count()).toBe(true)
+    expect(document.activeElement === list()).toBe(false)
+    expect(find(`[data-e2e=admin-billing-filters] [data-e2e=admin-billing-count]`).textContent)
+      .toBe(`0 groups`)
   })
 })
 

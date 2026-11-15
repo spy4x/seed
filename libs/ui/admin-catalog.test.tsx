@@ -180,7 +180,10 @@ const ROW: CatalogItemRow = {
 }
 
 /** The list screen over its own filter. */
-function ListScreen({ catalog }: { catalog: AdminCatalogResponse }) {
+/** The list screen holding its own filter, as the app's state does; `calls` gets each new one. */
+function ListScreen(
+  { catalog, calls = [] }: { catalog: AdminCatalogResponse; calls?: AdminCatalogFilter[] },
+) {
   const [filter, setFilter] = useState<AdminCatalogFilter>(ADMIN_CATALOG_NO_FILTER)
   return (
     <AdminCatalogScreen
@@ -188,9 +191,31 @@ function ListScreen({ catalog }: { catalog: AdminCatalogResponse }) {
       error={null}
       onRetry={() => {}}
       filter={filter}
-      onFilter={setFilter}
+      onFilter={(next) => {
+        calls.push(next)
+        setFilter(next)
+      }}
     />
   )
+}
+
+/** The filter bar's search field. */
+const SEARCH = "[data-e2e=filter-search]"
+
+/** The open menu's item whose label is `label`, before its count. */
+function menuItem(label: string): HTMLElement {
+  const item = [...document.querySelectorAll<HTMLElement>("[role=menuitemradio]")]
+    .find((candidate) => candidate.textContent?.trim().startsWith(label))
+  if (!item) throw new Error(`the open menu has no ${label}`)
+  return item
+}
+
+/** The addresses of the {@link ROWS} the list shows, found by their links' item ids. */
+function slugs(): string[] {
+  return [...document.querySelectorAll("[data-e2e=catalog-edit]")].map((link) => {
+    const id = link.getAttribute("href")?.split("/").at(-1)
+    return ROWS.find((row) => row.id === id)?.slug ?? `unknown ${id}`
+  })
 }
 
 /** Three items: a sold-out tee on the website, a draft hat with no category, a hidden jacket. */
@@ -249,7 +274,6 @@ describe("the catalog list", () => {
       )
 
     expect(filterCatalogItems(all, ADMIN_CATALOG_NO_FILTER).counts).toEqual({
-      all: 3,
       draft: 1,
       published: 1,
       hidden: 1,
@@ -263,24 +287,60 @@ describe("the catalog list", () => {
     expect(ids({ query: "mu-len" })).toEqual(["mu-len"])
     expect(ids({ status: "draft" })).toEqual(["mu-len"])
     expect(ids({ soldOut: true })).toEqual(["ao-thun", "jacket"])
-    // Each chip counts what it would show beside the other filters.
+    // Each status and the sold-out toggle count what they would show beside the other filters.
     expect(filterCatalogItems(all, { ...ADMIN_CATALOG_NO_FILTER, soldOut: true }).counts.draft)
       .toBe(0)
     expect(filterCatalogItems(all, { ...ADMIN_CATALOG_NO_FILTER, status: "hidden" }).counts.soldOut)
       .toBe(1)
   })
 
-  it("counts on its chips, and clears filters that match nothing", async () => {
+  it("counts each status in its menu and the sold-out sizes on their toggle", async () => {
     await mount(<ListScreen catalog={catalog({ items: ROWS })} />)
-    expect(find("[data-e2e=catalog-status]").textContent).toContain("On the website 1")
-    expect(find("[data-e2e=catalog-sold-out]").textContent).toContain("Sold-out sizes 2")
-    expect(find("[data-e2e=catalog-filters]").getAttribute("role")).toBe("search")
+    await clickOn(find("[data-e2e=filter-status]"))
+    expect(menuItem("On the website").textContent).toBe("On the website1")
+    expect(menuItem("Draft").textContent).toBe("Draft1")
+    expect(find("[aria-pressed]").textContent).toBe("Sold-out sizes 2")
+    expect(find("[data-e2e=catalog-count]").textContent).toBe("3 items")
+  })
 
-    await type(find("[data-e2e=catalog-search]"), "nothing like this")
+  it("filters as the status menu, the sold-out toggle and each keystroke change", async () => {
+    const calls: AdminCatalogFilter[] = []
+    await mount(<ListScreen catalog={catalog({ items: ROWS })} calls={calls} />)
+    await clickOn(find("[data-e2e=filter-status]"))
+    await clickOn(menuItem("Draft"))
+    expect(calls.at(-1)).toEqual({ ...ADMIN_CATALOG_NO_FILTER, status: "draft" })
+    expect(slugs()).toEqual(["mu-len"])
+
+    await clickOn(find("[aria-pressed]"))
+    expect(calls.at(-1)).toEqual({ ...ADMIN_CATALOG_NO_FILTER, status: "draft", soldOut: true })
+    expect(slugs()).toEqual([])
+
+    await clickOn(find("[aria-label='Remove the Draft filter']"))
+    await type(find(SEARCH), "khoac")
+    // No pause: the catalog is filtered in the browser, so every keystroke filters at once.
+    expect(calls.at(-1)).toEqual({ ...ADMIN_CATALOG_NO_FILTER, soldOut: true, query: "khoac" })
+    expect(slugs()).toEqual(["jacket"])
+  })
+
+  it("clears the filters but keeps the search, and offers Clear only while one is set", async () => {
+    const calls: AdminCatalogFilter[] = []
+    await mount(<ListScreen catalog={catalog({ items: ROWS })} calls={calls} />)
+    expect(document.querySelector("[data-e2e=filter-clear]")).toBeNull()
+    await type(find(SEARCH), "ao")
+    await clickOn(find("[aria-pressed]"))
+    await clickOn(find("[data-e2e=filter-clear]"))
+
+    expect(calls.at(-1)).toEqual({ ...ADMIN_CATALOG_NO_FILTER, query: "ao" })
+    expect(slugs()).toEqual(["ao-thun", "jacket"])
+  })
+
+  it("offers to clear a search and filters that match nothing", async () => {
+    await mount(<ListScreen catalog={catalog({ items: ROWS })} />)
+    await type(find(SEARCH), "nothing like this")
     expect(find("[data-e2e=catalog-count]").textContent).toBe("0 items")
     await clickOn(find("[data-e2e=catalog-clear]"))
-    expect(document.querySelectorAll("[data-e2e=catalog-row]")).toHaveLength(3)
-    expect(find<HTMLInputElement>("[data-e2e=catalog-search]").value).toBe("")
+    expect(slugs()).toHaveLength(3)
+    expect(find<HTMLInputElement>(SEARCH).value).toBe("")
   })
 
   it("says the catalog's currency and languages in words", () => {

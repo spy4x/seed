@@ -8,11 +8,11 @@ import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { FilterBar } from "@spy4x/preact-ui/filter-bar"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
-import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   ADMIN_API_TOKEN_STATES,
   type AdminApiToken,
@@ -32,7 +32,7 @@ import { useAdminText } from "./i18n.ts"
 /** The page's address in the admin app. */
 export const ADMIN_API_TOKENS_PATH = "/api-tokens"
 
-/** What each state is called, on its chip and its badge. */
+/** What each state is called, in the state menu and on its badge. */
 const STATE_LABELS: Record<AdminApiTokenState, string> = {
   live: `AdminApiTokens.live`,
   expired: `AdminApiTokens.expired`,
@@ -63,7 +63,7 @@ export interface AdminTokensConfirmState {
 }
 
 export interface AdminApiTokensScreenProps {
-  /** What the address asked for; the chips start from it. */
+  /** What the address asked for; the state menu starts from it. */
   filter: AdminApiTokenFilter
   /** The page of tokens, or `null` while it loads. */
   list: AdminApiTokenListResponse | null
@@ -84,15 +84,15 @@ export interface AdminApiTokensScreenProps {
 
 /**
  * The API tokens page: every token of everyone, newest first, with its owner, group and
- * access, its state and dates. Chips filter by state and show how many tokens each holds. A live
- * token can be revoked after a confirm; the API writes the audit row on its owner.
+ * access, its state and dates. A state menu filters them and shows how many tokens each holds.
+ * A live token can be revoked after a confirm; the API writes the audit row on its owner.
  */
 export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Element {
   const { filter, list, pending, error, onFilter, onPage } = props
-  const heading = useRef<HTMLHeadingElement>(null)
+  const heading = useRef<HTMLDivElement>(null)
   const t = useAdminText()
 
-  // After a page change the list is new: the reader starts again at its heading.
+  // After a page change the list is new: the reader starts again at the list.
   const page = list?.page
   const shown = useRef<number | undefined>(undefined)
   useEffect(() => {
@@ -103,16 +103,6 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
 
   useFocusAfterConfirm(props.confirm, heading)
 
-  const chips = ADMIN_API_TOKEN_STATES.map((state) => ({
-    value: state,
-    label: list
-      ? t.t(`AdminApiTokens.stateCount`, {
-        state: t.t(STATE_LABELS[state]),
-        count: list.counts[state],
-      })
-      : t.t(STATE_LABELS[state]),
-  }))
-
   return (
     <Stack>
       <PageHeader
@@ -120,26 +110,34 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
         subtitle={t.t(`AdminApiTokens.subtitle`)}
         titleDataE2E="admin-api-tokens-title"
       />
-      <div
-        class="flex flex-wrap items-center gap-2 rounded-xl border border-subtle bg-surface p-4"
-        data-e2e="admin-api-tokens-state"
-      >
-        <span class="text-sm text-muted" aria-hidden="true">{t.t(`AdminApiTokens.state`)}</span>
-        <ToggleChips
-          mode="single"
-          label={t.t(`AdminApiTokens.state`)}
-          options={chips}
-          value={filter.state}
-          onChange={(value) =>
-            onFilter({ state: (value as AdminApiTokenState | null) ?? null, page: 1 })}
+      <div data-e2e="admin-api-tokens-filters">
+        <FilterBar
+          filters={[
+            {
+              id: `state`,
+              label: t.t(`AdminApiTokens.state`),
+              options: ADMIN_API_TOKEN_STATES.map((state) => ({
+                value: state,
+                label: t.t(STATE_LABELS[state]),
+                ...(list ? { count: list.counts[state] } : {}),
+              })),
+              value: filter.state,
+              onChange: (value) =>
+                onFilter({ state: (value as AdminApiTokenState | null) ?? null, page: 1 }),
+            },
+          ]}
+          count={list
+            ? (
+              <span data-e2e="admin-api-tokens-count">
+                {t.t(`AdminApiTokens.count`, { count: list.total })}
+              </span>
+            )
+            : undefined}
         />
       </div>
 
       <ErrorState message={error} />
 
-      <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-api-tokens-count">
-        {list ? t.t(`AdminApiTokens.count`, { count: list.total }) : t.t(`AdminApiTokens.loading`)}
-      </h2>
       {list === null
         ? !error && (
           <div role="status" aria-label={t.t(`AdminApiTokens.loading`)}>
@@ -147,7 +145,14 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
           </div>
         )
         : (
-          <div data-e2e="admin-api-tokens-list" aria-busy={pending}>
+          <div
+            ref={heading}
+            tabIndex={-1}
+            aria-label={t.t(`AdminApiTokens.title`)}
+            aria-busy={pending}
+            class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+            data-e2e="admin-api-tokens-list"
+          >
             <DataTable
               mode="server"
               class={tokenTableClass(true)}

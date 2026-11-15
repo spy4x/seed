@@ -24,6 +24,9 @@ import { useAdminText, useAppText } from "./i18n.ts"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { PRODUCT_NAME } from "./brand.ts"
 
+/** Milliseconds a list the server searches waits after the last keystroke before it asks. */
+export const ADMIN_SEARCH_DELAY = 300
+
 /**
  * The pages of the admin app (`apps/admin`) that its screens link to. It runs on a host of
  * its own. Its routes and its links name these, never a string of their own; a module's own page

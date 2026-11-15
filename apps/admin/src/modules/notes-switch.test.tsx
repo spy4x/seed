@@ -24,10 +24,19 @@ import { dashboardModule } from "./dashboard/module.tsx"
 import { groupsModule } from "./groups/module.tsx"
 
 const window = new Window({ url: `http://admin.localhost/` })
-const own = { document: globalThis.document, window: globalThis.window }
+const own = {
+  document: globalThis.document,
+  window: globalThis.window,
+  getComputedStyle: globalThis.getComputedStyle,
+}
 
 beforeAll(() => {
-  Object.assign(globalThis, { document: window.document, window })
+  Object.assign(globalThis, {
+    document: window.document,
+    window,
+    // The group list's FilterBar measures its chip row.
+    getComputedStyle: window.getComputedStyle.bind(window),
+  })
 })
 
 afterAll(async () => {

@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
+import { FilterBar } from "@spy4x/preact-ui/filter-bar"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { Input, Select } from "@spy4x/preact-ui/input"
@@ -249,26 +250,15 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
       />
       <Stack>
         {counts && (counts.archived > 0 || archived) && (
-          <div
-            class="-mx-4 flex max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:px-0"
-            data-e2e="blog-channels-filter"
-          >
-            <ToggleChips
-              mode="single"
-              label={t.t(`AdminBlogChannels.show`)}
-              class="flex-nowrap"
-              options={[
-                {
-                  value: `active`,
-                  label: t.t(`AdminBlogChannels.chipActive`, { count: counts.active }),
-                },
-                {
-                  value: `archived`,
-                  label: t.t(`AdminBlogChannels.chipArchived`, { count: counts.archived }),
-                },
-              ]}
-              value={archived ? `archived` : `active`}
-              onChange={(value) => props.onShowArchived(value === `archived`)}
+          <div data-e2e="blog-channels-filters">
+            <FilterBar
+              togglesLabel={t.t(`AdminBlogChannels.show`)}
+              toggles={[{
+                id: `archived`,
+                label: t.t(`AdminBlogChannels.chipArchived`, { count: counts.archived }),
+                pressed: archived,
+                onChange: props.onShowArchived,
+              }]}
             />
           </div>
         )}

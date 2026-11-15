@@ -1,10 +1,11 @@
 /**
- * The blog's admin pages, driven in a browser DOM (happy-dom): what the list's chips and
- * search send, the editor's errors and where focus goes, the Preview tab, and what each dialog
+ * The blog's admin pages, driven in a browser DOM (happy-dom): what the list's filter bar
+ * sends, the editor's errors and where focus goes, the Preview tab, and what each dialog
  * sends, the newsletter list above all.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
+import { FakeTime } from "@std/testing/time"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
@@ -24,6 +25,7 @@ import {
   AdminBlogListScreen,
   type AdminBlogListScreenProps,
 } from "./admin-blog-list.tsx"
+import { ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
 import {
   AdminBlogEditorScreen,
   type AdminBlogEditorScreenProps,
@@ -169,31 +171,123 @@ function listProps(
     list: listed,
     pending: false,
     error: null,
-    onFilter: (filter) => calls.push(["filter", filter]),
+    onFilter: (filter, replace) =>
+      calls.push(replace ? ["filter", filter, replace] : ["filter", filter]),
     onRetry: () => calls.push(["retry"]),
     ...overrides,
   }
 }
 
+/** The list's filter bar search field. */
+const BLOG_SEARCH = "[data-e2e=admin-blog-filters] [data-e2e=filter-search]"
+
+/** The items of the filter bar's open menu, each as its text. */
+function menuItems(): string[] {
+  return [...document.querySelectorAll("[role=menuitemradio]")]
+    .map((item) => item.textContent?.trim() ?? "")
+}
+
+/** Opens the filter bar's menu `id` and chooses the item whose text starts with `label`. */
+async function chooseFrom(id: string, label: string): Promise<void> {
+  await clickOn(find(`[data-e2e=filter-${id}]`))
+  const item = [...document.querySelectorAll("[role=menuitemradio]")]
+    .find((candidate) => candidate.textContent?.trim().startsWith(label))
+  if (!item) throw new Error(`the ${id} menu has no ${label}`)
+  await clickOn(item)
+}
+
 describe("the blog list", () => {
-  it("counts each status on its chip and filters by the chip pressed", async () => {
+  it("counts each status in its menu and filters by the status chosen", async () => {
     const calls: unknown[][] = []
     await mount(<AdminBlogListScreen {...listProps(calls)} />)
-    const chips = [...document.querySelectorAll("[data-e2e=admin-blog-status] button")]
-      .map((chip) => chip.textContent?.trim())
-    expect(chips).toEqual(["All 3", "Drafts 1", "Scheduled 1", "Published 1"])
-    await clickOn(button("Scheduled"))
+    await clickOn(find("[data-e2e=filter-status]"))
+    expect(menuItems()).toEqual(["Drafts1", "Scheduled1", "Published1"])
+    await chooseFrom("status", "Scheduled")
     expect(calls).toEqual([["filter", { status: "scheduled", query: "" }]])
+    expect(find("[data-e2e=admin-blog-filters] [data-e2e=admin-blog-count]").textContent)
+      .toBe("1 post")
   })
 
-  it("searches by title or slug, and links each title to its editor", async () => {
+  it("searches by title or slug once the typing pauses, and links each title to its editor", async () => {
     const calls: unknown[][] = []
-    await mount(<AdminBlogListScreen {...listProps(calls)} />)
-    find<HTMLInputElement>("[data-e2e=admin-blog-search]").value = "  hello "
-    await submit("[data-e2e=admin-blog-search]")
-    expect(calls).toEqual([["filter", { status: null, query: "hello" }]])
+    using time = new FakeTime()
+    await mount(
+      <AdminBlogListScreen {...listProps(calls, { filter: { status: "draft", query: "" } })} />,
+    )
+    await type(BLOG_SEARCH, "  hel")
+    await type(BLOG_SEARCH, "  hello ")
+    await act(() => time.tick(ADMIN_SEARCH_DELAY - 1))
+    expect(calls).toEqual([])
+    await act(() => time.tick(1))
+    // Typing replaces the address instead of adding a history entry per pause.
+    expect(calls).toEqual([["filter", { status: "draft", query: "hello" }, true]])
     expect(find("[data-e2e=admin-blog-row]").getAttribute("href"))
       .toBe("/blog/0195f0b4-3c1e-7a00-8000-000000000001")
+  })
+
+  it("toggles the posts that need sharing with its count, which drops the status", async () => {
+    const calls: unknown[][] = []
+    const sharing = { activeChannels: 1, needsSharing: 2, toDo: {} }
+    await mount(
+      <AdminBlogListScreen
+        {...listProps(calls, {
+          filter: { status: "published", query: "x" },
+          list: { ...listed, sharing },
+        })}
+      />,
+    )
+    const toggle = button("Needs sharing 2")
+    expect(toggle.getAttribute("aria-pressed")).toBe("false")
+    await clickOn(toggle)
+    expect(calls).toEqual([["filter", { status: null, query: "x", sharing: true }]])
+
+    calls.length = 0
+    await mount(
+      <AdminBlogListScreen
+        {...listProps(calls, {
+          filter: { status: null, query: "x", sharing: true },
+          list: { ...listed, sharing },
+        })}
+      />,
+    )
+    await chooseFrom("status", "Drafts")
+    expect(calls).toEqual([["filter", { status: "draft", query: "x", sharing: undefined }]])
+  })
+
+  it("offers no sharing toggle before a channel exists", async () => {
+    await mount(
+      <AdminBlogListScreen
+        {...listProps([], {
+          list: { ...listed, sharing: { activeChannels: 0, needsSharing: 0, toDo: {} } },
+        })}
+      />,
+    )
+    expect(document.querySelectorAll("[data-e2e=admin-blog-filters] [aria-pressed]").length)
+      .toBe(0)
+  })
+
+  it("clears the status and sharing filters but keeps the search", async () => {
+    const calls: unknown[][] = []
+    await mount(
+      <AdminBlogListScreen {...listProps(calls, { filter: { status: "draft", query: "x" } })} />,
+    )
+    await clickOn(find("[data-e2e=filter-clear]"))
+    expect(calls).toEqual([["filter", { status: null, query: "x" }]])
+  })
+
+  it("moves focus to the list when the empty state's Clear brings back every post", async () => {
+    const calls: unknown[][] = []
+    const nothing = { posts: [], counts: { all: 0, draft: 0, scheduled: 0, published: 0 } }
+    const filter = { status: null, query: "zz" }
+    await mount(<AdminBlogListScreen {...listProps(calls, { filter, list: nothing })} />)
+    await clickOn(find("[data-e2e=admin-blog-clear]"))
+    expect(calls).toEqual([["filter", ADMIN_BLOG_NO_FILTER]])
+    await mount(<AdminBlogListScreen {...listProps(calls, { pending: true })} />)
+    await mount(<AdminBlogListScreen {...listProps(calls)} />)
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-blog-list")
+    expect(find("[data-e2e=admin-blog-list]").className.split(" ")).toEqual(
+      expect.arrayContaining(["focus-visible:ring-2", "focus-visible:ring-focus"]),
+    )
   })
 
   it("says no post exists yet only while nothing is searched", async () => {

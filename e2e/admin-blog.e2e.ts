@@ -137,7 +137,7 @@ test("an operator writes, previews, schedules, publishes, moves and deletes a po
 
     // The list shows it as published; the search finds it by its slug.
     await ops.locator(`a[href="/blog"]`).first().click()
-    await ops.locator("[data-e2e=admin-blog-search]").fill(slug)
+    await ops.locator("[data-e2e=admin-blog-filters] [data-e2e=filter-search]").fill(slug)
     await ops.keyboard.press("Enter")
     const rows = ops.locator("[data-e2e=admin-blog-list] tbody tr")
     await expect(rows).toHaveCount(1)
@@ -277,7 +277,7 @@ test("an operator adds a sharing channel, pastes a live post's link on it, and t
     // The list counts the post's channels to do and links to its checklist.
     const list = async () => {
       await ops.goto(`${adminBase}/blog`)
-      await ops.locator("[data-e2e=admin-blog-search]").fill(slug)
+      await ops.locator("[data-e2e=admin-blog-filters] [data-e2e=filter-search]").fill(slug)
       await ops.keyboard.press("Enter")
       const rows = ops.locator("[data-e2e=admin-blog-list] tbody tr")
       await expect(rows).toHaveCount(1)

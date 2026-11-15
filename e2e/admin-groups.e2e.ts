@@ -128,13 +128,12 @@ test.describe(`the admin app's groups`, () => {
       await ops.locator(`[data-e2e=auth-form-submit]`).click()
       await expect(ops.locator(`[data-e2e=admin-dashboard-title]`)).toBeVisible()
 
-      // The sidebar opens the groups; the search finds the group by its name.
+      // The sidebar opens the groups; the search finds the group by its name as it is typed.
       await ops.getByRole(`navigation`, { name: `Admin sections` })
         .getByRole(`link`, { name: `Groups` }).click()
       await expect(ops).toHaveURL(`${adminBase}/groups`)
       await expect(ops.locator(`[data-e2e=admin-groups-title]`)).toBeVisible()
-      await ops.locator(`[data-e2e=admin-groups-search]`).fill(groupName)
-      await ops.locator(`[data-e2e=admin-groups-submit]`).click()
+      await ops.locator(`[data-e2e=admin-groups-filters] [data-e2e=filter-search]`).fill(groupName)
       await expect(ops.locator(`[data-e2e=admin-groups-count]`)).toHaveText(`1 group`)
       const row = ops.locator(`[data-e2e=admin-groups-list] tbody tr`)
       await expect(row).toHaveCount(1)

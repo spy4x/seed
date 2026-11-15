@@ -1,5 +1,5 @@
 import type { JSX } from "preact"
-import { useEffect, useRef, useState } from "preact/hooks"
+import { useEffect, useRef } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { Kpi, KpiGrid } from "@spy4x/preact-charts/kpi"
 import { IconClock, IconCreditCard, IconExternalLink } from "@spy4x/preact-icons"
@@ -9,15 +9,12 @@ import { Card } from "@spy4x/preact-ui/card"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Field } from "@spy4x/preact-ui/field"
-import { Input } from "@spy4x/preact-ui/input"
+import { FilterBar } from "@spy4x/preact-ui/filter-bar"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
-import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
-  ADMIN_BILLING_SEARCH_MAX_LENGTH,
   type AdminBillingCustomer,
   type AdminBillingFigures,
   type AdminBillingFilter,
@@ -39,7 +36,8 @@ import {
   seatsOf,
 } from "@domain/billing"
 import { adminGroupPersonName } from "./admin-groups-list.tsx"
-import { type Navigate, ScreenForm } from "./progressive.tsx"
+import type { Navigate } from "./progressive.tsx"
+import { ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
 import { useFormat, When } from "@spy4x/preact-ui/format"
 import type { Formatters } from "@spy4x/time/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
@@ -70,7 +68,7 @@ export const BILLING_AUDIT_LABELS: Record<BillingAuditEvent, string> = {
   [BILLING_AUDIT_EVENTS.cancellationUndone]: `AdminAuditEvent.cancellationUndone`,
 }
 
-const STATUS_CHIPS: { value: AdminBillingStatusFilter; label: string }[] = [
+const STATUS_OPTIONS: { value: AdminBillingStatusFilter; label: string }[] = [
   { value: `paying`, label: `AdminBilling.paying` },
   { value: `trial`, label: `AdminBilling.trial` },
   { value: `past_due`, label: `AdminBilling.pastDue` },
@@ -204,7 +202,7 @@ function revenueText(revenue: readonly Money[]): string {
 }
 
 export interface AdminBillingListScreenProps {
-  /** What the address asked for; the search form and the chips start from it. */
+  /** What the address asked for; the filter bar starts from it. */
   filter: AdminBillingFilter
   /** The four figures, or `null` while they load or when they failed. */
   figures: AdminBillingFigures | null
@@ -217,7 +215,11 @@ export interface AdminBillingListScreenProps {
   error: string | null
   /** The time the dates are read against: past due or on Free. */
   now: Date
-  onSearch: (filter: AdminBillingFilter) => void
+  /**
+   * The operator searched or changed a filter: the app reads page 1 of that. `replace` is set
+   * while they type, so the address changes without a history entry per pause.
+   */
+  onSearch: (filter: AdminBillingFilter, replace?: boolean) => void
   onPage: (page: number) => void
   /** Reads the figures and the list again after a failure. */
   onRetry: () => void
@@ -228,30 +230,23 @@ export interface AdminBillingListScreenProps {
 
 /**
  * The billing page: four figures from the stored subscriptions, then every customer with
- * its status word, key date and monthly amount, searched by group or owner and filtered by status
- * chips that show their counts. Each name opens the customer's page, where the actions are.
+ * its status word, key date and monthly amount, with a `FilterBar` that searches by group or owner
+ * as you type and a status menu that shows each status's count. Each name opens the customer's page, where the actions are.
  */
 export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.Element {
   const { filter, list, pending, error, onSearch, onPage, navigate } = props
   const format = useFormat()
   const t = useAdminText()
-  const heading = useRef<HTMLHeadingElement>(null)
+  const heading = useRef<HTMLDivElement>(null)
 
-  // After a search, a chip or a page change the list is new: once it arrives, the reader starts
-  // again at its count. The first list is no change, so focus stays where it was.
+  // When the person turns the page, the reader starts again at the list once that page arrives.
+  // A search or a filter also lands on page 1, but focus stays in the field or menu they used.
   const asked = useRef(false)
-  // Whether the search form sent the pending request, so only a search says "Searching…".
-  const [searching, setSearching] = useState(false)
   useEffect(() => {
     if (pending) return
-    setSearching(false)
     if (asked.current && list !== null) heading.current?.focus()
     asked.current = false
   }, [pending, list])
-  const search = (next: AdminBillingFilter) => {
-    asked.current = true
-    onSearch(next)
-  }
   const turnPage = (next: number) => {
     asked.current = true
     onPage(next)
@@ -298,7 +293,6 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
     )
   }
 
-  const filtered = filter.query !== `` || filter.status !== `paying`
   // No customer at all, whatever the filter: nothing to search or filter yet.
   const none = list !== null && list.counts.all === 0 && filter.query === ``
 
@@ -326,78 +320,44 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
         )
         : (
           <>
-            <ScreenForm
-              pending={pending}
-              onSubmit={(data) => {
-                setSearching(true)
-                search({ ...filter, query: String(data.get(`q`) ?? ``).trim(), page: 1 })
-              }}
-            >
-              {/* Keyed by the query, so going back in history shows the search that page had. */}
-              <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
-                <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-                  <Field id="admin-billing-q" label={t.t(`AdminBilling.search`)}>
-                    <Input
-                      name="q"
-                      type="search"
-                      data-e2e="admin-billing-search"
-                      defaultValue={filter.query}
-                      maxLength={ADMIN_BILLING_SEARCH_MAX_LENGTH}
-                      autocomplete="off"
-                    />
-                  </Field>
-                </div>
-                <Button
-                  type="submit"
-                  data-e2e="admin-billing-submit"
-                  busy={pending && searching}
-                  busyLabel={t.t(`AdminBilling.searching`)}
-                >
-                  {t.t(`AdminBilling.submit`)}
-                </Button>
-              </div>
-            </ScreenForm>
-            <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-              {/* One row that scrolls sideways on a phone rather than wrapping into three. */}
-              <div
-                class="-mx-4 flex max-w-[calc(100%+2rem)] items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0"
-                data-e2e="admin-billing-status"
-              >
-                <span class="text-sm text-muted" aria-hidden="true">
-                  {t.t(`AdminBilling.status`)}
-                </span>
-                <ToggleChips
-                  mode="single"
-                  label={t.t(`AdminBilling.status`)}
-                  class="flex-nowrap sm:flex-wrap"
-                  options={STATUS_CHIPS.map((chip) => ({
-                    value: chip.value,
-                    label: list?.enabled
-                      ? t.t(`AdminBilling.chipCount`, {
-                        label: t.t(chip.label),
-                        count: format.number(list.counts[chip.value]),
-                      })
-                      : t.t(chip.label),
-                  }))}
-                  value={filter.status}
-                  onChange={(value) =>
-                    search({
-                      ...filter,
-                      status: (value ?? `all`) as AdminBillingStatusFilter,
-                      page: 1,
-                    })}
-                />
-              </div>
-              {filtered && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  data-e2e="admin-billing-clear"
-                  onClick={() => search({ query: ``, status: `paying`, page: 1 })}
-                >
-                  {t.t(`AdminBilling.clear`)}
-                </Button>
-              )}
+            <div data-e2e="admin-billing-filters">
+              <FilterBar
+                search={{
+                  value: filter.query,
+                  label: t.t(`AdminBilling.search`),
+                  delay: ADMIN_SEARCH_DELAY,
+                  onChange: (query) => onSearch({ ...filter, query: query.trim(), page: 1 }, true),
+                }}
+                filters={[
+                  {
+                    id: `status`,
+                    label: t.t(`AdminBilling.status`),
+                    options: STATUS_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: t.t(option.label),
+                      ...(list?.enabled ? { count: list.counts[option.value] } : {}),
+                    })),
+                    // Paying is the default, drawn as no filter: no chip, and "Clear filters" and a
+                    // chip's remove button come back to it.
+                    value: filter.status === `paying` ? null : filter.status,
+                    onChange: (value) =>
+                      onSearch({
+                        ...filter,
+                        status: (value ?? `paying`) as AdminBillingStatusFilter,
+                        page: 1,
+                      }),
+                  },
+                ]}
+                onClear={() => onSearch({ ...filter, status: `paying`, page: 1 })}
+                clearLabel={t.t(`AdminBilling.clear`)}
+                count={list?.enabled
+                  ? (
+                    <span data-e2e="admin-billing-count">
+                      {t.t(`AdminBilling.count`, { count: list.total })}
+                    </span>
+                  )
+                  : undefined}
+              />
             </div>
 
             {error && (
@@ -410,18 +370,6 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
               </div>
             )}
 
-            {(list !== null || !error) && (
-              <h2
-                ref={heading}
-                tabIndex={-1}
-                class="text-sm text-muted"
-                data-e2e="admin-billing-count"
-              >
-                {list?.enabled
-                  ? t.t(`AdminBilling.count`, { count: list.total })
-                  : t.t(`AdminBilling.loading`)}
-              </h2>
-            )}
             {list === null
               ? !error && (
                 <div role="status" aria-label={t.t(`AdminBilling.loading`)}>
@@ -429,7 +377,14 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                 </div>
               )
               : list.enabled && (
-                <div data-e2e="admin-billing-list">
+                <div
+                  ref={heading}
+                  tabIndex={-1}
+                  aria-label={t.t(`AdminBilling.customers`)}
+                  aria-busy={pending}
+                  class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+                  data-e2e="admin-billing-list"
+                >
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}
@@ -455,7 +410,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                         action={
                           <Button
                             variant="ghost"
-                            onClick={() => search({ query: ``, status: `paying`, page: 1 })}
+                            onClick={() => onSearch({ query: ``, status: `paying`, page: 1 })}
                           >
                             {t.t(`AdminBilling.clear`)}
                           </Button>

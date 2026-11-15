@@ -2,21 +2,17 @@ import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
-import { Button } from "@spy4x/preact-ui/button"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Field } from "@spy4x/preact-ui/field"
-import { Input } from "@spy4x/preact-ui/input"
+import { FilterBar } from "@spy4x/preact-ui/filter-bar"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
-import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import { FREE_PLAN_ID } from "@domain/billing"
 import {
   ADMIN_GROUP_DEFAULT_SORT,
-  ADMIN_GROUP_SEARCH_MAX_LENGTH,
   type AdminGroupFilter,
   type AdminGroupListResponse,
   type AdminGroupPerson,
@@ -27,7 +23,8 @@ import {
 } from "@domain/groups"
 import { GroupMark } from "./group-appearance.tsx"
 import { nextSort } from "./admin-users-screen.tsx"
-import { type Navigate, ScreenForm } from "./progressive.tsx"
+import type { Navigate } from "./progressive.tsx"
+import { ADMIN_SEARCH_DELAY } from "./admin-frame.tsx"
 import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
 import type { Formatters } from "@spy4x/time/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
@@ -40,7 +37,7 @@ export const ADMIN_GROUP_PATHS = {
   group: (id: string) => `/groups/${encodeURIComponent(id)}`,
 } as const
 
-const STATUS_CHIPS: { value: Exclude<AdminGroupStatusFilter, "any">; label: string }[] = [
+const STATUS_OPTIONS: { value: Exclude<AdminGroupStatusFilter, "any">; label: string }[] = [
   { value: `active`, label: `AdminGroups.active` },
   { value: `deleted`, label: `AdminGroups.inTrash` },
 ]
@@ -121,15 +118,18 @@ interface GroupTableRow {
 }
 
 export interface AdminGroupsListScreenProps {
-  /** What the address asked for; the search form and the chips start from it. */
+  /** What the address asked for; the filter bar starts from it. */
   filter: AdminGroupFilter
   /** The page of groups, or `null` while it loads. */
   list: AdminGroupListResponse | null
   pending: boolean
   /** Why the list could not be read, or `null`. */
   error: string | null
-  /** The operator searched, sorted or changed a filter: the app reads page 1 of that. */
-  onSearch: (filter: AdminGroupFilter) => void
+  /**
+   * The operator searched, sorted or changed a filter: the app reads page 1 of that. `replace` is
+   * set while they type, so the address changes without a history entry per pause.
+   */
+  onSearch: (filter: AdminGroupFilter, replace?: boolean) => void
   onPage: (page: number) => void
   /** Whether the notes are on (`NOTES`). Off, the Notes column is left out. Left out: on. */
   notes?: boolean
@@ -137,24 +137,18 @@ export interface AdminGroupsListScreenProps {
 }
 
 /**
- * The groups page: every group, in a table the server sorts and pages, with a search by
- * the group's name or its owner and chips for active groups and groups in the trash. Each name
- * opens the group. Counts only: nothing written inside a group shows here.
+ * The groups page: every group, in a table the server sorts and pages, with a `FilterBar` that
+ * searches by the group's name or its owner as you type and filters active groups or groups in
+ * the trash. Each name opens the group. Counts only: nothing written inside a group shows here.
  */
 export function AdminGroupsListScreen(
   { filter, list, pending, error, onSearch, onPage, notes, navigate }: AdminGroupsListScreenProps,
 ): JSX.Element {
-  const heading = useRef<HTMLHeadingElement>(null)
-  // The search field is not rebuilt when the query changes, since that would drop focus out of it
-  // after every search; going back in history sets its text instead.
-  const query = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    if (query.current && query.current.value !== filter.query) query.current.value = filter.query
-  }, [filter.query])
+  const heading = useRef<HTMLDivElement>(null)
   const t = useAdminText()
   const format = useFormat()
 
-  // When the person turns the page, the reader starts again at the list's heading once that page
+  // When the person turns the page, the reader starts again at the list once that page
   // arrives. A search or a filter also lands on page 1, but focus stays in the field they used.
   const page = list?.page
   const turned = useRef<number | null>(null)
@@ -184,78 +178,41 @@ export function AdminGroupsListScreen(
         subtitle={t.t(`AdminGroups.subtitle`)}
         titleDataE2E="admin-groups-title"
       />
-      <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
-        {
-          /* No `pending` here: a pending form disables its fieldset, which drops focus out of the
-            search field. The busy submit button already refuses a second search. */
-        }
-        <ScreenForm
-          onSubmit={(data) =>
-            onSearch({ ...filter, query: String(data.get(`q`) ?? ``).trim(), page: 1 })}
-        >
-          <div class="flex flex-wrap items-end gap-3" role="search">
-            <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-              <Field id="admin-groups-q" label={t.t(`AdminGroups.search`)}>
-                <Input
-                  ref={query}
-                  name="q"
-                  type="search"
-                  data-e2e="admin-groups-search"
-                  defaultValue={filter.query}
-                  maxLength={ADMIN_GROUP_SEARCH_MAX_LENGTH}
-                  autocomplete="off"
-                />
-              </Field>
-            </div>
-            <Button
-              type="submit"
-              data-e2e="admin-groups-submit"
-              busy={pending}
-              busyLabel={t.t(`AdminGroups.searching`)}
-            >
-              {t.t(`AdminGroups.submit`)}
-            </Button>
-          </div>
-        </ScreenForm>
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <div class="flex flex-wrap items-center gap-2" data-e2e="admin-groups-status">
-            <span class="text-sm text-muted" aria-hidden="true">{t.t(`AdminGroups.status`)}</span>
-            <ToggleChips
-              mode="single"
-              label={t.t(`AdminGroups.status`)}
-              options={STATUS_CHIPS.map((chip) => ({ ...chip, label: t.t(chip.label) }))}
-              value={filter.status === `any` ? null : filter.status}
-              onChange={(value) =>
+      <div data-e2e="admin-groups-filters">
+        <FilterBar
+          search={{
+            value: filter.query,
+            label: t.t(`AdminGroups.search`),
+            delay: ADMIN_SEARCH_DELAY,
+            onChange: (query) => onSearch({ ...filter, query: query.trim(), page: 1 }, true),
+          }}
+          filters={[
+            {
+              id: `status`,
+              label: t.t(`AdminGroups.status`),
+              options: STATUS_OPTIONS.map((option) => ({ ...option, label: t.t(option.label) })),
+              value: filter.status === `any` ? null : filter.status,
+              onChange: (value) =>
                 onSearch({
                   ...filter,
                   status: (value ?? `any`) as AdminGroupStatusFilter,
                   page: 1,
-                })}
-            />
-          </div>
-          {filtered && (
-            <Button
-              variant="ghost"
-              size="sm"
-              data-e2e="admin-groups-clear"
-              onClick={() => onSearch({ ...filter, query: ``, status: `any`, page: 1 })}
-            >
-              {t.t(`AdminGroups.clear`)}
-            </Button>
-          )}
-        </div>
+                }),
+            },
+          ]}
+          clearLabel={t.t(`AdminGroups.clear`)}
+          count={list
+            ? (
+              <span data-e2e="admin-groups-count">
+                {t.t(`AdminGroups.count`, { count: list.total })}
+              </span>
+            )
+            : undefined}
+        />
       </div>
 
       <ErrorState message={error} />
 
-      <h2
-        ref={heading}
-        tabIndex={-1}
-        class="rounded-sm text-sm text-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
-        data-e2e="admin-groups-count"
-      >
-        {list ? t.t(`AdminGroups.count`, { count: list.total }) : t.t(`AdminGroups.loading`)}
-      </h2>
       {list === null
         ? !error && (
           <div role="status" aria-label={t.t(`AdminGroups.loading`)}>
@@ -263,7 +220,14 @@ export function AdminGroupsListScreen(
           </div>
         )
         : (
-          <div data-e2e="admin-groups-list">
+          <div
+            ref={heading}
+            tabIndex={-1}
+            aria-label={t.t(`AdminGroups.title`)}
+            aria-busy={pending}
+            class="rounded-xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+            data-e2e="admin-groups-list"
+          >
             <DataTable
               mode="server"
               class={`${TABLE_CLASS} ${NARROW_HIDDEN[notes === false ? `noNotes` : `notes`]}`}
