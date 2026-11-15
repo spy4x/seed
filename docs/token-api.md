@@ -138,8 +138,10 @@ first answer back.
 
 ## Too many requests
 
-Each token can make up to 100 requests a minute, and each address up to 100 refused requests a
-minute. These are the defaults; the operator of the service may set others.
+Each token can make up to 100 requests a minute, and each address up to 100 requests a minute
+without a live token (none, or a malformed, revoked or expired one). A live token counts only
+against its own limit, so others sending bad tokens from your address never block it. These are
+the defaults; the operator of the service may set others.
 
 Past a limit the answer is `429`, in the same body as every other error:
 
