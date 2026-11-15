@@ -1,0 +1,45 @@
+# A pull request whose title starts with `[WIP]` runs only `check` and `secrets` (#1058); ci.yml
+# skips it and runs in full once the title loses `[WIP]` (the top of ci.yml says how). Woodpecker
+# sets `CI_COMMIT_MESSAGE` to the pull request's title on a pull request. This workflow reports
+# `ci/woodpecker/pr/wip`, which branch protection does not require, so a `[WIP]` head cannot merge.
+#
+# YAML anchors do not cross files, so both steps are copies of ci.yml's: ci.yml is the source, and
+# tests/ci-browser-tests.test.ts fails when the two differ.
+
+when:
+  - event: pull_request
+    evaluate: 'CI_COMMIT_MESSAGE startsWith "[WIP]"'
+
+steps:
+  check:
+    image: denoland/deno:2.9.7
+    commands:
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+      - deno install --frozen
+      - deno task check
+
+  secrets:
+    image: ghcr.io/gitleaks/gitleaks:v8.30.0@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9
+    depends_on: []
+    commands:
+      - |
+          set -eu
+          deep=""
+          if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+            git config --unset-all remote.origin.partialclonefilter || true
+            deep="--unshallow --refetch"
+          fi
+          if [ "$${CI_PIPELINE_EVENT}" = pull_request ] || [ "$${CI_PIPELINE_EVENT}" = pull_request_metadata ]; then
+            target="refs/remotes/origin/$${CI_COMMIT_TARGET_BRANCH}"
+            git fetch --no-tags $${deep} origin "+refs/heads/$${CI_COMMIT_TARGET_BRANCH}:$${target}"
+            base="$(git merge-base "$${target}" HEAD)" || {
+              echo "HEAD shares no commit with $${target}: nothing to scan from." >&2
+              exit 1
+            }
+            range="$${base}..HEAD"
+          else
+            if [ -n "$${deep}" ]; then git fetch --no-tags $${deep} origin "$${CI_COMMIT_SHA}"; fi
+            range=HEAD
+          fi
+          echo "Scanning $${range}"
+          gitleaks git --redact --verbose --no-banner --log-opts="$${range}" .
