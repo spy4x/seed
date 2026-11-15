@@ -15,6 +15,7 @@ import { memoryLocation } from "wouter-preact/memory-location"
 import { act } from "preact/test-utils"
 import {
   type OnboardingStatus,
+  PictureState,
   type SignInMethodsResponse,
   UserMFAStatus,
   UserRole,
@@ -734,6 +735,39 @@ describe("ProfileView", () => {
     } finally {
       globalThis.fetch = refuse
       configureModules({})
+    }
+  })
+
+  it("says in the picture row that a preparing picture is prepared and a refused one could not be used, and says neither for a ready one or none", async () => {
+    const signedIn = sessionState.value
+    const shown = async (pictureState: PictureState | null) => {
+      sessionState.value = {
+        ...signedIn,
+        user: { ...signedIn.user!, pictureId: pictureState ? `p1` : null, pictureState },
+      }
+      await open("/profile/account", ROUTED)
+      await settle()
+      const status = root!.querySelector(`[data-e2e=profile-picture-status]`)!
+      const seen = { text: status.textContent, hidden: status.classList.contains("sr-only") }
+      await act(() => render(null, root!))
+      root!.remove()
+      root = null
+      return seen
+    }
+
+    try {
+      expect(await shown(PictureState.Preparing)).toEqual({
+        text: "Preparing your picture…",
+        hidden: false,
+      })
+      expect(await shown(PictureState.Refused)).toEqual({
+        text: "We could not use that picture. Choose another one.",
+        hidden: false,
+      })
+      expect(await shown(PictureState.Ready)).toEqual({ text: "", hidden: true })
+      expect(await shown(null)).toEqual({ text: "", hidden: true })
+    } finally {
+      sessionState.value = signedIn
     }
   })
 
