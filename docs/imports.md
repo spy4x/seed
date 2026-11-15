@@ -9,7 +9,25 @@ The flow is the same for every kind of file. A kind says only which files it tak
 row maps to, and how a row is read, checked, written and removed. A product adds a kind without
 touching the flow's files.
 
-The screens are not built yet; the API is.
+## The screens
+
+The SPA's two pages name no kind, so a product's kind reuses them:
+
+- `/imports/new?kind=notes` picks the file, refusing a wrong type or a file past the kind's size
+  before the upload, and lists the person's recent imports of that kind in the selected group.
+- `/imports/:importId` follows the import through its steps. While it is ready, the person matches
+  columns to fields; every change checks all the rows again 400 ms later. Problems show on the
+  20 preview rows, and the refused rows further down are listed by line, counted as a spreadsheet
+  counts them (the header is line 1). The save button names the count of valid rows. A saved import
+  offers the kind's list and an undo behind a confirmation.
+
+The notes menu's "Import notes…" and the palette's "Import notes" open the picker, for an editor
+or above with the notes on. The screens are `libs/ui/import-screen.tsx`, their words per kind are
+`libs/ui/import-kinds.ts`, and the state is `apps/spa/src/state/imports.ts`.
+
+The admin app's Imports module (`/imports`) lists every group's imports by status: the group, the
+kind, the uploader's id, the counts, how long the read and the save took, and why one failed. It
+never shows the file, its name, its cells, or the options and choices a person gave.
 
 ## The steps
 
@@ -137,7 +155,11 @@ aggregate's table. Its rows go when the import goes; the records stay.
      `context.choices`, and answers the new ids;
    - `undo(tx, ids, context)`: removes them through the aggregate's own delete.
 2. List it in `importKinds` (`libs/server/imports/registry.ts`).
-3. Test its `read` with an awkward file (another encoding, a file past its limits, formula and
+3. Put its `id`, `accept`, `maxBytes` and `maxRows` in `libs/domain` (`ImportKindLimits`, as
+   `NOTE_IMPORT_KIND`), so the server kind and the SPA's picker read the same limits. Add its case
+   and words to `importKindView` (`libs/ui/import-kinds.ts`) and a link to
+   `IMPORT_PATHS.new(id)` where its records are listed.
+4. Test its `read` with an awkward file (another encoding, a file past its limits, formula and
    HTML cells, which stay text).
 
 ## The notes kind
