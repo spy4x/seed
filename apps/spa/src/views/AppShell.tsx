@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 import { matchRoute, useLocation, useRouter, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
-import { pictureUrl, shownPictureId, UserMFAStatus } from "@domain/identity"
+import { UserMFAStatus } from "@domain/identity"
 import { homePath, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
@@ -37,6 +37,7 @@ import {
 } from "../modules.ts"
 import { signOutRedirect } from "./sign-in-gate.ts"
 import { languageChoice } from "./language-choice.ts"
+import { shellUser } from "./shell-user.ts"
 import { UnsentSignOut } from "./UnsentSignOut.tsx"
 import { createSignOutCheck } from "./sign-out-check.ts"
 import { GUEST_PATHS, GuestBanner, GuestSignOutDialog } from "@ui/guest-screens.tsx"
@@ -360,13 +361,7 @@ export function AppShell(
         selectedId: selectionStore.groupId.value,
         onSelect: switchGroup,
       }}
-      user={{
-        // With no name and no address the menu would read "User"; a guest is named for what it is.
-        firstName: guest && !user.firstName && !user.lastName ? "Guest" : user.firstName,
-        lastName: user.lastName,
-        email: emailStore.status.value?.email,
-        avatarUrl: pictureUrl(shownPictureId(user)),
-      }}
+      user={shellUser(user, guest, emailStore.status.value?.email)}
       // The profile's Account section offers the code itself; the banner would only repeat it
       // there, and `/profile` shows that section from `md` up. With nothing to show it is left
       // out, because the frame keeps a margin under any banner it gets.
