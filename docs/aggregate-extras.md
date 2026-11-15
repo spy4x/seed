@@ -3,7 +3,7 @@
 > Also on the website: [seedsaas.com/docs/aggregate-extras](https://seedsaas.com/docs/aggregate-extras).
 
 This page connects a feature to the rest of the app: group settings, the activity log, the
-overview, the inbox, a new account's first minutes and the public demo. Each section copies what notes or groups already
+overview, the inbox, a new account's first minutes, the search palette and the public demo. Each section copies what notes or groups already
 do.
 
 You need:
@@ -183,6 +183,17 @@ stores.
 To add a screen to the tour, add it to `tourSteps` with the selector of its control and its text
 keys. Dismissing the card and finishing the tour are stored on the person's `users` row, so both
 follow the person to every device.
+
+## Find its records in the search palette
+
+Ctrl K (⌘K) finds notes, groups and commands. To find the new aggregate's records there too, pass
+`SearchPalette` (in `apps/spa/src/views/AppShell.tsx`) a `records` source: a translated `heading`
+and a `records()` function that returns what the store holds now, each record as
+`{ id, label, detail?, aliases?, href }`. A typed query matches them on the device with the same
+forgiving matching as the commands (a typo, word order, the other keyboard layout); the empty query
+lists none. Each source is its own section after the commands, at most `limit` rows (five by
+default), and a pick opens `href`. Return the same record objects while they are unchanged: the
+matcher prepares each object once and reuses that work.
 
 ## Show it in the public demo
 

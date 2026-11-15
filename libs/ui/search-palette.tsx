@@ -8,6 +8,7 @@ import {
 } from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import type { Translator } from "@spy4x/platform/universal/i18n"
+import { searchEntries } from "@spy4x/platform/universal/text"
 import { type GroupRole } from "@domain/groups"
 import type { ThemePreference } from "@domain/identity"
 import { roleName } from "./groups-screen.tsx"
@@ -93,7 +94,44 @@ export interface SearchPaletteProps {
    * row or command names notes or tags.
    */
   notes?: boolean
+  /**
+   * The product's own records the palette finds, such as accounts or invoices: each source is its
+   * own section after the groups and commands. Matched on the device only, never for the empty
+   * query.
+   */
+  records?: readonly PaletteRecordSource[]
 }
+
+/** One record a product holds on the device, as the palette lists and matches it. */
+export interface PaletteRecord {
+  /** Unique within its source. */
+  id: string
+  /** What the palette lists and matches, in the person's language. */
+  label: string
+  /** The row's second line, such as an amount or a date. It is shown, not matched. */
+  detail?: string
+  /** Other words that find it, such as a number or an old name. */
+  aliases?: readonly string[]
+  /** The page a pick opens, as a page command does. */
+  href: string
+}
+
+/**
+ * One kind of record the palette finds, under its own heading. `records` is called on every
+ * query, so it must answer from memory; return the same record objects while they are unchanged,
+ * since the matcher prepares each object once and reuses that work for it.
+ */
+export interface PaletteRecordSource {
+  /** The section's heading, in the person's language. */
+  heading: string
+  /** The records the device holds now. */
+  records: () => readonly PaletteRecord[]
+  /** The most rows the section lists, best first. Defaults to {@link RECORD_LIMIT}. */
+  limit?: number
+}
+
+/** How many rows a record source lists when it sets no `limit`. */
+export const RECORD_LIMIT = 5
 
 /**
  * The keys that open the search from every page: Ctrl K (⌘K on a Mac), and `/` outside a text
@@ -163,7 +201,8 @@ export function emptyLabel(t: Translator<string>, query: string, onDevice: boole
  * {@link paletteCommands}. A query lists the notes that match (from `searchNotes`), then the
  * person's groups and the commands that match, ranked together as the palette ranks a submenu
  * (`matchOptions`: aliases, word order, one typo, the other keyboard layout and alphabet), so the
- * strongest match is the first row after the notes and its heading comes first.
+ * strongest match is the first row after the notes and its heading comes first. Then each of the
+ * product's `records` sources that matches, under its own heading.
  * When the notes come from the device, their heading and the no-results line say so. Enter on a
  * group makes it the current one, and Ctrl Enter (⌘Enter) opens its settings. Theme opens a
  * submenu whose rows change the theme at once and keep the palette open.
@@ -223,7 +262,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
         asksNotes || !notesOn ? emptyLabel(t, text, answer.onDevice) : shortQueryLabel(t),
       )
     }
-    return [...notes, ...matched]
+    return [...notes, ...matched, ...recordRows(latest.current.records ?? [], text)]
   }
   /** A pick made inside a submenu, with the palette still open. */
   const select = (choice: SearchChoice) => latest.current.onSelect(choice)
@@ -273,6 +312,25 @@ function trigger(root: Element | null): HTMLButtonElement | null {
  */
 export function openSearch(container: Element | null): void {
   trigger(container?.querySelector("[data-e2e=search-root]") ?? null)?.click()
+}
+
+/**
+ * The rows of each record source that `query` matches, best first, at most its limit, under its
+ * heading. A query the matcher reads as empty (nothing typed, or only punctuation) matches every
+ * record with score `0`, so those are dropped: any real match scores more.
+ */
+function recordRows(sources: readonly PaletteRecordSource[], query: string): PaletteOption[] {
+  return sources.flatMap((source, index) =>
+    searchEntries(query, source.records(), { limit: source.limit ?? RECORD_LIMIT })
+      .filter((match) => match.score > 0)
+      .map(({ entry }): PaletteOption => ({
+        id: `record-${index}-${entry.id}`,
+        label: entry.label,
+        detail: entry.detail,
+        group: source.heading,
+        choice: { kind: "page", href: entry.href },
+      }))
+  )
 }
 
 /** A note row's second line: the group, when the person has several, then the snippet. */
