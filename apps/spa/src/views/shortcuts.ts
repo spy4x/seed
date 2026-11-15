@@ -140,6 +140,15 @@ export type TagPageActions = Partial<Record<"delete", () => void>>
  */
 export type GroupPageActions = Partial<Record<GroupAction, () => void>>
 
+/**
+ * The actions of a page's menu (`groupMenuActions`, `tagMenuActions`) that the palette offers: those
+ * the menu shows and lets the person pick now, mapped to `null`. A hidden or disabled item is left
+ * out, since the palette cannot show the menu's reason line.
+ */
+export function readyActions<A extends string>(menu: Partial<Record<A, string | null>>): A[] {
+  return (Object.keys(menu) as A[]).filter((action) => menu[action] === null)
+}
+
 /** One action command of a page: its id, the action it runs, its label key and extra words. */
 interface ActionCommand<A extends string> {
   id: string

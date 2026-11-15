@@ -3,7 +3,6 @@ import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import {
-  type GroupAction,
   type GroupDialog,
   GroupEditorScreen,
   groupMenuActions,
@@ -33,7 +32,7 @@ import { isSpaPath } from "./spa-paths.ts"
 import { currentLayer } from "../modules.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
 import { afterPalette } from "./palette-attach.ts"
-import type { GroupPageActions } from "./shortcuts.ts"
+import { type GroupPageActions, readyActions } from "./shortcuts.ts"
 
 const network = createOnlineStatus()
 
@@ -261,7 +260,7 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
   // does; the others open the menu's dialog through the screen, once the palette has closed.
   const requestDialog = useSignal<GroupDialog | null>(null)
   const ready = group
-    ? Object.entries(groupMenuActions({
+    ? readyActions(groupMenuActions({
       role: group.role,
       members: memberRows,
       hasTransfer: true,
@@ -270,7 +269,7 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
       hasSubscription,
       offline,
       exporting,
-    })).filter(([, block]) => block === null).map(([action]) => action as GroupAction)
+    }))
     : []
   useEffect(() => {
     groupEditorPageActions.value = Object.fromEntries(ready.map((action) => [

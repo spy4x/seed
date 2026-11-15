@@ -12,7 +12,7 @@ import { createTranslator } from "@spy4x/platform/universal/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
 import { paletteCommands, type PaletteOption } from "@ui/palette-commands.ts"
-import { pageCommands, runActionCommand, spaShortcutRows } from "./shortcuts.ts"
+import { pageCommands, readyActions, runActionCommand, spaShortcutRows } from "./shortcuts.ts"
 
 function rows(activityGroupId: string | null, onOverview = false) {
   const seen = { navigated: [] as string[], newNote: 0, shortcuts: 0, range: 0, customise: 0 }
@@ -172,6 +172,16 @@ describe("the tag and group pages' commands in the search palette", () => {
 
 const noop = () => {}
 const all = { attach: noop, duplicate: noop, move: noop, copyLink: noop, delete: noop }
+
+describe("readyActions", () => {
+  it("keeps the menu items the person can pick now and leaves out the disabled ones", () => {
+    expect(readyActions({ transfer: "subscription", export: null, delete: "lastGroup" }))
+      .toEqual(["export"])
+    expect(readyActions({ leave: null })).toEqual(["leave"])
+    expect(readyActions({ delete: "deleting" })).toEqual([])
+    expect(readyActions({})).toEqual([])
+  })
+})
 
 describe("runActionCommand", () => {
   it("runs the open page's action its command names, once", () => {

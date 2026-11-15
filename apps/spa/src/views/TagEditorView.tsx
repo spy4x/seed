@@ -18,7 +18,7 @@ import { deleteAndAnnounce } from "./tag-delete.ts"
 import { useAppText } from "@ui/i18n.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
 import { afterPalette } from "./palette-attach.ts"
-import type { TagPageActions } from "./shortcuts.ts"
+import { readyActions, type TagPageActions } from "./shortcuts.ts"
 
 const network = createOnlineStatus()
 
@@ -72,18 +72,19 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
   // The palette's Delete opens the menu's confirmation through the screen, once the palette has
   // closed, and only while the menu could open it too.
   const requestDialog = useSignal<"delete" | null>(null)
-  const deletable = tagMenuActions({
+  const ready = readyActions(tagMenuActions({
     canWrite,
     tagShown: saved !== null,
     hasDelete: canWrite && saved !== null,
     deleting,
-  }).delete === null
+  }))
   useEffect(() => {
-    tagEditorPageActions.value = deletable
-      ? { delete: () => afterPalette(document, () => requestDialog.value = `delete`) }
-      : {}
+    tagEditorPageActions.value = Object.fromEntries(ready.map((action) => [
+      action,
+      () => afterPalette(document, () => requestDialog.value = action),
+    ]))
     return () => tagEditorPageActions.value = null
-  }, [deletable])
+  }, [ready.join()])
   return (
     <>
       <TagEditorScreen
