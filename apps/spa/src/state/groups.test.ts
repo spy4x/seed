@@ -510,6 +510,22 @@ describe("groups store", () => {
     expect(store.unsaved("a")).toBe(true)
   })
 
+  it("keeps what was typed for a group but drops why its save was refused when its editor opens again", async () => {
+    const { store } = harness({
+      pages: [{ groups: [item("a", "1", "Old")], nextCursor: null }],
+      rename: () => Promise.reject(new TypeError("fetch failed")),
+    })
+    await store.refresh()
+    store.edit("a", { ...store.draft("a"), name: "New" })
+    await store.save("a")
+    expect(store.editorErrors.value.form).toBeDefined()
+
+    store.openEditor("a")
+
+    expect(store.draft("a").name).toBe("New")
+    expect(store.editorErrors.value).toEqual({})
+  })
+
   it("does not send a save with a wrong field, or for a group the person does not have", async () => {
     let sent = 0
     const { store } = harness({

@@ -363,14 +363,14 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
   }
 
   /**
-   * Opens the editor of a group (`null`: a new one). What was typed for another group, and the
-   * errors of an earlier attempt, are dropped: they belong to a page that is gone. What was typed
-   * for this group stays, with why its last try was refused, so a create the palette tried and the
-   * server refused opens on the text and the reason.
+   * Opens the editor of a group (`null`: a new one). What was typed for another group is dropped,
+   * and so are the errors of an earlier attempt: they belong to a page that is gone. One exception
+   * keeps both: the new group's form with something typed in it opens with its errors, so a create
+   * the palette tried and the server refused opens on the text and the reason.
    */
   function openEditor(groupId: string | null): void {
-    if (editor.value !== null && editor.value.groupId === groupId) return
-    editor.value = null
+    if (groupId === null && editor.value?.groupId === null) return
+    if (editor.value?.groupId !== groupId) editor.value = null
     editorErrors.value = {}
   }
 
