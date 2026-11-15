@@ -161,9 +161,10 @@ const SERVICES = [
 ] as const
 
 /**
- * The deploy's output in a terminal, and the services it starts as labels. A line too long for its
- * box (on a phone, and the overview's narrow column) wraps under its own start, indented, instead
- * of running off the edge; each label keeps its own width as the row wraps.
+ * The deploy's output in a terminal, and the services it starts as labels. On a phone a line too
+ * long for the box wraps under its own start, indented, instead of running off the edge. From `sm`
+ * up every line fits, so the lines stay unwrapped and unindented, as a terminal prints them. Each
+ * label keeps its own width as the row wraps.
  */
 export function DeployVisual(): JSX.Element {
   const { t } = useSite()
@@ -176,7 +177,12 @@ export function DeployVisual(): JSX.Element {
       >
         <TerminalText>
           {DEPLOY_OUTPUT.map((line) => (
-            <span key={line} class="block whitespace-pre-wrap ps-4 -indent-4">{line}</span>
+            <span
+              key={line}
+              class="block whitespace-pre-wrap ps-4 -indent-4 sm:whitespace-pre sm:ps-0 sm:indent-0"
+            >
+              {line}
+            </span>
           ))}
         </TerminalText>
       </WindowFrame>
