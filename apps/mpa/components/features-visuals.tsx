@@ -161,9 +161,9 @@ const SERVICES = [
 ] as const
 
 /**
- * The deploy's output in a terminal, and the services it starts as labels. A line too long for a
- * phone wraps under its own start, indented, instead of running off the edge; each label keeps its
- * own width as the row wraps.
+ * The deploy's output in a terminal, and the services it starts as labels. A line too long for its
+ * box (on a phone, and the overview's narrow column) wraps under its own start, indented, instead
+ * of running off the edge; each label keeps its own width as the row wraps.
  */
 export function DeployVisual(): JSX.Element {
   const { t } = useSite()
