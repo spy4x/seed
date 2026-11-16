@@ -28,7 +28,10 @@ import { CHECKLIST_PATH } from "./launch-checklist.ts"
 import { DOCS_PATH } from "./docs-site.ts"
 import { contactFooterLinks } from "./contact-links.ts"
 import { HIRE_PAGE_URL } from "./hire.ts"
+import SiteSearchIsland, { SITE_SEARCH_KEY_PREFIXES } from "./islands/site-search.tsx"
+import { SEARCH_INDEX_PATH, searchGroups } from "./search-paths.ts"
 import {
+  componentCatalogSubset,
   DEFAULT_LANGUAGE,
   isSiteLanguage,
   localePath,
@@ -388,16 +391,36 @@ export function SiteFrame(
                 href={languageHref}
               />
             </div>
-            <Button
-              href={spa.try}
-              rel={TRY_REL}
-              size="sm"
-              data-e2e="site-try-demo"
-              data-umami-event="try-demo"
-              data-umami-event-from="header"
-            >
-              {t.t(`SiteFrame.tryDemo`)}
-            </Button>
+            <div class="flex items-center gap-2">
+              <SiteSearchIsland
+                language={language}
+                messages={componentCatalogSubset(language, SITE_SEARCH_KEY_PREFIXES)}
+                src={href(SEARCH_INDEX_PATH)}
+                groupOrder={Object.values(searchGroups(t))}
+                links={[
+                  { id: `try`, label: t.t(`SiteFrame.tryDemo`), href: spa.try },
+                  { id: `docs`, label: t.t(`SiteSearchCommand.docs`), href: href(DOCS_PATH) },
+                  { id: `sign-in`, label: t.t(`SiteFooter.signIn`), href: spa.signIn },
+                  { id: `sign-up`, label: t.t(`SiteSearchCommand.signUp`), href: spa.signUp },
+                  { id: `star`, label: t.t(`SiteSearchCommand.star`), href: REPOSITORY_URL },
+                ]}
+                theme={{
+                  label: t.t(`SiteSearchCommand.theme`),
+                  light: t.t(`ThemePreview.light`),
+                  dark: t.t(`ThemePreview.dark`),
+                }}
+              />
+              <Button
+                href={spa.try}
+                rel={TRY_REL}
+                size="sm"
+                data-e2e="site-try-demo"
+                data-umami-event="try-demo"
+                data-umami-event-from="header"
+              >
+                {t.t(`SiteFrame.tryDemo`)}
+              </Button>
+            </div>
           </>
         }
       />

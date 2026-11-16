@@ -172,6 +172,20 @@ export function siteCatalogSubset(language: Language, keys: readonly string[]): 
 }
 
 /**
+ * The components' messages whose keys start with one of `prefixes`, in `language`, plurals intact,
+ * with English where a key is missing: what an island built from the components needs.
+ */
+export function componentCatalogSubset(language: Language, prefixes: readonly string[]): Catalog {
+  const [ui] = CATALOGS[language]
+  const [uiEn] = CATALOGS.en
+  return Object.fromEntries(
+    Object.keys(uiEn)
+      .filter((key) => prefixes.some((prefix) => key.startsWith(prefix)))
+      .map((key) => [key, ui[key] ?? uiEn[key]]),
+  )
+}
+
+/**
  * Every served language by its name in `language`, as one list: "English, Russian, Spanish, German,
  * Brazilian Portuguese, Arabic, French, Japanese and Simplified Chinese" in English. `zh-CN` is named
  * by its script, as readers know it, not as "Chinese (China)".
