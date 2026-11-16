@@ -952,6 +952,13 @@ PricingWays.title	f1a73f9391283f2e
 PricingWays.useText	75eb97fafef45458
 PricingWays.useTitle	d754502865ab9bb2
 PricingWays.useUnit	0b4d9a06fc563813
+SearchPage.description	4ba7b7657e8d9ec9
+SearchPage.label	67310a7cb7d07790
+SearchPage.none	32ac3ad49a2fdbd3
+SearchPage.prompt	850bfad18defecfa
+SearchPage.results	9691a6ea65c71032
+SearchPage.submit	49c266baaaa70981
+SearchPage.title	49c266baaaa70981
 SiteFooter.about	904ad897903c3077
 SiteFooter.admin	638343fec7c02a4a
 SiteFooter.apiDocs	9e632d3b5010d2ce
@@ -974,6 +981,9 @@ SiteFooter.status	e34f6b7e46b13ca8
 SiteFooter.terms	ede5489964834a51
 SiteFrame.skip	ac576a66d4563e60
 SiteFrame.tryDemo	6e5fe4ca7c07142f
+SiteIndex.in	a8df32eef8245cad
+SiteIndex.pages	9046da16aea909ba
+SiteIndex.sections	9bae918add9affa5
 SiteNav.blog	8c6bc099534a0251
 SiteNav.compare	e888155d8c7d2e3c
 SiteNav.docs	7af023c43013b9a5
@@ -982,6 +992,10 @@ SiteNav.github	f911e414cf6bdfc5
 SiteNav.hire	97032844653ecda1
 SiteNav.hireHint	aeea9dbd023e2185
 SiteNav.pricing	dfe95783edfef791
+SiteSearchCommand.docs	559b1cc46027e5bc
+SiteSearchCommand.signUp	5e2b8e96503d722e
+SiteSearchCommand.star	9000a7b3a28531fc
+SiteSearchCommand.theme	6026719f081a8f34
 SubscribeFailure.confirm	089494ee79b73060
 SubscribeFailure.subscribe	ebe34eeb0f227cde
 SubscribeFailure.unsubscribe	9d689e82824fc83e
