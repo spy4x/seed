@@ -1666,6 +1666,7 @@ export default {
   "Shortcuts.goTo": "移動",
   "Shortcuts.newNote": "新しいメモで",
   "Shortcuts.page": "このページ",
+  "Shortcuts.commands": "コマンドパレットのコマンド",
   "Shortcuts.show": "キーボードショートカットを表示",
   "Shortcuts.close": "ダイアログやメニューを閉じる",
   "Shortcuts.switchLabel": "1キーショートカット",

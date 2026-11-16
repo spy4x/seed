@@ -1866,6 +1866,7 @@ export default {
   "Shortcuts.goTo": "Ir para",
   "Shortcuts.newNote": "Em Nova nota",
   "Shortcuts.page": "Esta página",
+  "Shortcuts.commands": "Comandos da paleta",
   "Shortcuts.show": "Mostrar atalhos de teclado",
   "Shortcuts.close": "Fechar uma janela ou menu",
   "Shortcuts.switchLabel": "Atalhos de uma tecla",
