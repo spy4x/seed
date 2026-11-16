@@ -641,6 +641,13 @@ export default {
     "Ctrl+Kでコマンドパレットが開きます。打ち間違えた検索、キリル文字の検索、間違ったキーボード配列での検索が、どれも同じアクションを見つけて実行します。",
   "Loops.shortcutsCaption":
     "Ctrl+K（Macでは⌘K）を押します。検索は打ち間違い、キリル文字、間違ったキーボード配列も受け付けます。",
+  "Loops.speedName": "すぐに開く画面",
+  "Loops.speedTitle":
+    "2つのウィンドウで同じ4回のクリック。左の一般的なアプリはメモを開くたびにローディング表示が出ますが、右のSeedはどのメモもすぐに開きます。",
+  "Loops.speedCaption":
+    "両方のウィンドウで同じクリック。一般的なアプリは毎回サーバーを待ちますが、Seedはデバイス上のコピーからメモを開きます。",
+  "Loops.speedUsualLabel": "一般的なアプリ",
+  "Loops.speedSeedLabel": "Seed",
   "Outbox.change": "変更",
   "Outbox.changeNote": "メモ、メンバーなど",
   "Outbox.event": "そのイベント",

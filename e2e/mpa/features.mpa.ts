@@ -103,11 +103,12 @@ test(`the admin still loads only when its section nears the screen`, async ({ pa
   await expect.poll(() => asked).toContain(`/video/admin-panel-poster-1280.webp`)
 })
 
-/** The three feature loops, the page each plays on, and the name its play button carries. */
+/** The four feature loops, a page each plays on, and the name its play button carries. */
 const LOOPS = [
   [`realtime`, `/features/realtime`, `Realtime sync`],
   [`offline`, `/features/offline`, `Offline editing`],
   [`shortcuts`, `/features/shortcuts`, `Keyboard shortcuts`],
+  [`speed`, `/`, `Instant screens`],
 ] as const
 
 for (const [loop, path, name] of LOOPS) {

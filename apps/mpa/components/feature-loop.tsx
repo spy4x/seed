@@ -22,11 +22,18 @@ const LOOP_KEYS: Record<LoopName, { name: string; title: string; caption: string
     title: `Loops.shortcutsTitle`,
     caption: `Loops.shortcutsCaption`,
   },
+  speed: {
+    name: `Loops.speedName`,
+    title: `Loops.speedTitle`,
+    caption: `Loops.speedCaption`,
+  },
 }
 
 /**
  * A feature loop in a plain frame, with its caption under it: the dark clip in both page themes.
  * `data-no-zoom` keeps its poster out of the screenshot lightbox (`islands/shot-lightbox.tsx`).
+ * The side-by-side `speed` clip names its two halves above the frame, in the page's language,
+ * since the clip itself carries no words.
  */
 export function FeatureLoop(
   { loop, sizes = `(min-width: 1280px) 600px, (min-width: 768px) 672px, 100vw`, caption = true }: {
@@ -40,6 +47,12 @@ export function FeatureLoop(
   const keys = LOOP_KEYS[loop]
   return (
     <div data-no-zoom data-e2e={`loop-${loop}`}>
+      {loop === `speed` && (
+        <p class="mb-2 grid grid-cols-2 gap-4 text-sm font-medium text-muted" dir="ltr">
+          <span>{t.t(`Loops.speedUsualLabel`)}</span>
+          <span class="text-primary">{t.t(`Loops.speedSeedLabel`)}</span>
+        </p>
+      )}
       <WindowFrame variant="plain" caption={caption ? t.t(keys.caption) : undefined}>
         <LoopClip
           poster={{

@@ -687,6 +687,13 @@ export default {
     "Ctrl+K ouvre la palette de commandes. Une recherche avec une faute de frappe, une en cyrillique et une dans la mauvaise disposition de clavier trouvent chacune la même action, qui s’exécute ensuite.",
   "Loops.shortcutsCaption":
     "Appuyez sur Ctrl+K (⌘K sur Mac). La recherche pardonne les fautes de frappe, le cyrillique et la mauvaise disposition de clavier.",
+  "Loops.speedName": "Des écrans instantanés",
+  "Loops.speedTitle":
+    "Les mêmes quatre clics dans deux fenêtres. À gauche, une application classique affiche un indicateur de chargement avant chaque note ; à droite, Seed ouvre chaque note tout de suite.",
+  "Loops.speedCaption":
+    "Les mêmes clics dans les deux fenêtres. L’application classique attend le serveur à chaque fois ; Seed ouvre les notes à partir de la copie sur l’appareil.",
+  "Loops.speedUsualLabel": "Une application classique",
+  "Loops.speedSeedLabel": "Seed",
   "Outbox.change": "La modification",
   "Outbox.changeNote": "une note, un membre",
   "Outbox.event": "Son événement",

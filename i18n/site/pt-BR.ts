@@ -670,6 +670,13 @@ export default {
     "Ctrl+K abre a paleta de comandos. Uma busca com erro de digitação, uma em cirílico e uma no layout de teclado errado encontram a mesma ação, que então é executada.",
   "Loops.shortcutsCaption":
     "Pressione Ctrl+K (⌘K no Mac). A busca perdoa erros de digitação, cirílico e o layout de teclado errado.",
+  "Loops.speedName": "Telas na hora",
+  "Loops.speedTitle":
+    "Os mesmos quatro cliques em duas janelas. À esquerda, um app comum mostra um “carregando” antes de abrir cada nota; à direita, o Seed abre cada nota na hora.",
+  "Loops.speedCaption":
+    "Os mesmos cliques nas duas janelas. O app comum espera o servidor toda vez; o Seed abre as notas a partir da cópia no dispositivo.",
+  "Loops.speedUsualLabel": "Um app comum",
+  "Loops.speedSeedLabel": "Seed",
   "Outbox.change": "A alteração",
   "Outbox.changeNote": "uma nota, um membro",
   "Outbox.event": "Seu evento",
