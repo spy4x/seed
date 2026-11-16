@@ -175,3 +175,21 @@ export async function openProfile(page: Page, section?: string): Promise<void> {
   await page.waitForURL(`/profile/${section}`)
   await page.locator("[data-e2e=settings-heading]").waitFor()
 }
+
+/**
+ * Presses Tab, then Shift+Tab, `presses` times each in the open dialog `dialog` matches, and fails
+ * on the first press that puts focus outside it: a modal dialog keeps the keyboard inside until it
+ * closes, so the page behind it is never reached.
+ */
+export async function expectTabStaysIn(page: Page, dialog: string, presses = 12): Promise<void> {
+  for (const key of ["Tab", "Shift+Tab"]) {
+    for (let press = 1; press <= presses; press++) {
+      await page.keyboard.press(key)
+      const inside = await page.evaluate(
+        (selector) => Boolean(document.activeElement?.closest(selector)),
+        dialog,
+      )
+      if (!inside) throw new Error(`${key} press ${press} left ${dialog}`)
+    }
+  }
+}

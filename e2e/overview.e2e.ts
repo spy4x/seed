@@ -1,13 +1,15 @@
 import { expect, test } from "./fixtures/stack.ts"
-import { signIn } from "./fixtures/app.ts"
+import { expectTabStaysIn, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { PRODUCT_NAME } from "../libs/ui/brand.ts"
 
 /**
  * The group overview: the rail's first link opens the selected group's overview, a widget
  * hidden from its card's menu stays hidden after a reload (the layout is kept in the person's
  * preferences on the server), and "Reset layout" brings it back. A group the person is not in
- * reads as one that does not exist.
+ * reads as one that does not exist. The Customise dialog keeps Tab inside and, closed, gives focus
+ * back to the More actions button.
  */
 
 const appBase = "http://app.localhost"
@@ -59,6 +61,52 @@ test.describe("group overview", () => {
       await expect(page.getByText("This group does not exist.")).toBeVisible()
     } finally {
       await cleanup()
+    }
+  })
+
+  test("Customise keeps Tab inside and gives focus back to More actions on Done, the ✕ and Escape", async ({ page, request }) => {
+    test.setTimeout(90_000)
+    const email = `e2e-overview-${uuidV7().slice(-8)}@example.com`
+    try {
+      const signUp = await signUpWithCode(request, `${appBase}/api/auth/password/sign-up`, {
+        headers,
+        data: { email, password },
+      })
+      expect(signUp.ok(), await signUp.text()).toBe(true)
+      await signIn(page, email, password)
+      await page.getByRole("navigation", { name: "Main navigation" })
+        .getByRole("link", { name: "Overview" }).click()
+      await expect(page.locator(`[data-e2e="overview-widget-notes.total"]`)).toBeVisible()
+      await expect(page).toHaveTitle(`Overview · ${PRODUCT_NAME}`)
+
+      const menu = page.locator("[data-e2e=overview-menu]")
+      const dialog = page.locator("dialog[data-e2e=overview-customiser]")
+      const open = async () => {
+        await menu.click()
+        await page.getByRole("menuitem", { name: "Customise overview" }).click()
+        await expect(dialog).toBeVisible()
+      }
+
+      await open()
+      await expectTabStaysIn(page, "dialog[data-e2e=overview-customiser]")
+      await dialog.getByRole("button", { name: "Done" }).click()
+      await expect(dialog).toBeHidden()
+      await expect(menu).toBeFocused()
+
+      await open()
+      await dialog.getByRole("button", { name: "Close" }).click()
+      await expect(dialog).toBeHidden()
+      await expect(menu).toBeFocused()
+
+      await open()
+      await page.keyboard.press("Escape")
+      await expect(dialog).toBeHidden()
+      await expect(menu).toBeFocused()
+    } finally {
+      const response = await request.post(`${appBase}/api/test/cleanup-user`, {
+        data: { login: email },
+      })
+      expect.soft(response.status(), await response.text()).toBe(200)
     }
   })
 })
