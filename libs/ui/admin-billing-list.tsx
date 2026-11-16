@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { Kpi, KpiGrid } from "@spy4x/preact-charts/kpi"
 import { IconClock, IconCreditCard, IconExternalLink } from "@spy4x/preact-icons"
-import { Badge, type BadgeColor } from "@spy4x/preact-ui/badge"
+import { Badge, type BadgeTone } from "@spy4x/preact-ui/badge"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
@@ -102,22 +102,22 @@ export function billingPlanName(
     t.t(`AdminBilling.unknownPlan`)
 }
 
-const STATE_BADGES: Record<AdminBillingState, { key: string; color: BadgeColor }> = {
-  [AdminBillingState.Active]: { key: `AdminBilling.active`, color: `green` },
-  [AdminBillingState.Trial]: { key: `AdminBilling.trial`, color: `blue` },
-  [AdminBillingState.PastDue]: { key: `AdminBilling.pastDue`, color: `orange` },
-  [AdminBillingState.Cancelled]: { key: `AdminBilling.cancelled`, color: `gray` },
-  [AdminBillingState.Incomplete]: { key: `AdminBilling.incomplete`, color: `gray` },
-  [AdminBillingState.Paused]: { key: `AdminBilling.paused`, color: `gray` },
+const STATE_BADGES: Record<AdminBillingState, { key: string; color: BadgeTone }> = {
+  [AdminBillingState.Active]: { key: `AdminBilling.active`, color: `success` },
+  [AdminBillingState.Trial]: { key: `AdminBilling.trial`, color: `info` },
+  [AdminBillingState.PastDue]: { key: `AdminBilling.pastDue`, color: `warning` },
+  [AdminBillingState.Cancelled]: { key: `AdminBilling.cancelled`, color: `neutral` },
+  [AdminBillingState.Incomplete]: { key: `AdminBilling.incomplete`, color: `neutral` },
+  [AdminBillingState.Paused]: { key: `AdminBilling.paused`, color: `neutral` },
 }
 
 /** The status word's badge. A past-due group whose grace is over shows red. */
 export function billingStatusBadge(
   t: Translator<string>,
   view: AdminBillingStatusView,
-): { text: string; color: BadgeColor } {
+): { text: string; color: BadgeTone } {
   const { key, color } = STATE_BADGES[view.state]
-  return { text: t.t(key), color: view.date?.kind === `on_free_since` ? `red` : color }
+  return { text: t.t(key), color: view.date?.kind === `on_free_since` ? `danger` : color }
 }
 
 /** The key date beside the status word: `Plan kept until Oct 23, 2026`, or `""` for none. */
@@ -150,7 +150,7 @@ export function BillingStatusLine(
   const phrase = billingDatePhrase(t, view, useFormat())
   return (
     <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-1" data-e2e={dataE2E}>
-      <Badge text={badge.text} color={badge.color} />
+      <Badge text={badge.text} tone={badge.color} />
       {phrase && <span class="whitespace-nowrap text-sm">{phrase}</span>}
     </span>
   )
@@ -368,7 +368,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                 </span>
                 <ToggleChips
                   mode="single"
-                  label={t.t(`AdminBilling.status`)}
+                  ariaLabel={t.t(`AdminBilling.status`)}
                   class="flex-nowrap sm:flex-wrap"
                   options={STATUS_CHIPS.map((chip) => ({
                     value: chip.value,
@@ -708,7 +708,7 @@ function GroupCell(
         </Link>
         {customer.groupDeletedAt && (
           <span data-e2e="admin-billing-deleted">
-            <Badge text={t.t(`AdminBilling.inTrash`)} color="red" type="outline" />
+            <Badge text={t.t(`AdminBilling.inTrash`)} tone="danger" variant="outline" />
           </span>
         )}
       </div>

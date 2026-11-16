@@ -225,8 +225,8 @@ function TokenDetails({ token }: { token: ApiToken }): JSX.Element {
           text={t.t(
             token.access === ApiTokenAccess.WRITE ? `ApiTokens.readWrite` : `ApiTokens.readOnly`,
           )}
-          color={token.access === ApiTokenAccess.WRITE ? "orange" : "gray"}
-          type="outline"
+          tone={token.access === ApiTokenAccess.WRITE ? "warning" : "neutral"}
+          variant="outline"
         />
       </span>
       <span>

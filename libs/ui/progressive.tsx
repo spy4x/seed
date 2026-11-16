@@ -243,10 +243,10 @@ export function ScreenForm(
       status={pending ? "sending" : "idle"}
       labels={QUIET}
       onSubmit={onSubmit && ((data) => onSubmit(data))}
-      // EnhancedForm spaces its fields from its status line, which stays empty here: space-y-0!
-      // overrides its space-y-4 (the `!` is needed since preact-components 3), so the empty line
-      // takes no room.
-      class={className ? `space-y-0! ${className}` : "space-y-0!"}
+      // EnhancedForm spaces its fields from its status line, which stays empty here: space-y-0
+      // replaces its space-y-4 (EnhancedForm merges `class` through cn), so the empty line takes
+      // no room.
+      class={className ? `space-y-0 ${className}` : "space-y-0"}
     >
       {children}
     </EnhancedForm>

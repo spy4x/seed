@@ -218,6 +218,24 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
       page.current.querySelector<HTMLElement>("[data-e2e=overview-all-hidden-customise]")
     next?.focus()
   }, [props.widgets.length])
+  // When the Customise dialog closes (Done, the ✕ or Escape), the dialog puts focus back where it
+  // was when it opened. Two cases need help: the "All widgets are hidden" card's button opened it
+  // (focus goes back to that button while it is still there), and that button is gone by the time
+  // the dialog closes, which leaves focus on the body (it goes to More actions instead). Opened
+  // any other way (More actions, the palette, a hotkey), the dialog's own restore stands.
+  const opener = useRef<HTMLElement | null>(null)
+  const wasCustomising = useRef(props.customising)
+  useEffect(() => {
+    const closed = wasCustomising.current && !props.customising
+    wasCustomising.current = props.customising
+    if (!closed || !page.current) return
+    const from = opener.current
+    opener.current = null
+    if (from?.isConnected) return from.focus()
+    const { activeElement, body } = page.current.ownerDocument
+    if (activeElement && activeElement !== body) return
+    page.current.querySelector<HTMLElement>("[data-e2e=overview-menu]")?.focus()
+  }, [props.customising])
   const t = useAppText()
   const hide = (id: string) => {
     hidden.current = props.widgets.findIndex((widget) => widget.id === id)
@@ -331,7 +349,10 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                         <Button
                           variant="outline"
                           class="min-h-11 sm:min-h-9"
-                          onClick={props.onCustomise}
+                          onClick={(event: MouseEvent) => {
+                            opener.current = event.currentTarget as HTMLElement
+                            props.onCustomise()
+                          }}
                           data-e2e="overview-all-hidden-customise"
                         >
                           {t.t(`OverviewScreen.customise`)}

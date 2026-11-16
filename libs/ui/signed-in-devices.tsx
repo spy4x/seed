@@ -162,7 +162,7 @@ function DeviceDetails({ session }: { session: SignedInDevice }): JSX.Element {
   return (
     <span class="flex flex-col items-start gap-1" data-e2e="session-details">
       {session.current
-        ? <Badge text={t.t(`SignedInDevices.thisDevice`)} color="green" type="outline" />
+        ? <Badge text={t.t(`SignedInDevices.thisDevice`)} tone="success" variant="outline" />
         : (
           <span>
             <Rich

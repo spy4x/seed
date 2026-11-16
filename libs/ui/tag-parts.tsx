@@ -38,7 +38,7 @@ export function colorName(color: string): string {
 export function TagBadge({ tag }: { tag: Pick<TagRow, "name" | "color"> }): JSX.Element {
   return (
     <span
-      class={badgeClasses("gray", "filled", "max-w-full normal-case")}
+      class={badgeClasses("neutral", "filled", "max-w-full normal-case")}
       style={colorStyle(tag.color)}
       title={tag.name}
       translate={false}
@@ -136,7 +136,7 @@ export function TagChips(
     <div class="flex flex-col gap-2" data-e2e={dataE2E}>
       {showLabel && <p class="text-sm font-medium text-foreground" aria-hidden="true">{label}</p>}
       <ToggleChips
-        label={label}
+        ariaLabel={label}
         options={tags.map((tag) => ({
           value: tag.id,
           label: tag.name,

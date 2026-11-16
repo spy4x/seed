@@ -18,7 +18,7 @@ import {
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
 import { NotFoundScreen } from "@ui/not-found-screen.tsx"
-import { PRODUCT_NAME } from "@ui/brand.ts"
+import { pageTitle } from "@ui/brand.ts"
 import {
   type AdminStore,
   type DemoAdminCredentials,
@@ -141,10 +141,10 @@ function Operator(
     module.routes.some((route) => matchRoute(parser, route.path, path)[0])
   )
   const title = !user || !hasAdminAccess(user)
-    ? `${tag} · ${PRODUCT_NAME}`
+    ? pageTitle(tag)
     : found
     ? adminPageTitle(navItems, path, tag)
-    : [t.t(`AdminNotFound.title`), tag, PRODUCT_NAME].join(" · ")
+    : pageTitle(t.t(`AdminNotFound.title`), tag)
   useRouteAnnouncer({ path, title })
   // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
   // far down the list would show with their header under the top bar. A tab change (`?tab=`) keeps

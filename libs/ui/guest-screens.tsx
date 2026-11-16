@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
+import { PasswordInput } from "@spy4x/preact-ui/password-input"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { Rich } from "@spy4x/preact-ui/i18n"
@@ -452,13 +453,13 @@ function EmailForm(
           error={fieldErrors.password}
           required
         >
-          <Input
+          <PasswordInput
             name="password"
-            type="password"
             autocomplete="new-password"
             minLength={8}
             required
             data-e2e="keep-password"
+            toggleDataE2E="keep-password-toggle"
           />
         </Field>
         <Cluster>
