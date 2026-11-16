@@ -101,7 +101,8 @@ its own session) moves its subscription to it.
    (a `createCounter` from `@spy4x/platform/universal/metrics`). Register listeners with `subscribe`
    (not `eventBus.on`) so the name is known, and mark each best-effort or durable in
    `apps/api/cqrs/+init.ts`. Nothing exports the counter yet (`renderPrometheus` prints it). Once
-   the API serves it, add a scrape job to `infra/configs/vmagent.yml` and a rule to
+   the API serves it, add a scrape job to `infra/configs/vmagent.yml` and `infra/configs/vmagent.shared-host.yml`,
+   and a rule to
    `infra/configs/alerts.yml` (docs/stack.md, "Monitoring"). An outbox row has no payload, so a
    listener that needs the event's data cannot be durable until it has one. An audit record is
    therefore never a listener: sign-up, sign-in, sign-out and the profile change write their
