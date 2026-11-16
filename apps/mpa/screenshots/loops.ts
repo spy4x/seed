@@ -1,8 +1,9 @@
 // Seed's own site: see docs/start-a-product.md
 /**
- * Records the website's three silent feature loops from the real SPA: realtime sync, offline
- * editing and the keyboard shortcuts, in the dark theme only, the one most of the site's developer
- * readers use; a dark clip sits fine on a light page (`loops.ts` beside the routes names them).
+ * Records the website's four silent feature loops from the real SPA: realtime sync, offline
+ * editing, the keyboard shortcuts and instant screens (`speed`, beside a made-up app that waits for
+ * its server on every click), in the dark theme only, the one most of the site's developer readers
+ * use; a dark clip sits fine on a light page (`loops.ts` beside the routes names them).
  *
  * `deno task loops` in `apps/mpa`; README.md beside this file says what it needs. It seeds the same
  * four people and notes as `capture.ts`, plays each loop at 720×450 CSS px and device scale 2 with
@@ -29,6 +30,15 @@ const BUDGET = { video: 600_000, poster: { 720: 18_000, 1440: 90_000 } }
 /** How long the closing fade into the first frame lasts, and how long that frame then holds. */
 const FADE = 0.5
 const HOLD = 0.2
+/**
+ * The `speed` loop's left half: a made-up app, served from a fake origin so nothing leaves the
+ * machine, whose every screen waits `wait` ms for its server behind a spinner.
+ */
+const USUAL_APP = {
+  file: new URL("./speed-usual-app.html", import.meta.url).pathname,
+  origin: "http://usual-app.test",
+  wait: 900,
+}
 
 /** One recorded clip: one concat list per window, laid side by side, and its length in seconds. */
 interface Take {
@@ -221,10 +231,81 @@ async function shortcuts(
   return await finish([window], frames)
 }
 
+/**
+ * The same clicks in two windows: a made-up app that asks its server on every click (`USUAL_APP`)
+ * on the left, Seed's notes on the right. Open a note, back, the next one, back, a third.
+ */
+async function speed(
+  browser: Browser,
+  contexts: BrowserContext[],
+  seeded: Seeded,
+  frames: string,
+): Promise<Take> {
+  const half = LOOP_SIZE.width / 2
+  const start = { x: 300, y: 420 }
+  const left = await openWindow(browser, contexts, seeded, half, frames, start)
+  const right = await openWindow(browser, contexts, seeded, half, frames, start)
+  const rightItems = right.page.locator("[data-e2e=note-item-title]")
+  await gotoApp(right.page, "/notes", rightItems.first())
+  await right.page.locator("[data-e2e=shell-ws-status]", { hasText: "Online" }).waitFor()
+  // The usual app lists the same notes, in the order Seed shows them.
+  const notes = (await rightItems.allTextContents()).map((title) => ({
+    title: title.trim(),
+    body: NOTES.find((note) => note.title === title.trim())?.body ?? "",
+  }))
+  const html = (await Deno.readTextFile(USUAL_APP.file))
+    .replace(`"__NOTES__"`, JSON.stringify(notes))
+    .replace(`__WAIT__`, String(USUAL_APP.wait))
+  await left.page.route(
+    `${USUAL_APP.origin}/**`,
+    (route) => route.fulfill({ contentType: "text/html; charset=utf-8", body: html }),
+  )
+  await left.page.goto(`${USUAL_APP.origin}/`)
+  await left.page.locator("[data-note]").first().waitFor()
+  const windows = [left, right]
+  const both = (act: (window: Window) => Promise<unknown>) => Promise.all(windows.map(act))
+  // Each window's screen after a click: the usual app's only once its spinner has gone.
+  const settled = (list: boolean) =>
+    both(({ page }) =>
+      page === left.page
+        ? page.locator(list ? "[data-note]" : "article").first().waitFor()
+        : page.locator(list ? "[data-e2e=note-item-title]" : "[data-e2e=note-title]").first()
+          .waitFor()
+    )
+  await begin(windows)
+  await left.page.waitForTimeout(500)
+  for (const [step, index] of [0, 1, 2].entries()) {
+    await both(({ page, pointer }) =>
+      clickLike(
+        page,
+        pointer,
+        page === left.page ? page.locator(`[data-note="${index}"]`) : rightItems.nth(index),
+      )
+    )
+    await settled(false)
+    await left.page.waitForTimeout(900)
+    if (step === 2) break
+    await both(({ page, pointer }) =>
+      clickLike(
+        page,
+        pointer,
+        page === left.page
+          ? page.locator("[data-back]")
+          : page.getByRole("link", { name: "Back to notes" }),
+        { scroll: false },
+      )
+    )
+    await settled(true)
+    await left.page.waitForTimeout(300)
+  }
+  await left.page.waitForTimeout(400)
+  return await finish(windows, frames)
+}
+
 const CHOREOGRAPHY: Record<
   LoopName,
   (b: Browser, c: BrowserContext[], s: Seeded, f: string) => Promise<Take>
-> = { realtime, offline, shortcuts }
+> = { realtime, offline, shortcuts, speed }
 
 /** Runs ffmpeg and throws with its error output when it fails. */
 async function ffmpeg(args: string[]): Promise<void> {

@@ -6,7 +6,7 @@
  */
 
 /** The loops, by the feature each one proves. */
-export const LOOP_NAMES = [`realtime`, `offline`, `shortcuts`] as const
+export const LOOP_NAMES = [`realtime`, `offline`, `shortcuts`, `speed`] as const
 export type LoopName = typeof LOOP_NAMES[number]
 
 /** The CSS size each loop is drawn and recorded at; the files are twice as wide and tall. */
