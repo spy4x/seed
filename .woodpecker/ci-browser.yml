@@ -1,9 +1,9 @@
 # The browser steps of continuous integration: `browser`, `lighthouse`, `e2e-smoke` and the
 # nightly `e2e-full`, split out of ci.yml so they run at the same time as its steps, each workflow
 # in its own checkout with its own services (https://github.com/spy4x/ringmaster/issues/297).
-# Runs on every pull request, every tag (release.yml waits for it) and the nightly cron run on
-# `main` (docs/woodpecker-ci-setup.md, "The nightly run"). A push to `main` runs no browser step,
-# so it does not create this workflow, and a deploy on a push (deploy.yml.example) waits for
+# Runs on every pull request, every release tag `v<digit>*` (release.yml waits for it) and the
+# nightly cron run on `main` (docs/woodpecker-ci-setup.md, "The nightly run"). A push to `main`
+# runs no browser step, so it does not create this workflow, and a deploy on a push (deploy.yml.example) waits for
 # ci.yml alone. The nightly run takes the slow steps, `e2e-full` and the full Lighthouse run; a
 # pull request and a tag skip `e2e-full`.
 #
@@ -31,7 +31,9 @@ when:
   # `CI_PIPELINE_EVENT_REASON` joins the reasons with commas; GitHub sends one per event.
   - event: pull_request_metadata
     evaluate: 'CI_PIPELINE_EVENT_REASON contains "edited" && not (CI_COMMIT_MESSAGE startsWith "[WIP]")'
+  # Release tags only: a `ci-image-*` tag runs ci-image.yml alone.
   - event: tag
+    ref: refs/tags/v[0-9]*
   - event: cron
 
 variables:

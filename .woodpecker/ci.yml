@@ -1,5 +1,6 @@
-# Continuous integration: runs on every pull request, every push to main, every tag (release.yml
-# waits for it) and the nightly cron run on main (docs/woodpecker-ci-setup.md, "The nightly run").
+# Continuous integration: runs on every pull request, every push to main, every release tag
+# `v<digit>*` (release.yml waits for it) and the nightly cron run on main
+# (docs/woodpecker-ci-setup.md, "The nightly run").
 # A push to main runs only `check`, `secrets` and the images: its pull request already ran the
 # rest. The browser steps (`browser`, `lighthouse`, `e2e-smoke`, `e2e-full`) are in
 # ci-browser.yml, a workflow of its own that runs at the same time as this one, in its own
@@ -36,7 +37,9 @@ when:
     evaluate: 'CI_PIPELINE_EVENT_REASON contains "edited" && not (CI_COMMIT_MESSAGE startsWith "[WIP]")'
   - event: push
     branch: main
+  # Release tags only: a `ci-image-*` tag runs ci-image.yml alone.
   - event: tag
+    ref: refs/tags/v[0-9]*
   - event: cron
 
 variables:
