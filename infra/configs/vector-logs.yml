@@ -1,0 +1,33 @@
+# Ships this project's container logs to VictoriaLogs: to VLOGS_URL, or to the bundled VictoriaLogs
+# when that is unset. Vector loads this file next to infra/configs/vector.yml, whose `containers`
+# source it reads, unless VLOGS_SHIP=false: on a host whose own log shipper already stores every
+# container's log (docs/stack.md, "Shared stack on the same host"). A dollar sign with a name in
+# braces is pasted in from the container's environment as text, before the file is parsed, in
+# comments too (infra/configs/vector.yml says which values may come in that way).
+transforms:
+  logs:
+    type: remap
+    inputs: [containers]
+    source: |
+      .project = "${PROJECT}"
+      # Compose puts a dozen labels on every container; none helps to read a log line.
+      del(.label)
+
+sinks:
+  victorialogs:
+    type: elasticsearch
+    inputs: [logs]
+    endpoints: ['${VLOGS_URL}/insert/elasticsearch/']
+    api_version: v8
+    compression: gzip
+    healthcheck:
+      enabled: false
+    query:
+      _msg_field: message
+      _time_field: timestamp
+      _stream_fields: project,container_name,stream
+    # HTTP basic auth. The container's entrypoint encodes VLOGS_USERNAME and VLOGS_PASSWORD into
+    # VLOGS_AUTH, so a quote or a hash sign in the password cannot change this file.
+    request:
+      headers:
+        Authorization: 'Basic ${VLOGS_AUTH}'

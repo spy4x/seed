@@ -1,0 +1,19 @@
+# What vmagent scrapes when it joins the network of a monitoring stack on the same host
+# (infra/compose/compose.monitoring-network.yml): only what runs in that mode. On that network the
+# names `vmagent` and `cadvisor` also resolve to the host stack's own containers, so infra/configs/
+# vmagent.yml would scrape them as this project's. Its bundled-only jobs (victoriametrics,
+# nodeexporter, cadvisor) would stay down for good and fire the host's TargetDown rule.
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+  - job_name: vmagent
+    static_configs:
+      - targets: ['localhost:8429']
+  # Vector's own metrics, and the API's error lines it counts (infra/configs/vector.yml).
+  - job_name: vector
+    static_configs:
+      - targets: ['vector:9598']
+  - job_name: postgres
+    static_configs:
+      - targets: ['postgres-prometheus-exporter:9187']

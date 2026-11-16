@@ -127,6 +127,8 @@ rules.
 | `VLOGS_URL`                | Where logs go, as a VictoriaLogs base address. Empty: this project's VictoriaLogs.       | empty    | [The stack](stack.md#monitoring) |
 | `VLOGS_USERNAME`           | HTTP basic auth user for it.                                                             | empty    | [The stack](stack.md#monitoring) |
 | `VLOGS_PASSWORD`           | Its password.                                                                            | empty    | [The stack](stack.md#monitoring) |
+| `MONITORING_NETWORK`       | The Docker network of a monitoring stack on the same host, which vmagent joins.          | empty    | [The stack](stack.md#shared-stack-on-the-same-host) |
+| `VLOGS_SHIP`               | `false` keeps Vector's metrics but ships no logs. Empty or `true` ships them.            | empty    | [The stack](stack.md#shared-stack-on-the-same-host) |
 | `ALERT_NTFY_URL`           | With `monitoring`: the ntfy server alerts go to. Empty sends alerts nowhere.             | empty    | [The stack](stack.md#alerts)     |
 | `ALERT_NTFY_TOPIC`         | The ntfy topic.                                                                          | `alerts` | [The stack](stack.md#alerts)     |
 | `ALERT_NTFY_TOKEN`         | An ntfy access token. Empty for a topic anyone may post to.                              | empty    | [The stack](stack.md#alerts)     |

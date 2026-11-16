@@ -34,7 +34,8 @@ export function appRuntime(envVars: Record<string, string>): AppRuntime {
  * Plans `deno task compose <args>`. The engine is the one `CONTAINER_PROVIDER` names and Docker
  * without it, as everywhere else ({@link containerProvider}); `ENV` picks the second Compose file,
  * and `APP_RUNTIME=node` or `bun` adds a third that runs the API, the worker, the migration and the
- * website on that runtime ({@link appRuntime}).
+ * website on that runtime ({@link appRuntime}). A non-empty `MONITORING_NETWORK` adds the file that
+ * puts vmagent on that network, of a monitoring stack on the same host (docs/stack.md).
  *
  * `SPA=false` keeps the SPA off, and in production its `sourcemaps` service: every `up` scales them
  * to no container, which also stops and removes one that runs, so Traefik has no router for its
@@ -54,6 +55,7 @@ export function planCompose(
     "-f",
     `./infra/compose/compose.${envVars["ENV"]}.yml`,
     ...(runtime === "deno" ? [] : ["-f", `./infra/compose/compose.runtime-${runtime}.yml`]),
+    ...(envVars["MONITORING_NETWORK"] ? ["-f", "./infra/compose/compose.monitoring-network.yml"] : []),
     "--env-file",
     envFilePath,
   ]

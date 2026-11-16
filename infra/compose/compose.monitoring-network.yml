@@ -1,0 +1,17 @@
+# The shared stack on the same host (docs/stack.md, "Shared stack on the same host"). With
+# MONITORING_NETWORK set, `deno task compose` adds this file (infra/scripts/compose-plan.ts): vmagent
+# joins that Docker network, the internal one of a monitoring stack on this host, and pushes to its
+# VictoriaMetrics by container name, with no password and no public route.
+networks:
+  monitoring:
+    external: true
+    name: ${MONITORING_NETWORK}
+
+services:
+  vmagent:
+    networks:
+      - default
+      - monitoring
+    volumes:
+      # Compose merges volumes by their path in the container, so this replaces the bundled list.
+      - ../../infra/configs/vmagent.shared-host.yml:/etc/vmagent/scrape.yml:ro,Z

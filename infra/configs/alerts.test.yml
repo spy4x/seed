@@ -65,3 +65,50 @@ tests:
         groupname: backup
         alertname: BackupMissing
         exp_alerts: []
+
+  # The two disk rules fire on a series with `project`, as every series a Seed project sends has.
+  # The same series without it, as the host's own exporters write it on a shared host's
+  # VictoriaMetrics, fires nothing: the host's own rules watch its disks. Both rules wait 10
+  # minutes, so they fire at the second hourly evaluation.
+  - interval: 1h
+    input_series:
+      - series: 'vm_free_disk_space_bytes{project="seed",path="/storage"}'
+        values: '1073741824x5'
+      - series: 'vm_free_disk_space_bytes{path="/vm-data"}'
+        values: '1073741824x5'
+    alert_rule_test:
+      - eval_time: 2h
+        groupname: disk
+        alertname: DataDiskSpaceLow
+        exp_alerts:
+          - exp_labels:
+              project: seed
+              path: /storage
+              severity: critical
+            exp_annotations:
+              summary: 'seed: the data disk has 1GiB free'
+              description: 'Postgres, VictoriaMetrics and VictoriaLogs stop taking writes when it is full.'
+
+  - interval: 1h
+    input_series:
+      - series: 'node_filesystem_avail_bytes{project="seed",mountpoint="/",fstype="ext4"}'
+        values: '5x5'
+      - series: 'node_filesystem_size_bytes{project="seed",mountpoint="/",fstype="ext4"}'
+        values: '100x5'
+      - series: 'node_filesystem_avail_bytes{mountpoint="/",fstype="ext4"}'
+        values: '5x5'
+      - series: 'node_filesystem_size_bytes{mountpoint="/",fstype="ext4"}'
+        values: '100x5'
+    alert_rule_test:
+      - eval_time: 2h
+        groupname: disk
+        alertname: HostDiskSpaceLow
+        exp_alerts:
+          - exp_labels:
+              project: seed
+              mountpoint: /
+              fstype: ext4
+              severity: critical
+            exp_annotations:
+              summary: 'seed: / has 5% free'
+              description: 'Less than 10% of the disk at / is free.'

@@ -17,6 +17,7 @@ const COMPOSE_FILES = [
   `compose.dev.yml`,
   `compose.prod.yml`,
   `compose.proxy.yml`,
+  `compose.monitoring-network.yml`,
 ]
 const CONFIGS_PREFIX = `../../infra/configs/`
 
@@ -128,6 +129,124 @@ Deno.test("every config file a service mounts from infra/configs is in the repos
 })
 
 const VECTOR_CONFIG = new URL("../infra/configs/vector.yml", import.meta.url)
+const VECTOR_LOGS_CONFIG = new URL("../infra/configs/vector-logs.yml", import.meta.url)
+
+/**
+ * Runs Vector's entrypoint script with `env`, in place of Vector a command that prints VLOGS_AUTH
+ * on the first line and then each argument Vector would get, one per line.
+ */
+async function runVectorEntrypoint(
+  env: Record<string, string>,
+): Promise<{ success: boolean; stdout: string; stderr: string }> {
+  const { vector } = await services()
+  // Compose turns `$$` into `$` before the container's shell reads the script.
+  const [shell, flags, script, name] = vector.entrypoint!
+  const fake = [`/bin/sh`, `-c`, `printf '%s\\n' "$VLOGS_AUTH" "$@"`, `vector`]
+  const { success, stdout, stderr } = await new Deno.Command(shell, {
+    args: [flags, script.replaceAll(`$$`, `$`), name, ...fake],
+    // Only what Compose gives the container, and nothing from the environment the tests run in,
+    // so an unset VLOGS_SHIP is unset.
+    env: { VLOGS_USERNAME: ``, VLOGS_PASSWORD: ``, ...env },
+    clearEnv: true,
+  }).output()
+  const decoder = new TextDecoder()
+  return { success, stdout: decoder.decode(stdout).trimEnd(), stderr: decoder.decode(stderr) }
+}
+
+Deno.test("Vector loads the log shipping file unless VLOGS_SHIP is false", async () => {
+  const main = [`--config`, `/etc/vector/vector.yaml`]
+  const logs = [`--config`, `/etc/vector/vector-logs.yaml`]
+  for (const ship of [undefined, ``, `true`]) {
+    const { success, stdout, stderr } = await runVectorEntrypoint(
+      ship === undefined ? {} : { VLOGS_SHIP: ship },
+    )
+    expect(stderr, `VLOGS_SHIP=${ship}`).toBe(``)
+    expect(success, `VLOGS_SHIP=${ship}`).toBe(true)
+    expect(stdout.split(`\n`).slice(1), `VLOGS_SHIP=${ship}`).toEqual([...logs, ...main])
+  }
+  const off = await runVectorEntrypoint({ VLOGS_SHIP: `false` })
+  expect(off.success).toBe(true)
+  expect(off.stdout.split(`\n`).slice(1)).toEqual(main)
+  // Both files are mounted where the script looks for them.
+  const { vector } = await services()
+  expect(vector.volumes).toEqual([
+    `${CONFIGS_PREFIX}vector.yml:/etc/vector/vector.yaml:ro,Z`,
+    `${CONFIGS_PREFIX}vector-logs.yml:/etc/vector/vector-logs.yaml:ro,Z`,
+  ])
+  expect(vector.environment).toContain("VLOGS_SHIP=${VLOGS_SHIP:-}")
+})
+
+Deno.test("Vector refuses to start on a VLOGS_SHIP that is not empty, true or false", async () => {
+  for (const ship of [`bogus`, `False`, `0`]) {
+    const { success, stdout, stderr } = await runVectorEntrypoint({ VLOGS_SHIP: ship })
+    expect(success, ship).toBe(false)
+    expect(stdout, ship).toBe(``)
+    expect(stderr, ship).toContain(`VLOGS_SHIP must be true, false or empty, got "${ship}"`)
+  }
+})
+
+Deno.test("only the log shipping file sends to VictoriaLogs; the metrics stay in the main file", async () => {
+  const main = parse(await Deno.readTextFile(VECTOR_CONFIG)) as {
+    transforms: Record<string, unknown>
+    sinks: Record<string, { type: string }>
+  }
+  const logs = parse(await Deno.readTextFile(VECTOR_LOGS_CONFIG)) as {
+    transforms: Record<string, { inputs: string[] }>
+    sinks: Record<string, { type: string; inputs: string[] }>
+  }
+  expect(Object.keys(main.sinks)).toEqual([`metrics`])
+  expect(main.sinks.metrics.type).toBe(`prometheus_exporter`)
+  expect(Object.keys(main.transforms)).not.toContain(`logs`)
+  expect(Object.keys(logs.sinks)).toEqual([`victorialogs`])
+  expect(logs.sinks.victorialogs.inputs).toEqual([`logs`])
+  // It reads the main file's source, so it has no meaning alone.
+  expect(logs.transforms.logs.inputs).toEqual([`containers`])
+  expect(Object.keys(logs)).toEqual([`transforms`, `sinks`])
+})
+
+async function overlay(): Promise<{
+  networks: Record<string, ComposeNetwork & { name?: string }>
+  services: Record<string, ComposeService>
+}> {
+  const path = fromFileUrl(new URL(`compose.monitoring-network.yml`, COMPOSE_DIR))
+  return parse(await Deno.readTextFile(path)) as Awaited<ReturnType<typeof overlay>>
+}
+
+Deno.test("MONITORING_NETWORK puts vmagent alone on that external network, with its own scrape list", async () => {
+  const { networks, services: overlaid } = await overlay()
+  expect(networks).toEqual({ monitoring: { external: true, name: "${MONITORING_NETWORK}" } })
+  expect(Object.keys(overlaid)).toEqual([`vmagent`])
+  expect(overlaid.vmagent.networks).toEqual([`default`, `monitoring`])
+  // The same path in the container as the bundled list, so Compose replaces that mount.
+  const [shared] = (await services()).vmagent.volumes as string[]
+  expect(shared.split(`:`)[1]).toBe(`/etc/vmagent/scrape.yml`)
+  expect(overlaid.vmagent.volumes).toEqual([
+    `${CONFIGS_PREFIX}vmagent.shared-host.yml:/etc/vmagent/scrape.yml:ro,Z`,
+  ])
+  const stat = await Deno.stat(
+    fromFileUrl(new URL(`${CONFIGS_PREFIX}vmagent.shared-host.yml`, COMPOSE_DIR)),
+  )
+  expect(stat.isFile).toBe(true)
+})
+
+Deno.test("on the host's network vmagent scrapes only this project's own targets", async () => {
+  const path = new URL("../infra/configs/vmagent.shared-host.yml", import.meta.url)
+  const config = parse(await Deno.readTextFile(path)) as {
+    scrape_configs: { job_name: string; static_configs: { targets: string[] }[] }[]
+  }
+  const jobs = Object.fromEntries(
+    config.scrape_configs.map((
+      job,
+    ) => [job.job_name, job.static_configs.flatMap((c) => c.targets)]),
+  )
+  // The bundled-only jobs would stay down and fire the host's TargetDown rule, and the names
+  // `vmagent` and `cadvisor` resolve to the host stack's containers on that network.
+  expect(jobs).toEqual({
+    vmagent: [`localhost:8429`],
+    vector: [`vector:9598`],
+    postgres: [`postgres-prometheus-exporter:9187`],
+  })
+})
 
 Deno.test("Vector takes containers by the exact Compose project label, not by a name prefix", async () => {
   const config = parse(await Deno.readTextFile(VECTOR_CONFIG)) as {
@@ -146,18 +265,15 @@ Deno.test("Vector takes containers by the exact Compose project label, not by a 
 })
 
 Deno.test("a Vector password with a quote reaches the config only inside base64", async () => {
-  const { vector } = await services()
-  // Compose turns `$$` into `$` before the container's shell reads the script.
-  const [shell, flags, script, name] = vector.entrypoint!
-  const { success, stdout, stderr } = await new Deno.Command(shell, {
-    args: [flags, script.replaceAll(`$$`, `$`), name, `printenv`, `VLOGS_AUTH`],
-    env: { VLOGS_USERNAME: `shipper`, VLOGS_PASSWORD: `ab'cd #x` },
-  }).output()
-  expect(new TextDecoder().decode(stderr)).toBe(``)
+  const { success, stdout, stderr } = await runVectorEntrypoint({
+    VLOGS_USERNAME: `shipper`,
+    VLOGS_PASSWORD: `ab'cd #x`,
+  })
+  expect(stderr).toBe(``)
   expect(success).toBe(true)
-  expect(atob(new TextDecoder().decode(stdout).trim())).toBe(`shipper:ab'cd #x`)
+  expect(atob(stdout.split(`\n`)[0])).toBe(`shipper:ab'cd #x`)
 
-  const text = await Deno.readTextFile(VECTOR_CONFIG)
+  const text = await Deno.readTextFile(VECTOR_LOGS_CONFIG)
   expect(text).not.toContain("${VLOGS_PASSWORD")
   expect(text).not.toContain("${VLOGS_USERNAME")
   const config = parse(text) as {

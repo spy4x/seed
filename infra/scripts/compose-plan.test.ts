@@ -128,3 +128,30 @@ Deno.test("deno task compose refuses a runtime it does not know", () => {
     `APP_RUNTIME must be one of deno, node, bun, got "Node"`,
   )
 })
+
+Deno.test("MONITORING_NETWORK adds the shared-host monitoring file after the ENV and runtime ones", () => {
+  const network = ["-f", "./infra/compose/compose.monitoring-network.yml"]
+  const dev = planCompose({ ENV: "dev", MONITORING_NETWORK: "vm_metrics" }, ["ps"], ENV_FILE)
+  expect(dev.command).toEqual([...FILES.slice(0, 5), ...network, ...FILES.slice(5), "ps"])
+  const env = { ENV: "prod", APP_RUNTIME: "node", MONITORING_NETWORK: "vm_metrics" }
+  expect(planCompose(env, ["ps"], ENV_FILE).command).toEqual([
+    "compose",
+    "-f",
+    "./infra/compose/compose.shared.yml",
+    "-f",
+    "./infra/compose/compose.prod.yml",
+    "-f",
+    "./infra/compose/compose.runtime-node.yml",
+    ...network,
+    "--env-file",
+    ENV_FILE,
+    "ps",
+  ])
+})
+
+Deno.test("an unset or empty MONITORING_NETWORK adds no monitoring file", () => {
+  const envs: Record<string, string>[] = [{ ENV: "dev" }, { ENV: "dev", MONITORING_NETWORK: "" }]
+  for (const env of envs) {
+    expect(planCompose(env, ["ps"], ENV_FILE).command).toEqual([...FILES, "ps"])
+  }
+})
