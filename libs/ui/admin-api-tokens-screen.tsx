@@ -127,7 +127,7 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
         <span class="text-sm text-muted" aria-hidden="true">{t.t(`AdminApiTokens.state`)}</span>
         <ToggleChips
           mode="single"
-          label={t.t(`AdminApiTokens.state`)}
+          ariaLabel={t.t(`AdminApiTokens.state`)}
           options={chips}
           value={filter.state}
           onChange={(value) =>
@@ -248,8 +248,8 @@ export function tokenColumns(
             <span>
               <Badge
                 text={t.t(STATE_LABELS[token.state])}
-                color={stateColor(token.state)}
-                type="outline"
+                tone={stateTone(token.state)}
+                variant="outline"
               />
             </span>
           </span>
@@ -410,8 +410,8 @@ export function AccessBadge({ access }: { access: ApiTokenAccess }): JSX.Element
   return (
     <Badge
       text={t.t(write ? `AdminApiTokens.readWrite` : `AdminApiTokens.readOnly`)}
-      color={write ? "orange" : "gray"}
-      type="outline"
+      tone={write ? "warning" : "neutral"}
+      variant="outline"
     />
   )
 }
@@ -421,13 +421,13 @@ export function StateBadge({ state }: { state: AdminApiTokenState }): JSX.Elemen
   const t = useAdminText()
   return (
     <span data-e2e={`admin-api-token-state-${state}`}>
-      <Badge text={t.t(STATE_LABELS[state])} color={stateColor(state)} type="outline" />
+      <Badge text={t.t(STATE_LABELS[state])} tone={stateTone(state)} variant="outline" />
     </span>
   )
 }
 
-function stateColor(state: AdminApiTokenState): "green" | "red" | "gray" {
-  return state === "live" ? "green" : state === "revoked" ? "red" : "gray"
+function stateTone(state: AdminApiTokenState): "success" | "danger" | "neutral" {
+  return state === "live" ? "success" : state === "revoked" ? "danger" : "neutral"
 }
 
 /**

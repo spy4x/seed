@@ -186,8 +186,8 @@ follow the person to every device.
 
 ## Find its records in the search palette
 
-Ctrl K (⌘K) finds notes, groups and commands. To find the new aggregate's records there too, pass
-`SearchPalette` (in `apps/spa/src/views/AppShell.tsx`) a `records` source: a translated `heading`
+Ctrl K (⌘K) finds notes, groups and commands. To find the new aggregate's records there too, add
+a `records` source to the `SearchPalette` props in `apps/spa/src/views/AppShell.tsx` (`palette`): a translated `heading`
 and a `records()` function that returns what the store holds now, each record as
 `{ id, label, detail?, aliases?, href }`. A typed query matches them on the device with the same
 forgiving matching as the commands (a typo, word order, the other keyboard layout); the empty query

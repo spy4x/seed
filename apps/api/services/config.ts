@@ -1,7 +1,7 @@
 import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
 import { OPERATION_BUDGET, type OperationBudget } from "../middlewares/operation-rate-limits.ts"
 import { processEnv } from "@spy4x/platform/server/process"
-import { isSpaOn, readApiEnv } from "./config-env.ts"
+import { isSpaOn, readApiEnv, vapidKeysPath } from "./config-env.ts"
 import { isDemoMode } from "@server/auth/demo-accounts.ts"
 import type { SignUpMode } from "./sign-up-gate.ts"
 import { readNotesSetup } from "@server/notes/setup.ts"
@@ -27,7 +27,7 @@ export class Config {
   authCookieSecret = env.AUTH_COOKIE_SECRET
   authPepper = env.AUTH_PEPPER
   devEmail = env.DEV_EMAIL
-  vapidKeysPath = "./vapid.json"
+  vapidKeysPath = vapidKeysPath(env)
   errorReportDsn = env.ERROR_REPORT_DSN
   /** The client id and secret of each sign-in provider; one without both is off. */
   oauth = {

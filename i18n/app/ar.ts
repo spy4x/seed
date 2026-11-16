@@ -2019,6 +2019,7 @@ export default {
   "Shortcuts.goTo": "الانتقال إلى",
   "Shortcuts.newNote": "في «ملاحظة جديدة»",
   "Shortcuts.page": "هذه الصفحة",
+  "Shortcuts.commands": "أوامر لوحة الأوامر",
   "Shortcuts.show": "عرض اختصارات لوحة المفاتيح",
   "Shortcuts.close": "إغلاق نافذة حوار أو قائمة",
   "Shortcuts.switchLabel": "اختصارات المفتاح الواحد",

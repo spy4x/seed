@@ -222,7 +222,7 @@ export function AdminGroupsListScreen(
             <span class="text-sm text-muted" aria-hidden="true">{t.t(`AdminGroups.status`)}</span>
             <ToggleChips
               mode="single"
-              label={t.t(`AdminGroups.status`)}
+              ariaLabel={t.t(`AdminGroups.status`)}
               options={STATUS_CHIPS.map((chip) => ({ ...chip, label: t.t(chip.label) }))}
               value={filter.status === `any` ? null : filter.status}
               onChange={(value) =>
@@ -361,8 +361,8 @@ function groupColumns(
       render: ({ group }) => (
         <Badge
           text={planLabel(t, group.planId)}
-          color={group.planId === FREE_PLAN_ID ? `gray` : `purple`}
-          type="outline"
+          tone={group.planId === FREE_PLAN_ID ? `neutral` : `primary`}
+          variant="outline"
         />
       ),
     },
@@ -414,7 +414,7 @@ function GroupCell(
           </Link>
           {group.deletedAt && (
             <span data-e2e="admin-group-deleted">
-              <Badge text={t.t(`AdminGroups.inTrash`)} color="red" type="outline" />
+              <Badge text={t.t(`AdminGroups.inTrash`)} tone="danger" variant="outline" />
             </span>
           )}
         </div>

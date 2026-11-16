@@ -226,7 +226,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               <Badge
                 href={href(`/features#runtime`)}
                 text={t.t(`HomeHero.badge`)}
-                type="outline"
+                variant="outline"
               />
             </span>
             <h1

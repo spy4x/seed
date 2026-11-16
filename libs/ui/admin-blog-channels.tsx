@@ -255,7 +255,7 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
           >
             <ToggleChips
               mode="single"
-              label={t.t(`AdminBlogChannels.show`)}
+              ariaLabel={t.t(`AdminBlogChannels.show`)}
               class="flex-nowrap"
               options={[
                 {
@@ -332,8 +332,8 @@ export function AdminBlogChannelsScreen(props: AdminBlogChannelsScreenProps): JS
                       {postsByItself(channel) && (
                         <Badge
                           text={t.t(`AdminBlogChannels.automatic`)}
-                          color="blue"
-                          type="outline"
+                          tone="info"
+                          variant="outline"
                         />
                       )}
                     </div>
@@ -638,7 +638,7 @@ export function AdminBlogChannelScreen(props: AdminBlogChannelScreenProps): JSX.
                   id={blogChannelFieldId(`autoPost`)}
                   label={t.t(`AdminBlogChannels.autoPost`)}
                   value={value.autoPost}
-                  onToggle={(autoPost) => props.onChange({ ...value, autoPost })}
+                  onChange={(autoPost) => props.onChange({ ...value, autoPost })}
                   description={t.t(
                     value.autoPost
                       ? `AdminBlogChannels.autoPostOn`
@@ -698,7 +698,7 @@ export function AdminBlogChannelScreen(props: AdminBlogChannelScreenProps): JSX.
               id={blogChannelFieldId(`addUtm`)}
               label={t.t(`AdminBlogChannels.addUtm`)}
               value={value.addUtm}
-              onToggle={(addUtm) => props.onChange({ ...value, addUtm })}
+              onChange={(addUtm) => props.onChange({ ...value, addUtm })}
               description={value.addUtm
                 ? (
                   <Rich
@@ -719,7 +719,7 @@ export function AdminBlogChannelScreen(props: AdminBlogChannelScreenProps): JSX.
             >
               <div data-e2e="blog-channel-languages">
                 <ToggleChips
-                  label={t.t(`AdminBlogChannels.languages`)}
+                  ariaLabel={t.t(`AdminBlogChannels.languages`)}
                   options={LANGUAGES.map((language) => ({
                     value: language,
                     label: languageName(language),

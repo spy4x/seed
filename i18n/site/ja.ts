@@ -527,7 +527,7 @@ export default {
   "FeatureTierRuntime.nav": "ランタイム",
   "FeatureTierRuntime.title": "Deno・Node・Bunで動作",
   "FeatureTierRuntime.lead":
-    "API、ワーカー、WebサイトはDeno・Node・Bunのどれでもそのまま動き、CIは変更のたびに3つすべてで起動を確認しています。ランタイムはenvファイルの1行（APP_RUNTIME）で選べます。コードはWeb標準（fetch、Request、Web Crypto、WebSocket、ESモジュール）の上に作られています。Seed自体のタスクとテストはDenoで動きますが、DenoはnpmやBunが自動でインストールします。2026年10月、Denoチームはあと1年間サポートを続け、毎月バグ修正とセキュリティのリリースを出したうえで、自らの開発を終えると<announced>発表</announced>しました。Denoはオープンソースのまま残ります。",
+    "API、ワーカー、WebサイトはDeno・Node・Bunのどれでもそのまま動き、CIは変更のたびに3つすべてで起動を確認しています。ランタイムはenvファイルの1行（APP_RUNTIME）で選べます。コードはWeb標準（fetch、Request、Web Crypto、WebSocket、ESモジュール）の上に作られています。Seed自体のタスクとテストはDenoで動きますが、DenoはnpmやBunが自動でインストールします。2026年10月、Denoチームはあと1年間サポートを続け、毎月バグ修正とセキュリティのリリースを出したうえで、開発を終了すると<announced>発表</announced>しました。Denoはオープンソースのまま残ります。",
   "FeatureTierRuntime.pick": "ランタイムの選び方",
   "FeatureTierOperations.eyebrow": "運用",
   "FeatureTierOperations.title": "動かして、見守って、ユーザーをサポートする",

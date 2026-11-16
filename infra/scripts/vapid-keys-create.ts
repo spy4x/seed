@@ -1,7 +1,8 @@
 /// <reference lib="deno.ns" />
 /**
  * Generates VAPID keys for Web Push and writes them to infra/configs/vapid.json,
- * which compose bind-mounts into the API container as /app/vapid.json.
+ * which compose bind-mounts into the API container as /app/vapid.json. A path given as the first
+ * argument is written instead; run the script directly then, with `-W=<that path>`.
  *
  * Uses the same `@spy4x/integrations/push` version the API imports, so the file is always in the
  * format the API reads: `{ "publicKey": <JWK>, "privateKey": <JWK> }`. Nothing is fetched from a
@@ -9,7 +10,7 @@
  */
 import { generateVapidKeyPair } from "@spy4x/integrations/push"
 
-const OUTPUT_PATH = "infra/configs/vapid.json"
+const OUTPUT_PATH = Deno.args[0] ?? "infra/configs/vapid.json"
 
 const { keys } = await generateVapidKeyPair()
 

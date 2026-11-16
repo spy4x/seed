@@ -547,12 +547,12 @@ export default {
   "FeatureYourFeature.fact2": "Jede Schicht hat ihre eigenen Tests, die du gleich mitkopierst",
   "FeatureYourFeature.fact3": "Jede ID ist eine zeitlich sortierte UUID (Version 7)",
   "FeatureYourFeature.code": "docs/aggregates.md lesen",
-  "FeatureTierRuntime.eyebrow": "Laufzeit",
-  "FeatureTierRuntime.nav": "Laufzeiten",
+  "FeatureTierRuntime.eyebrow": "Runtime",
+  "FeatureTierRuntime.nav": "Runtimes",
   "FeatureTierRuntime.title": "Läuft auf Deno, Node und Bun",
   "FeatureTierRuntime.lead":
-    "Die API, der Worker und die Website laufen unverändert auf Deno, Node und Bun, und die CI startet sie bei jeder Änderung auf allen dreien. Eine Zeile in der Env-Datei, APP_RUNTIME, wählt die Laufzeit. Der Code baut auf Webstandards auf (fetch, Request, Web Crypto, WebSocket, ES-Module); Seeds eigene Tasks und Tests laufen auf Deno, das npm oder Bun dir mitinstalliert. Im Oktober 2026 haben die Macher von Deno noch ein Jahr Support mit monatlichen Bugfix- und Sicherheits-Releases <announced>angekündigt</announced>; danach beenden sie seine Entwicklung. Deno bleibt Open Source.",
-  "FeatureTierRuntime.pick": "So wählst du die Laufzeit",
+    "Die API, der Worker und die Website laufen unverändert auf Deno, Node und Bun, und die CI startet sie bei jeder Änderung auf allen dreien. Eine Zeile in der Env-Datei, APP_RUNTIME, wählt die Runtime. Der Code baut auf Webstandards auf (fetch, Request, Web Crypto, WebSocket, ES-Module); Seeds eigene Tasks und Tests laufen auf Deno, das npm oder Bun dir mitinstalliert. Im Oktober 2026 haben die Macher von Deno noch ein Jahr Support mit monatlichen Bugfix- und Sicherheits-Releases <announced>angekündigt</announced>; danach beenden sie seine Entwicklung. Deno bleibt Open Source.",
+  "FeatureTierRuntime.pick": "So wählst du die Runtime",
   "FeatureTierOperations.eyebrow": "Betrieb",
   "FeatureTierOperations.title": "Betreiben, überwachen, die Leute darauf unterstützen",
   "FeatureTierOperations.lead":
@@ -624,7 +624,7 @@ export default {
     "Nein. Seed läuft als dauerhaft laufende Container mit Docker Compose auf einem gemieteten Linux-Server, weil die API WebSocket-Verbindungen offen hält und ein Worker eine Warteschlange abarbeitet.",
   "FeaturesFaq.runtimeQuestion": "Läuft Seed mit Node.js oder Bun?",
   "FeaturesFaq.runtimeAnswer":
-    "Ja. Die API, der Hintergrund-Worker und die Website laufen auf Deno, Node oder Bun: Eine Einstellung in der Env-Datei, APP_RUNTIME, wählt die Laufzeit. Seeds eigene Tasks und Tests laufen auf Deno, das npm oder Bun dir mitinstalliert, du musst Deno also nicht extra installieren.",
+    "Ja. Die API, der Hintergrund-Worker und die Website laufen auf Deno, Node oder Bun: Eine Einstellung in der Env-Datei, APP_RUNTIME, wählt die Runtime. Seeds eigene Tasks und Tests laufen auf Deno, das npm oder Bun dir mitinstalliert, du musst Deno also nicht extra installieren.",
   "FeaturesFaq.databaseQuestion": "Kann Seed eine andere Datenbank als Postgres nutzen?",
   "FeaturesFaq.databaseAnswer":
     "Nein. Seed ist auf Postgres gebaut: Migrationen, Abfragen und Integrationstests setzen es voraus.",
@@ -1003,7 +1003,7 @@ export default {
   "FeaturePage.all": "Alle Funktionen",
   "FeaturePage.runtimeQuestion": "Läuft Seed auf Node oder Bun?",
   "FeaturePage.runtimeAnswer":
-    "Ja. Die API, der Hintergrund-Worker und die Website laufen auf Deno, Node oder Bun, gewählt mit einer Einstellung (APP_RUNTIME). Seeds eigene Tasks laufen auf Deno, das npm oder Bun dir mitinstalliert. Mehr dazu im Abschnitt zu den Laufzeiten auf der Funktionsseite.",
+    "Ja. Die API, der Hintergrund-Worker und die Website laufen auf Deno, Node oder Bun, gewählt mit einer Einstellung (APP_RUNTIME). Seeds eigene Tasks laufen auf Deno, das npm oder Bun dir mitinstalliert. Mehr dazu im Abschnitt zu den Runtimes auf der Funktionsseite.",
   "FeaturePageMissing.title": "Diese Funktionsseite gibt es hier nicht",
   "FeaturePageMissing.description":
     "Vielleicht ist sie umgezogen. Jede Funktion von Seed steht auf der Funktionsseite.",

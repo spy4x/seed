@@ -38,7 +38,7 @@ import {
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { groupRoleLabel } from "./admin-groups-list.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
-import { adminUserName, adminUserSubtitle, roleColor, roleLabel } from "./admin-users-screen.tsx"
+import { adminUserName, adminUserSubtitle, roleLabel, roleTone } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { OnDay, When } from "@spy4x/preact-ui/format"
 import { AdminPreferencesGroup } from "./preferences.tsx"
@@ -500,25 +500,25 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
         data-e2e="admin-user-card"
       >
         <div class="flex flex-wrap items-center gap-2">
-          <Badge text={roleLabel(t, user.role)} color={roleColor(user.role)} />
+          <Badge text={roleLabel(t, user.role)} tone={roleTone(user.role)} />
           {user.blockedAt
             ? (
               <span data-e2e="admin-user-status">
-                <Badge text={t.t(`AdminUser.blocked`)} color="red" />
+                <Badge text={t.t(`AdminUser.blocked`)} tone="danger" />
               </span>
             )
             : (
               <span data-e2e="admin-user-status">
-                <Badge text={t.t(`AdminUser.active`)} color="green" />
+                <Badge text={t.t(`AdminUser.active`)} tone="success" />
               </span>
             )}
           {user.guestSince && (
             <span data-e2e="admin-user-guest">
-              <Badge text={t.t(`AdminUser.guest`)} color="gray" type="outline" />
+              <Badge text={t.t(`AdminUser.guest`)} tone="neutral" variant="outline" />
             </span>
           )}
           {operator.id === user.id && (
-            <Badge text={t.t(`AdminUser.you`)} color="gray" type="outline" />
+            <Badge text={t.t(`AdminUser.you`)} tone="neutral" variant="outline" />
           )}
         </div>
         {user.guestSince && (
@@ -741,8 +741,8 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
             : (
               <span class="ms-auto">
                 {method.provenAt
-                  ? <Badge text={t.t(`AdminUser.proven`)} color="green" type="outline" />
-                  : <Badge text={t.t(`AdminUser.notProven`)} color="orange" type="outline" />}
+                  ? <Badge text={t.t(`AdminUser.proven`)} tone="success" variant="outline" />
+                  : <Badge text={t.t(`AdminUser.notProven`)} tone="warning" variant="outline" />}
               </span>
             )}
         </li>
@@ -836,7 +836,7 @@ function Groups(
             {group.name}
           </Link>
           <span class="ms-auto">
-            <Badge text={groupRoleLabel(t, group.role)} color="gray" type="outline" />
+            <Badge text={groupRoleLabel(t, group.role)} tone="neutral" variant="outline" />
           </span>
         </li>
       ))}

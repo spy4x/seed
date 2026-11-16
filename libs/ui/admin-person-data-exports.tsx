@@ -17,13 +17,13 @@ export interface AdminPersonDataExportsPanelProps {
 
 /** Each state's badge: its word's key and its look. */
 const BADGES = {
-  [DataExportStatus.Preparing]: { key: `AdminDataExports.preparing`, color: `gray` },
-  [DataExportStatus.Ready]: { key: `AdminDataExports.ready`, color: `green` },
-  [DataExportStatus.Expired]: { key: `AdminDataExports.expired`, color: `gray`, outline: true },
-  [DataExportStatus.Failed]: { key: `AdminDataExports.failed`, color: `red` },
+  [DataExportStatus.Preparing]: { key: `AdminDataExports.preparing`, color: `neutral` },
+  [DataExportStatus.Ready]: { key: `AdminDataExports.ready`, color: `success` },
+  [DataExportStatus.Expired]: { key: `AdminDataExports.expired`, color: `neutral`, outline: true },
+  [DataExportStatus.Failed]: { key: `AdminDataExports.failed`, color: `danger` },
 } as const satisfies Record<
   DataExportStatus,
-  { key: string; color: `gray` | `green` | `red`; outline?: true }
+  { key: string; color: `neutral` | `success` | `danger`; outline?: true }
 >
 
 /**
@@ -47,7 +47,7 @@ export function AdminPersonDataExportsPanel(
   return (
     <PanelRows empty={t.t(`AdminDataExports.empty`)} dataE2E="admin-person-data-exports">
       {exports.map((item) => {
-        const badge: { key: string; color: `gray` | `green` | `red`; outline?: true } =
+        const badge: { key: string; color: `neutral` | `success` | `danger`; outline?: true } =
           BADGES[item.status]
         return (
           <li key={item.id} class={PANEL_ROW} data-e2e={`admin-person-data-export-${item.id}`}>
@@ -59,8 +59,8 @@ export function AdminPersonDataExportsPanel(
             </span>
             <Badge
               text={t.t(badge.key)}
-              color={badge.color}
-              type={badge.outline ? `outline` : undefined}
+              tone={badge.color}
+              variant={badge.outline ? `outline` : undefined}
             />
             {item.sizeBytes !== null && (
               <span class="text-sm text-muted">{formatBytes(item.sizeBytes, locale)}</span>

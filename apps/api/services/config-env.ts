@@ -46,6 +46,8 @@ export const envSchema = type({
   S3_SECRET_ACCESS_KEY: "string > 0",
   /** `https://<key>@<host>/<project>` of an error tracker; unset or empty turns reporting off. */
   "ERROR_REPORT_DSN?": "string",
+  /** The web push keys file (`vapidKeysPath`); unset or empty: `./vapid.json`. */
+  "VAPID_KEYS_PATH?": "string",
   /** Guest accounts (docs/guests.md): on unless `false`, and off whenever `SIGN_UP=invite`. */
   "GUEST_MODE?": "string",
   /** The public demo (docs/demo.md): on only when `true`. */
@@ -125,4 +127,12 @@ export function readApiEnv(reader: EnvReader = systemEnv) {
  */
 export function isSpaOn(env: { SPA?: string }): boolean {
   return env.SPA !== "false"
+}
+
+/**
+ * Where the API reads its web push keys: `VAPID_KEYS_PATH`, or `./vapid.json` in the working
+ * directory when it is unset or empty, which is where compose bind-mounts the file.
+ */
+export function vapidKeysPath(env: { VAPID_KEYS_PATH?: string }): string {
+  return env.VAPID_KEYS_PATH || `./vapid.json`
 }

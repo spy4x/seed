@@ -1,5 +1,5 @@
-import type { JSX } from "preact"
-import { useEffect, useState } from "preact/hooks"
+import type { JSX, RefObject } from "preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { changeText } from "@spy4x/preact-charts/change"
 import { Kpi, type KpiChange, KpiGrid } from "@spy4x/preact-charts/kpi"
 import { LineChart } from "@spy4x/preact-charts/line-chart"
@@ -11,7 +11,6 @@ import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Field } from "@spy4x/preact-ui/field"
 import { Select } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
@@ -46,6 +45,20 @@ export const ADMIN_STATS_SETUP_URL =
 /** How long a first load waits before it draws the skeleton, so a fast answer never flashes one. */
 export const STATS_SKELETON_DELAY_MS = 300
 
+/**
+ * The thumbnail of an item without a photo: a picture icon on a faint square, the size of a photo,
+ * so its row lines up with the rows that have one. Translucent grey reads in both themes.
+ */
+export const NO_PHOTO_THUMBNAIL = `data:image/svg+xml,${
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" ` +
+      `fill="#8882"/><svg x="10" y="10" width="20" height="20" viewBox="0 0 24 24" fill="none" ` +
+      `stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" ` +
+      `y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path ` +
+      `d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></svg>`,
+  )
+}`
+
 /** Below this many visits on most days, the chart draws one point per week. */
 const WEEKLY_BELOW = 3
 
@@ -64,6 +77,8 @@ export interface AdminStatsScreenProps {
   /** Reads again; `fresh` skips the shared copy ("Refresh numbers"). */
   onRefresh: (fresh: boolean) => void
   navigate?: Navigate
+  /** The current time in epoch milliseconds, which says whether kept numbers are from today. */
+  now?: number
 }
 
 /**
@@ -135,15 +150,15 @@ export function AdminStatsScreen(props: AdminStatsScreenProps): JSX.Element {
 
 /** Everything under the header: one state, or the numbers. */
 function StatsBody(props: AdminStatsScreenProps): JSX.Element {
-  const { response, pending, error, onRefresh } = props
+  const { response, pending, error, onRefresh, now = Date.now() } = props
   const t = useAdminText()
   const format = useFormat()
   if (response === null) {
     return error
       ? (
-        <div class="flex flex-col items-start gap-3" data-e2e="admin-stats-error">
+        <div class="flex flex-col gap-3" data-e2e="admin-stats-error">
           <ErrorState message={t.t(`AdminStats.loadError`)} />
-          <Button variant="secondary" onClick={() => onRefresh(false)}>
+          <Button variant="secondary" class="self-center" onClick={() => onRefresh(false)}>
             {t.t(`AdminStats.tryAgain`)}
           </Button>
         </div>
@@ -160,7 +175,7 @@ function StatsBody(props: AdminStatsScreenProps): JSX.Element {
           title={t.t(`AdminStats.problemTitle`)}
           description={t.t(PROBLEM_TEXT[response.state])}
           action={
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap justify-center gap-2">
               {response.state === `unreachable` && (
                 <Button
                   variant="secondary"
@@ -195,7 +210,12 @@ function StatsBody(props: AdminStatsScreenProps): JSX.Element {
             </Button>
           }
         >
-          {t.t(`AdminStats.stale`, { time: format.time(response.updatedAt) })}
+          {t.t(`AdminStats.stale`, {
+            // Today's numbers name the time; older ones, in the operator's zone, the date too.
+            time: format.date(response.updatedAt) === format.date(now)
+              ? format.time(response.updatedAt)
+              : format.dateTime(response.updatedAt),
+          })}
         </Notice>
       )}
       {error && <ErrorState message={t.t(`AdminStats.loadError`)} />}
@@ -350,6 +370,14 @@ function Report(
   const format = useFormat()
   const days = report.days
   const channels = report.channels.map((channel) => channel.name)
+  const chart = useRef<HTMLDivElement>(null)
+  // A source row is under the chart: on a phone the chart is a screen above, so the press scrolls
+  // it into view to show what changed. Smooth unless the operator asked for reduced motion.
+  const showSource = (slug: string) => {
+    onSource(slug)
+    const reduced = globalThis.matchMedia?.(`(prefers-reduced-motion: reduce)`).matches ?? false
+    chart.current?.scrollIntoView?.({ behavior: reduced ? `auto` : `smooth`, block: `nearest` })
+  }
 
   if (report.visits.current === 0) {
     return (
@@ -421,7 +449,7 @@ function Report(
         </p>
       </section>
 
-      <VisitsChart report={report} source={source} onSource={onSource} />
+      <VisitsChart report={report} source={source} onSource={onSource} chartRef={chart} />
 
       <section aria-labelledby="admin-stats-sources-title" data-e2e="admin-stats-sources-list">
         <h2 id="admin-stats-sources-title" class="text-lg font-semibold">
@@ -440,14 +468,14 @@ function Report(
                   { label: t.t(`AdminStats.orderRate`), format: (rate) => percent(rate) },
                 ],
               }}
-              format={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               data={report.sources.map((row): RankedBarRow => ({
                 label: row.slug === null ? t.t(`AdminStats.noSource`) : row.name,
                 value: row.visits,
                 values: [row.orderClicks, row.rate],
                 lowSample: row.lowSample,
                 note: row.slug === null ? t.t(`AdminStats.noSourceHint`) : undefined,
-                onSelect: row.slug === null ? undefined : () => onSource(row.slug),
+                onSelect: row.slug === null ? undefined : () => showSource(row.slug!),
               }))}
             />
             {!report.hasSources && (
@@ -492,7 +520,7 @@ function Report(
                 label: channel.name,
                 value: channel.clicks,
               }))}
-              format={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               emptyLabel={t.t(`AdminStats.noOrderClicks`)}
             />
           </CardBody>
@@ -505,10 +533,11 @@ function Report(
 }
 
 function VisitsChart(
-  { report, source, onSource }: {
+  { report, source, onSource, chartRef }: {
     report: WebsiteStatsReport
     source: string | null
     onSource: (source: string | null) => void
+    chartRef: RefObject<HTMLDivElement>
   },
 ): JSX.Element {
   const t = useAdminText()
@@ -524,34 +553,40 @@ function VisitsChart(
   const total = report.perDay.reduce((sum, entry) => sum + entry.visits, 0)
   const named = report.sources.filter((row) => row.slug !== null)
   return (
-    <Card data-e2e="admin-stats-chart">
+    <Card ref={chartRef} data-e2e="admin-stats-chart">
+      {
+        /* The source picker sits in the header, not above the chart, so the page's answer fits the
+          first screen; on a phone the header wraps under the title. */
+      }
       <CardHeader
+        class="flex-wrap gap-x-4 gap-y-2"
         title={t.t(weekly ? `AdminStats.chartTitleWeekly` : `AdminStats.chartTitle`)}
         headingLevel={2}
         action={
-          <span class="text-sm text-muted">
-            {t.t(`AdminStats.chartSummary`, { total: format.number(total), count: report.days })}
-          </span>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span class="text-sm text-muted">
+              {t.t(`AdminStats.chartSummary`, { total: format.number(total), count: report.days })}
+            </span>
+            {named.length > 0 && (
+              <div class="w-full sm:w-auto sm:min-w-48 sm:max-w-xs">
+                <Select
+                  name="source"
+                  aria-label={t.t(`AdminStats.source`)}
+                  data-e2e="admin-stats-source"
+                  options={[
+                    { value: ``, label: t.t(`AdminStats.allSources`) },
+                    ...named.map((row) => ({ value: row.slug!, label: row.name })),
+                  ]}
+                  value={source ?? ``}
+                  onChange={(event) =>
+                    onSource((event.currentTarget as HTMLSelectElement).value || null)}
+                />
+              </div>
+            )}
+          </div>
         }
       />
       <CardBody>
-        {named.length > 0 && (
-          <div class="mb-3 max-w-xs">
-            <Field id="admin-stats-source" label={t.t(`AdminStats.source`)}>
-              <Select
-                name="source"
-                data-e2e="admin-stats-source"
-                options={[
-                  { value: ``, label: t.t(`AdminStats.allSources`) },
-                  ...named.map((row) => ({ value: row.slug!, label: row.name })),
-                ]}
-                value={source ?? ``}
-                onChange={(event) =>
-                  onSource((event.currentTarget as HTMLSelectElement).value || null)}
-              />
-            </Field>
-          </div>
-        )}
         <LineChart
           series={[
             { name: t.t(`AdminStats.visits`), points: current.map(({ x, y }) => ({ x, y })) },
@@ -565,7 +600,7 @@ function VisitsChart(
           yDomain={[0, countAxisTop([...current, ...previous].map((point) => point.y))]}
           yTicks={5}
           xFormat={(x) => day.dayMonth(typeof x === `string` ? `${x}T00:00:00Z` : x)}
-          yFormat={(value) => format.number(value)}
+          valueFormat={(value) => format.number(value)}
           ariaLabel={t.t(`AdminStats.chartLabel`, { count: report.days })}
           emptyLabel={t.t(`AdminDashboard.nothingYet`)}
         />
@@ -589,7 +624,10 @@ function Items(
     value,
     values,
     lowSample: item.lowSample,
-    image: item.coverId ? { src: ADMIN_CATALOG_PATHS.thumbnail(item.coverId), alt: `` } : undefined,
+    image: {
+      src: item.coverId ? ADMIN_CATALOG_PATHS.thumbnail(item.coverId) : NO_PHOTO_THUMBNAIL,
+      alt: ``,
+    },
     note: item.topSource ? t.t(`AdminStats.mostlyFrom`, { source: item.topSource }) : undefined,
     href: ADMIN_CATALOG_PATHS.item(item.id),
   })
@@ -612,7 +650,7 @@ function Items(
                   { label: t.t(`AdminStats.orderRate`), format: (rate) => percent(rate) },
                 ],
               }}
-              format={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               navigate={navigate}
               data={items.mostOrdered.map((item) =>
                 row(item, item.orderClicks, [item.views, item.rate])
@@ -630,7 +668,7 @@ function Items(
                 value: t.t(`AdminStats.views`),
                 extra: [{ label: t.t(`AdminStats.orderClicks`) }],
               }}
-              format={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               navigate={navigate}
               data={items.viewedNotOrdered.map((item) => row(item, item.views, [item.orderClicks]))}
               emptyLabel={items.mostOrdered.length > 0

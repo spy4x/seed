@@ -1,6 +1,7 @@
 import type { APIRequestContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp } from "./fixtures/app.ts"
+import { expectTabStaysIn, gotoApp } from "./fixtures/app.ts"
+import { PRODUCT_NAME } from "../libs/ui/brand.ts"
 import { lastMail, mailedCode, nextCode } from "./fixtures/sign-up.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
@@ -66,11 +67,29 @@ test(`keeping a guest account by e-mail keeps its user id, drops the banner and 
     const guestCookie = await sessionCookie()
     expect(guestCookie).toBeTruthy()
 
+    // Signing out asks first; that dialog keeps Tab inside it.
+    await page.locator(`[data-e2e=account-menu-button]`).click()
+    await page.getByRole(`menuitem`, { name: `Sign out` }).click()
+    await expect(page.locator(`dialog[data-e2e=guest-sign-out]`)).toBeVisible()
+    await expectTabStaysIn(page, `dialog[data-e2e=guest-sign-out]`)
+    await page.locator(`[data-e2e=guest-sign-out-cancel]`).click()
+    await expect(page.locator(`dialog[data-e2e=guest-sign-out]`)).toBeHidden()
+
     await page.locator(`[data-e2e=guest-banner-keep]`).click()
     await expect(page).toHaveURL(`/keep`)
+    await expect(page).toHaveTitle(`Keep your account · ${PRODUCT_NAME}`)
     const before = await lastMail(request, lastMailUrl, email)
     await page.locator(`[data-e2e=keep-email]`).fill(email)
-    await page.locator(`[data-e2e=keep-password]`).fill(`Passw0rd!`)
+    const password = page.locator(`[data-e2e=keep-password]`)
+    await password.fill(`Passw0rd!`)
+    // The eye button shows what was typed and hides it again.
+    const toggle = page.locator(`[data-e2e=keep-password-toggle]`)
+    await toggle.click()
+    await expect(password).toHaveAttribute(`type`, `text`)
+    await expect(toggle).toHaveAccessibleName(`Hide password`)
+    await toggle.click()
+    await expect(password).toHaveAttribute(`type`, `password`)
+    await expect(password).toHaveValue(`Passw0rd!`)
     await page.locator(`[data-e2e=keep-email-submit]`).click()
     await expect(page.getByRole(`heading`, { level: 1, name: `Check your inbox` })).toBeVisible()
     const field = page.locator(`[data-e2e=mailed-code-step-code]`)

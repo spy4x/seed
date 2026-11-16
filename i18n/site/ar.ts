@@ -517,7 +517,7 @@ export default {
   "FeatureTierRuntime.nav": "بيئات التشغيل",
   "FeatureTierRuntime.title": "يعمل على Deno وNode وBun",
   "FeatureTierRuntime.lead":
-    "تعمل الواجهة البرمجية (API) والعامل الخلفي والموقع دون أي تعديل على Deno وNode وBun، ويشغّلها CI على البيئات الثلاث مع كل تغيير. سطر واحد في ملف env، هو APP_RUNTIME، يختار بيئة التشغيل. الشيفرة مبنية على معايير الويب (fetch وRequest وWeb Crypto وWebSocket ووحدات ES)، أما مهام Seed واختباراته فتعمل على Deno، ويثبّته لك npm أو Bun. في أكتوبر 2026 <announced>أعلن</announced> فريق Deno عن عام آخر من الدعم مع إصدارات شهرية لإصلاح الأخطاء والثغرات الأمنية، ينهي بعده تطويره الخاص؛ ويبقى Deno مفتوح المصدر.",
+    "تعمل الواجهة البرمجية (API) والعامل الخلفي والموقع دون أي تعديل على Deno وNode وBun، ويشغّلها CI على البيئات الثلاث مع كل تغيير. سطر واحد في ملف env، هو APP_RUNTIME، يختار بيئة التشغيل. الشيفرة مبنية على معايير الويب (fetch وRequest وWeb Crypto وWebSocket ووحدات ES)، أما مهام Seed واختباراته فتعمل على Deno، ويثبّته لك npm أو Bun. في أكتوبر 2026 <announced>أعلن</announced> فريق Deno عن عام آخر من الدعم مع إصدارات شهرية لإصلاح الأخطاء والثغرات الأمنية، يتوقف بعده عن تطويره؛ ويبقى Deno مفتوح المصدر.",
   "FeatureTierRuntime.pick": "كيف تختار بيئة التشغيل",
   "FeatureTierOperations.eyebrow": "التشغيل",
   "FeatureTierOperations.title": "شغّله، وراقبه، وادعم مستخدميه",

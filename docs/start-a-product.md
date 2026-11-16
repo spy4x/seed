@@ -171,7 +171,7 @@ draws them on the website: replace both with the product's own clips, or delete 
 
 | File                      | What says "Seed"                                                       |
 | ------------------------- | ---------------------------------------------------------------------- |
-| `libs/ui/brand.ts`        | `PRODUCT_NAME`: the brand marks, the manifest and the admin tab titles |
+| `libs/ui/brand.ts`        | `PRODUCT_NAME`: the brand marks, the manifest and both apps' tab titles |
 | `apps/spa/index.html`     | `<title>` and `apple-mobile-web-app-title`                             |
 | `apps/admin/index.html`   | `<title>`                                                              |
 | `libs/ui/frame.tsx`       | The `Icon` of the `BrandMark`                                          |

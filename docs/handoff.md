@@ -275,7 +275,7 @@ To run the API for real outside compose you also need Valkey (`valkey-server --r
 <KV_PASSWORD>`; the API refuses to start without `KV_PASSWORD` and sends it with `AUTH`),
 migrations applied (`deno task db:migrate`), and `infra/configs/vapid.json` present
 (`deno task vapid-key:create`) copied to `./vapid.json`, since the API reads it
-from the working directory while compose bind-mounts it. Compose fails the start when the file is
+from the working directory while compose bind-mounts it, or named by `VAPID_KEYS_PATH`. Compose fails the start when the file is
 missing; `deno task deploy` generates it on the server.
 
 Live updates between tabs need the worker too: without it a group created in one tab shows in

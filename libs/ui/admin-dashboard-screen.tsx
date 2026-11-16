@@ -219,7 +219,7 @@ function DailyChart(
           yDomain={[0, countAxisTop(days.map((day) => day.count))]}
           yTicks={COUNT_AXIS_STEPS}
           xFormat={(x) => day.dayMonth(typeof x === "string" ? `${x}T00:00:00Z` : x)}
-          yFormat={(value) => format.number(value)}
+          valueFormat={(value) => format.number(value)}
           ariaLabel={t.t(`AdminDashboard.chartLabel`, { title, count: days.length })}
           emptyLabel={t.t(`AdminDashboard.nothingYet`)}
         />

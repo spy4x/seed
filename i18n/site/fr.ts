@@ -560,7 +560,7 @@ export default {
   "FeatureTierRuntime.nav": "Environnements",
   "FeatureTierRuntime.title": "Tourne sur Deno, Node et Bun",
   "FeatureTierRuntime.lead":
-    "L’API, le worker et le site web tournent sans modification sur Deno, Node et Bun, et la CI les démarre sur les trois à chaque changement. Une seule ligne du fichier env, APP_RUNTIME, choisit l’environnement d’exécution. Le code repose sur les standards du web (fetch, Request, Web Crypto, WebSocket, modules ES) ; les tâches et les tests de Seed tournent sur Deno, que npm ou Bun installe pour vous. En octobre 2026, l’équipe de Deno a <announced>annoncé</announced> une dernière année de support, avec des versions correctives et de sécurité chaque mois, après quoi elle arrête son propre développement ; Deno reste open source.",
+    "L’API, le worker et le site web tournent sans modification sur Deno, Node et Bun, et la CI les démarre sur les trois à chaque changement. Une seule ligne du fichier env, APP_RUNTIME, choisit l’environnement d’exécution. Le code repose sur les standards du web (fetch, Request, Web Crypto, WebSocket, modules ES) ; les tâches et les tests de Seed tournent sur Deno, que npm ou Bun installe pour vous. En octobre 2026, l’équipe de Deno a <announced>annoncé</announced> une dernière année de support, avec des versions correctives et de sécurité chaque mois, après quoi elle cessera de le développer ; Deno reste open source.",
   "FeatureTierRuntime.pick": "Choisir son environnement d’exécution",
   "FeatureTierOperations.eyebrow": "Exploitation",
   "FeatureTierOperations.title": "Le faire tourner, le surveiller, accompagner ses utilisateurs",

@@ -19,6 +19,7 @@ default, never a value to keep for a secret.
 | `CONTAINER_PROVIDER`   | The container engine: `docker` or `podman`. Empty means Docker; anything else is refused.                    | `docker`           | [Deploy an update](deploy-updates.md)          |
 | `DOMAIN`               | The product's host: the SPA, the API and the bundled file store.                                             | `app.localhost`    | [Deploy](deploy.md#dns)                        |
 | `DEV_EMAIL`            | The contact address sent with web push messages. The API refuses to start without it.                        | `dev@example.com`  |                                                |
+| `VAPID_KEYS_PATH` | Where the API reads its web push keys. Empty: `./vapid.json`, where compose mounts `infra/configs/vapid.json`; `deno task e2e:local` points it at a file of its own. | empty | |
 | `DENO_LOG`             | How much the API and the worker log: `info`, or `debug`, which logs every request.                           | `info`             | [Load tests](load-tests.md)                    |
 | `COMPOSE_BAKE`         | Docker Compose's own setting: build the images with Bake.                                                    | `true`             |                                                |
 | `COMPOSE_PROFILES`     | The optional parts Compose starts, comma-separated; empty starts only the must-haves. Profiles below. | `monitoring,files` |                                                |

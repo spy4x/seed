@@ -16,6 +16,7 @@ import {
   AdminStatsScreen,
   type AdminStatsScreenProps,
   chartPoints,
+  NO_PHOTO_THUMBNAIL,
   STATS_SKELETON_DELAY_MS,
 } from "./admin-stats-screen.tsx"
 import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
@@ -261,6 +262,33 @@ describe("stats screen", () => {
     expect(calls).toEqual([["source", "zalo-a"], ["source", "fb-market"], ["source", null]])
   })
 
+  it("scrolls the chart into view from a source row, smoothly unless motion is reduced", async () => {
+    const own = globalThis.matchMedia
+    try {
+      for (const reduced of [false, true]) {
+        globalThis.matchMedia = ((query: string) => ({
+          matches: reduced && query === "(prefers-reduced-motion: reduce)",
+        })) as typeof globalThis.matchMedia
+        await mount(<AdminStatsScreen {...props([])} />)
+        const scrolls: unknown[] = []
+        find("[data-e2e=admin-stats-chart]").scrollIntoView = (options) => scrolls.push(options)
+        await clickOn(button("Zalo A", find("[data-e2e=admin-stats-sources-list]")))
+        expect(scrolls).toEqual([{ behavior: reduced ? "auto" : "smooth", block: "nearest" }])
+      }
+    } finally {
+      globalThis.matchMedia = own
+    }
+  })
+
+  it("puts the source picker, named Source, in the chart's header beside the summary", async () => {
+    await mount(<AdminStatsScreen {...props([])} />)
+    const header = find("[data-e2e=admin-stats-chart] .pc-card-header")
+    const select = find<HTMLSelectElement>("[data-e2e=admin-stats-source]")
+    expect(header.contains(select)).toBe(true)
+    expect(header.textContent).toContain("140 visits")
+    expect(select.getAttribute("aria-label")).toBe("Source")
+  })
+
   it("draws the period picker beside the title from sm up, and under the header on a phone", async () => {
     await mount(<AdminStatsScreen {...props([])} />)
     const holders = [...document.querySelectorAll("[role=radiogroup]")].map((group) =>
@@ -306,6 +334,15 @@ describe("stats screen", () => {
     ])
     expect(find("[data-e2e=admin-stats-most-ordered]").textContent).toContain("mostly Zalo A")
     expect(find("[data-e2e=admin-stats-not-ordered]").textContent).toContain("at least 10 views")
+  })
+
+  it("draws an item's photo, or a placeholder of the same size when it has none", async () => {
+    await mount(<AdminStatsScreen {...props([])} />)
+    const photo = find<HTMLImageElement>("[data-e2e=admin-stats-most-ordered] tbody img")
+    const placeholder = find<HTMLImageElement>("[data-e2e=admin-stats-not-ordered] tbody img")
+    expect(photo.getAttribute("src")).toBe("/api/admin/catalog/photos/cover-1/thumbnail")
+    expect(placeholder.getAttribute("src")).toBe(NO_PHOTO_THUMBNAIL)
+    expect(placeholder.getAttribute("alt")).toBe("")
   })
 
   it("counts the order clicks per channel and says what the numbers leave out", async () => {
@@ -397,6 +434,17 @@ describe("stats screen states", () => {
     expect(has("[data-e2e=admin-stats-unknown-website] button")).toBe(false)
   })
 
+  it("centres the buttons of every error state under their centred text", async () => {
+    const url = "https://umami.example.com/websites/w1"
+    for (const state of ["token-refused", "unknown-website", "unreachable"] as const) {
+      await mount(<AdminStatsScreen {...props([], { response: { state, umamiUrl: url } })} />)
+      const buttons = find(`[data-e2e=admin-stats-${state}] a`).parentElement!
+      expect(buttons.classList.contains("justify-center")).toBe(true)
+    }
+    await mount(<AdminStatsScreen {...props([], { response: null, error: "Down." })} />)
+    expect(find("[data-e2e=admin-stats-error] button").classList.contains("self-center")).toBe(true)
+  })
+
   it("offers Try again, never zeros, while Umami is down with nothing kept", async () => {
     const calls: unknown[][] = []
     const down: WebsiteStatsResponse = {
@@ -420,6 +468,25 @@ describe("stats screen states", () => {
     expect(has("[data-e2e=admin-stats-kpis]")).toBe(true)
     await clickOn(button("Try again", notice))
     expect(calls).toEqual([["refresh", true]])
+  })
+
+  it("names only the time of kept numbers from today, and the date too from an earlier day", async () => {
+    const stale = { ...ready(), stale: true, updatedAt: "2026-10-27T14:40:00.000Z" }
+    const notice = async (timeZone: string) => {
+      await mount(
+        <FormatContext.Provider
+          value={createFormatters({ locale: `en-GB`, timeZone, hourCycle: `h23` })}
+        >
+          <AdminStatsScreen
+            {...props([], { response: stale, now: Date.parse("2026-10-27T20:00:00Z") })}
+          />
+        </FormatContext.Provider>,
+      )
+      return find("[data-e2e=admin-stats-stale]").textContent
+    }
+    // 20:00 in UTC is still the 27th; in Ho Chi Minh City (UTC+7) it is already the 28th.
+    expect(await notice(`UTC`)).toContain("Showing numbers from 14:40.")
+    expect(await notice(`Asia/Ho_Chi_Minh`)).toContain("Showing numbers from 27 Oct 2026, 21:40.")
   })
 
   it("shows our API's failure with Try again, which reads the shared copy", async () => {

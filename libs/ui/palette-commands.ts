@@ -245,7 +245,7 @@ function kbdOf(shortcuts: readonly ShortcutRow[], key: string): string | undefin
 }
 
 /**
- * The keys a row shows: the palette (preact-ui 14.8.0) draws one key press and throws on a
+ * The keys a row shows: the palette (preact-ui 16.0.0) draws one key press and throws on a
  * sequence such as `g n`, so a sequence is kept in `shortcut` only.
  */
 export function shortcutKeys(keys: string | undefined): Pick<PaletteOption, "kbd" | "shortcut"> {
