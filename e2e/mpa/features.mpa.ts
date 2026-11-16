@@ -103,11 +103,12 @@ test(`the admin still loads only when its section nears the screen`, async ({ pa
   await expect.poll(() => asked).toContain(`/video/admin-panel-poster-1280.webp`)
 })
 
-/** The three feature loops, the page each plays on, and the name its play button carries. */
+/** The four feature loops, a page each plays on, and the name its play button carries. */
 const LOOPS = [
   [`realtime`, `/features/realtime`, `Realtime sync`],
   [`offline`, `/features/offline`, `Offline editing`],
   [`shortcuts`, `/features/shortcuts`, `Keyboard shortcuts`],
+  [`speed`, `/`, `Instant screens`],
 ] as const
 
 for (const [loop, path, name] of LOOPS) {
@@ -156,7 +157,8 @@ test.describe(`a screenshot's lightbox`, () => {
   test(`zooms the page's screenshots but never a feature loop's poster`, async ({ page }) => {
     await page.goto(`/features`)
     await expect(page.getByRole(`button`, { name: /^Zoom: / }).first()).toBeVisible()
-    for (const [loop] of LOOPS) {
+    // /features shows the loop of each feature page; the speed loop lives on the home page only.
+    for (const [loop] of LOOPS.filter(([, path]) => path.startsWith(`/features/`))) {
       const figure = page.locator(`[data-e2e=loop-${loop}]`)
       await expect(figure.locator(`img`).first()).toBeAttached()
       // Once the clip is live the poster is hidden from the accessibility tree, so the zoom marks

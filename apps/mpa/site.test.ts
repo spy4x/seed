@@ -800,6 +800,23 @@ describe("the public website", () => {
     expect(hrefOf(linkNamed(band, "How it works"))).toBe(`/features#fast`)
   })
 
+  it("shows the speed loop in the speed band as a poster without JavaScript, its two halves named above it and its caption under it (#989)", async () => {
+    const { html } = await page("/")
+    const start = html.indexOf(`<section id="speed"`)
+    const band = html.slice(start, html.indexOf(`</section>`, start))
+    const loop = band.slice(band.indexOf(`data-e2e="loop-speed"`))
+
+    expect(band).toContain(`data-e2e="loop-speed"`)
+    expect(loop).toMatch(/<img [^>]*src="\/video\/speed-loop-dark-720\.webp/)
+    expect(loop).toMatch(/\/video\/speed-loop-dark-1440\.webp(\?[^ ]*)? 1440w/)
+    expect(loop).toContain(`sizes="(min-width: 1024px) 518px,`)
+    expect(loop).not.toContain(`<video`)
+    const labels = loop.slice(0, loop.indexOf(`<img`))
+    expect(labels.indexOf(`>A usual app</span>`)).toBeGreaterThan(-1)
+    expect(labels.indexOf(`>Seed</span>`)).toBeGreaterThan(labels.indexOf(`>A usual app</span>`))
+    expect(loop).toMatch(/<figcaption[^>]*>The same clicks in both windows\./)
+  })
+
   it("links the speed band to /features#fast in the home page's language", async () => {
     const localized = new App<State>()
       .use(pageMiddleware(config, neverCalled, () => true))
@@ -812,6 +829,7 @@ describe("the public website", () => {
     const band = html.slice(start, html.indexOf(`</section>`, start))
 
     expect(band).toContain(`>Kein Ladekreisel zwischen den Klicks</h2>`)
+    expect(band).toContain(`>Eine typische App</span>`)
     expect(hrefOf(linkNamed(band, "So funktioniert es"))).toBe(`/de/features#fast`)
     expect(hrefOf(linkNamed(band, "Probier es aus: klick dich durch die Demo"))).toBe(`${spa}/try`)
   })

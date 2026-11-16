@@ -591,6 +591,13 @@ export default {
     "Ctrl+K 打开命令面板。拼错的搜索、西里尔字母的搜索和用错键盘布局的搜索，都能找到同一个操作，然后执行它。",
   "Loops.shortcutsCaption":
     "按 Ctrl+K（Mac 上为 ⌘K）。搜索能容忍拼写错误、西里尔字母和用错的键盘布局。",
+  "Loops.speedName": "页面即点即开",
+  "Loops.speedTitle":
+    "两个窗口里相同的点击。左边是一个常见的应用，每打开一条笔记都要先转圈等待；右边的 Seed 每条笔记都立即打开。",
+  "Loops.speedCaption":
+    "两个窗口点击完全相同。常见的应用每次都要等服务器；Seed 从设备上的副本打开笔记。",
+  "Loops.speedUsualLabel": "常见的应用",
+  "Loops.speedSeedLabel": "Seed",
   "Outbox.change": "更改",
   "Outbox.changeNote": "一条笔记、一位成员",
   "Outbox.event": "它的事件",

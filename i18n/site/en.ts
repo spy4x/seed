@@ -649,6 +649,13 @@ export default {
     "Ctrl+K opens the command palette. A misspelled, a Cyrillic and a wrong-layout search each find the same action, which then runs.",
   "Loops.shortcutsCaption":
     "Press Ctrl+K (⌘K on a Mac). Search forgives typos, Cyrillic and the wrong keyboard layout.",
+  "Loops.speedName": "Instant screens",
+  "Loops.speedTitle":
+    "The same clicks in two windows. On the left, a usual app shows a spinner before each note opens; on the right, Seed opens each note at once.",
+  "Loops.speedCaption":
+    "The same clicks in both windows. The usual app waits for the server each time; Seed opens notes from the copy on the device.",
+  "Loops.speedUsualLabel": "A usual app",
+  "Loops.speedSeedLabel": "Seed",
   "Outbox.change": "The change",
   "Outbox.changeNote": "a note, a member",
   "Outbox.event": "Its event",

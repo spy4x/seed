@@ -155,7 +155,7 @@ provider with the product's translator.
 | ------------------------ | ----------------------------------------- | -------------------------------------------- |
 | Website screenshots      | `static/shots/`                           | `screenshots/capture.ts`                     |
 | The admin video          | `media/video/admin-panel.*`, `static/video/admin-panel-*` | `deno task video:admin`      |
-| The three feature loops  | `media/video/*-loop-*`, `static/video/*-loop-*` | `deno task loops` in `apps/mpa` (`screenshots/loops.ts`) |
+| The four feature loops   | `media/video/*-loop-*`, `static/video/*-loop-*` | `deno task loops` in `apps/mpa` (`screenshots/loops.ts`) |
 | README pictures          | `docs/screenshots/`                       | `docs/screenshots/record.ts`                 |
 
 `deno task video:admin`, run from the repository's root, records the video with
