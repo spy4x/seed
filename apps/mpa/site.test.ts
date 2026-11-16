@@ -829,7 +829,7 @@ describe("the public website", () => {
     const band = html.slice(start, html.indexOf(`</section>`, start))
 
     expect(band).toContain(`>Kein Ladekreisel zwischen den Klicks</h2>`)
-    expect(band).toContain(`>Eine übliche App</span>`)
+    expect(band).toContain(`>Eine typische App</span>`)
     expect(hrefOf(linkNamed(band, "So funktioniert es"))).toBe(`/de/features#fast`)
     expect(hrefOf(linkNamed(band, "Probier es aus: klick dich durch die Demo"))).toBe(`${spa}/try`)
   })

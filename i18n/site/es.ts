@@ -675,7 +675,7 @@ export default {
     "Pulsa Ctrl+K (⌘K en un Mac). La búsqueda perdona erratas, el cirílico y la distribución de teclado equivocada.",
   "Loops.speedName": "Pantallas al instante",
   "Loops.speedTitle":
-    "Los mismos cuatro clics en dos ventanas. A la izquierda, una app típica muestra un indicador de carga antes de abrir cada nota; a la derecha, Seed abre cada nota al momento.",
+    "Los mismos clics en dos ventanas. A la izquierda, una app típica muestra un indicador de carga antes de abrir cada nota; a la derecha, Seed abre cada nota al momento.",
   "Loops.speedCaption":
     "Los mismos clics en las dos ventanas. La app típica espera al servidor cada vez; Seed abre las notas desde la copia en el dispositivo.",
   "Loops.speedUsualLabel": "Una app típica",

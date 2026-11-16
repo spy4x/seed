@@ -672,7 +672,7 @@ export default {
     "Pressione Ctrl+K (⌘K no Mac). A busca perdoa erros de digitação, cirílico e o layout de teclado errado.",
   "Loops.speedName": "Telas na hora",
   "Loops.speedTitle":
-    "Os mesmos quatro cliques em duas janelas. À esquerda, um app comum mostra um “carregando” antes de abrir cada nota; à direita, o Seed abre cada nota na hora.",
+    "Os mesmos cliques em duas janelas. À esquerda, um app comum mostra um “carregando” antes de abrir cada nota; à direita, o Seed abre cada nota na hora.",
   "Loops.speedCaption":
     "Os mesmos cliques nas duas janelas. O app comum espera o servidor toda vez; o Seed abre as notas a partir da cópia no dispositivo.",
   "Loops.speedUsualLabel": "Um app comum",

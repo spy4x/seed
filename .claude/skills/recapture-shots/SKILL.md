@@ -1,6 +1,6 @@
 ---
 name: recapture-shots
-description: Re-capture the product screenshots, both the public website's (apps/mpa/static/shots and og cards, by apps/mpa/screenshots/capture.ts) and the README's (docs/screenshots, by docs/screenshots/record.ts). Use after a change that alters how a photographed screen looks in a significant way, and ask the owner when unsure. Also re-records the admin panel video of the website's /admin page (docs/screenshots/admin-video.ts) and the website's three feature loops (apps/mpa/screenshots/loops.ts) when a screen they show changed significantly.
+description: Re-capture the product screenshots, both the public website's (apps/mpa/static/shots and og cards, by apps/mpa/screenshots/capture.ts) and the README's (docs/screenshots, by docs/screenshots/record.ts). Use after a change that alters how a photographed screen looks in a significant way, and ask the owner when unsure. Also re-records the admin panel video of the website's /admin page (docs/screenshots/admin-video.ts) and the website's four feature loops (apps/mpa/screenshots/loops.ts) when a screen they show changed significantly.
 ---
 
 # Re-capture the product screenshots

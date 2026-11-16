@@ -673,10 +673,10 @@ export default {
     "Drück Strg+K (⌘K auf dem Mac). Die Suche verzeiht Tippfehler, Kyrillisch und das falsche Tastaturlayout.",
   "Loops.speedName": "Ansichten ohne Wartezeit",
   "Loops.speedTitle":
-    "Dieselben vier Klicks in zwei Fenstern. Links zeigt eine übliche App vor jeder Notiz einen Ladekreisel, rechts öffnet Seed jede Notiz sofort.",
+    "Dieselben Klicks in zwei Fenstern. Links zeigt eine typische App vor jeder Notiz einen Ladekreisel, rechts öffnet Seed jede Notiz sofort.",
   "Loops.speedCaption":
-    "Dieselben Klicks in beiden Fenstern. Die übliche App wartet jedes Mal auf den Server, Seed öffnet Notizen aus der Kopie auf dem Gerät.",
-  "Loops.speedUsualLabel": "Eine übliche App",
+    "Dieselben Klicks in beiden Fenstern. Die typische App wartet jedes Mal auf den Server, Seed öffnet Notizen aus der Kopie auf dem Gerät.",
+  "Loops.speedUsualLabel": "Eine typische App",
   "Loops.speedSeedLabel": "Seed",
   "Outbox.change": "Die Änderung",
   "Outbox.changeNote": "eine Notiz, ein Mitglied",
