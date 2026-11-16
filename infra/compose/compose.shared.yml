@@ -332,7 +332,8 @@ services:
       - docker-socket
 
   # Ships the logs of this Compose project's containers, and no other container's, to
-  # VictoriaLogs. It also counts the API's answers by status class as a metric for vmagent.
+  # VictoriaLogs, unless VLOGS_SHIP=false. It also counts the API's answers by status class as a
+  # metric for vmagent.
   #
   # It reads the logs from the Docker API through `socket-proxy` above, which lets it list
   # containers, inspect them, read their logs and follow events, and nothing else. It still gets
@@ -344,6 +345,7 @@ services:
     restart: unless-stopped
     volumes:
       - ../../infra/configs/vector.yml:/etc/vector/vector.yaml:ro,Z
+      - ../../infra/configs/vector-logs.yml:/etc/vector/vector-logs.yaml:ro,Z
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]
@@ -353,19 +355,28 @@ services:
       - /var/lib/vector
     # Vector pastes environment values into its config as text. A password may hold any
     # character, so it goes in as base64, together with the user name, and never as itself.
+    # VLOGS_SHIP=false leaves out the file that ships the logs (docs/stack.md, "Shared stack on the
+    # same host"). Any value but empty, true or false stops the container, so a typo never ships
+    # the logs twice or not at all.
     entrypoint:
       - sh
       - -euc
       - |
         VLOGS_AUTH=$$(printf '%s:%s' "$$VLOGS_USERNAME" "$$VLOGS_PASSWORD" | base64 | tr -d '\n')
         export VLOGS_AUTH
-        exec "$$@"
+        case "$${VLOGS_SHIP:-}" in
+          '' | true) set -- "$$@" --config /etc/vector/vector-logs.yaml ;;
+          false) ;;
+          *) echo "VLOGS_SHIP must be true, false or empty, got \"$$VLOGS_SHIP\"" >&2; exit 1 ;;
+        esac
+        exec "$$@" --config /etc/vector/vector.yaml
       - sh
     command: [/usr/local/bin/vector]
     environment:
-      # Lets infra/configs/vector.yml read the project's two names, VLOGS_URL and the VLOGS_AUTH
-      # made above. Vector calls it dangerous because a config from someone else could read any
-      # variable; this config is ours, and the five values below are all the container is given.
+      # Lets infra/configs/vector.yml and vector-logs.yml read the project's two names, VLOGS_URL
+      # and the VLOGS_AUTH made above. Vector calls it dangerous because a config from someone else
+      # could read any variable; this config is ours, and the six values below are all the
+      # container is given.
       - VECTOR_DANGEROUSLY_ALLOW_ENV_VAR_INTERPOLATION=true
       - PROJECT=${PROJECT}
       # The project name as Compose writes it on its containers' labels: lower case.
@@ -373,6 +384,7 @@ services:
       - VLOGS_URL=${VLOGS_URL:-http://victorialogs:9428}
       - VLOGS_USERNAME=${VLOGS_USERNAME:-}
       - VLOGS_PASSWORD=${VLOGS_PASSWORD:-}
+      - VLOGS_SHIP=${VLOGS_SHIP:-}
     deploy:
       resources:
         limits:

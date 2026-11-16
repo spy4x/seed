@@ -1,5 +1,6 @@
-# Vector ships this project's container logs to VictoriaLogs: to VLOGS_URL, or to the bundled
-# VictoriaLogs when that is unset (infra/compose/compose.shared.yml). A dollar sign with a name in
+# Vector reads this project's container logs and makes metrics of some lines for vmagent. Shipping
+# the logs themselves is in infra/configs/vector-logs.yml, which the container loads unless
+# VLOGS_SHIP=false (infra/compose/compose.shared.yml). A dollar sign with a name in
 # braces is pasted in from the container's environment as text, before the file is parsed, in
 # comments too. So only values that cannot break the file come in that way: the project name, the
 # address and the credentials in base64. The user name and the password themselves never do.
@@ -18,14 +19,6 @@ sources:
     exclude_containers: ['${PROJECT}-vector']
 
 transforms:
-  logs:
-    type: remap
-    inputs: [containers]
-    source: |
-      .project = "${PROJECT}"
-      # Compose puts a dozen labels on every container; none helps to read a log line.
-      del(.label)
-
   # The API has no metrics endpoint yet, so its requests are counted from its request log, whose
   # lines end like `--> GET /api/groups 200 3ms` (@spy4x/server/request-log; the status is wrapped
   # in a colour code). One counter per status class, api_requests_total{status="2xx"} to "5xx".
@@ -69,23 +62,6 @@ transforms:
         name: backup_last_success_timestamp_seconds
 
 sinks:
-  victorialogs:
-    type: elasticsearch
-    inputs: [logs]
-    endpoints: ['${VLOGS_URL}/insert/elasticsearch/']
-    api_version: v8
-    compression: gzip
-    healthcheck:
-      enabled: false
-    query:
-      _msg_field: message
-      _time_field: timestamp
-      _stream_fields: project,container_name,stream
-    # HTTP basic auth. The container's entrypoint encodes VLOGS_USERNAME and VLOGS_PASSWORD into
-    # VLOGS_AUTH, so a quote or a hash sign in the password cannot change this file.
-    request:
-      headers:
-        Authorization: 'Basic ${VLOGS_AUTH}'
   # Scraped by vmagent (infra/configs/vmagent.yml).
   metrics:
     type: prometheus_exporter
