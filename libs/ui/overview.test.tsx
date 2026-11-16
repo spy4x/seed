@@ -381,6 +381,9 @@ describe("the group overview", () => {
   })
 
   it("returns focus to More actions when Customise closes with Done or the ✕", async () => {
+    // happy-dom leaves the menu item's focus on its button, so the dialog's own restore lands there
+    // too and this passes without the screen's effect; in Chromium it does not, and the browser
+    // spec (e2e/overview.e2e.ts) is what fails without it.
     await mount()
 
     await clickOn(find("[data-e2e=overview-menu]"))

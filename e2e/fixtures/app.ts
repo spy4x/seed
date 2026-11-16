@@ -178,18 +178,25 @@ export async function openProfile(page: Page, section?: string): Promise<void> {
 
 /**
  * Presses Tab, then Shift+Tab, `presses` times each in the open dialog `dialog` matches, and fails
- * on the first press that puts focus outside it: a modal dialog keeps the keyboard inside until it
- * closes, so the page behind it is never reached.
+ * on the first press that puts focus on an element of the page behind it: a modal dialog keeps the
+ * keyboard inside until it closes. Past its last control Chromium hands focus to the browser's own
+ * toolbar, which leaves `document.activeElement` on `<body>`; the next press comes back into the
+ * dialog, so `<body>` counts as staying, and at least one press must land inside.
  */
 export async function expectTabStaysIn(page: Page, dialog: string, presses = 12): Promise<void> {
+  let landedInside = 0
   for (const key of ["Tab", "Shift+Tab"]) {
     for (let press = 1; press <= presses; press++) {
       await page.keyboard.press(key)
-      const inside = await page.evaluate(
-        (selector) => Boolean(document.activeElement?.closest(selector)),
-        dialog,
-      )
-      if (!inside) throw new Error(`${key} press ${press} left ${dialog}`)
+      const where = await page.evaluate((selector) => {
+        const active = document.activeElement
+        if (active?.closest(selector)) return `inside`
+        if (!active || active === document.body) return `browser`
+        return `${active.tagName.toLowerCase()} ${active.getAttribute("data-e2e") ?? ""}`.trim()
+      }, dialog)
+      if (where === `inside`) landedInside++
+      else if (where !== `browser`) throw new Error(`${key} press ${press} reached ${where}`)
     }
   }
+  if (landedInside === 0) throw new Error(`no Tab press reached ${dialog}`)
 }
