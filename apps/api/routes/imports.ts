@@ -50,7 +50,7 @@ export interface ImportsRouteDependencies {
  * - `GET /:importId` answers one import with its preview.
  * - `POST /:importId/check` takes `{ mapping }` and answers every refused row, capped, and the
  *   kind's review of the valid rows when it has one; saves nothing.
- * - `POST /:importId/commit` takes `{ mapping, choices? }` and queues the save; 202 with the import.
+ * - `POST /:importId/commit` takes `{ mapping, choices?, keep? }` and queues the save; 202 with the import.
  * - `POST /:importId/undo` removes the records the save made.
  *
  * Writes need the web app's origin and accept an `Idempotency-Key` header.
@@ -105,12 +105,16 @@ export function createImportsRoute(dependencies: ImportsRouteDependencies): Hono
     })
     .post("/:importId/commit", requireSameOrigin, async (c) => {
       const ref = refOf(c)
-      const { mapping, choices } = parseImportRequest(importCommitBodySchema, await readJson(c))
+      const { mapping, choices, keep } = parseImportRequest(
+        importCommitBodySchema,
+        await readJson(c),
+      )
       const result = await dependencies.commit(
         new ImportCommitCommand({
           ...ref,
           mapping,
           choices,
+          keep,
           requestId: c.get("requestId"),
           idempotencyKey: c.req.header("idempotency-key"),
         }),

@@ -272,9 +272,9 @@ export class PostgresImportRepository {
   }
 
   /**
-   * Saves a read import under `mapping` and the person's `choices`: stores both and queues the
-   * commit job. Asking again while it saves, or once it is saved, changes nothing and answers the
-   * import as it is.
+   * Saves a read import under `mapping`, the person's `choices` and the rows they `keep`: stores
+   * them and queues the commit job. Asking again while it saves, or once it is saved, changes
+   * nothing and answers the import as it is.
    */
   async requestCommit(
     groupId: string,
@@ -282,6 +282,7 @@ export class PostgresImportRepository {
     actorId: number,
     mapping: ImportMapping,
     choices?: ImportChoices,
+    keep?: readonly number[],
   ): Promise<ImportSummary> {
     return await this.sql.begin(async (tx) => {
       const { row } = await this.lockVisible(tx, groupId, id, actorId)
@@ -292,6 +293,7 @@ export class PostgresImportRepository {
       const [updated] = await tx<ImportRow[]>`
         UPDATE imports SET status = ${ImportStatus.COMMITTING}, mapping = ${tx.json(mapping)},
           choices = ${choices === undefined ? null : tx.json(choices)},
+          keep = ${keep === undefined ? null : tx.json([...keep])},
           commit_requested_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING ${columns(tx)}

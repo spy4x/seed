@@ -11,6 +11,7 @@ import { err, ok } from "@spy4x/platform/universal/result"
 import type postgres from "postgres"
 import {
   assertChoices,
+  assertKeep,
   assertMapping,
   cellOf,
   checkRows,
@@ -159,6 +160,18 @@ describe("the person's choices", () => {
   })
 })
 
+describe("the rows the person keeps", () => {
+  it("pass for rows 1 to the file's last", () => {
+    expect(codeOf(() => assertKeep([1, 3], 3))).toBeNull()
+    expect(codeOf(() => assertKeep([], 0))).toBeNull()
+  })
+
+  it("refuse a row past the file and a row below 1", () => {
+    expect(codeOf(() => assertKeep([1, 4], 3))).toBe(`INVALID_REQUEST`)
+    expect(codeOf(() => assertKeep([0], 3))).toBe(`INVALID_REQUEST`)
+  })
+})
+
 describe("a review", () => {
   const tx = {} as postgres.TransactionSql
   const context = { importId: `i`, groupId: `g`, actorId: 1, role: GroupRole.EDITOR, options: null }
@@ -204,6 +217,36 @@ describe("a review", () => {
       choices: [{ category: `home`, note: `x` }, { category: `fun` }],
       skipped: 1,
     })
+  })
+
+  it("saves a kept row whose skip is overridable, with its suggestions and choices, and leaves an unkept one out", () => {
+    const saved = valuesToSave(
+      [10, 20],
+      [1, 2],
+      [
+        { skip: `Matches a transfer`, suggestions: { category: `food` }, overridable: true },
+        { skip: `Matches a transfer`, suggestions: { category: `rent` }, overridable: true },
+      ],
+      { "1": { note: `mine` } },
+      [1],
+    )
+    expect(saved).toEqual({
+      values: [10],
+      choices: [{ category: `food`, note: `mine` }],
+      skipped: 1,
+    })
+  })
+
+  it("leaves a kept row out when its skip is not overridable", () => {
+    const final = { skip: `Saved before`, suggestions: {} }
+    expect(valuesToSave([10, 20], [1, 2], [final, { ...final, overridable: false }], {}, [1, 2]))
+      .toEqual({ values: [], choices: [], skipped: 2 })
+  })
+
+  it("ignores keep of a row the review did not skip and of a row number no value has", () => {
+    expect(
+      valuesToSave([10], [2], [{ skip: null, suggestions: {}, overridable: true }], {}, [1, 2, 9]),
+    ).toEqual({ values: [10], choices: [{}], skipped: 0 })
   })
 
   it("keeps every value without a review, with only the person's choices", () => {

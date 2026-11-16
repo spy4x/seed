@@ -54,12 +54,12 @@ Under `/api/groups/:groupId/imports`, over HTTP only, because a file is an uploa
 | `GET /`                                              | The person's own imports in the group, newest first, up to 50. |
 | `GET /:importId`                                     | One import, with its preview.                                  |
 | `POST /:importId/check`, `{ mapping }`               | Every refused row (up to 100, 10 errors each). Saves nothing.  |
-| `POST /:importId/commit`, `{ mapping, choices? }`    | 202 with the import. The commit job saves it.                  |
+| `POST /:importId/commit`, `{ mapping, choices?, keep? }` | 202 with the import. The commit job saves it.              |
 | `POST /:importId/undo`                               | The import, undone, in the same request.                       |
 
 A mapping is the field's key to the zero-based column: `{ "title": 0, "body": 1 }`. A field the
 kind lacks, a column past the file and an unmapped required field are refused with 400 before
-anything is queued. `options` and `choices` are optional, and a check of a kind with a review also
+anything is queued. `options`, `choices` and `keep` are optional, and a check of a kind with a review also
 answers `reviews`: see "Options, review and choices" below.
 
 Every step records a change on the group's change log (`import.created`, `import.read`,
@@ -110,10 +110,11 @@ not save its rows twice. The notes kind uses none of them.
   with `INVALID_REQUEST` before anything is written. Every later step gets the stored value:
   `check` as its third argument, `review`, `commit` and `undo` on their context.
 - **A review with the database.** A kind with `review(tx, values, context)` answers, for every
-  checked value in order, `{ skip, suggestions }`: why a save leaves the row out (such as "Saved
-  before") or `null`, and values for its choice fields, such as a category guessed from the payee.
-  A check runs it in a read-only transaction and answers `reviews`: `{ row, cells, skip,
-  suggestions }` for each of the first 5,000 valid rows, in file order. The cells come from the
+  checked value in order, `{ skip, suggestions, overridable? }`: why a save leaves the row out
+  (such as "Saved before") or `null`, values for its choice fields, such as a category guessed from
+  the payee, and whether the person may save a skipped row anyway (`false` by default). A check
+  runs it in a read-only transaction and answers `reviews`: `{ row, cells, skip, suggestions,
+  overridable }` for each of the first 5,000 valid rows, in file order. The cells come from the
   person's own file and are shown only to those who may see the import. The commit job runs the
   review again in its own transaction, under the group's lock, and leaves out the skipped rows,
   counted in `skippedCount` (`null` for a kind without a review). So a second save of the same file
@@ -128,6 +129,14 @@ not save its rows twice. The notes kind uses none of them.
   with the person's choices for that row. The kind checks them itself, as it checks any value from
   outside (a category of another group is refused). A choice for a row that was refused or
   skipped is ignored.
+- **Keep at the save.** A review guesses, and a guess can be wrong: an expense that equals an
+  unrelated transfer is not that transfer. A skip the review marks `overridable` can be undone by
+  the person: `keep` lists the row numbers to save anyway, at most 5,000. A row number below 1 or
+  past the file is refused with 400 before anything is queued. `keep` is stored in `imports.keep`,
+  and the commit job saves a kept row like any other, with its suggestions and choices, and does
+  not count it in `skippedCount`. `keep` of a row that is not skipped, or whose skip is not
+  overridable, is ignored. The job reviews again, so a skip that became final since the preview
+  (the same row saved by another import meanwhile) wins over `keep`.
 
 ## The batch table
 

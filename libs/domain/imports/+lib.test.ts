@@ -7,6 +7,7 @@ import {
   IMPORT_FILE_NAME_MAX_LENGTH,
   IMPORT_OPTIONS_MAX_BYTES,
   IMPORT_OPTIONS_MAX_KEYS,
+  IMPORT_REVIEW_ROWS_MAX,
   importCommitBodySchema,
   ImportError,
   importMappingBodySchema,
@@ -174,6 +175,30 @@ describe("a save's body", () => {
         codeOf(() => parseImportRequest(importCommitBodySchema, { mapping: {}, choices })),
       ])
         .toEqual([choices, `INVALID_REQUEST`])
+    }
+  })
+
+  it("takes keep as whole row numbers from 1, up to the review's row cap", () => {
+    const keep = Array.from({ length: IMPORT_REVIEW_ROWS_MAX }, (_, i) => i + 1)
+    expect(parseImportRequest(importCommitBodySchema, { mapping: {}, keep }))
+      .toEqual({ mapping: {}, keep })
+  })
+
+  it("refuses keep with a row below 1, a fraction, text, or more rows than the review answers", () => {
+    for (
+      const keep of [
+        [0],
+        [-1],
+        [1.5],
+        [`1`],
+        `1`,
+        Array.from({ length: IMPORT_REVIEW_ROWS_MAX + 1 }, (_, i) => i + 1),
+      ]
+    ) {
+      expect([
+        keep,
+        codeOf(() => parseImportRequest(importCommitBodySchema, { mapping: {}, keep })),
+      ]).toEqual([keep, `INVALID_REQUEST`])
     }
   })
 })

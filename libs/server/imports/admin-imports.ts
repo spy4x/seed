@@ -69,7 +69,7 @@ export function toAdminImportRow(raw: Raw): AdminImportRow {
 
 /**
  * One page of every group's imports, newest first, with the count of each status chip. It selects
- * no file, file name, cells, options or choices: the columns below are all an operator gets.
+ * no file, file name, cells, options, choices or kept rows: the columns below are all an operator gets.
  * The counts read the whole table, which keeps saved and undone imports until their group or
  * uploader goes: one row per file a person brought in, the same scan the Jobs list's counts make.
  */

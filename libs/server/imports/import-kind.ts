@@ -48,6 +48,12 @@ export interface ImportReview {
   skip: string | null
   /** Values proposed for the kind's choice fields; the person's choices override them. */
   suggestions: Record<string, string>
+  /**
+   * Whether the person may save a skipped row anyway, by naming it in the save's `keep`: for a
+   * guess that can be wrong, such as "Matches a transfer". Default `false`: the skip is final.
+   * Ignored on a row that is not skipped.
+   */
+  overridable?: boolean
 }
 
 /** What a kind's `commit` and `undo` need, in the flow's own transaction. */
@@ -267,6 +273,14 @@ export function assertChoices(kind: ImportKind, choices: ImportChoices, rowCount
 }
 
 /**
+ * Refuses, with `INVALID_REQUEST` in words, a `keep` row past the file's `rowCount` or below 1.
+ */
+export function assertKeep(keep: readonly number[], rowCount: number): void {
+  const wrong = keep.find((row) => row < 1 || row > rowCount)
+  if (wrong !== undefined) throw new ImportError("INVALID_REQUEST", `The file has no row ${wrong}`)
+}
+
+/**
  * Runs the kind's `review` over `values`: one answer per value, in order.
  *
  * @throws Error when the kind answers a different number of reviews, a fault in the kind.
@@ -289,20 +303,24 @@ export async function reviewValues(
 
 /**
  * The values a save writes and what its kind's `commit` gets with each: the rows the review did
- * not skip, each with its suggestions overlaid with the person's `choices` for its row. Without
- * reviews nothing is skipped and only the choices count. Choices for other rows are ignored.
+ * not skip, and the skipped rows whose skip is `overridable` and whose row number the person put in
+ * `keep`, each with its suggestions overlaid with the person's `choices` for its row. Without
+ * reviews nothing is skipped and only the choices count. Choices for other rows, and `keep` of a
+ * row not skipped or skipped for good, are ignored.
  */
 export function valuesToSave(
   values: readonly unknown[],
   valueRows: readonly number[],
   reviews: readonly ImportReview[] | null,
   choices: ImportChoices,
+  keep: readonly number[] = [],
 ): { values: unknown[]; choices: Record<string, string>[]; skipped: number } {
   const kept: unknown[] = []
   const chosen: Record<string, string>[] = []
+  const keepRows = new Set(keep)
   values.forEach((value, index) => {
     const review = reviews?.[index]
-    if (review?.skip != null) return
+    if (review?.skip != null && !(review.overridable && keepRows.has(valueRows[index]))) return
     kept.push(value)
     chosen.push({ ...review?.suggestions, ...choices[String(valueRows[index])] })
   })

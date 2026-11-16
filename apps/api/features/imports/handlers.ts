@@ -16,6 +16,7 @@ import {
 } from "@domain/imports"
 import {
   assertChoices,
+  assertKeep,
   assertMapping,
   checkRows,
   columnCount,
@@ -144,20 +145,21 @@ export function createImportCheckHandler(
     })
     return {
       ...result,
-      reviews: reviews.map(({ skip, suggestions }, index) => ({
+      reviews: reviews.map(({ skip, suggestions, overridable }, index) => ({
         row: valueRows[index],
         cells: [...read.value.rows[valueRows[index] - 1]],
         skip,
         suggestions,
+        overridable: overridable === true,
       })),
     }
   }
 }
 
 /**
- * Saves a read import under a mapping and the person's choices: the commit job writes the rows.
- * The mapping and the choices are checked against the kind and the file first, so a wrong column,
- * a field that is not a choice or a row past the file is a 400 here and never a failed import; the
+ * Saves a read import under a mapping, the person's choices and the rows they keep: the commit job
+ * writes the rows. The mapping, the choices and `keep` are checked against the kind and the file
+ * first, so a wrong column, a field that is not a choice or a row past the file is a 400 here and never a failed import; the
  * repository then checks who may save it again, on the locked group.
  */
 export function createImportCommitHandler(
@@ -171,6 +173,7 @@ export function createImportCommitHandler(
       const read = bytes ? await kind.read(bytes) : null
       if (read?.ok) assertMapping(kind, data.mapping, columnCount(read.value))
       if (data.choices) assertChoices(kind, data.choices, found.rowCount ?? 0)
+      if (data.keep) assertKeep(data.keep, found.rowCount ?? 0)
     }
     return await dependencies.imports.requestCommit(
       data.groupId,
@@ -178,6 +181,7 @@ export function createImportCommitHandler(
       data.actor.userId,
       data.mapping,
       data.choices,
+      data.keep,
     )
   }
 }

@@ -191,6 +191,8 @@ export interface ImportRowReview {
   skip: string | null
   /** Values the kind proposes for its choice fields; the person's choices override them. */
   suggestions: Record<string, string>
+  /** Whether a skipped row is saved anyway when the save names it in `keep`. */
+  overridable: boolean
 }
 
 // #region Errors
@@ -246,8 +248,8 @@ export const importMappingBodySchema = type({
 
 /**
  * The body of a save: the mapping and, optionally, the person's choices per row
- * ({@link ImportChoices}). Which fields may be chosen and which rows exist is checked against the
- * kind and the file.
+ * ({@link ImportChoices}) and the rows to `keep` despite an overridable skip. Which fields may be
+ * chosen and which rows exist is checked against the kind and the file.
  */
 export const importCommitBodySchema = importMappingBodySchema.and({
   "choices?": type({
@@ -257,6 +259,7 @@ export const importCommitBodySchema = importMappingBodySchema.and({
     }).narrow(keysAtMost(IMPORT_CHOICE_FIELDS_MAX)),
     "+": `reject`,
   }),
+  "keep?": `(1 <= number.integer <= 999999999)[] <= ${IMPORT_REVIEW_ROWS_MAX}`,
 })
 
 /** `value` checked against `schema`, or `INVALID_REQUEST` with each failed field. */
@@ -381,9 +384,11 @@ export class ImportCheckQuery implements Query<ImportMappingPayload, ImportCheck
 export interface ImportCommitPayload extends ImportMappingPayload {
   /** The person's per-row choices; only the kind's choice fields, only rows the file has. */
   choices?: ImportChoices
+  /** Row numbers to save despite a skip the review marks overridable; only rows the file has. */
+  keep?: number[]
 }
 
-/** Saves the import under a mapping: stores the mapping and choices and queues the commit job. */
+/** Saves the import: stores the mapping, choices and keep, and queues the commit job. */
 export class ImportCommitCommand implements Command<ImportCommitPayload, ImportSummary> {
   __resultType?: ImportSummary
   constructor(public data: ImportCommitPayload) {}
@@ -484,7 +489,7 @@ export function adminImportFilterQuery(filter: AdminImportFilter): string {
 
 /**
  * One import as an operator sees it: where it is, its counts and its timing. Never the file, its
- * name, its cells, or the options and choices a person gave: those are the group's data.
+ * name, its cells, or the options, choices and kept rows a person gave: those are the group's data.
  */
 export interface AdminImportRow {
   id: string

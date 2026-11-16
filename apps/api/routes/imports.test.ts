@@ -92,8 +92,10 @@ function app(userId: number | null = STARTER) {
       listForUser: (_groupId, user) => Promise.resolve(user === STARTER ? [stored] : []),
       file: () => Promise.resolve(FILE),
       review: () => Promise.reject(new Error(`the notes kind has no review`)),
-      requestCommit: (_groupId, _id, _actor, mapping) => {
-        writes.push(`commit ${JSON.stringify(mapping)}`)
+      requestCommit: (_groupId, _id, _actor, mapping, _choices, keep) => {
+        writes.push(
+          `commit ${JSON.stringify(mapping)}${keep ? ` keep ${JSON.stringify(keep)}` : ``}`,
+        )
         return Promise.resolve({ ...stored, status: ImportStatus.COMMITTING })
       },
       undo: () => {
@@ -294,6 +296,31 @@ describe("checking and saving", () => {
     expect(response.status).toBe(202)
     expect(writes).toEqual([`commit {"title":0}`])
   })
+
+  it("refuses keep of a row past the file or below 1 before queueing the save", async () => {
+    const { hono, writes } = app()
+    for (const keep of [[3], [0], [1, 3]]) {
+      const response = await hono.request(`${base}/${IMPORT_ID}/commit`, {
+        method: `POST`,
+        headers: json,
+        body: JSON.stringify({ mapping: { title: 0 }, keep }),
+      })
+      expect([keep, response.status, (await apiError(response)).reason])
+        .toEqual([keep, 400, `INVALID_REQUEST`])
+    }
+    expect(writes).toEqual([])
+  })
+
+  it("queues the save with the rows to keep", async () => {
+    const { hono, writes } = app()
+    const response = await hono.request(`${base}/${IMPORT_ID}/commit`, {
+      method: `POST`,
+      headers: json,
+      body: JSON.stringify({ mapping: { title: 0 }, keep: [2] }),
+    })
+    expect(response.status).toBe(202)
+    expect(writes).toEqual([`commit {"title":0} keep [2]`])
+  })
 })
 
 describe("a check of a kind with a review", () => {
@@ -313,7 +340,13 @@ describe("a check of a kind with a review", () => {
         file: () => Promise.resolve(FILE),
         review: (_kind: unknown, values: readonly unknown[]) => {
           reviewed = values.length
-          return Promise.resolve(values.map(() => ({ skip: null, suggestions: {} })))
+          return Promise.resolve(
+            values.map((_, i) => ({
+              skip: null,
+              suggestions: {},
+              ...(i === 0 ? { overridable: true } : {}),
+            })),
+          )
         },
       },
     } as unknown as ImportHandlerDependencies
@@ -328,6 +361,10 @@ describe("a check of a kind with a review", () => {
     expect(reviewed).toBe(IMPORT_REVIEW_ROWS_MAX)
     expect(result.valid).toBe(IMPORT_REVIEW_ROWS_MAX + 1)
     expect(result.reviews).toHaveLength(IMPORT_REVIEW_ROWS_MAX)
-    expect(result.reviews?.[0]).toEqual({ row: 2, cells: [`T0`], skip: null, suggestions: {} })
+    // `overridable` passes through, and a review that leaves it out answers `false`.
+    expect(result.reviews?.slice(0, 2)).toEqual([
+      { row: 2, cells: [`T0`], skip: null, suggestions: {}, overridable: true },
+      { row: 3, cells: [`T1`], skip: null, suggestions: {}, overridable: false },
+    ])
   })
 })
