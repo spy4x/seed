@@ -14,7 +14,8 @@
  * `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs of the set. Lighthouse
  * measures in a stage of its own, with no other step of its workflow beside it. A pull request
  * runs it only when it changes a file the website is built from (#821); the nightly run and a tag
- * always run it, and the e2e steps run whether it ran or not. A pull request measures only the
+ * always run it, and the e2e steps run whether it ran or not. A pull request runs the smoke set
+ * beside `browser`, on a Valkey service of its own, and Lighthouse after both. A pull request measures only the
  * quick pages (#876). A pull request builds the four images only when it changes what decides
  * whether an image builds: the four Dockerfiles, `.dockerignore`, `deno.jsonc`, `deno.lock` and
  * the workflow. A source change that breaks a bundle is caught by the push to `main`, which, like
@@ -62,6 +63,7 @@ export interface Step {
   commands?: string[]
   failure?: string
   depends_on?: Dependency | Dependency[]
+  environment?: Record<string, string>
 }
 
 const list = <T>(value: T | T[] | undefined): T[] =>
@@ -168,8 +170,8 @@ export function stages(
   return result.filter(Boolean)
 }
 
-/** A workflow: its own `when` and `depends_on`, and its steps. */
-type Workflow = Step & { steps?: Record<string, Step> }
+/** A workflow: its own `when` and `depends_on`, its steps and its services. */
+type Workflow = Step & { steps?: Record<string, Step>; services?: Record<string, unknown> }
 
 const workflow = async (path = CI) => parse(await read(path)) as Workflow
 const browserWorkflow = () => workflow(BROWSER)
@@ -272,15 +274,33 @@ Deno.test("Lighthouse measures in a stage of its own on every event that runs it
   }
 })
 
-Deno.test("a pull request that changes only the API runs no Lighthouse and still runs the smoke set after browser", async () => {
+Deno.test("a pull request runs the smoke set in the first stage beside browser, and Lighthouse only after both", async () => {
+  // A pull request waits for the longer of browser and e2e-smoke, not for both one after another.
   const ci = await browserWorkflow()
-  const changed = [`apps/api/x.ts`]
-  expect(blockingSteps(ci, `deno task lighthouse`, `pull_request`, `main`, changed)).toEqual([])
-  expect(blockingSteps(ci, SMOKE, `pull_request`, `main`, changed)).toEqual([`e2e-smoke`])
+  for (const changed of [[`apps/api/x.ts`], [`apps/mpa/routes/index.tsx`]]) {
+    expect(blockingSteps(ci, SMOKE, `pull_request`, `main`, changed)).toEqual([`e2e-smoke`])
+    const order = stages(ci, `pull_request`, `main`, changed)
+    expect({ changed, first: order[0].toSorted() })
+      .toEqual({ changed, first: [`browser`, `e2e-smoke`, `ready`] })
+  }
+  const changed = [`apps/mpa/routes/index.tsx`]
   const order = stages(ci, `pull_request`, `main`, changed)
-  expect(stageOf(order, `e2e-smoke`)).toBeGreaterThan(stageOf(order, `browser`))
-  // e2e-smoke shares its stage with no other step, as it did after Lighthouse.
-  expect(order[stageOf(order, `e2e-smoke`)]).toEqual([`e2e-smoke`])
+  expect(stageOf(order, `lighthouse`)).toBeGreaterThan(stageOf(order, `e2e-smoke`))
+  // Named, not only implied by the stage after `ready`, so the order holds if `ready` moves.
+  expect(list(ci.steps?.lighthouse?.depends_on)).toContainEqual({
+    name: `e2e-smoke`,
+    optional: true,
+  })
+  expect(blockingSteps(ci, `deno task lighthouse`, `pull_request`, `main`, [`apps/api/x.ts`]))
+    .toEqual([])
+})
+
+Deno.test("the smoke set's stack uses a Valkey service of its own, since browser runs beside it", async () => {
+  // Each stack starts a worker, and a worker takes any job queued on its Valkey.
+  const ci = await browserWorkflow()
+  const smoke = ci.steps?.[`e2e-smoke`]?.environment?.KV_HOSTNAME
+  expect(smoke).not.toBe(ci.steps?.browser?.environment?.KV_HOSTNAME)
+  expect(Object.keys(ci.services ?? {})).toContain(smoke)
 })
 
 Deno.test("a pull request that changes the website, a published guide, the lockfile or ci-browser.yml runs Lighthouse", async () => {
@@ -568,10 +588,13 @@ Deno.test("wip.yml runs exactly ci.yml's check and secrets steps", async () => {
 
 Deno.test("ci-browser.yml's Markdown list and services are copies of ci.yml's", async () => {
   // YAML anchors do not cross files; a Markdown list that drifted would skip e2e-smoke on a
-  // change ci.yml tests, and a Postgres that drifted would test another version.
-  const services = async (path: string) =>
-    (parse(await read(path)) as { services?: unknown }).services
-  expect(await services(BROWSER)).toEqual(await services(CI))
+  // change ci.yml tests, and a Postgres that drifted would test another version. e2e-smoke's
+  // `valkey-smoke` is a second copy of ci.yml's `valkey`.
+  const services = async (path: string) => (await workflow(path)).services ?? {}
+  const { "valkey-smoke": smoke, ...browser } = await services(BROWSER)
+  const ci = await services(CI)
+  expect(browser).toEqual(ci)
+  expect(smoke).toEqual(ci.valkey)
   const markdown = async (path: string) =>
     (parse(await read(path)) as { variables?: unknown[] }).variables?.[0]
   expect(await markdown(BROWSER)).toEqual(await markdown(CI))

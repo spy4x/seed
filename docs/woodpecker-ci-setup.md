@@ -31,19 +31,19 @@ merge. Editing the body of a ready pull request is also `edited` and re-runs bot
 is rare and accepted.
 
 ```
-ci.yml (Postgres and Valkey services)       ci-browser.yml (its own Postgres and Valkey)
+ci.yml (Postgres and Valkey services)       ci-browser.yml (its own Postgres and two Valkeys)
 
 secrets                                     ready
-check ──┬── integration                     browser (build, e2e-mpa, e2e-spa)
-        ├── backup-restore                      │
-        ├── alert-rules                     lighthouse (website changes, nightly, tag)
-        └── runtimes                        ┌───┴───────────┐
-image-node, image-bun,                  e2e-smoke        e2e-full
-image-mpa-node, image-mpa-bun       (pull request, tag)  (nightly)
+check ──┬── integration                     browser (build,          e2e-smoke
+        ├── backup-restore                    e2e-mpa, e2e-spa)      (pull request, tag)
+        ├── alert-rules                         └──────────┬───────────┘
+        └── runtimes                        lighthouse (website changes, nightly, tag)
+image-node, image-bun,                                 │
+image-mpa-node, image-mpa-bun               e2e-full (nightly)
 ```
 
-A pull request that changes no file of the website skips `lighthouse`; `e2e-smoke` then starts
-right after `browser`. `ready` only echoes a line: a pull request that changes only Markdown
+`browser` and `e2e-smoke` start together, and `lighthouse` starts when both have ended. A pull
+request that changes no file of the website skips `lighthouse`. `ready` only echoes a line: a pull request that changes only Markdown
 skips every other step of `ci-browser.yml`, and a workflow with no step left posts no status, so
 the required `ci/woodpecker/pr/ci-browser` would never arrive.
 
@@ -128,9 +128,11 @@ the host with it.
   Playwright's own browser download, run through Deno in the plain Deno image, hangs. The image
   tag must equal the Playwright version in `deno.jsonc` (`e2e` task), because the browser build in
   the image belongs to that version.
-- The browser steps run one after another in `ci-browser.yml`: each keeps the API's `vapid.json`
-  in the shared checkout and starts a worker on the one Valkey service. `ci.yml`'s steps have a
-  checkout and services of their own, so they never meet.
+- `browser` and `e2e-smoke` run at the same time in the checkout of `ci-browser.yml`. `browser`'s
+  scripts keep the API's `vapid.json` in the checkout's root and use the `valkey` service;
+  `e2e-smoke` keeps its keys in a scratch folder (`VAPID_KEYS_PATH`) and uses `valkey-smoke`, so
+  neither worker takes the other's jobs. `e2e-full` runs after `browser`, on `valkey`. `ci.yml`'s
+  steps have a checkout and services of their own, so they never meet.
 - Both steps stop after that many failed tests. With sign-in broken every test fails, each after
   30 s, and a step would otherwise run into the script's limit of 25 minutes.
 - A failed test is not retried: one failure fails the step, so a test that fails every second run
