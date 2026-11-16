@@ -98,7 +98,7 @@ steps:
     # Why not three steps: build and e2e-spa both build the SPA into apps/spa/dist; the run
     # scripts keep the API's vapid.json in the repository root while they run; and each starts a
     # worker on the one Valkey service, where a worker would take another stack's jobs.
-    image: antonshubin/template-ci:1@sha256:TODO-DIGEST
+    image: antonshubin/template-ci:1@sha256:6d174ea92c9434daf036f0d9b25cffa7b60c0b56c8563e9f6e8bae200215000d
     when: *browser_when
     environment:
       DB_HOST: postgres
@@ -157,7 +157,7 @@ steps:
     # the manifests, the lockfile and this file. The nightly run and a tag always run it. Woodpecker
     # applies `path` to pull requests and pushes only, and runs the step when the forge lists no
     # changed file.
-    image: antonshubin/template-ci:1@sha256:TODO-DIGEST
+    image: antonshubin/template-ci:1@sha256:6d174ea92c9434daf036f0d9b25cffa7b60c0b56c8563e9f6e8bae200215000d
     when:
       - event: pull_request
         path: &lighthouse_paths
@@ -206,7 +206,7 @@ steps:
     # too, because release.yml waits for this workflow. A pull request that changes only the Markdown
     # in `markdown_only` at the top skips it: the smoke set opens no guide. The nightly run skips
     # it, because its `e2e-full` runs every spec of the set.
-    image: antonshubin/template-ci:1@sha256:TODO-DIGEST
+    image: antonshubin/template-ci:1@sha256:6d174ea92c9434daf036f0d9b25cffa7b60c0b56c8563e9f6e8bae200215000d
     when:
       - event: pull_request
         path:
@@ -252,7 +252,7 @@ steps:
     # The specs that start the app with no network need the built SPA behind nginx; a step has no
     # container tool, so `E2E_BUILT=nginx` installs the build into this container's own nginx, as
     # e2e/spa/run.sh does.
-    image: antonshubin/template-ci:1@sha256:TODO-DIGEST
+    image: antonshubin/template-ci:1@sha256:6d174ea92c9434daf036f0d9b25cffa7b60c0b56c8563e9f6e8bae200215000d
     when:
       - event: cron
     environment:
