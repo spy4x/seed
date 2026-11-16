@@ -11,7 +11,7 @@
 #   runs it, with the container tool `CONTAINER_PROVIDER` (`podman` by default here;
 #   `deno task compose` runs Docker by default). The images it builds are removed when it ends.
 # - `nginx`: for a machine without a container tool that is thrown away afterwards, which is the CI
-#   step (.woodpecker/ci.yml). It builds the SPA here and copies it, `nginx.conf`, the generated
+#   step (.woodpecker/ci-browser.yml). It builds the SPA here and copies it, `nginx.conf`, the generated
 #   header file and the allow list to the paths the image has them at, under /etc and /usr/share,
 #   runs the two start scripts and starts the installed nginx. It needs root and an installed
 #   nginx, and it does not prove the `COPY` lines of the Dockerfile.

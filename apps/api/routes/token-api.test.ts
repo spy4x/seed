@@ -68,7 +68,18 @@ function memoryKv() {
   })
 }
 
-function buildApp(limit = 100) {
+/**
+ * The token API on in-memory stores, `limit` requests a window per budget. With `ipStoreDown` the
+ * address budget's store throws on every call, as when Valkey is down, and the failure is recorded
+ * in `storeErrors` instead of thrown.
+ */
+/** A rate-limit store whose backend fails on every call. */
+function downKv() {
+  const down = () => Promise.reject(new Error(`store down`))
+  return createKvStore({ backend: { get: down, set: down, delete: down } })
+}
+
+function buildApp(limit = 100, ipStoreDown = false) {
   const groups = roles({
     [`${groupId}:${OWNER}`]: GroupRole.OWNER,
     [`${otherGroupId}:${OWNER}`]: GroupRole.OWNER,
@@ -93,22 +104,23 @@ function buildApp(limit = 100) {
   queries.use(createSessionGate([]))
   queries.register(NoteListQuery, createNoteListHandler(dependencies))
   queries.register(NoteGetQuery, createNoteGetHandler(dependencies))
-  const looked: (string | undefined)[] = []
   const refusals: string[] = []
   const stores = new Map<string, ReturnType<typeof memoryKv>>()
+  const storeErrors: unknown[] = []
   const limits = createTokenRateLimits({
     windowMs: 60_000,
     limit,
-    store: (name) => stores.get(name) ?? stores.set(name, memoryKv()).get(name)!,
+    store: (name) =>
+      ipStoreDown && name === `ratelimit-api-token-ip`
+        ? downKv()
+        : stores.get(name) ?? stores.set(name, memoryKv()).get(name)!,
     onStoreError: (error) => {
-      throw error
+      if (!ipStoreDown) throw error
+      storeErrors.push(error)
     },
   })
   const route = createTokenApiRoute({
-    authenticate: (_c, presented) => {
-      looked.push(presented)
-      return Promise.resolve(TOKENS.get(presented ?? "") ?? null)
-    },
+    authenticate: (_c, presented) => Promise.resolve(TOKENS.get(presented ?? "") ?? null),
     create: (command) => commands.execute(command),
     get: (query) => queries.execute(query),
     list: (query) => queries.execute(query),
@@ -131,7 +143,7 @@ function buildApp(limit = 100) {
     await next()
   })
   app.route("/v1", route)
-  return { app, notes, looked, refusals, limits }
+  return { app, notes, refusals, limits, storeErrors }
 }
 
 function headers(token?: string, ip = "198.51.100.7"): Record<string, string> {
@@ -313,8 +325,8 @@ describe("token API", () => {
     expect((await list(WRITER_TWO)).status).toBe(200)
   })
 
-  it("stops an address that keeps presenting bad tokens before it reaches the lookup", async () => {
-    const { app, looked } = buildApp(2)
+  it("answers 429 with Retry-After once an address's bad tokens spend its budget", async () => {
+    const { app } = buildApp(2)
     const guess = () =>
       app.request(`${API}/groups/${groupId}/notes`, {
         headers: headers("tpl_guess0000000000000000"),
@@ -322,7 +334,40 @@ describe("token API", () => {
 
     expect((await guess()).status).toBe(401)
     expect((await guess()).status).toBe(401)
-    expect((await guess()).status).toBe(429)
-    expect(looked.length).toBe(2)
+    const limited = await guess()
+    expect(limited.status).toBe(429)
+    expect(Number(limited.headers.get("retry-after"))).toBeGreaterThan(0)
+  })
+
+  it("serves a live token after 150 bad tokens a minute from its address", async () => {
+    const { app } = buildApp()
+    const list = (token: string) =>
+      app.request(`${API}/groups/${groupId}/notes`, { headers: headers(token) })
+
+    const statuses = []
+    for (let i = 0; i < 150; i++) statuses.push((await list("tpl_guess0000000000000000")).status)
+    expect(statuses.filter((status) => status === 401).length).toBe(100)
+    expect(statuses.filter((status) => status === 429).length).toBe(50)
+    expect((await list(READER)).status).toBe(200)
+  })
+
+  it("bounds a live token's refused requests by its own budget, not the address's", async () => {
+    const { app } = buildApp(2)
+
+    expect((await createNote(app, READER)).status).toBe(403)
+    expect((await createNote(app, READER)).status).toBe(403)
+    expect((await createNote(app, READER)).status).toBe(429)
+    expect((await createNote(app, "tpl_guess0000000000000000")).status).toBe(401)
+  })
+
+  it("still refuses a bad token with 401 while the address budget's store is down", async () => {
+    const { app, storeErrors } = buildApp(1, true)
+
+    for (let i = 0; i < 3; i++) {
+      const response = await createNote(app, "tpl_guess0000000000000000")
+      expect(response.status).toBe(401)
+      expect(response.headers.get("www-authenticate")).toBe(`Bearer realm="api"`)
+    }
+    expect(storeErrors.length).toBe(3)
   })
 })

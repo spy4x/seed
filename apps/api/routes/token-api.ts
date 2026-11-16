@@ -38,9 +38,15 @@ export interface TokenApiDependencies extends NoteListDependencies {
   auditRefusal(c: Context, tokenId: string, reason: "scope"): Promise<void>
   create(command: NoteCreateCommand): Promise<NoteWriteResult>
   get(query: NoteGetQuery): Promise<{ note: Note }>
-  /** Spent per client address before the token is checked, so guessing costs a budget. */
+  /**
+   * Spent per client address only by a request without a live token, so guessing costs a budget
+   * and a live token never meets it. See {@link refuseWithoutToken}.
+   */
   limitByIp: MiddlewareHandler<TokenApiContext>
-  /** Spent per token once it is accepted: each token has a budget of its own. */
+  /**
+   * Spent per token right after it is accepted, by every request it makes, refused or not: each
+   * token has a budget of its own.
+   */
   limitByToken: MiddlewareHandler<TokenApiContext>
 }
 
@@ -71,6 +77,11 @@ const TOKEN_ERRORS: Record<ApiTokenErrorCode, { status: ContentfulStatusCode; me
  * allow. A missing, revoked or expired token gets 401 `TOKEN_INVALID`, the scope 403 `TOKEN_SCOPE`.
  * A refusal of a token that has an owner (revoked, expired, or out of its scope) is audited, a few
  * rows an hour per token at most.
+ *
+ * The token is read first. A request without a live token spends its address's budget
+ * (`limitByIp`) and gets 429 once that is spent; a live token spends only its own (`limitByToken`),
+ * so strangers behind the same address as the owner, or a proxy that gives everyone one address,
+ * never lock the owner's token out (spy4x/seed#1053).
  * No origin check: the browser never attaches the header on its own, so another site cannot make
  * it send one.
  */
@@ -83,12 +94,13 @@ export function createTokenApiRoute(dependencies: TokenApiDependencies): Hono<To
       }
       return tokenApiErrorResponse(c, error)
     })
-    .use(dependencies.limitByIp)
     .use(async (c, next) => {
       const token = await dependencies.authenticate(c, bearerTokenFromHeaders(c.req.raw.headers))
       if (!token) {
-        c.header("WWW-Authenticate", `Bearer realm="api"`)
-        return tokenApiErrorResponse(c, new ApiTokenError("TOKEN_INVALID", "No live token"))
+        return await refuseWithoutToken(c, dependencies.limitByIp, () => {
+          c.header("WWW-Authenticate", `Bearer realm="api"`)
+          return tokenApiErrorResponse(c, new ApiTokenError("TOKEN_INVALID", "No live token"))
+        })
       }
       c.set("apiToken", token)
       return await next()
@@ -123,6 +135,23 @@ export function createTokenApiRoute(dependencies: TokenApiDependencies): Hono<To
       )
       return c.json({ note: result.note }, result.created ? 201 : 200)
     })
+}
+
+/**
+ * Answers a request that presents no live token: it spends the client address's refusal budget
+ * (`limitByIp`) and gets `refusal()`, or 429 with `Retry-After` once that budget is spent. The
+ * limit runs here, after the lookup, so only such requests spend it; `refusal` is its `next`.
+ */
+export async function refuseWithoutToken(
+  c: Context<TokenApiContext>,
+  limitByIp: MiddlewareHandler<TokenApiContext>,
+  refusal: () => Response,
+): Promise<Response> {
+  const limited = await limitByIp(c, () => {
+    c.res = refusal()
+    return Promise.resolve()
+  })
+  return limited ?? c.res
 }
 
 /**

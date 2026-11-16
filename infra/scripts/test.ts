@@ -120,7 +120,7 @@ export const GROUPS: TestGroup[] = [
   },
   {
     flags: [
-      `--allow-read=infra/compose,infra/postgres,infra/envs/.env.example,infra/scripts/e2e-local.sh,.woodpecker/ci.yml,docs/handoff.md,docs/woodpecker-ci-setup.md`,
+      `--allow-read=infra/compose,infra/postgres,infra/envs/.env.example,infra/scripts/e2e-local.sh,.woodpecker/ci.yml,.woodpecker/ci-browser.yml,docs/handoff.md,docs/woodpecker-ci-setup.md`,
     ],
     paths: [`tests/compose-postgres.test.ts`],
   },
@@ -185,7 +185,7 @@ export const GROUPS: TestGroup[] = [
   },
   {
     flags: [
-      `--allow-read=.woodpecker/ci.yml,.woodpecker/wip.yml,e2e,docs/browser-tests.md,docs/woodpecker-ci-setup.md`,
+      `--allow-read=.woodpecker/ci.yml,.woodpecker/ci-browser.yml,.woodpecker/wip.yml,.woodpecker/release.yml,.woodpecker/deploy.yml.example,e2e,docs/browser-tests.md,docs/woodpecker-ci-setup.md`,
     ],
     paths: [`tests/ci-browser-tests.test.ts`],
   },
