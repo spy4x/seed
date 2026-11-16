@@ -286,6 +286,11 @@ Deno.test("a pull request runs the smoke set in the first stage beside browser, 
   const changed = [`apps/mpa/routes/index.tsx`]
   const order = stages(ci, `pull_request`, `main`, changed)
   expect(stageOf(order, `lighthouse`)).toBeGreaterThan(stageOf(order, `e2e-smoke`))
+  // Named, not only implied by the stage after `ready`, so the order holds if `ready` moves.
+  expect(list(ci.steps?.lighthouse?.depends_on)).toContainEqual({
+    name: `e2e-smoke`,
+    optional: true,
+  })
   expect(blockingSteps(ci, `deno task lighthouse`, `pull_request`, `main`, [`apps/api/x.ts`]))
     .toEqual([])
 })
