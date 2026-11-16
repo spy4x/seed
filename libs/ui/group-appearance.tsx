@@ -25,7 +25,7 @@ export function GroupMark(
   return (
     <span
       class={badgeClasses(
-        "gray",
+        "neutral",
         "filled",
         `${box} shrink-0 justify-center rounded-md p-0 leading-none normal-case ${className ?? ""}`,
       )}

@@ -54,17 +54,17 @@ export const ADMIN_CATALOG_PATHS = {
   full: (photoId: string) => `/api/admin/catalog/photos/${encodeURIComponent(photoId)}/full`,
 } as const
 
-const STATUS_BADGES: Record<CatalogItemStatus, { text: string; color: `green` | `gray` }> = {
-  draft: { text: `AdminCatalog.draft`, color: `gray` },
-  published: { text: `AdminCatalog.published`, color: `green` },
-  hidden: { text: `AdminCatalog.hidden`, color: `gray` },
+const STATUS_BADGES: Record<CatalogItemStatus, { text: string; color: `success` | `neutral` }> = {
+  draft: { text: `AdminCatalog.draft`, color: `neutral` },
+  published: { text: `AdminCatalog.published`, color: `success` },
+  hidden: { text: `AdminCatalog.hidden`, color: `neutral` },
 }
 
 /** An item's status as a pill: draft, on the website or hidden. */
 export function CatalogStatusBadge({ status }: { status: CatalogItemStatus }): JSX.Element {
   const t = useAdminText()
   const badge = STATUS_BADGES[status]
-  return <Badge text={t.t(badge.text)} color={badge.color} type="outline" />
+  return <Badge text={t.t(badge.text)} tone={badge.color} variant="outline" />
 }
 
 const STOCK_WORDS: Record<CatalogStock, string | null> = {
@@ -315,7 +315,7 @@ function CatalogList(
           <div data-e2e="catalog-status">
             <ToggleChips
               mode="single"
-              label={t.t(`AdminCatalog.status`)}
+              ariaLabel={t.t(`AdminCatalog.status`)}
               class="flex-nowrap sm:flex-wrap"
               options={STATUS_CHIPS.map((chip) => ({
                 value: chip.value,
@@ -331,7 +331,7 @@ function CatalogList(
           </div>
           <div data-e2e="catalog-sold-out">
             <ToggleChips
-              label={t.t(`AdminCatalog.stock`)}
+              ariaLabel={t.t(`AdminCatalog.stock`)}
               options={[{
                 value: `soldOut`,
                 label: t.t(`AdminCatalog.chipSoldOut`, { count: view.counts.soldOut }),

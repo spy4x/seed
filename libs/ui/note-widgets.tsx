@@ -216,7 +216,7 @@ const series: WidgetView = {
               yTicks={axis.steps}
               xFormat={(x) =>
                 day(context, typeof x === "string" ? x : x.toISOString().slice(0, 10))}
-              yFormat={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               ariaLabel={t.t(`NoteWidgets.seriesLabel`, {
                 summary: seriesSummary(t, format, result.current),
               })}

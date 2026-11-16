@@ -594,8 +594,8 @@ function MethodDetails(
       {method.current && (
         <Badge
           text={t.t(`SignInMethods.usedHere`)}
-          color="green"
-          type="outline"
+          tone="success"
+          variant="outline"
         />
       )}
       {only && method.kind !== "password" && (

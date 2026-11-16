@@ -1,5 +1,5 @@
 import type { JSX } from "preact"
-import { Badge, type BadgeColor, type BadgeType } from "@spy4x/preact-ui/badge"
+import { Badge, type BadgeTone, type BadgeVariant } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
@@ -28,13 +28,13 @@ import { useAdminText } from "./i18n.ts"
 export const ADMIN_IMPORTS_PATH = `/imports`
 
 /** Each status's word and badge; a chip of the list uses the same word. */
-const STATUSES: Record<ImportStatus, { key: string; color: BadgeColor; type: BadgeType }> = {
-  [ImportStatus.READING]: { key: `AdminImports.reading`, color: `blue`, type: `outline` },
-  [ImportStatus.READY]: { key: `AdminImports.ready`, color: `gray`, type: `outline` },
-  [ImportStatus.FAILED]: { key: `AdminImports.failed`, color: `red`, type: `filled` },
-  [ImportStatus.COMMITTING]: { key: `AdminImports.committing`, color: `blue`, type: `filled` },
-  [ImportStatus.COMMITTED]: { key: `AdminImports.committed`, color: `green`, type: `outline` },
-  [ImportStatus.UNDONE]: { key: `AdminImports.undone`, color: `gray`, type: `filled` },
+const STATUSES: Record<ImportStatus, { key: string; color: BadgeTone; type: BadgeVariant }> = {
+  [ImportStatus.READING]: { key: `AdminImports.reading`, color: `info`, type: `outline` },
+  [ImportStatus.READY]: { key: `AdminImports.ready`, color: `neutral`, type: `outline` },
+  [ImportStatus.FAILED]: { key: `AdminImports.failed`, color: `danger`, type: `filled` },
+  [ImportStatus.COMMITTING]: { key: `AdminImports.committing`, color: `info`, type: `filled` },
+  [ImportStatus.COMMITTED]: { key: `AdminImports.committed`, color: `success`, type: `outline` },
+  [ImportStatus.UNDONE]: { key: `AdminImports.undone`, color: `neutral`, type: `filled` },
 }
 
 const CHIPS: Record<AdminImportStatusFilter, string> = {
@@ -75,7 +75,7 @@ function StatusBadge({ status }: { status: ImportStatus }): JSX.Element {
   const view = STATUSES[status] ?? STATUSES[ImportStatus.READING]
   return (
     <span data-e2e="admin-import-status" data-status={ImportStatus[status]?.toLowerCase()}>
-      <Badge text={t.t(view.key)} color={view.color} type={view.type} />
+      <Badge text={t.t(view.key)} tone={view.color} variant={view.type} />
     </span>
   )
 }

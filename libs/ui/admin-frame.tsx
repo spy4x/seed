@@ -240,7 +240,7 @@ export function ComingSoonPanel(
         title={title}
         headingLevel={2}
         description={description}
-        action={<Badge text={t.t("AdminFrame.comingSoonBadge")} color="gray" />}
+        action={<Badge text={t.t("AdminFrame.comingSoonBadge")} tone="neutral" />}
       />
     </Card>
   )

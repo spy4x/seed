@@ -440,7 +440,7 @@ function Report(
                   { label: t.t(`AdminStats.orderRate`), format: (rate) => percent(rate) },
                 ],
               }}
-              format={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               data={report.sources.map((row): RankedBarRow => ({
                 label: row.slug === null ? t.t(`AdminStats.noSource`) : row.name,
                 value: row.visits,
@@ -492,7 +492,7 @@ function Report(
                 label: channel.name,
                 value: channel.clicks,
               }))}
-              format={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               emptyLabel={t.t(`AdminStats.noOrderClicks`)}
             />
           </CardBody>
@@ -565,7 +565,7 @@ function VisitsChart(
           yDomain={[0, countAxisTop([...current, ...previous].map((point) => point.y))]}
           yTicks={5}
           xFormat={(x) => day.dayMonth(typeof x === `string` ? `${x}T00:00:00Z` : x)}
-          yFormat={(value) => format.number(value)}
+          valueFormat={(value) => format.number(value)}
           ariaLabel={t.t(`AdminStats.chartLabel`, { count: report.days })}
           emptyLabel={t.t(`AdminDashboard.nothingYet`)}
         />
@@ -612,7 +612,7 @@ function Items(
                   { label: t.t(`AdminStats.orderRate`), format: (rate) => percent(rate) },
                 ],
               }}
-              format={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               navigate={navigate}
               data={items.mostOrdered.map((item) =>
                 row(item, item.orderClicks, [item.views, item.rate])
@@ -630,7 +630,7 @@ function Items(
                 value: t.t(`AdminStats.views`),
                 extra: [{ label: t.t(`AdminStats.orderClicks`) }],
               }}
-              format={(value) => format.number(value)}
+              valueFormat={(value) => format.number(value)}
               navigate={navigate}
               data={items.viewedNotOrdered.map((item) => row(item, item.views, [item.orderClicks]))}
               emptyLabel={items.mostOrdered.length > 0
