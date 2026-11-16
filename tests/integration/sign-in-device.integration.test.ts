@@ -306,29 +306,56 @@ Deno.test("a forged, foreign or expired device cookie gets no way past the addre
   })
 })
 
-Deno.test("one device gets ten sign-ins in 15 minutes, then waits", async () => {
+Deno.test("a login's devices share ten sign-ins in 15 minutes, then wait", async () => {
   await withSchema(async (sql) => {
     const { clock, attempt, deviceOf } = await buildApp(sql)
-    const device = await deviceOf(OWNER)
-    const other = await deviceOf(OWNER)
+    const devices = [await deviceOf(OWNER), await deviceOf(OWNER)]
+    const eves = await deviceOf("eve@example.com")
 
     const statuses: number[] = []
     for (let signIn = 0; signIn < DEVICE_SIGN_IN_ATTEMPTS; signIn++) {
-      // The right password, so the device's lock stays off, from a fresh address each time: only
-      // the device's budget can run out.
-      statuses.push((await attempt(OWNER, PASSWORD, { device })).status)
+      // The right password, so the devices' locks stay off, from a fresh address each time: only
+      // the login's device budget can run out. The two devices take turns.
+      statuses.push((await attempt(OWNER, PASSWORD, { device: devices[signIn % 2] })).status)
     }
-    const eleventh = await attempt(OWNER, PASSWORD, { device })
-    const otherDevice = await attempt(OWNER, PASSWORD, { device: other })
+    const eleventh = await attempt(OWNER, PASSWORD, { device: devices[0] })
+    const otherDevice = await attempt(OWNER, PASSWORD, { device: devices[1] })
+    const otherLogin = await attempt("eve@example.com", PASSWORD, { device: eves })
     clock.ms += DEVICE_SIGN_IN_WINDOW_MS
-    const afterWindow = await attempt(OWNER, PASSWORD, { device })
+    const afterWindow = await attempt(OWNER, PASSWORD, { device: devices[1] })
 
     expect(statuses).toEqual(Array(DEVICE_SIGN_IN_ATTEMPTS).fill(200))
     expect(eleventh.status).toBe(429)
     expect(eleventh.message).toBe(DEVICE_BUDGET_SPENT)
     expect(Number(eleventh.retryAfter)).toBeGreaterThan(0)
-    expect(otherDevice.status).toBe(200)
+    expect([otherDevice.status, otherDevice.message]).toEqual([429, DEVICE_BUDGET_SPENT])
+    expect(otherLogin.status).toBe(200)
     expect(afterWindow.status).toBe(200)
+  })
+})
+
+Deno.test("one address that mints cookies for its own login gets no more password checks than the login's budget", async () => {
+  await withSchema(async (sql) => {
+    const { attempt } = await buildApp(sql)
+    const minted: string[] = []
+    for (let mint = 0; mint < 3; mint++) {
+      const { status, device } = await attempt(OWNER, PASSWORD, { from: SHARED_ADDRESS })
+      expect(status).toBe(200)
+      if (!device) throw new Error("the right password set no device cookie")
+      minted.push(device)
+    }
+
+    const answers: Answer[] = []
+    for (let signIn = 0; signIn < DEVICE_SIGN_IN_ATTEMPTS * 3; signIn++) {
+      const device = minted[signIn % minted.length]
+      answers.push(await attempt(OWNER, PASSWORD, { from: SHARED_ADDRESS, device }))
+    }
+
+    // Every cookie is a device of the one login, so they spend one budget between them.
+    expect(answers.slice(0, DEVICE_SIGN_IN_ATTEMPTS).map((a) => a.status))
+      .toEqual(Array(DEVICE_SIGN_IN_ATTEMPTS).fill(200))
+    expect(answers.slice(DEVICE_SIGN_IN_ATTEMPTS).map((a) => [a.status, a.message]))
+      .toEqual(Array(DEVICE_SIGN_IN_ATTEMPTS * 2).fill([429, DEVICE_BUDGET_SPENT]))
   })
 })
 

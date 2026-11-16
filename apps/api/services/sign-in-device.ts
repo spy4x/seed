@@ -1,8 +1,8 @@
 /**
  * The device cookie of the password sign-in: the "device cookie" defence against lockout that
  * OWASP describes. A browser that once proved the password of a login gets a signed cookie naming
- * a device of that login. Its later sign-ins to that login spend a budget of that device
- * (`rateLimits.deviceSignIn`) instead of the strict budget per network address and the lock per
+ * a device of that login. Its later sign-ins to that login spend the budget all the login's devices
+ * share (`rateLimits.deviceSignIn`) instead of the strict budget per network address and the lock per
  * name (`password-failures.ts`), so strangers' wrong passwords cannot keep its owner out.
  *
  * Two rules keep a cookie from becoming a way around those limits:

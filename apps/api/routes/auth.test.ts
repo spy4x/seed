@@ -762,7 +762,7 @@ describe("auth routes on the public demo (docs/demo.md)", () => {
       demo: { adminHost: HERE },
       rateLimits: {
         ...limits,
-        deviceSignIn: (deviceId) => (deviceChecks++, limits.deviceSignIn(deviceId)),
+        deviceSignIn: (loginKey) => (deviceChecks++, limits.deviceSignIn(loginKey)),
       },
     })
 

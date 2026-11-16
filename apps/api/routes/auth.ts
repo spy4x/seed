@@ -49,9 +49,9 @@ export interface AuthRouteDependencies {
    */
   passwordFailures: Lockout
   /**
-   * The device cookie a password sign-in sets, and whose budget and lock replace the per-address
-   * budget and the per-name lock for its login (`services/sign-in-device.ts`). The device's lock
-   * counts in `passwordFailures`.
+   * The device cookie a password sign-in sets. With it, the login's device budget and the device's
+   * lock replace the per-address budget and the per-name lock (`services/sign-in-device.ts`). The
+   * device's lock counts in `passwordFailures`.
    */
   signInDevice: SignInDevice
   /** Persistent count of wrong e-mail codes per user, with a growing lock. */
@@ -69,7 +69,7 @@ export interface AuthRouteDependencies {
 /** The answer to a wrong password. */
 const INVALID_CREDENTIALS = "Invalid e-mail, username or password"
 
-/** The answer when a device has spent its sign-in budget (`rateLimits.deviceSignIn`). */
+/** The answer when a login's devices have spent their sign-in budget (`rateLimits.deviceSignIn`). */
 export const DEVICE_BUDGET_SPENT = `Too many sign-in attempts. Try again later.`
 
 /**
@@ -138,9 +138,9 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
     })
     .post(`password/check`, mutationGuards.anonymous, async (c) => {
       // The body comes before any budget: which one an attempt spends depends on the login it
-      // names. A browser whose device cookie names that login and its current password spends its
-      // device's budget and its device's lock instead of the lock per name, so strangers' wrong
-      // passwords cannot keep it out (`services/sign-in-device.ts`).
+      // names. A browser whose device cookie names that login and its current password spends the
+      // login's device budget and its device's lock instead of the address's budget and the lock
+      // per name, so strangers' wrong passwords cannot keep it out (`services/sign-in-device.ts`).
       const read = await readApiJson(c).then(
         (body) => ({ parsed: validate(authSignInSchema, body) }),
         (error: unknown) => ({ parsed: null, error }),
@@ -152,7 +152,10 @@ export function createAuthRoute(deps: AuthRouteDependencies): Hono<APIContext> {
         ? await signInDevice.recognise(c, credentials.login)
         : null
       if (credentials && deviceId !== null) {
-        const decision = await rateLimits.deviceSignIn(deviceId)
+        // One budget for all the login's devices: a new cookie per right password buys no more.
+        const decision = await rateLimits.deviceSignIn(
+          await passwordFailureSubject(credentials.login),
+        )
         if (!decision.allowed) return tooMany(c, decision.retryAfterMs, DEVICE_BUDGET_SPENT)
         // The device's own lock, on the lock per name's policy: a stolen cookie gets no more
         // guesses than a name does. Counted before the password is looked at, as for the name.

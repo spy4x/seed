@@ -10,7 +10,7 @@
  *
  * A sign-in whose device cookie names its login and current password (`sign-in-device.ts`) is
  * neither counted nor refused on the name: that browser proved the password before, and spends its
- * device's budget and its device's own count in this table instead, so a stranger who sets the
+ * login's device budget and its device's own count in this table instead, so a stranger who sets the
  * lock off does not keep the owner out.
  *
  * The key is the name, not the account, and a name no account uses is counted and locked like any

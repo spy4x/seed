@@ -152,10 +152,12 @@ export const EMAIL_CHANGE_ADDRESS_WINDOW_MS = 60 * 60_000
 export const THUMBNAIL_LIMIT_FACTOR = 10
 
 /**
- * Password sign-ins one device may try per {@link DEVICE_SIGN_IN_WINDOW_MS}: a browser whose device
- * cookie (`services/sign-in-device.ts`) names the login it signs in to and that login's current
- * password. It spends this budget instead of the strict one per address, so strangers cannot run it
- * out; its wrong passwords count on a lock of the device's own.
+ * Password sign-ins one login's devices may try together per {@link DEVICE_SIGN_IN_WINDOW_MS}: a
+ * browser whose device cookie (`services/sign-in-device.ts`) names the login it signs in to and that
+ * login's current password. It spends this budget instead of the strict one per address, so
+ * strangers cannot run it out; its wrong passwords count on a lock of the device's own. The budget
+ * is the login's, not the device's: each right password mints a new cookie, so a budget per device
+ * would let an account mint cookies for itself and check passwords without bound.
  */
 export const DEVICE_SIGN_IN_ATTEMPTS = 10
 
@@ -193,12 +195,13 @@ export interface AuthRateLimits {
    */
   guestStart(c: Context<APIContext>): Promise<RateLimitDecision>
   /**
-   * Spends one of the device's {@link DEVICE_SIGN_IN_ATTEMPTS} password sign-ins and says whether
-   * it was allowed. `password/check` calls it instead of `strictByIp` once the request's device
-   * cookie names its login. Refuses the same way as `emailCodeByAddress` when the store fails: this
-   * budget stands between a stolen cookie and the password.
+   * Spends one of the login's {@link DEVICE_SIGN_IN_ATTEMPTS} password sign-ins from its devices
+   * and says whether it was allowed; `loginKey` is the login's `passwordFailureSubject`, which every
+   * device of the login shares. `password/check` calls it instead of `strictByIp` once the request's
+   * device cookie names its login. Refuses the same way as `emailCodeByAddress` when the store
+   * fails: this budget stands between a stolen cookie and the password.
    */
-  deviceSignIn(deviceId: string): Promise<RateLimitDecision>
+  deviceSignIn(loginKey: string): Promise<RateLimitDecision>
   /** Normal limit per signed-in user, else per client IP, for every other auth route. */
   normal: MiddlewareHandler<APIContext>
   /**
@@ -292,8 +295,8 @@ export interface AuthRateLimitSettings {
  *
  * Shared budgets, on purpose: sign-in, sign-up and both halves of a password reset from one IP
  * spend one strict budget, since each guesses or probes an account. The one exception is a
- * password sign-in from a browser whose device cookie names the login: it spends that device's
- * budget (`deviceSignIn`) instead, and that device's lock in place of the lock per name, so a
+ * password sign-in from a browser whose device cookie names the login: it spends that login's
+ * device budget (`deviceSignIn`) instead, and that device's lock in place of the lock per name, so a
  * stranger who shares the owner's address, or knows the owner's name, cannot keep the owner out.
  * Asking for a reset code also
  * spends the address's own budget (`resetByAddress`), so many IPs together still cannot flood one
@@ -391,7 +394,8 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     clock,
   })
   // An hour long, so a script cannot fill the database with empty accounts.
-  // Keyed by the device id of a verified cookie: only a browser that proved the password has one.
+  // Keyed by the login of a verified cookie, shared by all its devices: only a browser that proved
+  // the login's current password has one, and minting more cookies buys no more checks.
   const device = createStoreLimiter(store(DEVICE_SIGN_IN_STORE), {
     windowMs: DEVICE_SIGN_IN_WINDOW_MS,
     limit: DEVICE_SIGN_IN_ATTEMPTS,
@@ -459,7 +463,7 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       if (!own.allowed) return own
       return await codeByAddress.check(keys.address)
     },
-    deviceSignIn: async (deviceId) => await device.check(`auth-device:${deviceId}`),
+    deviceSignIn: async (loginKey) => await device.check(`auth-device:${loginKey}`),
     guestStart: async (c) => await guest.check(`auth-guest:${signUpClient(c)}`),
     emailChangeByUser: async (userId) => await emailChange.check(`auth-email-change:${userId}`),
     emailChangeByAddress: async (email) =>
