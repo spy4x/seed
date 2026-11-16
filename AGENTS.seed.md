@@ -18,7 +18,7 @@ video with `deno task video:admin` in the same follow-up PR as the screenshots, 
 `apps/mpa/admin-video.ts` (its length, size, upload date and transcript) to match. The skill says
 how.
 
-The website's three feature loops (realtime, offline, shortcuts; `apps/mpa/media/video/*-loop-*`)
+The website's four feature loops (realtime, offline, shortcuts, speed; `apps/mpa/media/video/*-loop-*`)
 film the SPA's screens. When a change alters a screen a loop shows significantly, re-record that
 loop with `deno task loops <name>` in `apps/mpa`, in the same follow-up PR.
 
