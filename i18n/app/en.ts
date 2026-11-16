@@ -328,6 +328,7 @@ export default {
   "Import.file": "File",
   "Import.fileHint":
     "A {types} file, up to {size} MB and {rows} rows. The first row can name the columns.",
+  "Import.optionsFirst": "Fill in the fields above first.",
   "Import.browse": "Choose a file",
   "Import.tooLarge": "{name} is larger than {size} MB.",
   "Import.wrongType": "{name} is not a {types} file.",

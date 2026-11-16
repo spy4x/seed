@@ -22,7 +22,7 @@ import { Table } from "@spy4x/preact-ui/table"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { type ImportCheckResult, ImportStatus, type ImportSummary } from "@domain/imports"
 import { useAppText } from "./i18n.ts"
-import type { ImportKindView, ImportKindWords } from "./import-kinds.ts"
+import type { ImportKindView, ImportKindWords, ImportOptions } from "./import-kinds.ts"
 import { IMPORT_PATHS, type Navigate, ScreenForm } from "./progressive.tsx"
 
 /** The mapper's root id: a field's select is `import-mapper-<key>`, which the main button focuses. */
@@ -52,12 +52,16 @@ export interface ImportNewScreenProps extends ImportPageProps {
   recent: readonly ImportSummary[] | null
   /** A file was chosen and passed the kind's type and size; the app uploads it. */
   onFile?: (file: File) => void
+  /** The kind's upload options as the person set them; `null` or absent for its `initial`. */
+  options?: ImportOptions | null
+  onOptions?: (value: ImportOptions) => void
 }
 
 /**
  * `/imports/new?kind=`: one file picker that uploads the file it is given at once, with the kind's
  * limits in its hint, and "Your recent imports" under it. The picker refuses a wrong type or an
  * oversized file itself, so the API never sees one. A viewer sees why they cannot import instead.
+ * A kind with upload options draws its form above the picker, which waits until the form is ready.
  */
 export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
   const { kind, offline = false, uploading = null, recent } = props
@@ -67,6 +71,10 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
   const types = listOf(t, kind.limits.accept)
   const size = megabytes(kind.limits.maxBytes)
   const mine = recent?.filter((item) => item.kind === kind.limits.id) ?? []
+  const options = kind.options
+  const value = props.options ?? options?.initial ?? {}
+  const ready = options ? options.ready(value) : true
+  const limits = t.t(`Import.fileHint`, { types, size, rows: format.number(kind.limits.maxRows) })
   return (
     <Stack gap="xl">
       <PageHeader
@@ -79,26 +87,31 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
         {props.forbidden ? <Viewer {...props} words={words} /> : (
           <>
             {offline && <Offline />}
+            {options && (
+              <div class="flex flex-col gap-4" data-e2e="import-options">
+                {options.render({
+                  value,
+                  onChange: (next) => props.onOptions?.(next),
+                  disabled: uploading !== null || offline,
+                })}
+              </div>
+            )}
             <FileInput
               id="import-file"
               name="file"
               accept={kind.limits.accept.join(`,`)}
               maxSize={kind.limits.maxBytes}
               label={t.t(`Import.file`)}
-              hint={t.t(`Import.fileHint`, {
-                types,
-                size,
-                rows: format.number(kind.limits.maxRows),
-              })}
+              hint={ready ? limits : `${t.t(`Import.optionsFirst`)} ${limits}`}
               error={props.error ?? undefined}
-              disabled={uploading !== null || offline}
+              disabled={uploading !== null || offline || !ready}
               previews={false}
               labels={{
                 browse: t.t(`Import.browse`),
                 tooLarge: (name) => t.t(`Import.tooLarge`, { name, size }),
                 wrongType: (name) => t.t(`Import.wrongType`, { name, types }),
               }}
-              onFiles={(files) => files[0] && props.onFile?.(files[0])}
+              onFiles={(files) => ready && files[0] && props.onFile?.(files[0])}
             />
             <p role="status" aria-live="polite" class="text-sm text-muted" data-e2e="import-upload">
               {uploading !== null && t.t(`Import.uploading`, { file: uploading })}

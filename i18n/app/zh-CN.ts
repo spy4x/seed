@@ -279,6 +279,7 @@ export default {
   "Import.title": "导入",
   "Import.file": "文件",
   "Import.fileHint": "{types} 文件，最大 {size} MB、{rows} 行。第一行可以是列名。",
+  "Import.optionsFirst": "请先填写上面的字段。",
   "Import.browse": "选择文件",
   "Import.tooLarge": "{name} 超过了 {size} MB。",
   "Import.wrongType": "{name} 不是 {types} 文件。",

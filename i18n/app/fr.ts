@@ -379,6 +379,7 @@ export default {
   "Import.file": "Fichier",
   "Import.fileHint":
     "Un fichier {types}, jusqu’à {size} Mo et {rows} lignes. La première ligne peut nommer les colonnes.",
+  "Import.optionsFirst": "Remplissez d’abord les champs ci-dessus.",
   "Import.browse": "Choisir un fichier",
   "Import.tooLarge": "{name} dépasse {size} Mo.",
   "Import.wrongType": "{name} n’est pas un fichier {types}.",

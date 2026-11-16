@@ -11,7 +11,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { type ImportCheckResult, ImportStatus, type ImportSummary } from "@domain/imports"
 import { NOTE_RESTORE_DAYS } from "@domain/notes"
-import { importKindView } from "./import-kinds.ts"
+import { type ImportKindView, importKindView } from "./import-kinds.ts"
 import {
   IMPORT_MAPPER_ID,
   ImportNewScreen,
@@ -107,6 +107,33 @@ async function pick(file: File): Promise<void> {
 }
 
 const NOTES = importKindView(`notes`, true)!
+
+const WORDS = { account: `Account` }
+const ACCOUNTS = [[``, `Choose`], [`a1`, `Main`]]
+
+/** A product's kind with upload options and a review, as a bank statement has. */
+const BANK: ImportKindView = {
+  ...NOTES,
+  limits: { ...NOTES.limits, id: `bank` },
+  options: {
+    initial: { accountId: `` },
+    // The test kind's own words come from a variable: the product's kind takes its catalog's.
+    render: ({ value, onChange, disabled }) => (
+      <label>
+        {WORDS.account}
+        <select
+          id="bank-account"
+          value={value.accountId}
+          disabled={disabled}
+          onChange={(event) => onChange({ accountId: event.currentTarget.value })}
+        >
+          {ACCOUNTS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+        </select>
+      </label>
+    ),
+    ready: (value) => value.accountId !== ``,
+  },
+}
 
 function summary(overrides: Partial<ImportSummary> = {}): ImportSummary {
   return {
@@ -221,6 +248,49 @@ describe("the import picker", () => {
       `/imports/0190a000-0000-7000-8000-000000000001`,
     )
     expect(find(`[data-e2e="import-recent-item"]`).textContent).toContain(`Imported`)
+  })
+
+  it("shows the notes picker with no options form and the picker open", async () => {
+    await mount(picker())
+    expect(has(`[data-e2e="import-options"]`)).toBe(false)
+    expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(false)
+    expect(document.body.textContent).not.toContain(`Fill in the fields above first.`)
+  })
+
+  it("keeps the picker closed until the kind's options are ready, then hands them on", async () => {
+    const set: Record<string, string>[] = []
+    const chosen: File[] = []
+    await mount(picker({
+      kind: BANK,
+      onOptions: (value) => set.push(value),
+      onFile: (file) => chosen.push(file),
+    }))
+    expect(find<HTMLSelectElement>(`#bank-account`).value).toBe(``)
+    expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(true)
+    expect(find(`#import-file-hint`).textContent).toBe(
+      `Fill in the fields above first. A .csv or .txt file, up to 2 MB and 5,000 rows. ` +
+        `The first row can name the columns.`,
+    )
+    const account = find<HTMLSelectElement>(`#bank-account`)
+    account.value = `a1`
+    await act(() => {
+      account.dispatchEvent(new window.Event(`change`, { bubbles: true }) as unknown as Event)
+    })
+    expect(set).toEqual([{ accountId: `a1` }])
+    await rerender(picker({
+      kind: BANK,
+      options: { accountId: `a1` },
+      onFile: (file) => chosen.push(file),
+    }))
+    expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(false)
+    expect(document.body.textContent).not.toContain(`Fill in the fields above first.`)
+    await pick(new window.File([`Date\n1`], `bank.csv`, { type: `text/csv` }) as unknown as File)
+    expect(chosen.map((file) => file.name)).toEqual([`bank.csv`])
+  })
+
+  it("disables the kind's options while a file uploads", async () => {
+    await mount(picker({ kind: BANK, options: { accountId: `a1` }, uploading: `bank.csv` }))
+    expect(find<HTMLSelectElement>(`#bank-account`).disabled).toBe(true)
   })
 
   it("says which file is uploading and takes no second one meanwhile", async () => {

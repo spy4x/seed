@@ -354,6 +354,7 @@ export default {
   "Import.file": "Datei",
   "Import.fileHint":
     "Eine {types}-Datei, bis {size} MB und {rows} Zeilen. Die erste Zeile darf die Spalten benennen.",
+  "Import.optionsFirst": "Fülle zuerst die Felder oben aus.",
   "Import.browse": "Datei auswählen",
   "Import.tooLarge": "{name} ist größer als {size} MB.",
   "Import.wrongType": "{name} ist keine {types}-Datei.",

@@ -13,6 +13,7 @@ import {
   type ImportsResult,
   type ImportsTimer,
   type ImportsTransport,
+  uploadQuery,
 } from "./imports.ts"
 
 const GROUP = `0190a000-0000-7000-8000-0000000000aa`
@@ -252,6 +253,30 @@ describe(`the imports store`, () => {
     expect(keys[2]).toBe(keys[1])
     expect(keys[1]).not.toBe(keys[0])
     expect(of(`upload`)[0].args.slice(0, 2)).toEqual([GROUP, `notes`])
+  })
+
+  it(`uploads with the kind's options, and with none for a kind without them`, async () => {
+    const file = new File([`Date\n1`], `bank.csv`, { type: `text/csv` })
+    const { transport, of } = fake()
+    const store = createImportsStore(transport, manualTimer().timer)
+    await store.upload(GROUP, `bank`, file, { accountId: `a1` })
+    await store.upload(GROUP, `notes`, file)
+    expect(of(`upload`).map((c) => c.args[4])).toEqual([{ accountId: `a1` }, undefined])
+  })
+
+  it(`puts the options in the upload's query as JSON, and leaves them out without any`, () => {
+    expect(uploadQuery(`bank`, `b.csv`, { accountId: `a1` }).get(`options`)).toBe(
+      `{"accountId":"a1"}`,
+    )
+    expect(uploadQuery(`notes`, `n.csv`).toString()).toBe(`kind=notes&name=n.csv`)
+  })
+
+  it(`forgets the options the person set when the picker opens again`, () => {
+    const store = createImportsStore(fake().transport, manualTimer().timer)
+    store.setOptions({ accountId: `a1` })
+    expect(store.options.value).toEqual({ accountId: `a1` })
+    store.startNew()
+    expect(store.options.value).toBeNull()
   })
 
   it(`reads nothing more for an import once the page left it`, async () => {

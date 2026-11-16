@@ -312,6 +312,7 @@ export default {
   "Import.file": "ファイル",
   "Import.fileHint":
     "{types} ファイル、{size} MB・{rows} 行まで。1 行目に列名を書くこともできます。",
+  "Import.optionsFirst": "先に上の項目を入力してください。",
   "Import.browse": "ファイルを選択",
   "Import.tooLarge": "{name} は {size} MB を超えています。",
   "Import.wrongType": "{name} は {types} ファイルではありません。",

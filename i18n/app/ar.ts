@@ -410,6 +410,7 @@ export default {
   "Import.file": "الملف",
   "Import.fileHint":
     "ملف {types}، حتى {size} ميغابايت و{rows} صف. يمكن أن يحمل الصف الأول أسماء الأعمدة.",
+  "Import.optionsFirst": "املأ الحقول أعلاه أولًا.",
   "Import.browse": "اختيار ملف",
   "Import.tooLarge": "حجم {name} أكبر من {size} ميغابايت.",
   "Import.wrongType": "{name} ليس ملف {types}.",

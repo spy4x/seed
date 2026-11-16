@@ -383,6 +383,7 @@ export default {
   "Import.file": "Файл",
   "Import.fileHint":
     "Файл {types}, до {size} МБ и {rows} строк. В первой строке могут быть названия столбцов.",
+  "Import.optionsFirst": "Сначала заполните поля выше.",
   "Import.browse": "Выбрать файл",
   "Import.tooLarge": "{name} больше {size} МБ.",
   "Import.wrongType": "{name} — не файл {types}.",

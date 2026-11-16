@@ -362,6 +362,7 @@ export default {
   "Import.file": "Archivo",
   "Import.fileHint":
     "Un archivo {types}, de hasta {size} MB y {rows} filas. La primera fila puede nombrar las columnas.",
+  "Import.optionsFirst": "Primero completa los campos de arriba.",
   "Import.browse": "Elegir un archivo",
   "Import.tooLarge": "{name} ocupa más de {size} MB.",
   "Import.wrongType": "{name} no es un archivo {types}.",
