@@ -485,7 +485,7 @@ export default {
   "FeatureTierRuntime.nav": "运行时",
   "FeatureTierRuntime.title": "可运行在 Deno、Node 和 Bun 上",
   "FeatureTierRuntime.lead":
-    "API、worker 和网站无需任何改动就能在 Deno、Node 和 Bun 上运行，每次改动 CI 都会在这三个运行时上分别启动它们。env 文件里的一行 APP_RUNTIME 决定用哪个运行时。代码基于 Web 标准（fetch、Request、Web Crypto、WebSocket、ES 模块）；Seed 自己的任务和测试运行在 Deno 上，npm 或 Bun 会替你装好 Deno。2026 年 10 月，Deno 团队<announced>宣布</announced>将再提供一年支持，每月发布错误修复和安全更新，之后结束自己的开发工作；Deno 仍然是开源的。",
+    "API、worker 和网站无需任何改动就能在 Deno、Node 和 Bun 上运行，每次改动 CI 都会在这三个运行时上分别启动它们。env 文件里的一行 APP_RUNTIME 决定用哪个运行时。代码基于 Web 标准（fetch、Request、Web Crypto、WebSocket、ES 模块）；Seed 自己的任务和测试运行在 Deno 上，npm 或 Bun 会替你装好 Deno。2026 年 10 月，Deno 团队<announced>宣布</announced>将再提供一年支持，每月发布错误修复和安全更新，之后不再继续开发它；Deno 仍然是开源的。",
   "FeatureTierRuntime.pick": "如何选择运行时",
   "FeatureTierOperations.eyebrow": "运维",
   "FeatureTierOperations.title": "运行它、监控它、支持它的用户",
