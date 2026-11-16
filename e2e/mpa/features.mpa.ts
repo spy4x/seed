@@ -157,7 +157,8 @@ test.describe(`a screenshot's lightbox`, () => {
   test(`zooms the page's screenshots but never a feature loop's poster`, async ({ page }) => {
     await page.goto(`/features`)
     await expect(page.getByRole(`button`, { name: /^Zoom: / }).first()).toBeVisible()
-    for (const [loop] of LOOPS) {
+    // /features shows the loop of each feature page; the speed loop lives on the home page only.
+    for (const [loop] of LOOPS.filter(([, path]) => path.startsWith(`/features/`))) {
       const figure = page.locator(`[data-e2e=loop-${loop}]`)
       await expect(figure.locator(`img`).first()).toBeAttached()
       // Once the clip is live the poster is hidden from the accessibility tree, so the zoom marks
