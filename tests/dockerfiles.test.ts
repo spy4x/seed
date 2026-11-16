@@ -181,6 +181,11 @@ Deno.test("the Node and Bun images pin every image they start from by digest", a
   }
 })
 
+Deno.test("the CI image of the browser steps pins the Playwright image it starts from by digest", async () => {
+  const path = `infra/ci/playwright.dockerfile`
+  expect({ path, loose: imagesWithoutDigest(await read(path)) }).toEqual({ path, loose: [] })
+})
+
 Deno.test("the Node image runs the API on Node, and the Bun image on Bun", async () => {
   for (const runtime of ["node", "bun"]) {
     const final = instructions(await read(`apps/api/dockerfile.${runtime}`)).filter((line) =>
