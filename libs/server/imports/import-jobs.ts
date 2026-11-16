@@ -86,7 +86,8 @@ export function importReadJob(sql: postgres.Sql, kinds: readonly ImportKind[]): 
  * writes every valid row through the kind's `commit`, its batch in `import_records`, in one
  * transaction, then drops the file. Rows with errors are left out and counted. A kind with a
  * `review` is asked again here, in this transaction, and the rows it skips are left out and
- * counted too; each value goes to `commit` with its suggestions overlaid with the person's choices. A refusal (the
+ * counted too, unless the review marks the skip overridable and the person kept the row; each value
+ * goes to `commit` with its suggestions overlaid with the person's choices. A refusal (the
  * uploader lost the role, the plan is full, the file no longer reads) saves nothing and marks the
  * import `FAILED` with why; any other fault rolls back and the job is tried again. A rerun on a
  * saved import finds it `COMMITTED` and stops, so no row is written twice.
@@ -134,6 +135,7 @@ export function importCommitJob(sql: postgres.Sql, setup: ImportJobSetup): JobHa
           checked.valueRows,
           reviews,
           JSON.parse(row.choicesJson ?? `{}`) as ImportChoices,
+          JSON.parse(row.keepJson ?? `[]`) as number[],
         )
         const sequence = await announceImport(tx, row.groupId, row.userId, IMPORT_EVENTS.committed)
         if (sequence === null) throw new ImportError("GROUP_NOT_FOUND", `The group was deleted.`)
@@ -191,6 +193,7 @@ interface LockedImport {
   mappingJson: string | null
   optionsJson: string | null
   choicesJson: string | null
+  keepJson: string | null
 }
 
 /**
@@ -206,7 +209,8 @@ async function lockImport(tx: postgres.TransactionSql, id: string): Promise<Lock
   await tx`SELECT 1 FROM groups WHERE id = ${peek.groupId} FOR NO KEY UPDATE`
   const [row] = await tx<LockedImport[]>`
     SELECT status, kind, group_id AS "groupId", user_id AS "userId", file,
-      mapping::text AS "mappingJson", options::text AS "optionsJson", choices::text AS "choicesJson"
+      mapping::text AS "mappingJson", options::text AS "optionsJson", choices::text AS "choicesJson",
+      keep::text AS "keepJson"
     FROM imports WHERE id = ${id}
     FOR UPDATE
   `

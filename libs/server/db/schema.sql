@@ -1538,6 +1538,7 @@ CREATE TABLE imports (
     options JSONB,
     choices JSONB,
     skipped_count INT4,
+    keep JSONB,
     CONSTRAINT imports_status_check CHECK (status BETWEEN 1 AND 6),
     CONSTRAINT imports_file_size_check CHECK (file_size >= 0),
     CONSTRAINT imports_failure_check CHECK ((failure IS NULL) = (failed_at IS NULL))

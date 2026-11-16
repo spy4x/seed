@@ -18,7 +18,7 @@ import {
   ImportUndoCommand,
   importUpload,
 } from "@domain/imports"
-import { type ImportKind, importKind } from "@server/imports/import-kind.ts"
+import { type ImportKind, importKind, type ImportReview } from "@server/imports/import-kind.ts"
 import {
   deleteStaleImports,
   IMPORT_STALE_MS,
@@ -749,8 +749,14 @@ Deno.test("imports with a review: a check answers each valid row with its cells,
     )
     expect(result).toMatchObject({ rowCount: 3, valid: 2, withErrors: 1 })
     expect(result.reviews).toEqual([
-      { row: 1, cells: [`Have`], skip: `Saved before`, suggestions: { tag: `auto Have` } },
-      { row: 3, cells: [`New`], skip: null, suggestions: { tag: `auto New` } },
+      {
+        row: 1,
+        cells: [`Have`],
+        skip: `Saved before`,
+        suggestions: { tag: `auto Have` },
+        overridable: false,
+      },
+      { row: 3, cells: [`New`], skip: null, suggestions: { tag: `auto New` }, overridable: false },
     ])
   })
 })
@@ -888,6 +894,150 @@ Deno.test("imports with choices: a field that is not a choice and a row past the
     expect(await commitJobsOf(sql, read.id)).toBe(0)
 
     expect(await codeOf(commit({ "2": { tag: `x` } }))).toBeNull()
+    expect(await commitJobsOf(sql, read.id)).toBe(1)
+  })
+})
+
+/**
+ * The linked kind with a review whose skip can be wrong, the shape of a bank statement whose
+ * expense equals an unrelated transfer: a title the group has from elsewhere is skipped as
+ * overridable ("Matches a note"), and one a linked import saved is skipped for good.
+ */
+function overridableKind(seen: CommitSeen[]): ImportKind {
+  return importKind<{ title: string }>({
+    ...(linkedKind(seen) as ImportKind<{ title: string }>),
+    async review(tx, values, context) {
+      const existing = await tx<{ title: string; final: boolean | null }[]>`
+        SELECT notes.title, bool_or(imports.kind = 'linked') AS final
+        FROM notes
+        LEFT JOIN import_records ON import_records.record_id = notes.id
+        LEFT JOIN imports ON imports.id = import_records.import_id
+        WHERE notes.group_id = ${context.groupId} AND notes.deleted_at IS NULL
+          AND notes.title = ANY(${values.map((value) => value.title)})
+        GROUP BY notes.title
+      `
+      const final = new Map(existing.map((row) => [row.title, row.final === true]))
+      return values.map((value): ImportReview => {
+        const seenBefore = final.get(value.title)
+        if (seenBefore === undefined) return { skip: null, suggestions: { tag: `auto` } }
+        return seenBefore
+          ? { skip: `Saved before`, suggestions: {} }
+          : { skip: `Matches a note`, suggestions: { tag: `auto` }, overridable: true }
+      })
+    },
+  })
+}
+
+Deno.test("imports with keep: an overridable skip the person keeps is saved, an unkept one and a final one are skipped", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Parent`)
+    await saved(sql, groupId, editor, `Maybe A`, `Maybe B`)
+    const seen: CommitSeen[] = []
+    const kinds = [overridableKind(seen)]
+    const api = handlers(sql, kinds)
+    const first = await uploadedLinked(sql, kinds, groupId, editor, { parentNoteId }, `Have`)
+    await api.commit(
+      new ImportCommitCommand({
+        actor: actor(editor),
+        groupId,
+        importId: first.id,
+        mapping: { title: 0 },
+      }),
+    )
+    await importCommitJob(sql, { ...NO_BILLING, kinds })(job(first.id))
+    seen.length = 0
+
+    const read = await uploadedLinked(
+      sql,
+      kinds,
+      groupId,
+      editor,
+      { parentNoteId },
+      `Maybe A`,
+      `Maybe B`,
+      `Have`,
+      `New`,
+    )
+    const ref = { actor: actor(editor), groupId, importId: read.id, mapping: { title: 0 } }
+    const preview = await api.check(new ImportCheckQuery(ref))
+    expect(preview.reviews?.map(({ row, skip, overridable }) => ({ row, skip, overridable })))
+      .toEqual([
+        { row: 1, skip: `Matches a note`, overridable: true },
+        { row: 2, skip: `Matches a note`, overridable: true },
+        { row: 3, skip: `Saved before`, overridable: false },
+        { row: 4, skip: null, overridable: false },
+      ])
+
+    // Row 1 is overridable and kept, row 2 overridable but not kept, row 3 kept but final.
+    await api.commit(
+      new ImportCommitCommand({ ...ref, keep: [1, 3], choices: { "1": { tag: `mine` } } }),
+    )
+    await importCommitJob(sql, { ...NO_BILLING, kinds })(job(read.id))
+
+    expect(seen).toEqual([{
+      step: `commit`,
+      options: { parentNoteId },
+      choices: [{ tag: `mine` }, { tag: `auto` }],
+    }])
+    const done = await api.get(new ImportGetQuery({ ...ref }))
+    expect(done).toMatchObject({ status: ImportStatus.COMMITTED, savedCount: 2, skippedCount: 2 })
+    expect(await liveTitles(sql, groupId)).toEqual(
+      [`Have`, `Maybe A`, `Maybe A`, `Maybe B`, `New`, `Parent`],
+    )
+  })
+})
+
+Deno.test("imports with keep: a skip that turns final between the preview and the save wins over keep", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Parent`)
+    await saved(sql, groupId, editor, `Lunch`)
+    const kinds = [overridableKind([])]
+    const api = handlers(sql, kinds)
+    const first = await uploadedLinked(sql, kinds, groupId, editor, { parentNoteId }, `Lunch`)
+    const second = await uploadedLinked(sql, kinds, groupId, editor, { parentNoteId }, `Lunch`)
+    for (const one of [first, second]) {
+      const ref = { actor: actor(editor), groupId, importId: one.id, mapping: { title: 0 } }
+      const preview = await api.check(new ImportCheckQuery(ref))
+      expect(preview.reviews?.map((review) => review.overridable)).toEqual([true])
+      await api.commit(new ImportCommitCommand({ ...ref, keep: [1] }))
+    }
+
+    await importCommitJob(sql, { ...NO_BILLING, kinds })(job(first.id))
+    await importCommitJob(sql, { ...NO_BILLING, kinds })(job(second.id))
+
+    expect(await liveTitles(sql, groupId)).toEqual([`Lunch`, `Lunch`, `Parent`])
+    const late = await api.get(
+      new ImportGetQuery({ actor: actor(editor), groupId, importId: second.id }),
+    )
+    expect(late).toMatchObject({ status: ImportStatus.COMMITTED, savedCount: 0, skippedCount: 1 })
+  })
+})
+
+Deno.test("imports with keep: a row past the file or below 1 is refused before the save is queued", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor } = await team(sql)
+    const parentNoteId = await parentNote(sql, groupId, editor, `Parent`)
+    const kinds = [overridableKind([])]
+    const read = await uploadedLinked(sql, kinds, groupId, editor, { parentNoteId }, `A`, `B`)
+    const commit = (keep: number[]) => () =>
+      handlers(sql, kinds).commit(
+        new ImportCommitCommand({
+          actor: actor(editor),
+          groupId,
+          importId: read.id,
+          mapping: { title: 0 },
+          keep,
+        }),
+      )
+
+    expect(await codeOf(commit([3]))).toBe(`INVALID_REQUEST`)
+    expect(await codeOf(commit([0]))).toBe(`INVALID_REQUEST`)
+    expect(await stored(sql, read.id)).toMatchObject({ status: ImportStatus.READY })
+    expect(await commitJobsOf(sql, read.id)).toBe(0)
+
+    expect(await codeOf(commit([2]))).toBeNull()
     expect(await commitJobsOf(sql, read.id)).toBe(1)
   })
 })
