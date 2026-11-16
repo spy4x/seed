@@ -70,6 +70,21 @@ describe(`the palette's commands`, () => {
     }
   })
 
+  it(`return the rows themselves from matchCommands, so a row's state is read when drawn`, () => {
+    let state = `On`
+    const row: PaletteOption = {
+      id: `action-switch`,
+      label: `Переключатель`,
+      englishWords: [`Switch`],
+      get state() {
+        return state
+      },
+    }
+    const [found] = matchCommands([row], `switch`)
+    state = `Off`
+    expect(found?.state).toBe(`Off`)
+  })
+
   it(`put Go to Notes first for notse and заметки`, () => {
     for (const query of [`notse`, `заметки`]) {
       const found = matchCommands(paletteCommands(context(), () => {}), query)[0]
