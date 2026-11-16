@@ -81,6 +81,10 @@ if [ "$PAGES" = quick ]; then
 fi
 
 # Outside deno.lock: Lighthouse CI's own dependencies include the npm `uuid` package, which
-# tests/no-uuid-v4.test.ts refuses in any tracked file. The version is pinned here, and the
-# repository's minimum dependency age still holds for everything it pulls in.
-deno run -A --no-lock npm:@lhci/cli@0.15.1 autorun --config="$CONFIG"
+# tests/no-uuid-v4.test.ts refuses in any tracked file. The version is pinned here.
+# `--no-config` keeps deno.jsonc out: with it, Deno would resolve the project's own npm packages
+# again on every run (`nodeModulesDir`), and the CI image's cache, made from this command with no
+# config, would not cover them (infra/ci/playwright.dockerfile). So the repository's minimum
+# dependency age does not hold here: what Lighthouse CI pulls in is resolved without it, in CI
+# once, when the CI image is built.
+deno run -A --no-config --no-lock npm:@lhci/cli@0.15.1 autorun --config="$CONFIG"
