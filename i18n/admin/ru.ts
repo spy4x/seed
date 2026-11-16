@@ -326,10 +326,10 @@ export default {
   "AdminBillingCustomer.doneTime": "Группе {group} дан бесплатный период.",
   "AdminBillingCustomer.doneCancelNow":
     "Подписка группы {group} отменена. Теперь группа на бесплатном тарифе.",
-  "AdminBillingCustomer.doneCancelOn": "{date} подписка группы {group} закончится.",
+  "AdminBillingCustomer.doneCancelOn": "Подписка группы {group} закончится {date} без продления.",
   "AdminBillingCustomer.doneCancelEnd":
     "Подписка группы {group} закончится вместе с текущим периодом.",
-  "AdminBillingCustomer.doneUndoOn": "{date} подписка группы {group} продлится.",
+  "AdminBillingCustomer.doneUndoOn": "Подписка группы {group} продлится {date}, как обычно.",
   "AdminBillingCustomer.doneUndo": "Подписка группы {group} будет продлеваться как обычно.",
   "AdminBillingCustomer.needsSupervisor": "Нужен старший оператор",
   "AdminBillingCustomer.youBelong": "Вы состоите в этой группе",
@@ -524,19 +524,19 @@ export default {
   "AdminBlogChannels.keyMissing":
     "Ждёт ключа. Укажите <key>{key}</key> в env-файле сервера и выполните деплой.",
   "AdminBlogChannels.lastFailed": "Последнее размещение не удалось: {reason}",
-  "AdminBlogChannels.signInOk": "До {date} вход в LinkedIn действует.",
+  "AdminBlogChannels.signInOk": "Вход в LinkedIn действует до {date}",
   "AdminBlogChannels.signInSoon": {
     "one":
-      "{date}, через {count} день, истекает вход в LinkedIn. Продлите его командой <cmd>{command}</cmd>.",
+      "Вход в LinkedIn истечёт {date} (через {count} день). Продлите его командой <cmd>{command}</cmd>.",
     "few":
-      "{date}, через {count} дня, истекает вход в LinkedIn. Продлите его командой <cmd>{command}</cmd>.",
+      "Вход в LinkedIn истечёт {date} (через {count} дня). Продлите его командой <cmd>{command}</cmd>.",
     "many":
-      "{date}, через {count} дней, истекает вход в LinkedIn. Продлите его командой <cmd>{command}</cmd>.",
+      "Вход в LinkedIn истечёт {date} (через {count} дней). Продлите его командой <cmd>{command}</cmd>.",
     "other":
-      "{date}, через {count} дня, истекает вход в LinkedIn. Продлите его командой <cmd>{command}</cmd>.",
+      "Вход в LinkedIn истечёт {date} (через {count} дня). Продлите его командой <cmd>{command}</cmd>.",
   },
   "AdminBlogChannels.signInExpired":
-    "{date} истёк вход в LinkedIn. Посты подождут, пока вы не выполните <cmd>{command}</cmd>.",
+    "Вход в LinkedIn истёк {date} — посты подождут, пока вы не выполните <cmd>{command}</cmd>.",
   "AdminBlogChannels.loading": "Загружаем каналы продвижения",
   "AdminBlogChannels.listError": "Не удалось загрузить каналы продвижения. Попробуйте чуть позже.",
   "AdminBlogChannels.retry": "Повторить",
