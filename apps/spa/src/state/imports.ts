@@ -86,7 +86,7 @@ const post = (body: unknown, key?: string): RequestInit => ({
 })
 
 /** An upload's query: the kind, the file's name and, when given, the options as JSON. */
-export function uploadQuery(
+function uploadQuery(
   kind: string,
   name: string,
   options?: Record<string, string>,
@@ -160,6 +160,10 @@ export function createImportsStore(
   const error = signal<string | null>(null)
   /** The picker's upload options as the person set them; `null` for the kind's initial ones. */
   const options = signal<Record<string, string> | null>(null)
+  /** The person's values for the review's choice fields, only those that differ from it. */
+  const choices = signal<ImportChoices>({})
+  /** Rows to save despite an overridable skip. */
+  const keep = signal<readonly number[]>([])
   let openId: string | null = null
   /** Bumped by every open and close, so a late answer for another import is dropped. */
   let opened = 0
@@ -247,6 +251,8 @@ export function createImportsStore(
     undoing,
     error,
     options,
+    choices,
+    keep,
 
     /** Reads the person's recent imports in `group`, newest first. */
     async loadRecent(group: string): Promise<void> {
@@ -313,6 +319,8 @@ export function createImportsStore(
       committing.value = false
       undoing.value = false
       error.value = null
+      choices.value = {}
+      keep.value = []
       keys.commit = null
       keys.undo = null
       await read()
@@ -332,7 +340,26 @@ export function createImportsStore(
       }, IMPORT_CHECK_DELAY_MS)
     },
 
-    /** Saves the rows with the mapping; the import then shows as being saved. */
+    /**
+     * Sets the person's value of choice field `field` on `row`. A value equal to the review's
+     * suggestion is no choice at all, so it is dropped rather than sent.
+     */
+    choose(row: number, field: string, value: string): void {
+      const suggestion = check.value?.reviews?.find((review) => review.row === row)
+        ?.suggestions[field] ?? ``
+      const { [String(row)]: before = {}, ...others } = choices.value
+      const { [field]: _, ...rest } = before
+      const after = value === suggestion ? rest : { ...rest, [field]: value }
+      choices.value = Object.keys(after).length > 0 ? { ...others, [row]: after } : others
+    },
+
+    /** Saves `row` despite its overridable skip (`on`), or leaves it skipped again. */
+    setKeep(row: number, on: boolean): void {
+      const others = keep.value.filter((kept) => kept !== row)
+      keep.value = on ? [...others, row] : others
+    },
+
+    /** Saves the rows with the mapping, the choices and the kept rows; then shows it saving. */
     async commit(): Promise<void> {
       const group = groupId.value
       const id = openId
@@ -342,7 +369,16 @@ export function createImportsStore(
       committing.value = true
       error.value = null
       keys.commit ??= uuidV7()
-      const result = await transport.commit(group, id, sent(mapping.value), keys.commit)
+      const answer: ImportReviewAnswer = {}
+      if (Object.keys(choices.value).length > 0) answer.choices = choices.value
+      if (keep.value.length > 0) answer.keep = [...keep.value]
+      const result = await transport.commit(
+        group,
+        id,
+        sent(mapping.value),
+        keys.commit,
+        answer.choices || answer.keep ? answer : undefined,
+      )
       if (mine !== opened) return
       committing.value = false
       if (result.ok || result.status !== 0) keys.commit = null
@@ -385,6 +421,8 @@ export function createImportsStore(
       mapping.value = {}
       check.value = null
       error.value = null
+      choices.value = {}
+      keep.value = []
       keys.upload = null
       keys.commit = null
       keys.undo = null

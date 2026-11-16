@@ -339,6 +339,27 @@ export default {
     "other": "ほか{count}件",
   },
   "Import.noValid": "すべての行に問題があります。ファイルを直すか、列を変えてください。",
+  "Import.allSkipped": "すべての行がスキップされるため、何もインポートされません。",
+  "Import.review": "行を確認",
+  "Import.toImport": {
+    "other": "インポート {count} 件",
+  },
+  "Import.skipped": {
+    "other": "スキップ {count} 件",
+  },
+  "Import.filter": "表示する行",
+  "Import.filterAll": "すべて",
+  "Import.filterToImport": "インポートする行",
+  "Import.filterSkipped": "スキップ",
+  "Import.reviewNone": "該当する行はありません。",
+  "Import.status": "状態",
+  "Import.willImport": "インポートされます",
+  "Import.keep": "それでもインポート",
+  "Import.keepLine": "{line} 行目をそれでもインポート",
+  "Import.choiceLine": "{field}（{line} 行目）",
+  "Import.showMore": {
+    "other": "さらに {count} 件表示",
+  },
   "Import.committing": "インポート中…",
   "Import.leave": "このページを離れても、インポートは続きます。",
   "Import.leftOut": {

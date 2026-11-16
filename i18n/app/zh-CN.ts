@@ -306,6 +306,27 @@ export default {
     "other": "以及另外 {count} 行",
   },
   "Import.noValid": "每一行都有问题。请修改文件，或更改列。",
+  "Import.allSkipped": "所有行都被跳过，不会导入任何内容。",
+  "Import.review": "检查各行",
+  "Import.toImport": {
+    "other": "{count} 行待导入",
+  },
+  "Import.skipped": {
+    "other": "{count} 行已跳过",
+  },
+  "Import.filter": "显示哪些行",
+  "Import.filterAll": "全部",
+  "Import.filterToImport": "待导入",
+  "Import.filterSkipped": "已跳过",
+  "Import.reviewNone": "这里没有行。",
+  "Import.status": "状态",
+  "Import.willImport": "将会导入",
+  "Import.keep": "仍然导入",
+  "Import.keepLine": "仍然导入第 {line} 行",
+  "Import.choiceLine": "{field}，第 {line} 行",
+  "Import.showMore": {
+    "other": "再显示 {count} 行",
+  },
   "Import.committing": "正在导入…",
   "Import.leave": "你可以离开此页面，导入会继续进行。",
   "Import.leftOut": {

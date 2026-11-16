@@ -103,6 +103,10 @@ export function ImportView({ importId }: { importId: string }) {
       committing={store.committing.value}
       undoing={store.undoing.value}
       error={store.error.value}
+      choices={store.choices.value}
+      keep={store.keep.value}
+      onChoose={store.choose}
+      onKeep={store.setKeep}
       onCommit={() => void store.commit()}
       onUndo={() => void store.undo()}
       onShowRemoved={() => {

@@ -10,10 +10,10 @@ import { GUEST_REFUSAL_CODE } from "@domain/identity"
 import {
   createImportsStore,
   IMPORT_CHECK_DELAY_MS,
+  importsHttp,
   type ImportsResult,
   type ImportsTimer,
   type ImportsTransport,
-  uploadQuery,
 } from "./imports.ts"
 
 const GROUP = `0190a000-0000-7000-8000-0000000000aa`
@@ -264,11 +264,37 @@ describe(`the imports store`, () => {
     expect(of(`upload`).map((c) => c.args[4])).toEqual([{ accountId: `a1` }, undefined])
   })
 
-  it(`puts the options in the upload's query as JSON, and leaves them out without any`, () => {
-    expect(uploadQuery(`bank`, `b.csv`, { accountId: `a1` }).get(`options`)).toBe(
-      `{"accountId":"a1"}`,
-    )
-    expect(uploadQuery(`notes`, `n.csv`).toString()).toBe(`kind=notes&name=n.csv`)
+  it(`sends the options in the upload's query, and choices and keep in the save's body`, async () => {
+    const sent: { url: string; body: unknown }[] = []
+    const realFetch = globalThis.fetch
+    globalThis.fetch = (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : String(input), `http://x`)
+      sent.push({ url: url.pathname + url.search, body: init?.body })
+      return Promise.resolve(
+        new Response(`{}`, { status: 200, headers: { "content-type": `application/json` } }),
+      )
+    }
+    try {
+      const file = new File([`Date\n1`], `b.csv`, { type: `text/csv` })
+      await importsHttp.upload(GROUP, `bank`, file, `k1`, { accountId: `a1` })
+      await importsHttp.upload(GROUP, `notes`, file, `k2`)
+      await importsHttp.commit(GROUP, ID, { date: 0 }, `k3`, {
+        choices: { "1": { category: `rent` } },
+        keep: [3],
+      })
+      await importsHttp.commit(GROUP, ID, { title: 0 }, `k4`)
+    } finally {
+      globalThis.fetch = realFetch
+    }
+    const query = (index: number) => new URLSearchParams(sent[index].url.split(`?`)[1])
+    expect(query(0).get(`options`)).toBe(`{"accountId":"a1"}`)
+    expect(query(1).has(`options`)).toBe(false)
+    expect(JSON.parse(String(sent[2].body))).toEqual({
+      mapping: { date: 0 },
+      choices: { "1": { category: `rent` } },
+      keep: [3],
+    })
+    expect(JSON.parse(String(sent[3].body))).toEqual({ mapping: { title: 0 } })
   })
 
   it(`forgets the options the person set when the picker opens again`, () => {
@@ -277,6 +303,60 @@ describe(`the imports store`, () => {
     expect(store.options.value).toEqual({ accountId: `a1` })
     store.startNew()
     expect(store.options.value).toBeNull()
+  })
+
+  it(`saves the person's choices that differ from the review, and the kept rows`, async () => {
+    const reviewed: ImportCheckResult = {
+      ...CHECK,
+      reviews: [
+        { row: 1, cells: [`A`], skip: null, suggestions: { category: `food` }, overridable: false },
+      ],
+    }
+    const { transport, of } = fake({ check: [ok(reviewed)] })
+    const store = createImportsStore(transport, manualTimer().timer)
+    await store.open(GROUP, ID)
+    await Promise.resolve()
+    store.choose(1, `category`, `rent`)
+    store.choose(1, `transfer`, `t1`)
+    store.choose(1, `transfer`, ``)
+    store.choose(2, `category`, `food`)
+    expect(store.choices.value).toEqual({ "1": { category: `rent` }, "2": { category: `food` } })
+    // Back to the suggestion: nothing left to send for the field, nor for a row with no field.
+    store.choose(1, `category`, `food`)
+    store.choose(2, `category`, ``)
+    expect(store.choices.value).toEqual({})
+    store.choose(1, `category`, `rent`)
+    store.setKeep(3, true)
+    store.setKeep(5, true)
+    store.setKeep(3, true)
+    store.setKeep(5, false)
+    expect(store.keep.value).toEqual([3])
+    await store.commit()
+    expect(of(`commit`)[0].args[4]).toEqual({ choices: { "1": { category: `rent` } }, keep: [3] })
+  })
+
+  it(`saves a notes import with no choices and no kept rows in the body`, async () => {
+    const { transport, of } = fake()
+    const store = createImportsStore(transport, manualTimer().timer)
+    await store.open(GROUP, ID)
+    await store.commit()
+    expect(of(`commit`)[0].args.length).toBe(5)
+    expect(of(`commit`)[0].args[4]).toBeUndefined()
+  })
+
+  it(`forgets the choices and kept rows when another import opens, or at sign-out`, async () => {
+    const store = createImportsStore(fake().transport, manualTimer().timer)
+    await store.open(GROUP, ID)
+    store.choose(1, `category`, `rent`)
+    store.setKeep(3, true)
+    await store.open(GROUP, `0190a000-0000-7000-8000-000000000002`)
+    expect(store.choices.value).toEqual({})
+    expect(store.keep.value).toEqual([])
+    store.choose(1, `category`, `rent`)
+    store.setKeep(3, true)
+    store.reset()
+    expect(store.choices.value).toEqual({})
+    expect(store.keep.value).toEqual([])
   })
 
   it(`reads nothing more for an import once the page left it`, async () => {
