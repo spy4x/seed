@@ -770,7 +770,7 @@ export function fakeDemoData(seed: number, now: Date): FakeDemoData {
       true,
     ),
   })
-  // The first group's owner brought a few notes in from a CSV file, as one saved import.
+  // A writer of the first group brought a few notes in from a CSV file, as one saved import.
   groups[0] = withImportedNotes(groups[0])
   // The newest small group came from an export file: its owner moved it over from elsewhere.
   small[small.length - 1].imported = true
@@ -780,17 +780,21 @@ export function fakeDemoData(seed: number, now: Date): FakeDemoData {
   return { users, groups: [...groups, ...small], subscriptions, ...newsletter, operator }
 }
 
-/** How many of a group's owner's notes {@link withImportedNotes} marks. */
+/** How many of one writer's notes {@link withImportedNotes} marks. */
 export const IMPORTED_NOTES = 3
 
 /**
- * Marks up to {@link IMPORTED_NOTES} of the owner's notes as brought in from one CSV file, all
- * written the moment the oldest of them was; an edit since stays after it.
+ * Marks up to {@link IMPORTED_NOTES} of one writer's notes as brought in from one CSV file, all
+ * written the moment the oldest of them was; an edit since stays after it. The writer is the
+ * owner when the owner wrote any note, else the first note's author: on some days the random
+ * draw gives the owner none, and the demo must still show an import.
  */
 function withImportedNotes(group: FakeGroup): FakeGroup {
+  const byOwner = group.notes.some((note) => note.author === group.owner)
+  const writer = byOwner ? group.owner : group.notes[0]?.author
   const picked = group.notes
     .map((note, index) => ({ note, index }))
-    .filter(({ note }) => note.author === group.owner)
+    .filter(({ note }) => note.author === writer)
     .slice(0, IMPORTED_NOTES)
   if (picked.length === 0) return group
   const createdAgo = Math.max(...picked.map(({ note }) => note.createdAgo))
