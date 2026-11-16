@@ -49,10 +49,11 @@
 }
 
 /* A heading a link or the search opens (`/pricing#costs-title`) lands below the header, which is
-   sticky from `lg` and 69 px tall there. */
+   sticky from `lg` and 69 px tall there. The spacing scale stops at 64 px, so the margin is two
+   steps: 64 px for the header and 8 px of air. */
 @media (width >= 64rem) {
   main :is(h2, h3)[id] {
-    scroll-margin-top: --spacing(20);
+    scroll-margin-top: calc(--spacing(16) + --spacing(2));
   }
 }
 
