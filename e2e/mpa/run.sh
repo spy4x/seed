@@ -3,7 +3,7 @@
 # the API and the worker, builds and starts the MPA on its own host, puts the API and a stand-in for
 # the SPA behind the app's host (`e2e/mpa/proxy.ts`, `e2e/mpa/spa-shell.ts`) and runs Playwright.
 # The two hosts differ, as in production, so a mailed link that names the wrong one fails a test.
-# CI runs this script (.woodpecker/ci.yml); run it the same way on a machine.
+# CI runs this script (.woodpecker/ci-browser.yml); run it the same way on a machine.
 #
 # Needs from the environment: a Postgres and a Valkey that are already running, as `DB_HOST`,
 # `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `KV_HOSTNAME`, `KV_PORT` and `KV_PASSWORD`, and a

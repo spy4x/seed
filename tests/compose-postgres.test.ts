@@ -1,9 +1,9 @@
 /// <reference lib="deno.ns" />
 /**
  * Holds the Postgres version and its data directory. Development and production
- * (`infra/compose/compose.shared.yml`), CI (`.woodpecker/ci.yml`) and the local browser run
- * (`infra/scripts/e2e-local.sh`) must name the same Postgres 18 minor version, or a test passes on
- * one version and production runs another. The two documents that print the image must name it
+ * (`infra/compose/compose.shared.yml`), CI (`.woodpecker/ci.yml` and `.woodpecker/ci-browser.yml`)
+ * and the local browser run (`infra/scripts/e2e-local.sh`) must name the same Postgres 18 minor
+ * version, or a test passes on one version and production runs another. The two documents that print the image must name it
  * too. The Postgres 18 image keeps its data under `/var/lib/postgresql`, in a host directory of
  * its own: mounted at the old path, or on the Postgres 16 directory, it would start empty or not
  * at all (docs/postgres-18-upgrade.md). Its memory settings must fit the memory limit the example
@@ -24,6 +24,7 @@ const IMAGE_PLACES = [
   COMPOSE,
   "infra/postgres/Dockerfile",
   ".woodpecker/ci.yml",
+  ".woodpecker/ci-browser.yml",
   "infra/scripts/e2e-local.sh",
   "docs/handoff.md",
   "docs/woodpecker-ci-setup.md",

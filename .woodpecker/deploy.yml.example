@@ -1,4 +1,5 @@
-# Deploys `main` to the server after every push that passes `ci.yml`.
+# Deploys `main` to the server after every push that passes `ci.yml`. It waits for `ci` alone:
+# ci-browser.yml does not run on a push to `main`, so it is not named in `depends_on`.
 #
 # Woodpecker reads only `*.yml` and `*.yaml` in this folder, so this file does nothing until a
 # product copies it to `.woodpecker/deploy.yml`. docs/woodpecker-ci-setup.md, "Deploy on every

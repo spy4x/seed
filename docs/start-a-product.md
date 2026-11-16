@@ -118,7 +118,7 @@ Seed's, so the product keeps taking its fixes.
    guide in a folder, `include.txt` also needs a line for the folder, such as `docs/<product>/`,
    since rsync skips a file whose folder it was not told to enter. A sync that changes these two
    lists may conflict; keep the product's lines.
-5. In `/.woodpecker/ci.yml`, add the folder, such as `docs/<product>/*.md`, to the Lighthouse
+5. In `/.woodpecker/ci-browser.yml`, add the folder, such as `docs/<product>/*.md`, to the Lighthouse
    step's `path` list next to `docs/*.md`, so a pull request that changes a guide measures the
    site.
 

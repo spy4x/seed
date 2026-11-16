@@ -11,15 +11,22 @@ const HOOK = new URL(`../.githooks/pre-push`, import.meta.url)
 const FAKE_DENO = `#!/bin/sh
 [ -n "$FAKE_DENO_DEPTH" ] && exit 99
 export FAKE_DENO_DEPTH=1
-printf '%s LANG=%s LC_ALL=%s\\n' "$*" "$LANG" "$LC_ALL" >> "$FAKE_DENO_LOG"
+printf '%s LANG=%s LC_ALL=%s GIT_DIR=%s\\n' "$*" "$LANG" "$LC_ALL" "$GIT_DIR" >> "$FAKE_DENO_LOG"
 exit "$FAKE_DENO_STATUS"
 `
 
 interface Repo {
   /** The work tree's path. */
   work: string
-  /** Runs git in the work tree; `checkStatus` is what the fake `deno task check` exits with. */
-  git(args: string[], checkStatus?: number): Promise<{ code: number; output: string }>
+  /**
+   * Runs git in the work tree, or in `cwd`; `checkStatus` is what the fake `deno task check` exits
+   * with.
+   */
+  git(
+    args: string[],
+    checkStatus?: number,
+    cwd?: string,
+  ): Promise<{ code: number; output: string }>
   /** The fake deno's calls, one line each. */
   calls(): Promise<string[]>
   /** The sha the bare remote holds for a branch, or `` when it has none. */
@@ -75,7 +82,7 @@ async function withRepo(test: (repo: Repo) => Promise<void>) {
 
     await test({
       work,
-      git: (args, checkStatus) => run(work, args, checkStatus),
+      git: (args, checkStatus, cwd = work) => run(cwd, args, checkStatus),
       calls: async () => (await Deno.readTextFile(log)).split(`\n`).filter(Boolean),
       remoteSha: async (branch) =>
         (await must(`${dir}/remote.git`, [
@@ -102,7 +109,7 @@ Deno.test(`a red check refuses the push and the branch never reaches the remote`
     const push = await repo.git([`push`, `origin`, `feature`], 1)
     expect(push.code).not.toBe(0)
     expect(push.output).toContain(`Push refused: check is red. Run \`deno task check\``)
-    expect(await repo.calls()).toEqual([`task check LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`])
+    expect(await repo.calls()).toEqual([`task check LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 GIT_DIR=`])
     expect(await repo.remoteSha(`feature`)).toBe(``)
   }))
 
@@ -122,7 +129,20 @@ Deno.test(`the check runs in CI's locale, en_US.UTF-8`, () =>
   withRepo(async (repo) => {
     await change(repo)
     await repo.git([`push`, `origin`, `feature`], 0)
-    expect(await repo.calls()).toEqual([`task check LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`])
+    expect(await repo.calls()).toEqual([`task check LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 GIT_DIR=`])
+  }))
+
+// Git sets GIT_DIR for a hook run from a linked worktree, the way agents push. Left set, a test
+// that runs git in a temp repository of its own rewrites this worktree's index instead.
+Deno.test(`a push from a linked worktree runs the check without git's GIT_DIR`, () =>
+  withRepo(async (repo) => {
+    const linked = `${repo.work}-linked`
+    await repo.git([`worktree`, `add`, `-q`, `-b`, `feature`, linked])
+    await Deno.writeTextFile(`${linked}/a.txt`, `two\n`)
+    await repo.git([`commit`, `-qam`, `two`], 0, linked)
+    const push = await repo.git([`push`, `origin`, `feature`], 0, linked)
+    expect(push.code).toBe(0)
+    expect(await repo.calls()).toEqual([`task check LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 GIT_DIR=`])
   }))
 
 Deno.test(`deleting a branch skips the check`, () =>
