@@ -380,6 +380,47 @@ describe("the group overview", () => {
     expect(dialog.open).toBe(false)
   })
 
+  it("returns focus to More actions when Customise closes with Done or the ✕", async () => {
+    await mount()
+
+    await clickOn(find("[data-e2e=overview-menu]"))
+    await clickText("Customise overview")
+    await clickText("Done", "dialog[data-e2e=overview-customiser]")
+    expect(focused()).toBe("overview-menu")
+
+    await clickOn(find("[data-e2e=overview-menu]"))
+    await clickText("Customise overview")
+    await clickOn(find('dialog[data-e2e=overview-customiser] button[aria-label="Close"]'))
+    expect(document.querySelectorAll("dialog[data-e2e=overview-customiser][open]").length).toBe(0)
+    expect(focused()).toBe("overview-menu")
+  })
+
+  it("returns focus to the All widgets are hidden card's Customise when it opened the dialog", async () => {
+    await mount()
+    for (const id of [total, added, series]) {
+      await clickOn(find(`${card(id)} button[aria-haspopup]`))
+      await clickText("Hide widget", card(id))
+    }
+
+    await clickOn(find("[data-e2e=overview-all-hidden-customise]"))
+    await clickText("Done", "dialog[data-e2e=overview-customiser]")
+    expect(focused()).toBe("overview-all-hidden-customise")
+  })
+
+  it("returns focus to More actions when the card that opened Customise is gone on close", async () => {
+    await mount()
+    for (const id of [total, added, series]) {
+      await clickOn(find(`${card(id)} button[aria-haspopup]`))
+      await clickText("Hide widget", card(id))
+    }
+
+    await clickOn(find("[data-e2e=overview-all-hidden-customise]"))
+    await clickOn(find('[data-e2e=overview-customiser] [aria-label="Show Notes"]'))
+    expect(document.querySelectorAll("[data-e2e=overview-all-hidden]").length).toBe(0)
+    await clickText("Done", "dialog[data-e2e=overview-customiser]")
+    expect(focused()).toBe("overview-menu")
+  })
+
   it("resets the layout and copies the link from More actions", async () => {
     const seen = await mount()
 
@@ -638,6 +679,12 @@ describe("the group overview in another language", () => {
       expect(document.querySelector(card(id))?.textContent).toContain(PSEUDO.t(titleKey))
       expect(customise).toContain(PSEUDO.t(titleKey))
     }
+    // The dialog's ✕ is named from the catalog, not left as the component's English default.
+    expect(
+      document.querySelectorAll(
+        `[data-e2e=overview-customiser] button[aria-label="${PSEUDO.t("LayoutCustomiser.close")}"]`,
+      ).length,
+    ).toBe(1)
 
     await act(() => render(page({ widgets: [], customising: false, emptyGroup: null }), root!))
     expect(englishLeft(document.body, data)).toEqual([])

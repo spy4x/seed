@@ -218,6 +218,22 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
       page.current.querySelector<HTMLElement>("[data-e2e=overview-all-hidden-customise]")
     next?.focus()
   }, [props.widgets.length])
+  // When the Customise dialog closes (Done, the ✕ or Escape), focus goes back to what opened it:
+  // the "All widgets are hidden" card's button while it is still there, else the More actions
+  // button. The dialog's own restore would land on the menu item, which is gone by then.
+  const opener = useRef<HTMLElement | null>(null)
+  const wasCustomising = useRef(props.customising)
+  useEffect(() => {
+    const closed = wasCustomising.current && !props.customising
+    wasCustomising.current = props.customising
+    if (!closed || !page.current) return
+    const from = opener.current
+    opener.current = null
+    const target = from?.isConnected
+      ? from
+      : page.current.querySelector<HTMLElement>("[data-e2e=overview-menu]")
+    target?.focus()
+  }, [props.customising])
   const t = useAppText()
   const hide = (id: string) => {
     hidden.current = props.widgets.findIndex((widget) => widget.id === id)
@@ -331,7 +347,10 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                         <Button
                           variant="outline"
                           class="min-h-11 sm:min-h-9"
-                          onClick={props.onCustomise}
+                          onClick={(event: MouseEvent) => {
+                            opener.current = event.currentTarget as HTMLElement
+                            props.onCustomise()
+                          }}
                           data-e2e="overview-all-hidden-customise"
                         >
                           {t.t(`OverviewScreen.customise`)}
