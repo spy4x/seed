@@ -22,7 +22,7 @@ import { ShortcutsList } from "./shortcuts.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useAdminText, useAppText } from "./i18n.ts"
 import { Rich } from "@spy4x/preact-ui/i18n"
-import { PRODUCT_NAME } from "./brand.ts"
+import { pageTitle, PRODUCT_NAME } from "./brand.ts"
 
 /**
  * The pages of the admin app (`apps/admin`) that its screens link to. It runs on a host of
@@ -179,7 +179,7 @@ export function adminPageTitle(
 ): string {
   const href = adminNavPath(navItems, path)
   const page = navItems.find((item) => item.href === href)?.name
-  return [page, tag, PRODUCT_NAME].filter(Boolean).join(" · ")
+  return pageTitle(page, tag)
 }
 
 /**
