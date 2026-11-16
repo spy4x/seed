@@ -44,7 +44,13 @@ import {
   onListPage,
 } from "./shortcuts.ts"
 import { pageCommands } from "./page-commands.ts"
-import { type AdminSearchChoice, AdminSearchPalette } from "@ui/admin-palette.tsx"
+import {
+  adminPaletteContext,
+  type AdminSearchChoice,
+  AdminSearchPalette,
+  type AdminSearchPaletteProps,
+} from "@ui/admin-palette.tsx"
+import { adminPaletteCommands } from "@ui/admin-palette-commands.ts"
 import { guardNavigate } from "./leave.ts"
 import {
   type createSingleKeysSetting,
@@ -282,6 +288,14 @@ function Operator(
     )
   }
 
+  const palette: AdminSearchPaletteProps = {
+    goTo: adminGoTo(modules),
+    listFilter: onListPage(modules, path),
+    theme: theme.preference.value,
+    singleKeys: singleKeys.on.value,
+    page,
+    onSelect: pick,
+  }
   return (
     <FormatContext.Provider value={own.format.value}>
       <AdminShell
@@ -293,18 +307,13 @@ function Operator(
         language={language}
         onSignOut={store.signOut}
         navigate={leave}
-        search={
-          <AdminSearchPalette
-            goTo={adminGoTo(modules)}
-            listFilter={onListPage(modules, path)}
-            theme={theme.preference.value}
-            singleKeys={singleKeys.on.value}
-            page={page}
-            onSelect={pick}
-          />
-        }
+        search={<AdminSearchPalette {...palette} />}
         shortcuts={{
           rows: shortcutRows,
+          // The palette's own registry, built only while the dialog shows it.
+          commands: shortcutsOpen
+            ? adminPaletteCommands(adminPaletteContext(t, palette), pick)
+            : undefined,
           open: shortcutsOpen,
           onOpen: () => setShortcutsOpen(true),
           onClose: () => setShortcutsOpen(false),

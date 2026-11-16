@@ -1523,6 +1523,7 @@ export default {
   "Shortcuts.goTo": "前往",
   "Shortcuts.newNote": "在新建笔记中",
   "Shortcuts.page": "当前页面",
+  "Shortcuts.commands": "命令面板中的命令",
   "Shortcuts.show": "显示键盘快捷键",
   "Shortcuts.close": "关闭对话框或菜单",
   "Shortcuts.switchLabel": "单键快捷键",

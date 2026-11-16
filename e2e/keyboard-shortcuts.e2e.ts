@@ -116,6 +116,8 @@ test.describe("keyboard shortcuts", () => {
             dialog.getAnimations({ subtree: true }).map((animation) => animation.finished),
           )
         )
+        // The palette's commands make the list longer than a phone's screen: bring the switch in.
+        await toggle.scrollIntoViewIfNeeded()
         const before = await toggle.boundingBox()
         await toggle.click()
         await expect(toggle).toHaveAttribute("aria-checked", "false")
@@ -141,6 +143,28 @@ test.describe("keyboard shortcuts", () => {
       expect(page.url()).toBe(url)
       await press(page, "Control+k")
       await expect(page.locator("dialog[data-e2e=search]")).toBeVisible()
+    } finally {
+      await cleanup(request, email)
+    }
+  })
+
+  test("the shortcuts dialog lists the palette's commands with the words that find them, on a phone too", async ({ page, request }) => {
+    const email = address("commands")
+    try {
+      await signUp(request, email)
+      await signIn(page, email, password)
+      await page.setViewportSize({ width: 390, height: 900 })
+      await press(page, "?")
+      const list = page.getByRole("dialog", { name: "Keyboard shortcuts" })
+      await expect(list.getByRole("heading", { name: "Palette commands" })).toBeVisible()
+      // Sign out has no keys: its row names it, then the words that find it.
+      const signOut = list.locator("dt", { hasText: "log out, logout, sign off" })
+      await expect(signOut).toHaveText("Sign outlog out, logout, sign off, выйти, выход")
+      // Nothing scrolls sideways: the long lines of words wrap.
+      const sideways = await list.evaluate((dialog) =>
+        [dialog, ...dialog.querySelectorAll("dl")].some((box) => box.scrollWidth > box.clientWidth)
+      )
+      expect(sideways).toBe(false)
     } finally {
       await cleanup(request, email)
     }

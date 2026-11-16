@@ -2,11 +2,13 @@ import type { JSX } from "preact"
 import { useRef } from "preact/hooks"
 import { CommandPalette, matchOptions } from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { ThemePreference } from "@domain/identity"
 import {
   adminFindCommands,
   type AdminGoTo,
   adminPaletteCommands,
+  type AdminPaletteContext,
   type AdminPaletteOption,
   type AdminSearchChoice,
 } from "./admin-palette-commands.ts"
@@ -32,6 +34,30 @@ export interface AdminSearchPaletteProps {
    * a theme or the single keys.
    */
   onSelect: (choice: AdminSearchChoice) => void
+}
+
+/**
+ * What the palette's registry ({@link adminPaletteCommands}) reads, from the palette's props. The
+ * admin app builds the same list for the shortcuts dialog with it, so the two never disagree.
+ *
+ * @param t The admin app's translator.
+ * @param props The palette's props.
+ * @param live The latest props, read when a row is drawn (the theme, the single keys); defaults
+ *   to `props`.
+ */
+export function adminPaletteContext(
+  t: Translator<string>,
+  props: Omit<AdminSearchPaletteProps, "onSelect">,
+  live: () => Pick<AdminSearchPaletteProps, "theme" | "singleKeys"> = () => props,
+): AdminPaletteContext {
+  return {
+    t,
+    goTo: props.goTo,
+    listFilter: props.listFilter,
+    theme: () => live().theme,
+    singleKeys: () => live().singleKeys,
+    page: props.page,
+  }
 }
 
 /** The palette's only hotkey: `/` focuses a list's own search field in the admin app. */
@@ -62,14 +88,7 @@ export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element 
   const latest = useRef(props)
   latest.current = props
   const select = (choice: AdminSearchChoice) => latest.current.onSelect(choice)
-  const options = adminPaletteCommands({
-    t,
-    goTo: props.goTo,
-    listFilter: props.listFilter,
-    theme: () => latest.current.theme,
-    singleKeys: () => latest.current.singleKeys,
-    page: props.page,
-  }, select)
+  const options = adminPaletteCommands(adminPaletteContext(t, props, () => latest.current), select)
   const shown = new Set(props.goTo.map((entry) => entry.id))
   const filter = (rows: readonly AdminPaletteOption[], query: string) => [
     ...matchOptions(rows, query, rows.length),
