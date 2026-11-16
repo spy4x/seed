@@ -2,12 +2,19 @@ import type { ComponentChildren } from "preact"
 import { useEffect, useMemo, useRef } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 import { matchRoute, useLocation, useRouter, useSearch } from "wouter-preact"
+import { useFormat } from "@spy4x/preact-ui/format"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
 import { UserMFAStatus } from "@domain/identity"
 import { homePath, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
-import { type SearchChoice, SearchPalette } from "@ui/search-palette.tsx"
+import {
+  paletteContext,
+  type SearchChoice,
+  SearchPalette,
+  type SearchPaletteProps,
+} from "@ui/search-palette.tsx"
+import { paletteCommands } from "@ui/palette-commands.ts"
 import { NewNoteDialog } from "@ui/new-note-dialog.tsx"
 import { emailStore } from "../state/email.ts"
 import { signOut } from "../state/auth.ts"
@@ -249,6 +256,8 @@ export function AppShell(
   const notes = notesOn()
   const routed = spaRoutePaths(notes).some((path) => matchRoute(parser, path, location)[0])
   const t = useAppText()
+  // The palette's registry reads it for sizes in a detail; the shortcuts dialog lists its commands.
+  const { locale } = useFormat()
   const guest = isGuestSession(user)
   const { onSignOut, dialog } = useSignOut(guest)
   // Hidden on this browser once dismissed; the profile keeps its own entry to the same page.
@@ -319,36 +328,39 @@ export function AppShell(
       signOut: onSignOut,
       install: () => void install.install(),
     })
+  const palette: SearchPaletteProps = {
+    searchNotes,
+    groups,
+    currentGroup: current
+      ? { id: current.id, name: current.name, canWrite: canMutateNotes(current.role) }
+      : null,
+    online: wsStatus === "open",
+    pageCommands: pageCommands(t, {
+      overview: Boolean(overviewPageActions.value),
+      benchmark: Boolean(benchmarkPageActions.value),
+      ...actionPages(notes),
+    }, rows),
+    onSelect: (choice) => void open(choice),
+    theme: themeStore.preference.value,
+    shortcuts: rows,
+    activityGroupId,
+    canInstall: install.mode.value === "prompt",
+    slashKey: singleKeys.on.value,
+    guest,
+    twoFactor: user.mfa === UserMFAStatus.CONFIGURED,
+    benchmark: benchmarkOpen(),
+    notes,
+    files: filesOn(),
+  }
   return (
     <AppFrame
-      search={
-        <SearchPalette
-          searchNotes={searchNotes}
-          groups={groups}
-          currentGroup={current
-            ? { id: current.id, name: current.name, canWrite: canMutateNotes(current.role) }
-            : null}
-          online={wsStatus === "open"}
-          pageCommands={pageCommands(t, {
-            overview: Boolean(overviewPageActions.value),
-            benchmark: Boolean(benchmarkPageActions.value),
-            ...actionPages(notes),
-          }, rows)}
-          onSelect={(choice) => void open(choice)}
-          theme={themeStore.preference.value}
-          shortcuts={rows}
-          activityGroupId={activityGroupId}
-          canInstall={install.mode.value === "prompt"}
-          slashKey={singleKeys.on.value}
-          guest={guest}
-          twoFactor={user.mfa === UserMFAStatus.CONFIGURED}
-          benchmark={benchmarkOpen()}
-          notes={notes}
-          files={filesOn()}
-        />
-      }
+      search={<SearchPalette {...palette} />}
       shortcuts={{
         rows,
+        // The palette's own registry, built only while the dialog shows it.
+        commands: shortcutsOpen.value
+          ? paletteCommands(paletteContext(t, locale, palette), palette.onSelect)
+          : undefined,
         open: shortcutsOpen.value,
         onOpen: () => shortcutsOpen.value = true,
         onClose: () => shortcutsOpen.value = false,
