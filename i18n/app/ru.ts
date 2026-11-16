@@ -1955,6 +1955,7 @@ export default {
   "Shortcuts.goTo": "Переход",
   "Shortcuts.newNote": "В окне «Новая заметка»",
   "Shortcuts.page": "На этой странице",
+  "Shortcuts.commands": "Команды палитры",
   "Shortcuts.show": "Показать горячие клавиши",
   "Shortcuts.close": "Закрыть окно или меню",
   "Shortcuts.switchLabel": "Горячие клавиши из одной буквы",
