@@ -123,11 +123,11 @@ the host with it.
   --max-failures=10`, with the built SPA in the container's own nginx for the specs that start the
   app with no network (`E2E_BUILT=nginx`). It is not part of the pull-request check, so it blocks no
   merge; a red nightly run says a merge broke a screen outside the smoke set.
-- The four browser steps run in `mcr.microsoft.com/playwright`, which ships Chromium and its system
-  libraries, and install the pinned Deno release from GitHub, checked against its SHA-256.
-  Playwright's own browser download, run through Deno in the plain Deno image, hangs. The image
-  tag must equal the Playwright version in `deno.jsonc` (`e2e` task), because the browser build in
-  the image belongs to that version.
+- The four browser steps run in the CI image ("The CI image" below), built on
+  `mcr.microsoft.com/playwright`, which ships Chromium and its system libraries, with the pinned
+  Deno release in it. Playwright's own browser download, run through Deno in the plain Deno image,
+  hangs. The Playwright tag in `infra/ci/playwright.dockerfile` must equal the Playwright version in
+  `deno.jsonc` (`e2e` task), because the browser build in the image belongs to that version.
 - `browser` and `e2e-smoke` run at the same time in the checkout of `ci-browser.yml`. `browser`'s
   scripts keep the API's `vapid.json` in the checkout's root and use the `valkey` service;
   `e2e-smoke` keeps its keys in a scratch folder (`VAPID_KEYS_PATH`) and uses `valkey-smoke`, so
@@ -227,9 +227,11 @@ image, so there is no worker image. How to cut a release: [Publish a release](re
 
 ## The CI image
 
-`infra/ci/playwright.dockerfile` is the image for the browser steps of `ci-browser.yml`: the
-Playwright image those steps pin, plus `unzip`, `nginx`, Deno and a Deno cache (`DENO_DIR=/opt/deno`)
-that already holds Lighthouse CI. A step that runs in it downloads none of them.
+`infra/ci/playwright.dockerfile` is the image of the four browser steps of `ci-browser.yml`
+(`browser`, `lighthouse`, `e2e-smoke`, `e2e-full`): the Playwright image, plus `unzip`, `nginx`,
+Deno and a Deno cache (`DENO_DIR=/opt/deno`) that already holds Lighthouse CI. A step that runs in
+it downloads none of them. For those steps, the Dockerfile is the one place that holds the
+versions of Playwright, Deno and Lighthouse CI.
 
 To publish a new one, push a tag `ci-image-<n>` on a commit that is on `main`:
 
@@ -240,16 +242,20 @@ git tag ci-image-2 origin/main && git push origin ci-image-2
 `.woodpecker/ci-image.yml` builds it with kaniko and pushes it with crane as
 `<IMAGE_PREFIX>-ci:<n>` (here `antonshubin/template-ci:2`), with the same secrets and guard as
 releases. It never moves `latest`. A product changes `IMAGE_PREFIX` at the top of `ci-image.yml`.
-Then pin the new tag by its digest in the four Playwright steps of `ci-browser.yml`
-(https://github.com/spy4x/seed/issues/1079).
+Then pin the new tag by its digest in the four browser steps of `ci-browser.yml`
+(`image: <IMAGE_PREFIX>-ci:<n>@sha256:<digest>`; a product that changed `IMAGE_PREFIX` changes the
+name there too). The digest is on Docker Hub:
+
+```bash
+curl -s https://hub.docker.com/v2/repositories/antonshubin/template-ci/tags/2 | jq -r .digest
+```
 
 ## Changing the Deno version
 
 Change the tag in every `image: denoland/deno:<version>` line of `ci.yml`, and the release URL and
-SHA-256 in the four Playwright steps of `ci-browser.yml` (`browser`, `lighthouse`, `e2e-smoke`,
-`e2e-full`) and in `runtimes`, and in `infra/ci/playwright.dockerfile`, then publish a new CI
-image (above). `ready` in `ci-browser.yml` pins the Deno image by tag and digest: update both. Keep
-them equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
+SHA-256 in `runtimes` and in `infra/ci/playwright.dockerfile`, then publish a new CI image and pin
+it in the four browser steps of `ci-browser.yml` (above). `ready` in `ci-browser.yml` pins the
+Deno image by tag and digest: update both. Keep them equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
 
 ## Running the steps locally
 
