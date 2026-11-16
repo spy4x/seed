@@ -1,6 +1,9 @@
 # vmalert's rules (bundled mode). Alertmanager sends what fires to ntfy: ALERT_NTFY_URL in the env
 # file. In the external mode the same file can be given to the vmalert of the other server: every
-# series carries a `project` label.
+# series this project sends carries a `project` label. In the shared-host mode, copy it once per
+# host into the monitoring stack's `alerts/` folder (docs/stack.md, "Shared stack on the same
+# host"): every rule fires per project, for each Seed project on the host, and never on a series
+# without `project`, such as the host's own disks, which the host's own rules watch.
 groups:
   - name: api
     rules:
@@ -18,7 +21,7 @@ groups:
       # The disk that holds .volumes, so Postgres' data too. VictoriaMetrics reports it about its
       # own storage path, with no host exporter needed (vmagent scrapes it: job victoriametrics).
       - alert: DataDiskSpaceLow
-        expr: vm_free_disk_space_bytes < 2 * 1024 * 1024 * 1024
+        expr: vm_free_disk_space_bytes{project!=""} < 2 * 1024 * 1024 * 1024
         for: 10m
         labels:
           severity: critical
@@ -28,8 +31,8 @@ groups:
       # Every disk of the host. Has data only with the host-monitoring profile (node-exporter).
       - alert: HostDiskSpaceLow
         expr: |
-          node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"}
-            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"} < 0.10
+          node_filesystem_avail_bytes{project!="",fstype!~"tmpfs|overlay|squashfs|ramfs"}
+            / node_filesystem_size_bytes{project!="",fstype!~"tmpfs|overlay|squashfs|ramfs"} < 0.10
         for: 10m
         labels:
           severity: critical
