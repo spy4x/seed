@@ -26,7 +26,11 @@ import {
   SIGN_UP_CODE_MAILS_PER_ADDRESS,
   SIGN_UP_CODE_MAILS_PER_CLIENT,
 } from "../../apps/api/middlewares/auth-rate-limits.ts"
-import { fakeTotpFailures, generousLimits } from "../../apps/api/_testing/auth-routes.ts"
+import {
+  fakeTotpFailures,
+  generousLimits,
+  testSignInDevice,
+} from "../../apps/api/_testing/auth-routes.ts"
 import { checkedError } from "../../apps/api/_testing/api-error.ts"
 import {
   API_URL,
@@ -212,6 +216,7 @@ function authApp(signIn: SignIn): Hono<APIContext> {
       rateLimits: createAuthRateLimits(generousLimits),
       totpFailures: fakeTotpFailures([]),
       passwordFailures: fakeTotpFailures([]),
+      signInDevice: testSignInDevice,
       emailCodeFailures: fakeTotpFailures([]),
       requestEmailCode: () => Promise.resolve(),
     }),

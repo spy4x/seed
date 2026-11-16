@@ -55,6 +55,7 @@ import { createMutationGuards } from "./middlewares/mutation-guards.ts"
 import { createTotpFailures } from "./services/totp-failures.ts"
 import { createEmailCodeFailures } from "./services/email-code-failures.ts"
 import { createPasswordFailures, prunePasswordFailures } from "./services/password-failures.ts"
+import { createPasswordFingerprint, createSignInDevice } from "./services/sign-in-device.ts"
 import {
   createAuthRateLimits,
   EMAIL_CODE_STORE,
@@ -206,6 +207,12 @@ app.route(
     rateLimits,
     totpFailures: createTotpFailures({ sql }),
     passwordFailures: createPasswordFailures({ sql }),
+    // The same secret and `Secure` rule as the session cookie (`services/auth.ts`).
+    signInDevice: createSignInDevice({
+      cookieSecret: config.authCookieSecret,
+      secureCookie: !config.isDev,
+      passwordFingerprint: createPasswordFingerprint(sql),
+    }),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
     demo: config.demo ? { adminHost: config.adminDomain } : null,

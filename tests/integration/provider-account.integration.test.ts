@@ -27,6 +27,10 @@ import {
   PASSWORD_SET_CODE_REQUIRED,
 } from "../../apps/api/routes/auth-password.ts"
 import { createAuthRoute } from "../../apps/api/routes/auth.ts"
+import {
+  createPasswordFingerprint,
+  createSignInDevice,
+} from "../../apps/api/services/sign-in-device.ts"
 import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards.ts"
 import { createAuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
@@ -178,6 +182,11 @@ function buildApp(sql: postgres.Sql, people: Record<string, ProviderPerson>) {
       }),
       totpFailures: createTotpFailures({ sql }),
       passwordFailures: createPasswordFailures({ sql }),
+      signInDevice: createSignInDevice({
+        cookieSecret: COOKIE_SECRET,
+        secureCookie: false,
+        passwordFingerprint: createPasswordFingerprint(sql),
+      }),
       emailCodeFailures: createEmailCodeFailures({ sql }),
       requestEmailCode: (userId, email) =>
         sendEmailCode(

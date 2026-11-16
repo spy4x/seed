@@ -26,6 +26,7 @@ import { type AuthRateLimits, createAuthRateLimits } from "../middlewares/auth-r
 import type { Lockout } from "@spy4x/server/lockout"
 import { createKvStore, type RateLimitStore } from "@spy4x/platform/rate-limit"
 import { createAuthRoute } from "../routes/auth.ts"
+import { createSignInDevice } from "../services/sign-in-device.ts"
 
 /** When the fake sign-in's waiting sign-up stops working. */
 export const WAITING_UNTIL = new Date("2026-10-17T10:10:00.000Z")
@@ -192,6 +193,16 @@ export function brokenStore(): RateLimitStore {
   return { read: down, write: down, delete: down, consume: down, release: down }
 }
 
+/**
+ * The real device cookie over a test-only secret, without `Secure`, as in development. Every login
+ * has one password that never changes; the integration tests cover the real fingerprint.
+ */
+export const testSignInDevice = createSignInDevice({
+  cookieSecret: `unit-test-only-device-cookie-secret-0123456789`,
+  secureCookie: false,
+  passwordFingerprint: () => Promise.resolve(`unit-test-password`),
+})
+
 /** Limits no test outside the rate-limit block reaches. */
 export const generousLimits = {
   windowMs: 60_000,
@@ -265,6 +276,7 @@ export function buildApp(
     totpFailures: fakeTotpFailures(failureCalls, lockedForMs),
     passwordFailures: passwordFailures ??
       fakeTotpFailures(passwordFailureCalls, passwordLockedForMs),
+    signInDevice: testSignInDevice,
     emailCodeFailures: fakeTotpFailures(codeFailureCalls, codeLockedForMs),
     requestEmailCode: (_userId, email) => (mailed.push(email), Promise.resolve()),
     demo,

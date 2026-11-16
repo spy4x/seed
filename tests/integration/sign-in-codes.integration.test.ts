@@ -34,6 +34,10 @@ import { MAILED_CODE_DEAD, MAILED_CODE_WRONG } from "../../apps/api/routes/auth-
 import { PASSWORD_RESET_REFUSED } from "../../apps/api/routes/auth-password-reset.ts"
 import { SIGN_IN_CODE_UNCONFIRMED } from "../../apps/api/routes/auth-sign-in-codes.ts"
 import { createAuthRoute } from "../../apps/api/routes/auth.ts"
+import {
+  createPasswordFingerprint,
+  createSignInDevice,
+} from "../../apps/api/services/sign-in-device.ts"
 import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards.ts"
 import type { AuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
@@ -104,6 +108,7 @@ const openLimits: AuthRateLimits = {
   signInCode: allowed,
   emailChangeByUser: allowed,
   emailChangeByAddress: allowed,
+  deviceSignIn: allowed,
 }
 const openLockout = {
   begin: () => Promise.resolve(0),
@@ -203,6 +208,11 @@ async function withFixture(
         rateLimits: openLimits,
         totpFailures: openLockout,
         passwordFailures: openLockout,
+        signInDevice: createSignInDevice({
+          cookieSecret: COOKIE_SECRET,
+          secureCookie: false,
+          passwordFingerprint: createPasswordFingerprint(sql),
+        }),
         emailCodeFailures: openLockout,
         requestEmailCode: () => Promise.resolve(),
       }),
