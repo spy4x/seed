@@ -161,8 +161,10 @@ const SERVICES = [
 ] as const
 
 /**
- * The deploy's output in a terminal, and the services it starts as labels. Each label grows to fill
- * its row, so the rows end flush at any width instead of leaving one label alone on the last.
+ * The deploy's output in a terminal, and the services it starts as labels. On a phone a line too
+ * long for the box wraps under its own start, indented, instead of running off the edge. From `sm`
+ * up every line fits, so the lines stay unwrapped and unindented, as a terminal prints them. Each
+ * label keeps its own width as the row wraps.
  */
 export function DeployVisual(): JSX.Element {
   const { t } = useSite()
@@ -173,13 +175,22 @@ export function DeployVisual(): JSX.Element {
         title={t.t(`HomeQuickStart.terminal`)}
         caption={t.t(`FeatureVisuals.deployCaption`)}
       >
-        <TerminalText>{DEPLOY_OUTPUT.join(`\n`)}</TerminalText>
+        <TerminalText>
+          {DEPLOY_OUTPUT.map((line) => (
+            <span
+              key={line}
+              class="block whitespace-pre-wrap ps-4 -indent-4 sm:whitespace-pre sm:ps-0 sm:indent-0"
+            >
+              {line}
+            </span>
+          ))}
+        </TerminalText>
       </WindowFrame>
       <ul aria-label={t.t(`FeatureVisuals.services`)} class="flex flex-wrap gap-2">
         {SERVICES.map((service) => (
           <li
             key={service}
-            class="grow rounded-control border border-subtle bg-surface px-2 py-1 text-center font-mono text-sm"
+            class="rounded-control border border-subtle bg-surface px-2 py-1 font-mono text-sm"
           >
             {service}
           </li>
