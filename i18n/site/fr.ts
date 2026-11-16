@@ -689,9 +689,9 @@ export default {
     "Appuyez sur Ctrl+K (⌘K sur Mac). La recherche pardonne les fautes de frappe, le cyrillique et la mauvaise disposition de clavier.",
   "Loops.speedName": "Des écrans instantanés",
   "Loops.speedTitle":
-    "Les mêmes quatre clics dans deux fenêtres. À gauche, une application classique affiche un indicateur de chargement avant chaque note ; à droite, Seed ouvre chaque note tout de suite.",
+    "Les mêmes quatre clics dans deux fenêtres. À gauche, une application classique affiche un indicateur de chargement avant chaque note ; à droite, Seed ouvre chaque note tout de suite.",
   "Loops.speedCaption":
-    "Les mêmes clics dans les deux fenêtres. L’application classique attend le serveur à chaque fois ; Seed ouvre les notes à partir de la copie sur l’appareil.",
+    "Les mêmes clics dans les deux fenêtres. L’application classique attend le serveur à chaque fois ; Seed ouvre les notes à partir de la copie sur l’appareil.",
   "Loops.speedUsualLabel": "Une application classique",
   "Loops.speedSeedLabel": "Seed",
   "Outbox.change": "La modification",
