@@ -100,6 +100,9 @@ feature cards, `/features`, `/pricing` and `/compare`, and the components they r
 names it in the same PR, so the site never lists a feature the product lacks and never leaves out
 one it has.
 
+A new public page or section goes into the website's search index (`apps/mpa/search.ts`): its
+title, description, aliases and section text. The coverage test fails when a page is missing.
+
 `deno task lighthouse` (CI step `lighthouse`) measures the website against the Lighthouse budget
 in the global `design` skill. The pages it measures are listed in
 `apps/mpa/lighthouse/lighthouserc.json`; a pull request measures only those in

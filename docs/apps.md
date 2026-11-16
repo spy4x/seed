@@ -13,8 +13,8 @@ Seed ships two web apps over the same API, with different jobs.
   `DOMAIN`.
 - **The MPA** (`apps/mpa`, Preact on a small Fresh-compatible layer built with Vite:
   [the website's server](website-server.md)) is the product's public website. It holds the home
-  page, pricing, the privacy and terms pages, the blog, the newsletter, `robots.txt`,
-  `sitemap.xml` and `llms.txt`. Its sign-in and sign-up links open the SPA.
+  page, pricing, the privacy and terms pages, the blog, the newsletter, the site search,
+  `robots.txt`, `sitemap.xml` and `llms.txt`. Its sign-in and sign-up links open the SPA.
 
 In the SPA, people see each other's changes live over a WebSocket
 ([ADR 002](decisions/002-realtime-transport-and-sync.md)). It also works offline
@@ -23,6 +23,11 @@ In the SPA, people see each other's changes live over a WebSocket
 The MPA renders every page on the server, and every page works with JavaScript turned off. It has
 no session and never touches the database. It asks the API over HTTP for the blog's posts, the
 contact links, a few settings flags and the newsletter's sign-ups.
+
+Every page of the MPA has a search in its header: Ctrl/⌘+K or `/` opens it, and it finds pages and
+the sections of Features, Pricing, Compare and the admin panel page. Without JavaScript its button
+leads to `/search?q=`, which lists the same results. A product changes what it finds in
+`apps/mpa/search.ts`: its list of pages with sections, and the extra words people search by.
 
 The website's end-to-end test runs in CI on every pull request. To run it locally, start Postgres
 and Valkey, then run `e2e/mpa/run.sh`; the script's header says what it needs.
