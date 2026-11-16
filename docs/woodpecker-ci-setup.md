@@ -11,9 +11,9 @@ template gets the pipeline the moment its repository is activated in Woodpecker.
 `ci/woodpecker/pr/ci` and `ci/woodpecker/pr/ci-browser` on a pull request, and branch protection
 requires both.
 
-`ci.yml` runs on every pull request, every push to `main`, every tag and the nightly run on `main`
-(below); `ci-browser.yml` on all of them but a push to `main`. Only `release.yml` filters tags to
-`v<digit>*`. A push to `main` runs only `check`, `secrets` and the four image steps: its pull
+`ci.yml` runs on every pull request, every push to `main`, every release tag `v<digit>*` and the
+nightly run on `main` (below); `ci-browser.yml` on all of them but a push to `main`. A tag
+`ci-image-<n>` runs only `ci-image.yml` ([The CI image](#the-ci-image)). A push to `main` runs only `check`, `secrets` and the four image steps: its pull
 request already ran the rest. A push to any other branch runs nothing: open a pull request to run
 the pipeline. This is the one list of CI's steps; other pages link here.
 
@@ -223,13 +223,31 @@ builds into a tar file without any secret, and crane, the only step with the tok
 version without a pre-release suffix also gets `latest`. The worker and the migration run the API
 image, so there is no worker image. How to cut a release: [Publish a release](releases.md).
 
+## The CI image
+
+`infra/ci/playwright.dockerfile` is the image for the browser steps of `ci-browser.yml`: the
+Playwright image those steps pin, plus `unzip`, `nginx`, Deno and a Deno cache (`DENO_DIR=/opt/deno`)
+that already holds Lighthouse CI. A step that runs in it downloads none of them.
+
+To publish a new one, push a tag `ci-image-<n>` on a commit that is on `main`:
+
+```bash
+git tag ci-image-2 origin/main && git push origin ci-image-2
+```
+
+`.woodpecker/ci-image.yml` builds it with kaniko and pushes it with crane as
+`<IMAGE_PREFIX>-ci:<n>` (here `antonshubin/template-ci:2`), with the same secrets and guard as
+releases. It never moves `latest`. A product changes `IMAGE_PREFIX` at the top of `ci-image.yml`.
+Then pin the new tag by its digest in the four Playwright steps of `ci-browser.yml`
+(https://github.com/spy4x/seed/issues/1079).
+
 ## Changing the Deno version
 
 Change the tag in every `image: denoland/deno:<version>` line of `ci.yml`, and the release URL and
 SHA-256 in the four Playwright steps of `ci-browser.yml` (`browser`, `lighthouse`, `e2e-smoke`,
-`e2e-full`) and in `runtimes`. `ready` in `ci-browser.yml` pins the Deno image by tag and digest:
-update both. Keep them
-equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
+`e2e-full`) and in `runtimes`, and in `infra/ci/playwright.dockerfile`, then publish a new CI
+image (above). `ready` in `ci-browser.yml` pins the Deno image by tag and digest: update both. Keep
+them equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
 
 ## Running the steps locally
 
