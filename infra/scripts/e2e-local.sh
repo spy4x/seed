@@ -78,8 +78,9 @@
 # Playwright workers passes 500.
 #   systemd-run --user --scope --quiet -p TasksMax=3000 -p MemoryMax=8G deno task e2e:local
 #
-# The API reads `vapid.json` from the repository root. The script puts one there while it runs and
-# refuses to start when one is there already. It never prints a secret.
+# The API reads its web push keys from this run's scratch folder (`VAPID_KEYS_PATH`), a copy of
+# infra/configs/vapid.json or new keys, so nothing is written to the checkout's root or
+# infra/configs/. It never prints a secret.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -137,10 +138,6 @@ fi
 for tool in "${TOOLS[@]}"; do
   command -v "$tool" >/dev/null || { echo "e2e:local needs $tool"; exit 1; }
 done
-if [ -e vapid.json ]; then
-  echo "vapid.json exists in the repository root; move it away first"
-  exit 1
-fi
 
 log() { echo "[e2e:local] $*"; }
 
@@ -178,7 +175,6 @@ cleanup() {
   fi
   find "$COPY_DIR" -delete 2>/dev/null
   find "$SCRATCH" -delete
-  find vapid.json -delete 2>/dev/null
 }
 trap cleanup EXIT
 # `deno task` forwards a signal the script also gets from its process group, so it arrives twice.
@@ -335,12 +331,14 @@ export GUEST_OPERATION_QUERIES_PER_MINUTE=30000
 log "migrating the database"
 timeout 300 deno task db:migrate
 
-# Reuse existing web push keys; never replace them, and leave no file in infra/configs/ that was
-# not there. Cleanup deletes the copy in the repository root.
+# Reuse existing web push keys without changing them, or make new ones, in the scratch folder
+# that cleanup deletes.
+export VAPID_KEYS_PATH="$SCRATCH/vapid.json"
 if [ -f infra/configs/vapid.json ]; then
-  cp infra/configs/vapid.json vapid.json
+  cp infra/configs/vapid.json "$VAPID_KEYS_PATH"
 else
-  timeout 120 deno task vapid-key:create >/dev/null && mv infra/configs/vapid.json vapid.json
+  timeout 120 deno run -W="$VAPID_KEYS_PATH" infra/scripts/vapid-keys-create.ts \
+    "$VAPID_KEYS_PATH" >/dev/null
 fi
 
 log "starting the file store on 127.0.0.1:$FILES_PORT"
