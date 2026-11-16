@@ -46,6 +46,18 @@ Deno.test("no fake time lies after now, on any day of the week", () => {
   }
 })
 
+Deno.test("the first group has notes its owner imported from a file on every day of the week", () => {
+  for (let day = 0; day < 7; day++) {
+    const now = new Date(NOW.getTime() + day * 24 * 60 * 60_000)
+    for (const seed of [7, 42]) {
+      const [first] = fakeDemoData(seed, now).groups
+      const imported = first.notes.filter((note) => note.fromFile)
+      expect(imported.length).toBeGreaterThan(0)
+      expect(new Set(imported.map((note) => note.author))).toEqual(new Set([first.owner]))
+    }
+  }
+})
+
 Deno.test("the fake people's names and addresses depend on the seed alone", () => {
   const later = new Date(NOW.getTime() + 9 * 60 * 60_000)
   for (const now of [NOW, later]) {

@@ -785,18 +785,18 @@ export const IMPORTED_NOTES = 3
 
 /**
  * Marks up to {@link IMPORTED_NOTES} of the owner's notes as brought in from one CSV file, all
- * written the moment the oldest of them was; an edit since stays after it.
+ * written the moment the oldest of them was; an edit since stays after it. When the owner wrote
+ * none, which the weekday's draws can cause, the group's first notes become the owner's import.
  */
 function withImportedNotes(group: FakeGroup): FakeGroup {
-  const picked = group.notes
-    .map((note, index) => ({ note, index }))
-    .filter(({ note }) => note.author === group.owner)
-    .slice(0, IMPORTED_NOTES)
+  const indexed = group.notes.map((note, index) => ({ note, index }))
+  const own = indexed.filter(({ note }) => note.author === group.owner)
+  const picked = (own.length > 0 ? own : indexed).slice(0, IMPORTED_NOTES)
   if (picked.length === 0) return group
   const createdAgo = Math.max(...picked.map(({ note }) => note.createdAgo))
   const indexes = new Set(picked.map(({ index }) => index))
   const notes = group.notes.map((note, index) =>
-    indexes.has(index) ? { ...note, createdAgo, fromFile: true } : note
+    indexes.has(index) ? { ...note, author: group.owner, createdAgo, fromFile: true } : note
   )
   return { ...group, notes }
 }
