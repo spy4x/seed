@@ -218,9 +218,11 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
       page.current.querySelector<HTMLElement>("[data-e2e=overview-all-hidden-customise]")
     next?.focus()
   }, [props.widgets.length])
-  // When the Customise dialog closes (Done, the ✕ or Escape), focus goes back to what opened it:
-  // the "All widgets are hidden" card's button while it is still there, else the More actions
-  // button. The dialog's own restore would land on the menu item, which is gone by then.
+  // When the Customise dialog closes (Done, the ✕ or Escape), the dialog puts focus back where it
+  // was when it opened. Two cases need help: the "All widgets are hidden" card's button opened it
+  // (focus goes back to that button while it is still there), and that button is gone by the time
+  // the dialog closes, which leaves focus on the body (it goes to More actions instead). Opened
+  // any other way (More actions, the palette, a hotkey), the dialog's own restore stands.
   const opener = useRef<HTMLElement | null>(null)
   const wasCustomising = useRef(props.customising)
   useEffect(() => {
@@ -229,10 +231,10 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
     if (!closed || !page.current) return
     const from = opener.current
     opener.current = null
-    const target = from?.isConnected
-      ? from
-      : page.current.querySelector<HTMLElement>("[data-e2e=overview-menu]")
-    target?.focus()
+    if (from?.isConnected) return from.focus()
+    const { activeElement, body } = page.current.ownerDocument
+    if (activeElement && activeElement !== body) return
+    page.current.querySelector<HTMLElement>("[data-e2e=overview-menu]")?.focus()
   }, [props.customising])
   const t = useAppText()
   const hide = (id: string) => {

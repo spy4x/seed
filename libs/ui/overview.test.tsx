@@ -424,6 +424,23 @@ describe("the group overview", () => {
     expect(focused()).toBe("overview-menu")
   })
 
+  it("leaves focus where the dialog put it back when Customise opened from outside the page, such as the palette", async () => {
+    const palette = document.createElement("button")
+    palette.setAttribute("data-e2e", "palette-trigger")
+    document.body.append(palette)
+    try {
+      const seen = await mount()
+      palette.focus()
+      const open = { customising: true }
+      await act(() => render(<Harness loads={READY} seen={seen} props={open} />, root!))
+      const closed = { customising: false }
+      await act(() => render(<Harness loads={READY} seen={seen} props={closed} />, root!))
+      expect(focused()).toBe("palette-trigger")
+    } finally {
+      palette.remove()
+    }
+  })
+
   it("resets the layout and copies the link from More actions", async () => {
     const seen = await mount()
 
