@@ -245,7 +245,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
             value={step === TwoFactorStep.Disable
               ? (
                 <span class="flex flex-wrap items-center gap-2">
-                  <Badge text={t.t(`ProfileSecurity.on`)} color="green" type="outline" />
+                  <Badge text={t.t(`ProfileSecurity.on`)} tone="success" variant="outline" />
                   {t.t(`ProfileSecurity.onText`)}
                 </span>
               )

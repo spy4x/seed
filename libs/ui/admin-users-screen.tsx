@@ -74,9 +74,9 @@ export function adminUserSubtitle(
 }
 
 /** A role's badge colour: viewers stay quiet, every role above them stands out. */
-export function roleColor(role: UserRole): "gray" | "blue" | "purple" {
-  if (role === UserRole.VIEWER) return "gray"
-  return role === UserRole.ADMIN ? "purple" : "blue"
+export function roleTone(role: UserRole): "neutral" | "info" | "primary" {
+  if (role === UserRole.VIEWER) return "neutral"
+  return role === UserRole.ADMIN ? "primary" : "info"
 }
 
 /**
@@ -221,7 +221,7 @@ export function AdminUsersScreen(
           <FilterChips label={t.t(`AdminUsers.status`)} dataE2E="admin-users-blocked">
             <ToggleChips
               mode="single"
-              label={t.t(`AdminUsers.status`)}
+              ariaLabel={t.t(`AdminUsers.status`)}
               options={[
                 { value: `active`, label: t.t(`AdminUsers.active`) },
                 { value: `blocked`, label: t.t(`AdminUsers.blocked`) },
@@ -234,7 +234,7 @@ export function AdminUsersScreen(
           <FilterChips label={t.t(`AdminUsers.account`)} dataE2E="admin-users-account">
             <ToggleChips
               mode="single"
-              label={t.t(`AdminUsers.account`)}
+              ariaLabel={t.t(`AdminUsers.account`)}
               // Guest accounts, made with one click and no sign-in method, or every other.
               options={[
                 { value: `guest`, label: t.t(`AdminUsers.guests`) },
@@ -254,7 +254,7 @@ export function AdminUsersScreen(
           <FilterChips label={t.t(`AdminUsers.role`)} dataE2E="admin-users-role">
             <ToggleChips
               mode="single"
-              label={t.t(`AdminUsers.role`)}
+              ariaLabel={t.t(`AdminUsers.role`)}
               options={ROLES.map((role) => ({ value: String(role), label: roleLabel(t, role) }))}
               value={filter.role === null ? null : String(filter.role)}
               onChange={(value) =>
@@ -352,7 +352,7 @@ function userColumns(
       key: "role",
       header: t.t(`AdminUsers.role`),
       sortable: true,
-      render: ({ role }) => <Badge text={roleLabel(t, role)} color={roleColor(role)} />,
+      render: ({ role }) => <Badge text={roleLabel(t, role)} tone={roleTone(role)} />,
     },
     {
       id: "status",
@@ -361,10 +361,10 @@ function userColumns(
         user.blockedAt
           ? (
             <span data-e2e="admin-user-blocked">
-              <Badge text={t.t(`AdminUsers.blocked`)} color="red" />
+              <Badge text={t.t(`AdminUsers.blocked`)} tone="danger" />
             </span>
           )
-          : <Badge text={t.t(`AdminUsers.active`)} color="green" type="outline" />,
+          : <Badge text={t.t(`AdminUsers.active`)} tone="success" variant="outline" />,
     },
     {
       key: "lastSeenAt",
@@ -432,12 +432,12 @@ function PersonCell(
           </Link>
           {user.guestSince && (
             <span data-e2e="admin-user-guest">
-              <Badge text={t.t(`AdminUsers.guest`)} color="gray" type="outline" />
+              <Badge text={t.t(`AdminUsers.guest`)} tone="neutral" variant="outline" />
             </span>
           )}
           {self && (
             <span data-e2e="admin-user-you">
-              <Badge text={t.t(`AdminUsers.you`)} color="gray" type="outline" />
+              <Badge text={t.t(`AdminUsers.you`)} tone="neutral" variant="outline" />
             </span>
           )}
         </span>
@@ -446,10 +446,10 @@ function PersonCell(
         )}
         {/* The Role and Status columns' badges, shown here only where those columns are hidden. */}
         <span class="mt-1 flex flex-wrap gap-2 sm:hidden" data-e2e="admin-user-phone-badges">
-          <Badge text={roleLabel(t, user.role)} color={roleColor(user.role)} />
+          <Badge text={roleLabel(t, user.role)} tone={roleTone(user.role)} />
           {user.blockedAt
-            ? <Badge text={t.t(`AdminUsers.blocked`)} color="red" />
-            : <Badge text={t.t(`AdminUsers.active`)} color="green" type="outline" />}
+            ? <Badge text={t.t(`AdminUsers.blocked`)} tone="danger" />
+            : <Badge text={t.t(`AdminUsers.active`)} tone="success" variant="outline" />}
         </span>
         {/* The Last seen and Created columns' facts, shown here only where those columns are hidden. */}
         <span

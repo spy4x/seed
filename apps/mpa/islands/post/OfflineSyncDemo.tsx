@@ -107,8 +107,8 @@ export default function OfflineSyncDemo({ figure }: { figure: FigureFrame }): JS
                 >
                   <span class="text-foreground">{name(note)}</span>
                   <Badge
-                    color={note.synced ? `green` : `orange`}
-                    type="outline"
+                    tone={note.synced ? `success` : `warning`}
+                    variant="outline"
                     text={t.t(
                       note.synced
                         ? `PostFigure.OfflineSyncDemo.saved`

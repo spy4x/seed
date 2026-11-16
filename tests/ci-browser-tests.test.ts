@@ -1,15 +1,18 @@
 /// <reference lib="deno.ns" />
 /**
- * Holds which browser tests CI runs. A merge is allowed on the pull-request check alone, so that
- * check must run the smoke set (`SMOKE_SPECS` of `infra/scripts/e2e-local-plan.ts`), and the set
+ * Holds which browser tests CI runs. CI is two workflows that run at the same time:
+ * `.woodpecker/ci.yml` (`check`, `secrets`, the stack's steps and the images) and
+ * `.woodpecker/ci-browser.yml` (`browser`, `lighthouse`, `e2e-smoke`, `e2e-full`). A merge is
+ * allowed on their pull-request checks alone, so ci-browser must run the smoke set (`SMOKE_SPECS` of `infra/scripts/e2e-local-plan.ts`), and the set
  * must keep the sign-in and the notes specs: without either, a pull request that breaks that
  * screen shows green again. The one exception is a pull request that changes only Markdown
  * outside the product (`markdown_only` and `internal_markdown` in the workflow): it skips the
- * steps that start the stack, and runs `browser` only when it changes a published guide. A push
- * to `main` runs only `check`, `secrets` and the images. The whole suite runs in the nightly cron
+ * steps that start the stack, and runs `browser` only when it changes a published guide; ci-browser
+ * still runs its `ready` step, so its required status arrives. A push to `main` runs only
+ * `check`, `secrets` and the images, and creates no ci-browser workflow. The whole suite runs in the nightly cron
  * run on `main`, where a red run is seen but blocks nobody and no push cancels it.
  * `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs of the set. Lighthouse
- * measures in a stage of its own, with no other step of the pipeline beside it. A pull request
+ * measures in a stage of its own, with no other step of its workflow beside it. A pull request
  * runs it only when it changes a file the website is built from (#821); the nightly run and a tag
  * always run it, and the e2e steps run whether it ran or not. A pull request measures only the
  * quick pages (#876). A pull request builds the four images only when it changes what decides
@@ -18,7 +21,7 @@
  * a tag, always builds them (https://github.com/spy4x/ringmaster/issues/296). A pull request
  * titled `[WIP]` runs only `check` and `secrets` (`.woodpecker/wip.yml`, copies of ci.yml's), and
  * removing `[WIP]` from the title (`pull_request_metadata`) runs the same steps as a pull request
- * (#1058).
+ * (#1058), in both workflows. A release waits for both (`.woodpecker/release.yml`).
  */
 
 import { expect } from "@std/expect"
@@ -30,6 +33,7 @@ const ROOT = new URL("../", import.meta.url)
 const read = (path: string) => Deno.readTextFile(fromFileUrl(new URL(path, ROOT)))
 
 const CI = ".woodpecker/ci.yml"
+const BROWSER = ".woodpecker/ci-browser.yml"
 // Both stop after a few failed tests: with sign-in broken every test fails slowly, and a red
 // check must not take the step's whole limit.
 const SUITE = "deno task e2e:local --max-failures=10"
@@ -164,7 +168,23 @@ export function stages(
   return result.filter(Boolean)
 }
 
-const workflow = async () => parse(await read(CI)) as Step & { steps?: Record<string, Step> }
+/** A workflow: its own `when` and `depends_on`, and its steps. */
+type Workflow = Step & { steps?: Record<string, Step> }
+
+const workflow = async (path = CI) => parse(await read(path)) as Workflow
+const browserWorkflow = () => workflow(BROWSER)
+
+/**
+ * The steps both CI workflows run for `event` on `main` when `changed` files changed, as one list.
+ * A workflow whose own `when` does not hold for the event is not created and runs nothing.
+ */
+async function ranInCi(event: string, changed: string[] = []): Promise<string[]> {
+  const ran: string[] = []
+  for (const ci of [await workflow(), await browserWorkflow()]) {
+    if (runsFor(ci, event, `main`, changed)) ran.push(...stages(ci, event, `main`, changed).flat())
+  }
+  return ran
+}
 
 Deno.test("a step runs for an event when it has no condition or one condition names the event and the branch", () => {
   expect(runsFor({}, "pull_request", "main")).toBe(true)
@@ -234,19 +254,26 @@ Deno.test("an exclude condition fails only when every changed file matches it", 
 /** The stage of `name` in `list`, or -1 when it does not run. */
 const stageOf = (list: string[][], name: string) => list.findIndex((names) => names.includes(name))
 
-Deno.test("Lighthouse measures in a stage of its own on every event that runs it", async () => {
+Deno.test("Lighthouse measures in a stage of its own on every event that runs it, with or without browser", async () => {
   // Lab performance falls when another step shares the CPU, and the budget then fails on noise.
-  const ci = await workflow()
-  const website = [`apps/mpa/routes/index.tsx`]
-  for (const event of [`pull_request`, `cron`, `tag`]) {
-    const [step] = blockingSteps(ci, `deno task lighthouse`, event, `main`, website)
-    const stage = stages(ci, event, `main`, website).find((names) => names.includes(step))
-    expect({ event, stage }).toEqual({ event, stage: [`lighthouse`] })
+  // A change to i18n/*.md skips `browser` and still runs Lighthouse, which must not then share
+  // the first stage with `ready`.
+  const ci = await browserWorkflow()
+  const cases: [string, string[]][] = [
+    [`pull_request`, [`apps/mpa/routes/index.tsx`]],
+    [`pull_request`, [`i18n/TRANSLATING.md`]],
+    [`cron`, []],
+    [`tag`, []],
+  ]
+  for (const [event, changed] of cases) {
+    const [step] = blockingSteps(ci, `deno task lighthouse`, event, `main`, changed)
+    const stage = stages(ci, event, `main`, changed).find((names) => names.includes(step))
+    expect({ event, changed, stage }).toEqual({ event, changed, stage: [`lighthouse`] })
   }
 })
 
 Deno.test("a pull request that changes only the API runs no Lighthouse and still runs the smoke set after browser", async () => {
-  const ci = await workflow()
+  const ci = await browserWorkflow()
   const changed = [`apps/api/x.ts`]
   expect(blockingSteps(ci, `deno task lighthouse`, `pull_request`, `main`, changed)).toEqual([])
   expect(blockingSteps(ci, SMOKE, `pull_request`, `main`, changed)).toEqual([`e2e-smoke`])
@@ -256,16 +283,17 @@ Deno.test("a pull request that changes only the API runs no Lighthouse and still
   expect(order[stageOf(order, `e2e-smoke`)]).toEqual([`e2e-smoke`])
 })
 
-Deno.test("a pull request that changes the website, a published guide or the lockfile runs Lighthouse", async () => {
-  const ci = await workflow()
-  for (const file of [`apps/mpa/routes/index.tsx`, `docs/billing.md`, `deno.lock`]) {
+Deno.test("a pull request that changes the website, a published guide, the lockfile or ci-browser.yml runs Lighthouse", async () => {
+  const ci = await browserWorkflow()
+  const files = [`apps/mpa/routes/index.tsx`, `docs/billing.md`, `deno.lock`, BROWSER]
+  for (const file of files) {
     const steps = blockingSteps(ci, `deno task lighthouse`, `pull_request`, `main`, [file])
     expect({ file, steps }).toEqual({ file, steps: [`lighthouse`] })
   }
 })
 
 Deno.test("the nightly run and a tag run Lighthouse whatever they change, and a push to main never", async () => {
-  const ci = await workflow()
+  const ci = await browserWorkflow()
   for (const event of [`cron`, `tag`]) {
     const steps = blockingSteps(ci, `deno task lighthouse`, event, `main`, [`apps/api/x.ts`])
     expect({ event, steps }).toEqual({ event, steps: [`lighthouse`] })
@@ -277,7 +305,9 @@ Deno.test("the nightly run and a tag run Lighthouse whatever they change, and a 
 Deno.test("a pull request and its title edit measure the quick pages, and the nightly run and a tag every page", async () => {
   // run.sh measures every page unless LIGHTHOUSE_PAGES=quick; only a pull request and its title
   // edit may set it.
-  const commands = list((await workflow()).steps?.lighthouse?.commands).map((line) => line.trim())
+  const commands = list((await browserWorkflow()).steps?.lighthouse?.commands).map((line) =>
+    line.trim()
+  )
   const at = commands.indexOf(`deno task lighthouse`)
   expect(commands.slice(at - 1, at)).toEqual([
     `case "$\${CI_PIPELINE_EVENT}" in pull_request | pull_request_metadata) export LIGHTHOUSE_PAGES=quick ;; esac`,
@@ -354,37 +384,44 @@ Deno.test("every spec of the smoke set is a file in e2e/", async () => {
 })
 
 Deno.test("a pull request runs the smoke set in a step that fails the pipeline", async () => {
-  expect(blockingSteps(await workflow(), SMOKE, "pull_request", "main")).toEqual(["e2e-smoke"])
+  expect(blockingSteps(await browserWorkflow(), SMOKE, "pull_request", "main")).toEqual([
+    "e2e-smoke",
+  ])
+  expect(blockingSteps(await workflow(), SMOKE, "pull_request", "main")).toEqual([])
 })
 
 Deno.test("only the nightly run runs the whole suite, and it skips the smoke set", async () => {
-  const ci = await workflow()
+  const ci = await browserWorkflow()
   expect(blockingSteps(ci, SUITE, "cron", "main")).toEqual(["e2e-full"])
   expect(blockingSteps(ci, SMOKE, "cron", "main")).toEqual([])
   // A push to main would be cancelled by the next merge before the suite ends.
   expect(blockingSteps(ci, SUITE, "push", "main")).toEqual([])
   expect(blockingSteps(ci, SUITE, "pull_request", "main")).toEqual([])
-  // A release waits for this workflow: the whole suite must not stand between a tag and its
-  // images, and the smoke set must.
+  // A release waits for ci-browser: the whole suite must not stand between a tag and its images,
+  // and the smoke set must.
   expect(blockingSteps(ci, SUITE, "tag", "main")).toEqual([])
   expect(blockingSteps(ci, SMOKE, "tag", "main")).toEqual(["e2e-smoke"])
 })
 
 Deno.test("a push to main runs only check, secrets and the four images, whatever it changes", async () => {
   // Its pull request already ran the rest; the slow steps would be cancelled by the next merge.
-  const ci = await workflow()
-  expect(runsFor(ci, `push`, `main`)).toBe(true)
+  expect(runsFor(await workflow(), `push`, `main`)).toBe(true)
   for (const changed of [[], [`apps/api/x.ts`], [`apps/mpa/routes/index.tsx`, `deno.lock`]]) {
-    const ran = stages(ci, `push`, `main`, changed).flat().sort()
+    const ran = (await ranInCi(`push`, changed)).sort()
     expect({ changed, ran }).toEqual({ changed, ran: [`check`, `secrets`, ...IMAGES].sort() })
   }
 })
 
+Deno.test("ci-browser runs on a pull request, its title edit, a tag and the nightly run, and never on a push", async () => {
+  // A push to main runs no browser step, and deploy.yml.example waits for ci alone.
+  const events = list((await browserWorkflow()).when).flatMap(({ event }) => list(event)).sort()
+  expect(events).toEqual([`cron`, `pull_request`, `pull_request_metadata`, `tag`])
+})
+
 Deno.test("the nightly run on main runs every check and test step but no image and no smoke set", async () => {
-  const ci = await workflow()
-  expect(runsFor(ci, `cron`, `main`)).toBe(true)
-  const ran = stages(ci, `cron`, `main`).flat().sort()
-  expect(ran).toEqual([
+  expect(runsFor(await workflow(), `cron`, `main`)).toBe(true)
+  expect(runsFor(await browserWorkflow(), `cron`, `main`)).toBe(true)
+  expect((await ranInCi(`cron`)).sort()).toEqual([
     `alert-rules`,
     `backup-restore`,
     `browser`,
@@ -392,6 +429,7 @@ Deno.test("the nightly run on main runs every check and test step but no image a
     `e2e-full`,
     `integration`,
     `lighthouse`,
+    `ready`,
     `runtimes`,
     `secrets`,
   ])
@@ -417,17 +455,33 @@ const MARKDOWN_ONLY = [
 const STACK = [`integration`, `backup-restore`, `alert-rules`, `browser`, `runtimes`, `e2e-smoke`]
 
 Deno.test("a pull request that changes only Markdown no app loads runs check and none of the stack's steps", async () => {
-  const ci = await workflow()
   for (const file of MARKDOWN_ONLY) {
-    const ran = stages(ci, `pull_request`, `main`, [file]).flat()
+    const ran = await ranInCi(`pull_request`, [file])
     expect({ file, ran: ran.filter((name) => STACK.includes(name)) }).toEqual({ file, ran: [] })
     expect({ file, check: ran.includes(`check`) }).toEqual({ file, check: true })
   }
+  const ci = await browserWorkflow()
   expect(blockingSteps(ci, SMOKE, `pull_request`, `main`, MARKDOWN_ONLY)).toEqual([])
 })
 
+Deno.test("ci-browser runs its ready step on every event it runs on, whatever changed, so its status always arrives", async () => {
+  // A workflow left with no step posts no status, and branch protection requires
+  // ci/woodpecker/pr/ci-browser: a pull request that changes only Markdown could never merge.
+  const ci = await browserWorkflow()
+  expect(ci.steps?.ready?.when).toBeUndefined()
+  for (const event of [`pull_request`, `pull_request_metadata`, `tag`, `cron`]) {
+    for (const changed of [[], [`README.md`], MARKDOWN_ONLY, [`apps/api/x.ts`]]) {
+      const ran = stages(ci, event, `main`, changed).flat()
+      expect({ event, changed, ready: ran.includes(`ready`) }).toEqual({
+        event,
+        changed,
+        ready: true,
+      })
+    }
+  }
+})
+
 Deno.test("a pull request that changes Markdown and any other file, the nightly run and a tag run the stack", async () => {
-  const ci = await workflow()
   const cases: [string, string[]][] = [
     [`pull_request`, [`README.md`, `apps/api/x.ts`]],
     [`pull_request`, [`libs/server/blog/seed-posts/a.md`]],
@@ -436,7 +490,7 @@ Deno.test("a pull request that changes Markdown and any other file, the nightly 
     [`tag`, [`README.md`]],
   ]
   for (const [event, changed] of cases) {
-    const ran = stages(ci, event, `main`, changed).flat()
+    const ran = await ranInCi(event, changed)
     // The nightly run's e2e-full runs every spec of the smoke set.
     const stack = STACK.filter((name) => name !== `e2e-smoke` || event !== `cron`)
     expect({ event, changed, missing: stack.filter((name) => !ran.includes(name)) })
@@ -445,19 +499,19 @@ Deno.test("a pull request that changes Markdown and any other file, the nightly 
 })
 
 Deno.test("a pull request that changes only a published guide runs the browser tests and Lighthouse", async () => {
-  const ci = await workflow()
-  const order = stages(ci, `pull_request`, `main`, [`docs/capacity.md`])
-  expect(stageOf(order, `lighthouse`)).toBeGreaterThan(stageOf(order, `check`))
-  expect(order.flat().filter((name) => STACK.includes(name))).toEqual([`browser`])
+  const changed = [`docs/capacity.md`]
+  const order = stages(await browserWorkflow(), `pull_request`, `main`, changed)
+  expect(stageOf(order, `lighthouse`)).toBeGreaterThan(stageOf(order, `browser`))
+  const ran = await ranInCi(`pull_request`, changed)
+  expect(ran.filter((name) => STACK.includes(name))).toEqual([`browser`])
 })
 
 const WIP = `.woodpecker/wip.yml`
 const WIP_TITLE = `CI_COMMIT_MESSAGE startsWith "[WIP]"`
 
-Deno.test("a title edit that drops [WIP] runs the same steps as a pull request, whatever it changes", async () => {
+Deno.test("a title edit that drops [WIP] runs the same steps as a pull request in both workflows, whatever it changes", async () => {
   // A step without the `pull_request_metadata` twin would be skipped, and the short run would
-  // still report the required `ci/woodpecker/pr/ci` check green.
-  const ci = await workflow()
+  // still report the required `ci/woodpecker/pr/ci` or `ci/woodpecker/pr/ci-browser` check green.
   const cases = [
     [],
     [`apps/api/x.ts`],
@@ -467,27 +521,36 @@ Deno.test("a title edit that drops [WIP] runs the same steps as a pull request, 
     [`apps/api/dockerfile.node`],
     [`tests/x.test.ts`],
   ]
-  for (const changed of cases) {
-    const edit = stages(ci, `pull_request_metadata`, `main`, changed)
-    expect({ changed, edit }).toEqual({
-      changed,
-      edit: stages(ci, `pull_request`, `main`, changed),
-    })
+  for (const path of [CI, BROWSER]) {
+    const ci = await workflow(path)
+    for (const changed of cases) {
+      const edit = stages(ci, `pull_request_metadata`, `main`, changed)
+      expect({ path, changed, edit }).toEqual({
+        path,
+        changed,
+        edit: stages(ci, `pull_request`, `main`, changed),
+      })
+    }
   }
 })
 
-Deno.test("ci.yml runs on a pull request or a title edit only without [WIP], and wip.yml only with it", async () => {
+Deno.test("ci.yml and ci-browser.yml run on a pull request or a title edit only without [WIP], and wip.yml only with it", async () => {
   const conditions = (workflow: Step) =>
     list(workflow.when).map(({ event, evaluate }) => ({ event, evaluate }))
   const pullRequest = (workflow: Step) =>
     conditions(workflow).filter(({ event }) => `${event}`.startsWith(`pull_request`))
-  expect(pullRequest(await workflow())).toEqual([
-    { event: `pull_request`, evaluate: `not (${WIP_TITLE})` },
-    {
-      event: `pull_request_metadata`,
-      evaluate: `CI_PIPELINE_EVENT_REASON contains "edited" && not (${WIP_TITLE})`,
-    },
-  ])
+  for (const path of [CI, BROWSER]) {
+    expect({ path, conditions: pullRequest(await workflow(path)) }).toEqual({
+      path,
+      conditions: [
+        { event: `pull_request`, evaluate: `not (${WIP_TITLE})` },
+        {
+          event: `pull_request_metadata`,
+          evaluate: `CI_PIPELINE_EVENT_REASON contains "edited" && not (${WIP_TITLE})`,
+        },
+      ],
+    })
+  }
   expect(conditions(parse(await read(WIP)) as Step)).toEqual([
     { event: `pull_request`, evaluate: WIP_TITLE },
   ])
@@ -501,4 +564,22 @@ Deno.test("wip.yml runs exactly ci.yml's check and secrets steps", async () => {
   for (const name of [`check`, `secrets`]) {
     expect({ name, step: wip[name] }).toEqual({ name, step: ci[name] })
   }
+})
+
+Deno.test("ci-browser.yml's Markdown list and services are copies of ci.yml's", async () => {
+  // YAML anchors do not cross files; a Markdown list that drifted would skip e2e-smoke on a
+  // change ci.yml tests, and a Postgres that drifted would test another version.
+  const services = async (path: string) =>
+    (parse(await read(path)) as { services?: unknown }).services
+  expect(await services(BROWSER)).toEqual(await services(CI))
+  const markdown = async (path: string) =>
+    (parse(await read(path)) as { variables?: unknown[] }).variables?.[0]
+  expect(await markdown(BROWSER)).toEqual(await markdown(CI))
+})
+
+Deno.test("a release waits for both CI workflows, and a deploy on a push for ci alone", async () => {
+  // A tag runs both; a push to main runs no ci-browser, which a deploy must not wait for.
+  const dependsOn = async (path: string) => list((await workflow(path)).depends_on)
+  expect(await dependsOn(`.woodpecker/release.yml`)).toEqual([`ci`, `ci-browser`])
+  expect(await dependsOn(`.woodpecker/deploy.yml.example`)).toEqual([`ci`])
 })

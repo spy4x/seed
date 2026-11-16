@@ -295,7 +295,7 @@ export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
         <div data-e2e="admin-audit-view">
           <ToggleChips
             mode="single"
-            label={t.t(`AdminAudit.view`)}
+            ariaLabel={t.t(`AdminAudit.view`)}
             options={VIEW_CHIPS.map((chip) => ({ value: chip.value, label: t.t(chip.key) }))}
             value={view}
             onChange={(next) => next && props.onView(next as AdminAuditView)}
@@ -659,7 +659,7 @@ function AuditTable(
           </span>
           {entry.byOperator && (
             <span>
-              <Badge text={t.t(`AdminAudit.operatorBadge`)} color="blue" type="outline" />
+              <Badge text={t.t(`AdminAudit.operatorBadge`)} tone="info" variant="outline" />
             </span>
           )}
           <PhonePeople entry={entry} />
@@ -762,7 +762,11 @@ function AuditTimeline(
                         />
                       </span>
                       {entry.byOperator && (
-                        <Badge text={t.t(`AdminAudit.operatorBadge`)} color="blue" type="outline" />
+                        <Badge
+                          text={t.t(`AdminAudit.operatorBadge`)}
+                          tone="info"
+                          variant="outline"
+                        />
                       )}
                     </>
                   )}

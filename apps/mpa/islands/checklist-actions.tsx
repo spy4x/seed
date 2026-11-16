@@ -26,7 +26,7 @@ export default function ChecklistActions(
     <div class="flex flex-wrap gap-3">
       <CopyButton
         textToCopy={() => `${location.origin}${location.pathname}`}
-        title={copy}
+        text={copy}
         copiedLabel={copied}
         failedLabel={copyFailed}
         copiedForMs={3000}

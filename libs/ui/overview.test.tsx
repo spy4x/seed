@@ -380,6 +380,66 @@ describe("the group overview", () => {
     expect(dialog.open).toBe(false)
   })
 
+  it("returns focus to More actions when Customise closes with Done or the ✕", async () => {
+    // The menu gives focus back to More actions before the dialog opens, so the dialog's own restore
+    // lands there, here and in Chromium alike. This guards that behaviour, not the screen's effect.
+    await mount()
+
+    await clickOn(find("[data-e2e=overview-menu]"))
+    await clickText("Customise overview")
+    await clickText("Done", "dialog[data-e2e=overview-customiser]")
+    expect(focused()).toBe("overview-menu")
+
+    await clickOn(find("[data-e2e=overview-menu]"))
+    await clickText("Customise overview")
+    await clickOn(find('dialog[data-e2e=overview-customiser] button[aria-label="Close"]'))
+    expect(document.querySelectorAll("dialog[data-e2e=overview-customiser][open]").length).toBe(0)
+    expect(focused()).toBe("overview-menu")
+  })
+
+  it("returns focus to the All widgets are hidden card's Customise when it opened the dialog", async () => {
+    await mount()
+    for (const id of [total, added, series]) {
+      await clickOn(find(`${card(id)} button[aria-haspopup]`))
+      await clickText("Hide widget", card(id))
+    }
+
+    await clickOn(find("[data-e2e=overview-all-hidden-customise]"))
+    await clickText("Done", "dialog[data-e2e=overview-customiser]")
+    expect(focused()).toBe("overview-all-hidden-customise")
+  })
+
+  it("returns focus to More actions when the card that opened Customise is gone on close", async () => {
+    await mount()
+    for (const id of [total, added, series]) {
+      await clickOn(find(`${card(id)} button[aria-haspopup]`))
+      await clickText("Hide widget", card(id))
+    }
+
+    await clickOn(find("[data-e2e=overview-all-hidden-customise]"))
+    await clickOn(find('[data-e2e=overview-customiser] [aria-label="Show Notes"]'))
+    expect(document.querySelectorAll("[data-e2e=overview-all-hidden]").length).toBe(0)
+    await clickText("Done", "dialog[data-e2e=overview-customiser]")
+    expect(focused()).toBe("overview-menu")
+  })
+
+  it("leaves focus where the dialog put it back when Customise opened from outside the page, such as the palette", async () => {
+    const palette = document.createElement("button")
+    palette.setAttribute("data-e2e", "palette-trigger")
+    document.body.append(palette)
+    try {
+      const seen = await mount()
+      palette.focus()
+      const open = { customising: true }
+      await act(() => render(<Harness loads={READY} seen={seen} props={open} />, root!))
+      const closed = { customising: false }
+      await act(() => render(<Harness loads={READY} seen={seen} props={closed} />, root!))
+      expect(focused()).toBe("palette-trigger")
+    } finally {
+      palette.remove()
+    }
+  })
+
   it("resets the layout and copies the link from More actions", async () => {
     const seen = await mount()
 
@@ -638,6 +698,12 @@ describe("the group overview in another language", () => {
       expect(document.querySelector(card(id))?.textContent).toContain(PSEUDO.t(titleKey))
       expect(customise).toContain(PSEUDO.t(titleKey))
     }
+    // The dialog's ✕ is named from the catalog, not left as the component's English default.
+    expect(
+      document.querySelectorAll(
+        `[data-e2e=overview-customiser] button[aria-label="${PSEUDO.t("LayoutCustomiser.close")}"]`,
+      ).length,
+    ).toBe(1)
 
     await act(() => render(page({ widgets: [], customising: false, emptyGroup: null }), root!))
     expect(englishLeft(document.body, data)).toEqual([])

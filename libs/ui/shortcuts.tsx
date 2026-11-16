@@ -104,7 +104,7 @@ export function ShortcutsList(
             id="single-key-shortcuts"
             label={t.t(`Shortcuts.switchLabel`)}
             value={singleKeys}
-            onToggle={onSingleKeys}
+            onChange={onSingleKeys}
             description={singleKeys ? t.t(`Shortcuts.inFields`) : t.t(`Shortcuts.off`)}
           />
         </div>

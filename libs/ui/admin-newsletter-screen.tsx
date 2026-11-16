@@ -254,7 +254,7 @@ function StatsSection(
             yDomain={[0, countAxisTop(days.map((day) => day.count))]}
             yTicks={5}
             xFormat={(x) => day.dayMonth(typeof x === "string" ? `${x}T00:00:00Z` : x)}
-            yFormat={(value) => format.number(value)}
+            valueFormat={(value) => format.number(value)}
             ariaLabel={t.t(`AdminNewsletter.chartLabel`, { count: days.length })}
             emptyLabel={t.t(`AdminNewsletter.nothingYet`)}
           />
@@ -336,7 +336,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
             </span>
             <ToggleChips
               mode="single"
-              label={t.t(`AdminNewsletter.status`)}
+              ariaLabel={t.t(`AdminNewsletter.status`)}
               options={STATUS_CHIPS.map((chip) => ({ value: chip.value, label: t.t(chip.key) }))}
               value={filter.status === "any" ? null : filter.status}
               onChange={(value) =>
@@ -353,7 +353,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
             </span>
             <ToggleChips
               mode="single"
-              label={t.t(`AdminNewsletter.language`)}
+              ariaLabel={t.t(`AdminNewsletter.language`)}
               options={LANGUAGES.map((language) => ({
                 value: language,
                 label: languageName(language),
@@ -483,8 +483,8 @@ function subscriberColumns(
       header: t.t(`AdminNewsletter.status`),
       render: ({ status }) =>
         status === "confirmed"
-          ? <Badge text={t.t(`AdminNewsletter.confirmed`)} color="green" />
-          : <Badge text={t.t(`AdminNewsletter.pending`)} color="orange" type="outline" />,
+          ? <Badge text={t.t(`AdminNewsletter.confirmed`)} tone="success" />
+          : <Badge text={t.t(`AdminNewsletter.pending`)} tone="warning" variant="outline" />,
     },
     {
       id: "language",
@@ -592,7 +592,7 @@ function sendColumns(
       header: t.t(`AdminNewsletter.failed`),
       render: ({ failed }) =>
         failed !== null && failed > 0
-          ? <Badge text={format.number(failed)} color="red" />
+          ? <Badge text={format.number(failed)} tone="danger" />
           : count(failed),
     },
     {
@@ -600,10 +600,10 @@ function sendColumns(
       header: t.t(`AdminNewsletter.state`),
       render: ({ completedAt, failed }) =>
         completedAt
-          ? <Badge text={t.t(`AdminNewsletter.finished`)} color="green" type="outline" />
+          ? <Badge text={t.t(`AdminNewsletter.finished`)} tone="success" variant="outline" />
           : failed !== null && failed > 0
-          ? <Badge text={t.t(`AdminNewsletter.needsRerun`)} color="orange" />
-          : <Badge text={t.t(`AdminNewsletter.sendingState`)} color="blue" type="outline" />,
+          ? <Badge text={t.t(`AdminNewsletter.needsRerun`)} tone="warning" />
+          : <Badge text={t.t(`AdminNewsletter.sendingState`)} tone="info" variant="outline" />,
     },
   ]
 }
