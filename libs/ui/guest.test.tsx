@@ -168,6 +168,7 @@ describe("KeepScreen", () => {
       "keep-passkey",
       "keep-email",
       "keep-password",
+      "keep-password-toggle",
       "keep-email-submit",
     ])
     await click("[data-e2e=keep-github]")
@@ -180,6 +181,29 @@ describe("KeepScreen", () => {
       ["passkey"],
       ["email", "ada@example.com", "long enough"],
     ])
+  })
+
+  it("shows and hides the new password with its eye button, and still sends what was typed", async () => {
+    const { props, calls } = keepProps()
+    await mount(<KeepScreen {...props} />)
+    const input = find<HTMLInputElement>("[data-e2e=keep-password]")
+    const toggle = find("[data-e2e=keep-password-toggle]")
+    expect(input.type).toBe("password")
+    expect(document.querySelector(`label[for="${input.id}"]`)?.textContent).toContain("Password")
+    expect(toggle.getAttribute("type")).toBe("button")
+    expect(toggle.getAttribute("aria-label")).toBe("Show password")
+
+    await type("[data-e2e=keep-password]", "long enough")
+    await click("[data-e2e=keep-password-toggle]")
+    expect(find<HTMLInputElement>("[data-e2e=keep-password]").type).toBe("text")
+    expect(toggle.getAttribute("aria-pressed")).toBe("true")
+    expect(toggle.getAttribute("aria-label")).toBe("Hide password")
+
+    await click("[data-e2e=keep-password-toggle]")
+    expect(find<HTMLInputElement>("[data-e2e=keep-password]").type).toBe("password")
+    await type("[data-e2e=keep-email]", "ada@example.com")
+    await submit("[data-e2e=keep-email-submit]")
+    expect(calls).toEqual([["email", "ada@example.com", "long enough"]])
   })
 
   it("says which method kept the account and moves focus to that line", async () => {
