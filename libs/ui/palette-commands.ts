@@ -5,7 +5,11 @@
  *
  * @module
  */
-import type { CommandPaletteOption } from "@spy4x/preact-ui/command-palette"
+import {
+  type CommandPaletteOption,
+  type MatchableOption,
+  matchOptions,
+} from "@spy4x/preact-ui/command-palette"
 import { isolate } from "@spy4x/preact-ui/bdi"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { ThemePreference } from "@domain/identity"
@@ -67,14 +71,48 @@ export interface PageCommand {
   id: string
   /** What the palette lists, in the person's language. */
   label: string
-  /** Other words that find it, such as its English label. */
+  /** Other words that find it, which the shortcuts dialog lists. */
   aliases?: readonly string[]
+  /** Its English label: it finds the command in every language, but the dialog does not list it. */
+  englishWords?: readonly string[]
   /** Its keys from the app's shortcut list, when it has any. */
   kbd?: string
 }
 
+/**
+ * A palette command found by its English words too: they find it in every language, but the
+ * shortcuts dialog lists only `aliases`, so a reader of another language sees no English there.
+ */
+export interface EnglishWordsOption extends CommandPaletteOption {
+  /** The English label and detail, and other English words that find it in every language. */
+  englishWords?: readonly string[]
+}
+
+/**
+ * The palette's default filter (`matchOptions`) with each option's `englishWords` matched as
+ * aliases. It returns the given options themselves, so a row's getters stay read when drawn.
+ * `limit` defaults to `matchOptions`' own.
+ */
+export function matchCommands<T extends EnglishWordsOption>(
+  options: readonly T[],
+  query: string,
+  limit?: number,
+): T[] {
+  const original = new Map<MatchableOption, T>()
+  const matchable = options.map((option): MatchableOption => {
+    const words = {
+      label: option.label,
+      detail: option.detail,
+      aliases: [...option.aliases ?? [], ...option.englishWords ?? []],
+    }
+    original.set(words, option)
+    return words
+  })
+  return matchOptions(matchable, query, limit).map((words) => original.get(words)!)
+}
+
 /** One row of the palette, carrying what picking it does; a submenu's rows run themselves. */
-export interface PaletteOption extends CommandPaletteOption {
+export interface PaletteOption extends EnglishWordsOption {
   choice?: SearchChoice
   /** The keys of the app's shortcut that does the same, a sequence such as `g n` included. */
   shortcut?: string
@@ -280,25 +318,32 @@ export function paletteCommands(
     account: t.t(`Search.account`),
   }
   // A command is found by its label and detail in English too, so a person who types the English
-  // word ("password", "ZIP") finds it in every language. A detail given as text is shown as it is.
+  // word ("password", "ZIP") finds it in every language; the shortcuts dialog lists none of them.
+  // A detail given as text is shown as it is.
   const command = (
     id: string,
     key: string,
     group: string,
     choice: SearchChoice,
-    extra: { detail?: KeyedMessage | string; aliases?: readonly string[]; kbd?: string } = {},
+    extra: {
+      detail?: KeyedMessage | string
+      aliases?: readonly string[]
+      englishWords?: readonly string[]
+      kbd?: string
+    } = {},
   ): PaletteOption => ({
     id: `action-${id}`,
     label: t.t(key),
     detail: typeof extra.detail === `string`
       ? extra.detail
       : messageText(t, extra.detail ?? null) ?? undefined,
-    aliases: [
+    aliases: extra.aliases ?? [],
+    englishWords: [
       englishText(key),
       ...(extra.detail && typeof extra.detail !== `string`
         ? [englishText(extra.detail.key, extra.detail.values)]
         : []),
-      ...(extra.aliases ?? []),
+      ...(extra.englishWords ?? []),
     ],
     ...shortcutKeys(extra.kbd ?? kbdOf(shortcuts, key)),
     group,
@@ -314,6 +359,7 @@ export function paletteCommands(
     id: `command-${pageCommand.id}`,
     label: pageCommand.label,
     aliases: pageCommand.aliases,
+    englishWords: pageCommand.englishWords,
     ...shortcutKeys(pageCommand.kbd),
     group: heading.page,
     choice: { kind: "command", id: pageCommand.id },
@@ -352,10 +398,8 @@ export function paletteCommands(
     const href = entry.href(context)
     if (href === null) return []
     return [command(entry.id, entry.key, heading.goTo, page(href), {
-      aliases: [
-        ...(entry.open ? [t.t(entry.open), englishText(entry.open)] : []),
-        ...entry.aliases,
-      ],
+      aliases: [...(entry.open ? [t.t(entry.open)] : []), ...entry.aliases],
+      englishWords: entry.open ? [englishText(entry.open)] : [],
     })]
   })
   if (context.benchmark) {
@@ -507,7 +551,8 @@ export function themeCommand(
   current: () => ThemePreference,
   group: string,
   setTheme: (theme: ThemePreference) => void,
-): CommandPaletteOption {
+): EnglishWordsOption {
+  // Submenu rows: the palette's default filter finds them, and the shortcuts dialog lists none.
   const rows = THEMES.map((theme): CommandPaletteOption => ({
     id: `theme-${theme}`,
     label: themeName(t, theme),
@@ -522,8 +567,8 @@ export function themeCommand(
   return {
     id: `action-theme`,
     label: t.t(`Preferences.theme`),
+    englishWords: [englishText(`Preferences.theme`)],
     aliases: [
-      englishText(`Preferences.theme`),
       `dark`,
       `light`,
       `dark mode`,

@@ -2,11 +2,7 @@ import type { JSX } from "preact"
 import { createPortal } from "preact/compat"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { useFormat } from "@spy4x/preact-ui/format"
-import {
-  CommandPalette,
-  type CommandPaletteLabels,
-  matchOptions,
-} from "@spy4x/preact-ui/command-palette"
+import { CommandPalette, type CommandPaletteLabels } from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { searchEntries } from "@spy4x/platform/universal/text"
@@ -16,6 +12,7 @@ import { roleName } from "./groups-screen.tsx"
 import type { ShortcutRow } from "./shortcuts.tsx"
 import {
   groupRow,
+  matchCommands,
   type PageCommand,
   paletteCommands,
   type PaletteContext,
@@ -289,7 +286,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     // Groups and commands are ranked together, so the strongest match of either is highlighted
     // first; the palette lists each heading where its first row falls.
     const rows = [...groupRows, ...paletteCommands(context(t), select)]
-    const matched = matchOptions(rows, text, rows.length)
+    const matched = matchCommands(rows, text, rows.length)
     // Built from the query, so they list for any text; under Create, after the plain commands.
     const quickCreate = quickCreateRows(context(t), text)
     const hint = notesHint(

@@ -17,9 +17,20 @@ import {
 import { shortcutsMenuItems } from "./frame.tsx"
 import { paletteCommands } from "./palette-commands.ts"
 import { paletteContext } from "./search-palette.tsx"
-import { adminPaletteCommands } from "./admin-palette-commands.ts"
+import { adminPageCommand, adminPaletteCommands } from "./admin-palette-commands.ts"
 import { adminPaletteContext } from "./admin-palette.tsx"
 import { ADMIN_ENGLISH, ENGLISH } from "./i18n-testing.ts"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.ts"
+import appRu from "@i18n/app/ru.ts"
+import admin from "@i18n/admin/en.ts"
+import adminRu from "@i18n/admin/ru.ts"
+
+const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translation: appRu }] })
+const ADMIN_RU = createTranslator({
+  language: `ru`,
+  catalogs: [{ source: app, translation: appRu }, { source: admin, translation: adminRu }],
+})
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -225,6 +236,43 @@ describe("the Keyboard shortcuts dialog's palette commands", () => {
     ])
     expect(rows[0].dd).toBeNull()
     expect(rows[1].dd?.textContent).toBe(`Ctrl+Shift+P`)
+  })
+
+  it("lists none of a command's English words in Russian, in the product and the admin app", async () => {
+    const spa = paletteCommands(
+      paletteContext(RU, `ru`, {
+        groups: [],
+        currentGroup: { id: `0190a000-0000-7000-8000-000000000001`, name: `Home`, canWrite: true },
+        online: true,
+        shortcuts: ROWS,
+        pageCommands: [{ id: `delete`, label: `Удалить`, englishWords: [`Delete this note`] }],
+      }),
+      run,
+    )
+    const admin = adminPaletteCommands(
+      adminPaletteContext(ADMIN_RU, {
+        goTo: [{ id: `users`, key: `AdminNav.users`, href: `/users`, keys: `g u` }],
+        listFilter: true,
+        theme: `system`,
+        singleKeys: true,
+        page: [adminPageCommand(ADMIN_RU, `export`, `AdminUsers.export`, () => {})],
+      }),
+      () => {},
+    )
+    // Guards against a vacuous pass: the label and the detail of New note are English words.
+    expect(spa.find((command) => command.id === `action-new-note`)?.englishWords)
+      .toEqual([`New note`, `In Home`])
+    for (const commands of [spa, admin]) {
+      await mount(true, ROWS, true, commands)
+      const rows = commandList()
+      for (const [index, command] of commands.entries()) {
+        const words = rows[index].dt.querySelector("span")?.textContent?.split(`, `) ?? []
+        expect(command.englishWords?.length, command.id).toBeGreaterThan(0)
+        for (const word of command.englishWords ?? []) {
+          expect(words, command.id).not.toContain(word)
+        }
+      }
+    }
   })
 
   it("lists the admin palette's commands the same way", async () => {

@@ -64,7 +64,8 @@ export function commandRows(
   singleKeys: boolean,
 ): { description: string; detail: string; keys?: string; group: string }[] {
   return commands.map((command) => {
-    // The label, the palette's detail (each also an alias in English) and repeats are left out.
+    // The label, the palette's detail and repeats are left out; the English words that find a
+    // command in every language (`englishWords`) are not aliases, so none of them is listed.
     const seen = new Set(
       [command.label, command.detail ?? ``].map((text) => text.toLocaleLowerCase()),
     )

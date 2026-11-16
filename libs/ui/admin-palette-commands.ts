@@ -6,7 +6,6 @@
  *
  * @module
  */
-import type { CommandPaletteOption } from "@spy4x/preact-ui/command-palette"
 import { createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
 import { ADMIN_NO_FILTER, adminUserFilterQuery, type ThemePreference } from "@domain/identity"
 import { ADMIN_GROUP_NO_FILTER, adminGroupFilterQuery } from "@domain/groups"
@@ -15,6 +14,7 @@ import admin from "@i18n/admin/en.ts"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { ADMIN_GROUP_PATHS } from "./admin-groups-list.tsx"
 import {
+  type EnglishWordsOption,
   type PageCommand,
   SETTINGS_ALIASES,
   shortcutKeys,
@@ -42,7 +42,7 @@ export type AdminSearchChoice =
   | { kind: "sign-out" }
 
 /** One row of the admin palette, carrying what picking it does; a submenu's rows run themselves. */
-export interface AdminPaletteOption extends CommandPaletteOption {
+export interface AdminPaletteOption extends EnglishWordsOption {
   choice?: AdminSearchChoice
   /** The keys of the shortcut that does the same, a sequence such as `g u` included. */
   shortcut?: string
@@ -81,7 +81,7 @@ export function adminPageCommand(
   run: () => void,
   aliases: readonly string[] = [],
 ): AdminPageCommand {
-  return { id, label: t.t(key), aliases: [englishText(key), ...aliases], run }
+  return { id, label: t.t(key), aliases, englishWords: [englishText(key)], run }
 }
 
 /** What the registry reads of the admin app's state. */
@@ -167,7 +167,8 @@ export function adminPaletteCommands(
   ): AdminPaletteOption => ({
     id: `action-${id}`,
     label: t.t(key),
-    aliases: [englishText(key), ...(extra.aliases ?? [])],
+    aliases: extra.aliases ?? [],
+    englishWords: [englishText(key)],
     ...shortcutKeys(extra.keys),
     group,
     choice,
@@ -177,6 +178,7 @@ export function adminPaletteCommands(
     id: `command-${pageCommand.id}`,
     label: pageCommand.label,
     aliases: pageCommand.aliases,
+    englishWords: pageCommand.englishWords,
     ...shortcutKeys(pageCommand.kbd),
     group: heading.page,
     choice: { kind: "command", id: pageCommand.id },
@@ -192,7 +194,8 @@ export function adminPaletteCommands(
   const singleKeys: AdminPaletteOption = {
     id: `action-single-keys`,
     label: t.t(`Shortcuts.switchLabel`),
-    aliases: [englishText(`Shortcuts.switchLabel`), ...SINGLE_KEYS_ALIASES, ...SETTINGS_ALIASES],
+    aliases: [...SINGLE_KEYS_ALIASES, ...SETTINGS_ALIASES],
+    englishWords: [englishText(`Shortcuts.switchLabel`)],
     group: heading.settings,
     // Read when drawn: the palette keeps this row, highlighted, while it stays open after a pick.
     get state() {
