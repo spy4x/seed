@@ -18,9 +18,10 @@
 # ended, not only the ones it depends on. Steps that must run one after another in the shared
 # checkout are therefore commands of one step (`browser`), not a chain of steps.
 #
-# Deno 2.9.7 is the version ci.yml uses. Playwright 1.57.0 is the version `deno task e2e` runs
-# (deno.jsonc); the e2e image tag must match it, because the browser build inside the image is
-# tied to that version.
+# The four browser steps run in the CI image (infra/ci/playwright.dockerfile, published by
+# ci-image.yml): Playwright with Deno, unzip, nginx and Lighthouse CI already in it, so a step
+# downloads none of them. That Dockerfile holds their versions. A new image is pinned below by its
+# tag and digest (docs/woodpecker-ci-setup.md, "The CI image").
 #
 # YAML anchors do not cross files, so `markdown_only` and the two services are copies of
 # ci.yml's: ci.yml is the source.
@@ -97,7 +98,7 @@ steps:
     # Why not three steps: build and e2e-spa both build the SPA into apps/spa/dist; the run
     # scripts keep the API's vapid.json in the repository root while they run; and each starts a
     # worker on the one Valkey service, where a worker would take another stack's jobs.
-    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    image: antonshubin/template-ci:1@sha256:TODO-DIGEST
     when: *browser_when
     environment:
       DB_HOST: postgres
@@ -109,13 +110,6 @@ steps:
       KV_PORT: "6379"
       KV_PASSWORD: ci-throwaway
     commands:
-      # npm's newest `deno` package lags the binary, so take the pinned release itself.
-      - |
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
-          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip nginx
-          unzip -q -o /tmp/deno.zip -d /usr/local/bin
-          chmod +x /usr/local/bin/deno
       - deno --version
       - deno install --frozen
       - deno task build
@@ -163,7 +157,7 @@ steps:
     # the manifests, the lockfile and this file. The nightly run and a tag always run it. Woodpecker
     # applies `path` to pull requests and pushes only, and runs the step when the forge lists no
     # changed file.
-    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    image: antonshubin/template-ci:1@sha256:TODO-DIGEST
     when:
       - event: pull_request
         path: &lighthouse_paths
@@ -188,13 +182,6 @@ steps:
       - event: cron
       - event: tag
     commands:
-      # npm's newest `deno` package lags the binary, so take the pinned release itself.
-      - |
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
-          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip nginx
-          unzip -q -o /tmp/deno.zip -d /usr/local/bin
-          chmod +x /usr/local/bin/deno
       - deno --version
       - deno install --frozen
       - deno task mpa:build
@@ -219,7 +206,7 @@ steps:
     # too, because release.yml waits for this workflow. A pull request that changes only the Markdown
     # in `markdown_only` at the top skips it: the smoke set opens no guide. The nightly run skips
     # it, because its `e2e-full` runs every spec of the set.
-    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    image: antonshubin/template-ci:1@sha256:TODO-DIGEST
     when:
       - event: pull_request
         path:
@@ -239,13 +226,6 @@ steps:
       KV_PASSWORD: ci-throwaway
       E2E_SERVICES: environment
     commands:
-      # npm's newest `deno` package lags the binary, so take the pinned release itself.
-      - |
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
-          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
-          unzip -q -o /tmp/deno.zip -d /usr/local/bin
-          chmod +x /usr/local/bin/deno
       - deno --version
       # Chromium resolves *.localhost itself. The requests a spec makes outside the browser ask the
       # system resolver, which in this container does not know the name.
@@ -272,7 +252,7 @@ steps:
     # The specs that start the app with no network need the built SPA behind nginx; a step has no
     # container tool, so `E2E_BUILT=nginx` installs the build into this container's own nginx, as
     # e2e/spa/run.sh does.
-    image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
+    image: antonshubin/template-ci:1@sha256:TODO-DIGEST
     when:
       - event: cron
     environment:
@@ -295,15 +275,7 @@ steps:
       # in this file, is therefore 75 minutes (#751).
       E2E_LOCAL_TIMEOUT: "2100"
     commands:
-      # npm's newest `deno` package lags the binary, so take the pinned release itself.
-      - |
-          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
-          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
-          unzip -q -o /tmp/deno.zip -d /usr/local/bin
-          chmod +x /usr/local/bin/deno
       - deno --version
-      - apt-get install -y -qq --no-install-recommends nginx
       - echo "127.0.0.1 app.localhost" >> /etc/hosts
       # Stops after ten failed tests in a pass, for the same reason as in e2e-smoke.
       - deno task e2e:local --max-failures=10
