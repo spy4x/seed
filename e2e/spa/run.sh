@@ -142,7 +142,7 @@ deno task db:migrate
 if [ -f infra/configs/vapid.json ]; then
   cp infra/configs/vapid.json vapid.json
 else
-  deno task vapid-key:create >/dev/null && mv infra/configs/vapid.json vapid.json
+  deno run -W=vapid.json infra/scripts/vapid-keys-create.ts vapid.json >/dev/null
 fi
 
 API_HOST=127.0.0.1 API_PORT="$API_PORT" deno run --allow-all apps/api/+main.ts \
