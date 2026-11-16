@@ -37,7 +37,7 @@ const HOLD = 0.2
 const USUAL_APP = {
   file: new URL("./speed-usual-app.html", import.meta.url).pathname,
   origin: "http://usual-app.test",
-  wait: 900,
+  wait: 800,
 }
 
 /** One recorded clip: one concat list per window, laid side by side, and its length in seconds. */
@@ -273,7 +273,7 @@ async function speed(
           .waitFor()
     )
   await begin(windows)
-  await left.page.waitForTimeout(500)
+  await left.page.waitForTimeout(300)
   for (const [step, index] of [0, 1, 2].entries()) {
     await both(({ page, pointer }) =>
       clickLike(
@@ -283,7 +283,7 @@ async function speed(
       )
     )
     await settled(false)
-    await left.page.waitForTimeout(900)
+    await left.page.waitForTimeout(700)
     if (step === 2) break
     await both(({ page, pointer }) =>
       clickLike(
@@ -296,9 +296,9 @@ async function speed(
       )
     )
     await settled(true)
-    await left.page.waitForTimeout(300)
+    await left.page.waitForTimeout(200)
   }
-  await left.page.waitForTimeout(400)
+  await left.page.waitForTimeout(200)
   return await finish(windows, frames)
 }
 
