@@ -48,6 +48,14 @@
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
 }
 
+/* A heading a link or the search opens (`/pricing#costs-title`) lands below the header, which is
+   sticky from `lg` and 69 px tall there. */
+@media (width >= 64rem) {
+  main :is(h2, h3)[id] {
+    scroll-margin-top: --spacing(20);
+  }
+}
+
 /* Motion only for readers who did not ask for less of it. No smooth scrolling on the page: it
    keeps a control moving while Playwright scrolls it into view, so a click waits for it forever. */
 @media (prefers-reduced-motion: no-preference) {
