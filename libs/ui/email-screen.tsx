@@ -386,8 +386,8 @@ export function EmailState({ proven }: { proven: boolean }): JSX.Element {
     <span data-e2e="email-state">
       <Badge
         text={t.t(proven ? `EmailScreen.verified` : `EmailScreen.notVerified`)}
-        color={proven ? "green" : "orange"}
-        type="outline"
+        tone={proven ? "success" : "warning"}
+        variant="outline"
       />
     </span>
   )

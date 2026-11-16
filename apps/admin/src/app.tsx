@@ -18,7 +18,7 @@ import {
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
 import { NotFoundScreen } from "@ui/not-found-screen.tsx"
-import { PRODUCT_NAME } from "@ui/brand.ts"
+import { pageTitle } from "@ui/brand.ts"
 import {
   type AdminStore,
   type DemoAdminCredentials,
@@ -44,7 +44,13 @@ import {
   onListPage,
 } from "./shortcuts.ts"
 import { pageCommands } from "./page-commands.ts"
-import { type AdminSearchChoice, AdminSearchPalette } from "@ui/admin-palette.tsx"
+import {
+  adminPaletteContext,
+  type AdminSearchChoice,
+  AdminSearchPalette,
+  type AdminSearchPaletteProps,
+} from "@ui/admin-palette.tsx"
+import { adminPaletteCommands } from "@ui/admin-palette-commands.ts"
 import { guardNavigate } from "./leave.ts"
 import {
   type createSingleKeysSetting,
@@ -141,10 +147,10 @@ function Operator(
     module.routes.some((route) => matchRoute(parser, route.path, path)[0])
   )
   const title = !user || !hasAdminAccess(user)
-    ? `${tag} · ${PRODUCT_NAME}`
+    ? pageTitle(tag)
     : found
     ? adminPageTitle(navItems, path, tag)
-    : [t.t(`AdminNotFound.title`), tag, PRODUCT_NAME].join(" · ")
+    : pageTitle(t.t(`AdminNotFound.title`), tag)
   useRouteAnnouncer({ path, title })
   // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
   // far down the list would show with their header under the top bar. A tab change (`?tab=`) keeps
@@ -282,6 +288,14 @@ function Operator(
     )
   }
 
+  const palette: AdminSearchPaletteProps = {
+    goTo: adminGoTo(modules),
+    listFilter: onListPage(modules, path),
+    theme: theme.preference.value,
+    singleKeys: singleKeys.on.value,
+    page,
+    onSelect: pick,
+  }
   return (
     <FormatContext.Provider value={own.format.value}>
       <AdminShell
@@ -293,18 +307,13 @@ function Operator(
         language={language}
         onSignOut={store.signOut}
         navigate={leave}
-        search={
-          <AdminSearchPalette
-            goTo={adminGoTo(modules)}
-            listFilter={onListPage(modules, path)}
-            theme={theme.preference.value}
-            singleKeys={singleKeys.on.value}
-            page={page}
-            onSelect={pick}
-          />
-        }
+        search={<AdminSearchPalette {...palette} />}
         shortcuts={{
           rows: shortcutRows,
+          // The palette's own registry, built only while the dialog shows it.
+          commands: shortcutsOpen
+            ? adminPaletteCommands(adminPaletteContext(t, palette), pick)
+            : undefined,
           open: shortcutsOpen,
           onOpen: () => setShortcutsOpen(true),
           onClose: () => setShortcutsOpen(false),

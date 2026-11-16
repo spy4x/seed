@@ -376,7 +376,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
   const copyAction = json !== null && (
     <CopyButton
       textToCopy={json}
-      title={t.t(`Benchmark.copy`)}
+      text={t.t(`Benchmark.copy`)}
       variant="primary"
       copyLabel={t.t(`Benchmark.copy`)}
       copiedLabel={t.t(`Benchmark.resultsCopied`)}
@@ -430,7 +430,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
             <div class="mt-3 flex flex-col gap-2 sm:flex-row">
               <CopyButton
                 textToCopy={stoppedRun.json}
-                title={t.t(`Benchmark.copyThatRun`)}
+                text={t.t(`Benchmark.copyThatRun`)}
                 copyLabel={t.t(`Benchmark.copyThatRun`)}
                 copiedLabel={t.t(`Benchmark.resultsCopied`)}
                 failedLabel={t.t(`Benchmark.copyFailed`)}
@@ -462,7 +462,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
               <div>
                 <CopyButton
                   textToCopy={props.generatorCommand}
-                  title={t.t(`Benchmark.copyCommand`)}
+                  text={t.t(`Benchmark.copyCommand`)}
                   copyLabel={t.t(`Benchmark.copyCommand`)}
                   copiedLabel={t.t(`Benchmark.commandCopied`)}
                   failedLabel={t.t(`Benchmark.copyFailed`)}

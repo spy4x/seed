@@ -7,8 +7,19 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
-import { SHORTCUT_GROUPS, type ShortcutRow, ShortcutsList } from "./shortcuts.tsx"
+import {
+  commandRows,
+  type PaletteCommandRow,
+  SHORTCUT_GROUPS,
+  type ShortcutRow,
+  ShortcutsList,
+} from "./shortcuts.tsx"
 import { shortcutsMenuItems } from "./frame.tsx"
+import { paletteCommands } from "./palette-commands.ts"
+import { paletteContext } from "./search-palette.tsx"
+import { adminPaletteCommands } from "./admin-palette-commands.ts"
+import { adminPaletteContext } from "./admin-palette.tsx"
+import { ADMIN_ENGLISH, ENGLISH } from "./i18n-testing.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -50,7 +61,12 @@ const ROWS: ShortcutRow[] = [
 ]
 
 /** The dialog open over `rows`; returns the switch's reports. */
-async function mount(singleKeys: boolean, rows = ROWS, open = true): Promise<boolean[]> {
+async function mount(
+  singleKeys: boolean,
+  rows = ROWS,
+  open = true,
+  commands?: readonly PaletteCommandRow[],
+): Promise<boolean[]> {
   const toggled: boolean[] = []
   if (!root) {
     root = document.createElement("div")
@@ -60,6 +76,7 @@ async function mount(singleKeys: boolean, rows = ROWS, open = true): Promise<boo
     render(
       <ShortcutsList
         rows={rows}
+        commands={commands}
         open={open}
         onOpen={() => {}}
         onClose={() => {}}
@@ -117,6 +134,129 @@ describe("the Keyboard shortcuts dialog", () => {
       .toBe("Single-key shortcuts")
     await act(() => toggle.click())
     expect(toggled).toEqual([false])
+  })
+})
+
+/** The rows under the "Palette commands" heading, each as its `dt` and `dd`. */
+function commandList(): { dt: Element; dd: Element | null }[] {
+  const heading = [...document.querySelectorAll("dialog h3")].find((h) =>
+    h.textContent === "Palette commands"
+  )
+  const list = heading?.parentElement?.querySelector("dl")
+  if (!list) throw new Error(`no Palette commands group`)
+  return [...list.children].map((row) => ({
+    dt: row.querySelector("dt")!,
+    dd: row.querySelector("dd"),
+  }))
+}
+
+/** A product's own command, such as Financy's, with words in English and Russian. */
+const PRODUCT_COMMAND: PaletteCommandRow = {
+  label: `Record payment`,
+  aliases: [`Record payment`, `pay`, `add expense`, `оплата`, `pay`],
+  shortcut: `mod+shift+p`,
+}
+
+/** The SPA's palette registry, over the shortcut rows above. */
+const spaCommands = () =>
+  paletteCommands(
+    paletteContext(ENGLISH, `en`, {
+      groups: [],
+      currentGroup: { id: `0190a000-0000-7000-8000-000000000001`, name: `Home`, canWrite: true },
+      online: true,
+      shortcuts: ROWS,
+    }),
+    run,
+  )
+
+describe("the Keyboard shortcuts dialog's palette commands", () => {
+  it("lists every command of the palette once, with the other words that find it", async () => {
+    const commands = spaCommands()
+    await mount(true, ROWS, true, commands)
+    const rows = commandList()
+    expect(rows.map(({ dt }) => dt.firstChild?.textContent)).toEqual(
+      commands.map((command) => command.label),
+    )
+    for (const [index, command] of commands.entries()) {
+      const detail = rows[index].dt.querySelector("span")?.textContent ?? ``
+      for (const alias of command.aliases ?? []) {
+        const shown = [command.label, command.detail].map((text) => text?.toLocaleLowerCase())
+        if (shown.includes(alias.toLocaleLowerCase())) continue
+        expect(detail).toContain(alias)
+      }
+    }
+    const headings = [...document.querySelectorAll("dialog h3")].map((h) => h.textContent)
+    expect(headings.at(-1)).toBe("Palette commands")
+  })
+
+  it("reads a command's name before its other words, in the same term", async () => {
+    await mount(true, ROWS, true, [PRODUCT_COMMAND])
+    const [{ dt }] = commandList()
+    expect(dt.childNodes[0].nodeType).toBe(3)
+    expect(dt.childNodes[0].textContent).toBe(`Record payment`)
+    expect(dt.childNodes[1].textContent).toBe(`pay, add expense, оплата`)
+  })
+
+  it("shows a command's keys, and none for a command without them", async () => {
+    const commands = spaCommands()
+    await mount(true, ROWS, true, commands)
+    const rows = commandList()
+    const notes = commands.findIndex((command) => command.shortcut === `g n`)
+    expect(rows[notes].dd?.textContent).toBe(`G then N`)
+    const signOut = commands.findIndex((command) => command.id === `action-sign-out`)
+    expect(signOut).toBeGreaterThan(-1)
+    expect(rows[signOut].dd).toBeNull()
+  })
+
+  it("lists a product's own command with no code of its own", async () => {
+    await mount(true, ROWS, true, [PRODUCT_COMMAND])
+    const [{ dt, dd }] = commandList()
+    expect(dt.textContent).toBe(`Record paymentpay, add expense, оплата`)
+    expect(dd?.textContent).toBe(`Ctrl+Shift+P`)
+  })
+
+  it("keeps a single-key command listed, without its key, while single keys are off", async () => {
+    const single = { label: `Open inbox`, aliases: [`mail`], shortcut: `i` }
+    await mount(false, ROWS, true, [single, PRODUCT_COMMAND])
+    const rows = commandList()
+    expect(rows.map(({ dt }) => dt.firstChild?.textContent)).toEqual([
+      `Open inbox`,
+      `Record payment`,
+    ])
+    expect(rows[0].dd).toBeNull()
+    expect(rows[1].dd?.textContent).toBe(`Ctrl+Shift+P`)
+  })
+
+  it("lists the admin palette's commands the same way", async () => {
+    const commands = adminPaletteCommands(
+      adminPaletteContext(ADMIN_ENGLISH, {
+        goTo: [{ id: `users`, key: `AdminNav.users`, href: `/users`, keys: `g u` }],
+        listFilter: false,
+        theme: `system`,
+        singleKeys: true,
+      }),
+      () => {},
+    )
+    await mount(true, ROWS, true, commands)
+    const rows = commandList()
+    expect(rows.map(({ dt }) => dt.firstChild?.textContent)).toEqual(
+      commands.map((command) => command.label),
+    )
+    const users = commands.findIndex((command) => command.shortcut === `g u`)
+    expect(rows[users].dt.querySelector("span")?.textContent).toContain(`people`)
+    expect(rows[users].dd?.textContent).toBe(`G then U`)
+  })
+})
+
+describe("commandRows", () => {
+  it("drops an alias that repeats the label, the detail or another alias, whatever its case", () => {
+    const notes = {
+      label: `Notes`,
+      detail: `In Home`,
+      aliases: [`notes`, `in home`, `List`, `list`],
+    }
+    expect(commandRows([notes], `H`, true))
+      .toEqual([{ description: `Notes`, detail: `List`, keys: undefined, group: `H` }])
   })
 })
 

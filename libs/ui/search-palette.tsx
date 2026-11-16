@@ -18,6 +18,7 @@ import {
   groupRow,
   type PageCommand,
   paletteCommands,
+  type PaletteContext,
   type PaletteOption,
   pickedChoice,
   quickCreateRows,
@@ -109,6 +110,39 @@ export interface SearchPaletteProps {
    * query.
    */
   records?: readonly PaletteRecordSource[]
+}
+
+/**
+ * What the palette's registry ({@link paletteCommands}) reads, from the palette's props. The app
+ * builds the same list for the shortcuts dialog with it, so the two never disagree.
+ *
+ * @param t The app's translator.
+ * @param locale The region format's locale, for sizes in a detail.
+ * @param props The palette's props.
+ * @param live The latest props, read when a row is drawn (the theme); defaults to `props`.
+ */
+export function paletteContext(
+  t: Translator<string>,
+  locale: string,
+  props: Omit<SearchPaletteProps, "searchNotes" | "onSelect">,
+  live: () => Pick<SearchPaletteProps, "theme"> = () => props,
+): PaletteContext {
+  return {
+    t,
+    locale,
+    currentGroup: props.currentGroup,
+    online: props.online,
+    theme: () => live().theme ?? `system`,
+    shortcuts: props.shortcuts ?? [],
+    activityGroupId: props.activityGroupId ?? null,
+    pageCommands: props.pageCommands ?? [],
+    guest: props.guest ?? false,
+    benchmark: props.benchmark ?? false,
+    canInstall: props.canInstall ?? false,
+    twoFactor: props.twoFactor ?? false,
+    notes: props.notes ?? true,
+    files: props.files ?? true,
+  }
 }
 
 /** One record a product holds on the device, as the palette lists and matches it. */
@@ -276,26 +310,8 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   /** A pick made inside a submenu, with the palette still open. */
   const select = (choice: SearchChoice) => latest.current.onSelect(choice)
   /** What the registry reads, from the latest props. */
-  const context = (t: Translator<string>) => {
-    const props = latest.current
-    return {
-      t,
-      locale: region.current,
-      currentGroup: props.currentGroup,
-      online: props.online,
-      theme: () => latest.current.theme ?? `system`,
-      shortcuts: props.shortcuts ?? [],
-      activityGroupId: props.activityGroupId ?? null,
-      pageCommands: props.pageCommands ?? [],
-      guest: props.guest ?? false,
-      benchmark: props.benchmark ?? false,
-      canInstall: props.canInstall ?? false,
-      twoFactor: props.twoFactor ?? false,
-      notes: props.notes ?? true,
-      files: props.files ?? true,
-    }
-  }
-
+  const context = (t: Translator<string>) =>
+    paletteContext(t, region.current, latest.current, () => latest.current)
   return (
     <div ref={root} data-e2e="search-root">
       <CommandPalette<PaletteOption>

@@ -47,7 +47,7 @@ import {
   groupRoleLabel,
   planLabel,
 } from "./admin-groups-list.tsx"
-import { roleColor, roleLabel } from "./admin-users-screen.tsx"
+import { roleLabel, roleTone } from "./admin-users-screen.tsx"
 import { ActivitySentence } from "./group-activity-panel.tsx"
 import { GroupMark } from "./group-appearance.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -121,13 +121,13 @@ const BILLING_STATUS: Record<number, string> = {
 /** Each invitation state's word (a catalog key) and colour. */
 const INVITATION_STATES: Record<
   AdminInvitationState,
-  { key: string; color: "green" | "gray" | "orange" | "red" }
+  { key: string; color: "success" | "neutral" | "warning" | "danger" }
 > = {
-  pending: { key: `AdminGroup.pending`, color: `green` },
-  used: { key: `AdminGroup.used`, color: `gray` },
-  expired: { key: `AdminGroup.expired`, color: `gray` },
-  declined: { key: `AdminGroup.declined`, color: `orange` },
-  revoked: { key: `AdminGroup.revoked`, color: `red` },
+  pending: { key: `AdminGroup.pending`, color: `success` },
+  used: { key: `AdminGroup.used`, color: `neutral` },
+  expired: { key: `AdminGroup.expired`, color: `neutral` },
+  declined: { key: `AdminGroup.declined`, color: `warning` },
+  revoked: { key: `AdminGroup.revoked`, color: `danger` },
 }
 
 /** A user value inside a sentence: isolated for right-to-left text and never machine-translated. */
@@ -310,21 +310,21 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         <div class="flex flex-wrap items-center gap-2">
           <span data-e2e="admin-group-status">
             {deleted
-              ? <Badge text={t.t(`AdminGroup.inTrash`)} color="red" />
-              : <Badge text={t.t(`AdminGroup.active`)} color="green" />}
+              ? <Badge text={t.t(`AdminGroup.inTrash`)} tone="danger" />
+              : <Badge text={t.t(`AdminGroup.active`)} tone="success" />}
           </span>
           <Badge
             text={t.t(`AdminGroup.planBadge`, { plan: planLabel(t, group.planId) })}
-            color={group.planId === `free` ? `gray` : `purple`}
-            type="outline"
+            tone={group.planId === `free` ? `neutral` : `primary`}
+            variant="outline"
           />
           {detail.billing && (
             <Badge
               text={t.t(`AdminGroup.subscription`, {
                 status: t.t(BILLING_STATUS[detail.billing.status] ?? `AdminGroup.statusUnknown`),
               })}
-              color={detail.billing.status === BillingStatus.PastDue ? `orange` : `gray`}
-              type="outline"
+              tone={detail.billing.status === BillingStatus.PastDue ? `warning` : `neutral`}
+              variant="outline"
             />
           )}
         </div>
@@ -558,15 +558,15 @@ function Members(
             <Cluster gap="sm">
               <Badge
                 text={groupRoleLabel(t, member.role)}
-                color={member.role === GroupRole.OWNER ? `purple` : `gray`}
-                type="outline"
+                tone={member.role === GroupRole.OWNER ? `primary` : `neutral`}
+                variant="outline"
               />
               {member.userRole > 1 && (
-                <Badge text={roleLabel(t, member.userRole)} color={roleColor(member.userRole)} />
+                <Badge text={roleLabel(t, member.userRole)} tone={roleTone(member.userRole)} />
               )}
-              {member.blocked && <Badge text={t.t(`AdminGroup.blocked`)} color="red" />}
+              {member.blocked && <Badge text={t.t(`AdminGroup.blocked`)} tone="danger" />}
               {member.id === operator.id && (
-                <Badge text={t.t(`AdminGroup.you`)} color="gray" type="outline" />
+                <Badge text={t.t(`AdminGroup.you`)} tone="neutral" variant="outline" />
               )}
             </Cluster>
             <span class="text-xs text-muted">
@@ -639,9 +639,9 @@ function Invitations(
               </span>
             </div>
             <Cluster gap="sm">
-              <Badge text={groupRoleLabel(t, invitation.role)} color="gray" type="outline" />
+              <Badge text={groupRoleLabel(t, invitation.role)} tone="neutral" variant="outline" />
               <span data-e2e="admin-group-invitation-state">
-                <Badge text={t.t(state.key)} color={state.color} />
+                <Badge text={t.t(state.key)} tone={state.color} />
               </span>
             </Cluster>
             {invitation.state === `pending` && (

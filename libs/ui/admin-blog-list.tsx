@@ -1,7 +1,7 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconPencilSquare, IconPlus } from "@spy4x/preact-icons"
-import { Badge, type BadgeColor, type BadgeType } from "@spy4x/preact-ui/badge"
+import { Badge, type BadgeTone, type BadgeVariant } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
@@ -54,18 +54,18 @@ const NEEDS_SHARING = `sharing`
 /** Each status's badge (its word as a catalog key), the same in the list and in the editor's header. */
 const BLOG_STATUS_BADGES: Record<
   BlogPostStatus,
-  { key: string; color: BadgeColor; type: BadgeType }
+  { key: string; color: BadgeTone; type: BadgeVariant }
 > = {
-  draft: { key: `AdminBlog.draft`, color: `gray`, type: `filled` },
-  scheduled: { key: `AdminBlog.scheduled`, color: `blue`, type: `outline` },
-  published: { key: `AdminBlog.published`, color: `green`, type: `filled` },
+  draft: { key: `AdminBlog.draft`, color: `neutral`, type: `filled` },
+  scheduled: { key: `AdminBlog.scheduled`, color: `info`, type: `outline` },
+  published: { key: `AdminBlog.published`, color: `success`, type: `filled` },
 }
 
 /** A post's status as its badge. */
 export function BlogStatusBadge({ status }: { status: BlogPostStatus }): JSX.Element {
   const t = useAdminText()
   const badge = BLOG_STATUS_BADGES[status]
-  return <Badge text={t.t(badge.key)} color={badge.color} type={badge.type} />
+  return <Badge text={t.t(badge.key)} tone={badge.color} variant={badge.type} />
 }
 
 /** Each chip: its word alone, and with the count once the list has loaded. */
@@ -205,7 +205,7 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
               >
                 <ToggleChips
                   mode="single"
-                  label={t.t(`AdminBlog.status`)}
+                  ariaLabel={t.t(`AdminBlog.status`)}
                   class="flex-nowrap sm:flex-wrap"
                   options={[
                     ...STATUS_CHIPS.map((chip) => ({

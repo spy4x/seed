@@ -10,6 +10,7 @@ import {
   type StringRouteParams,
   Switch,
   useLocation,
+  useRouter,
   useSearch,
 } from "wouter-preact"
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
@@ -23,6 +24,7 @@ import { tagsStore } from "./state/tags.ts"
 import { selectionStore } from "./state/selection.ts"
 import { benchmarkOpen } from "./state/demo.ts"
 import { useAppText } from "@ui/i18n.ts"
+import { useSiteText } from "@ui/site-text.ts"
 import { profileStore } from "./state/profile.ts"
 import { membersStore } from "./state/members.ts"
 import { importsStore } from "./state/imports.ts"
@@ -75,6 +77,7 @@ import { signInRedirect } from "./views/sign-in-gate.ts"
 import {
   announcedPage,
   isProfilePath,
+  spaPageTitle,
   type SpaRoutePath,
   spaRoutePaths,
 } from "./views/spa-paths.ts"
@@ -227,8 +230,8 @@ function Frame() {
   // A route change swaps the page without a load: the hook moves focus to the `<h1>` the new page
   // shows first, as a load would put the reader at its top. The note page moves focus on to the
   // note's heading when it replaces the loading one (`NoteEditorView`). Focus still ends on the
-  // document body when signing out swaps the shell. The app has no page titles yet, so the tab's
-  // title stays.
+  // document body when signing out swaps the shell. The hook also names the page in the tab
+  // (`Notes · Seed`, from `spaPageTitle`).
   const [path] = useLocation()
   // A load of the home page (every sign-in without a `next`) is replaced by the page it opens
   // (`HomeView`). That page is still the load, so the announcer starts afresh there, once, and
@@ -258,12 +261,19 @@ function Frame() {
 }
 
 /**
- * Announces each route change ({@link useRouteAnnouncer}). Moving between the profile's sections,
- * the settings layout moves focus to the new section's heading itself; the announcer leaves it
- * there.
+ * Announces each route change ({@link useRouteAnnouncer}) and names the page in the tab, in the
+ * page's language. Moving between the profile's sections, the settings layout moves focus to the
+ * new section's heading itself; the announcer leaves it there.
  */
 function RouteAnnouncer({ path }: { path: string }) {
-  useRouteAnnouncer({ path: announcedPage(path), keepPageFocus: isProfilePath(path) })
+  // The newsletter's pages are named from the website's catalog, which the app does not load.
+  const t = useSiteText()
+  const { parser } = useRouter()
+  useRouteAnnouncer({
+    path: announcedPage(path),
+    title: spaPageTitle(t, path, notesOn(), parser),
+    keepPageFocus: isProfilePath(path),
+  })
   return null
 }
 

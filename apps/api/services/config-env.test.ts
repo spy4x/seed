@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
 import { createEnvReader } from "@spy4x/server/config"
-import { isSpaOn, readApiEnv } from "./config-env.ts"
+import { isSpaOn, readApiEnv, vapidKeysPath } from "./config-env.ts"
 
 const REQUIRED_ENV: Record<string, string> = {
   ENV: "dev",
@@ -159,4 +159,12 @@ Deno.test("SIGN_UP takes open and invite, and unset or empty leaves it unset", (
   expect(readApiEnv(createEnvReader({ ...env, SIGN_UP: `open` })).SIGN_UP).toBe(`open`)
   expect(readApiEnv(createEnvReader({ ...env, SIGN_UP: `` })).SIGN_UP).toBe(undefined)
   expect(readApiEnv(createEnvReader(env)).SIGN_UP).toBe(undefined)
+})
+
+Deno.test("the API reads web push keys from ./vapid.json unless VAPID_KEYS_PATH names a file", () => {
+  const env = (extra: Record<string, string>) =>
+    readApiEnv(createEnvReader({ ...REQUIRED_ENV, KV_PASSWORD: `test-only`, ...extra }))
+  expect(vapidKeysPath(env({}))).toBe(`./vapid.json`)
+  expect(vapidKeysPath(env({ VAPID_KEYS_PATH: `` }))).toBe(`./vapid.json`)
+  expect(vapidKeysPath(env({ VAPID_KEYS_PATH: `/tmp/run/vapid.json` }))).toBe(`/tmp/run/vapid.json`)
 })

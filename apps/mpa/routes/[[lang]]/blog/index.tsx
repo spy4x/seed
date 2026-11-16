@@ -160,7 +160,7 @@ function TopicLinks(
                 // topic is.
                 aria-current={here ? "page" : "false"}
                 class={badgeClasses(
-                  here ? "purple" : "gray",
+                  here ? "primary" : "neutral",
                   here ? "filled" : "outline",
                   `normal-case gap-1 min-h-11 sm:min-h-8 px-3 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-focus focus-visible:outline-hidden ${
                     here ? "" : "bg-surface text-foreground border-subtle hover:bg-hover"

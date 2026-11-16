@@ -238,8 +238,8 @@ export function AdminPersonNotificationsPanel(
               </span>
               <span class="ms-auto">
                 {notification.readAt
-                  ? <Badge text={t.t(`AdminPersonTabs.read`)} color="gray" type="outline" />
-                  : <Badge text={t.t(`AdminPersonTabs.unread`)} color="blue" />}
+                  ? <Badge text={t.t(`AdminPersonTabs.read`)} tone="neutral" variant="outline" />
+                  : <Badge text={t.t(`AdminPersonTabs.unread`)} tone="info" />}
               </span>
             </li>
           ))}

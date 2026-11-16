@@ -1,0 +1,69 @@
+# Publishes the image of the browser steps (infra/ci/playwright.dockerfile) to Docker Hub when a
+# `ci-image-<n>` tag is pushed: tag `ci-image-1` publishes `$IMAGE_PREFIX-ci:1`. No other workflow
+# runs on such a tag. A product copied from the template changes `IMAGE_PREFIX` below and the
+# secrets in Woodpecker, nothing else. How to publish one: docs/woodpecker-ci-setup.md, "The CI
+# image".
+#
+# The same shape as release.yml, whose top explains it: the repository is untrusted, so no step
+# mounts a volume or runs privileged; kaniko builds the image with no secret, because it runs the
+# Dockerfile's RUN lines; crane, which runs no repository code, is the only step that receives
+# DOCKERHUB_USERNAME and DOCKERHUB_TOKEN (the Woodpecker server's global secrets, enabled for the
+# tag event). The image is never tagged `latest`: ci-browser.yml pins it by digest. Every runtime
+# variable is written `$$`, so Woodpecker leaves it for the shell.
+
+when:
+  - event: tag
+    ref: refs/tags/ci-image-*
+
+variables:
+  # The image is named `<IMAGE_PREFIX>-ci`, as release.yml names its images.
+  # Seed's own site: see docs/start-a-product.md
+  - &image_env
+    IMAGE_PREFIX: antonshubin/template
+
+steps:
+  guard:
+    # Stops a mistaken publish: a tag pushed on a commit that is not on main fails here. It is not
+    # a security boundary (release.yml's guard says why). The clone is shallow, so main is fetched
+    # explicitly.
+    image: alpine/git:2.52.0@sha256:4a0e72d49596a1f5d3701aeedafdadc5c0da4062be4657c7bdc4017387f591cc
+    commands:
+      - git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+      - |
+          if ! git merge-base --is-ancestor "$${CI_COMMIT_SHA}" refs/remotes/origin/main; then
+            echo "Refusing to publish $${CI_COMMIT_TAG}: commit $${CI_COMMIT_SHA} is not on main." >&2
+            exit 1
+          fi
+          echo "$${CI_COMMIT_TAG} ($${CI_COMMIT_SHA}) is on main."
+
+  build:
+    # The kaniko executor from woodpeckerci/plugin-kaniko, run as plain commands. No secret.
+    image: woodpeckerci/plugin-kaniko:2.3.3@sha256:d6ecc0f37561503eeacd8f2189068c5a13c531f5629cf2ce2de0ac144824c9f4
+    depends_on: [guard]
+    environment:
+      <<: *image_env
+    commands:
+      - executor --context "$$PWD" --dockerfile infra/ci/playwright.dockerfile
+        --destination "$$IMAGE_PREFIX-ci:$${CI_COMMIT_TAG#ci-image-}"
+        --no-push --tar-path "$$PWD/ci.tar"
+
+  publish:
+    # crane v0.22.1, as in release.yml: its `debug` build, pinned by digest, because the release
+    # builds have no shell. Its shell is /busybox/sh and it has no /bin/sh.
+    image: gcr.io/go-containerregistry/crane:debug@sha256:e78770b31258a3846f878036d9c1f63fbe4c871f9f56990bf77fd95c013e3c1b
+    entrypoint: ["/busybox/sh", "-c", "echo $$CI_SCRIPT | /busybox/base64 -d | /busybox/sh -e"]
+    depends_on: [build]
+    environment:
+      <<: *image_env
+      DOCKERHUB_USERNAME:
+        from_secret: DOCKERHUB_USERNAME
+      DOCKERHUB_TOKEN:
+        from_secret: DOCKERHUB_TOKEN
+    commands:
+      - |
+          set -eu
+          # The login stays in this container, outside the workspace.
+          export DOCKER_CONFIG=/tmp/docker
+          printf '%s' "$$DOCKERHUB_TOKEN" |
+            crane auth login index.docker.io -u "$$DOCKERHUB_USERNAME" --password-stdin
+          crane push ci.tar "$$IMAGE_PREFIX-ci:$${CI_COMMIT_TAG#ci-image-}"

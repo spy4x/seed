@@ -31,11 +31,11 @@ import type { Navigate } from "./progressive.tsx"
  */
 const HEALTH: Record<
   AdminHealth,
-  { name: string; key: string; color: "green" | "orange" | "red" }
+  { name: string; key: string; color: "success" | "warning" | "danger" }
 > = {
-  [AdminHealth.OK]: { name: "ok", key: `AdminSystem.ok`, color: "green" },
-  [AdminHealth.WARNING]: { name: "warning", key: `AdminSystem.warning`, color: "orange" },
-  [AdminHealth.ERROR]: { name: "error", key: `AdminSystem.error`, color: "red" },
+  [AdminHealth.OK]: { name: "ok", key: `AdminSystem.ok`, color: "success" },
+  [AdminHealth.WARNING]: { name: "warning", key: `AdminSystem.warning`, color: "warning" },
+  [AdminHealth.ERROR]: { name: "error", key: `AdminSystem.error`, color: "danger" },
 }
 
 /** The banner above the cards: the worst state of the stack in one sentence. */
@@ -53,7 +53,7 @@ export function HealthBadge(
   const { name, key, color } = HEALTH[health] ?? HEALTH[AdminHealth.ERROR]
   return (
     <span data-e2e={dataE2E} data-health={name}>
-      <Badge text={t.t(key)} color={color} />
+      <Badge text={t.t(key)} tone={color} />
     </span>
   )
 }
