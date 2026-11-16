@@ -73,7 +73,8 @@ The account is shared, so the API keeps visitors from taking it over or reaching
   (`apps/api/middlewares/admin-host.ts`) answers 401 and `DEMO_ADMIN_ELSEWHERE` to its session on
   every other host. Nobody can change its password, address or second factor, or delete it.
 - A wrong password never locks it, so one visitor cannot lock the others out. The sign-in's
-  limit per network address still holds.
+  limit per network address still holds: its sign-in never sets or honours a device cookie
+  ([several-projects.md](several-projects.md#what-the-projects-share)).
 - `apps/api/routes/admin/demo-guard.ts` refuses it the actions that outlive the nightly wipe or
   reach real people or services, with 403 and `DEMO_REFUSED`: the blog (posts, sharing channels
   and shares) and contact links (seedsaas.com's own content, which the wipe keeps), the catalog

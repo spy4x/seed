@@ -21,6 +21,10 @@ import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn, type SignIn } from "../../apps/api/services/sign-in.ts"
 import { createGuestRoute } from "../../apps/api/routes/auth-guest.ts"
 import { createAuthRoute } from "../../apps/api/routes/auth.ts"
+import {
+  createPasswordFingerprint,
+  createSignInDevice,
+} from "../../apps/api/services/sign-in-device.ts"
 import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards.ts"
 import {
   type AuthRateLimits,
@@ -91,6 +95,7 @@ const openLimits: AuthRateLimits = {
   signInCode: allowed,
   emailChangeByUser: allowed,
   emailChangeByAddress: allowed,
+  deviceSignIn: allowed,
 }
 const openLockout = {
   begin: () => Promise.resolve(0),
@@ -173,6 +178,11 @@ async function withFixture(
         rateLimits,
         totpFailures: openLockout,
         passwordFailures: openLockout,
+        signInDevice: createSignInDevice({
+          cookieSecret: COOKIE_SECRET,
+          secureCookie: false,
+          passwordFingerprint: createPasswordFingerprint(sql),
+        }),
         emailCodeFailures: openLockout,
         requestEmailCode: () => Promise.resolve(),
       }),

@@ -12,6 +12,10 @@ import {
 } from "../../apps/api/services/password-failures.ts"
 import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards.ts"
 import { createAuthRoute } from "../../apps/api/routes/auth.ts"
+import {
+  createPasswordFingerprint,
+  createSignInDevice,
+} from "../../apps/api/services/sign-in-device.ts"
 import type { AuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
@@ -84,6 +88,7 @@ const openAuthLimits: AuthRateLimits = {
   signInCode: notCalled,
   emailChangeByUser: notCalled,
   emailChangeByAddress: notCalled,
+  deviceSignIn: notCalled,
 }
 const openLockout = {
   begin: () => Promise.resolve(0),
@@ -122,6 +127,11 @@ async function buildApp(sql: postgres.Sql) {
       rateLimits: openAuthLimits,
       totpFailures: openLockout,
       passwordFailures: createPasswordFailures({ sql, clock }),
+      signInDevice: createSignInDevice({
+        cookieSecret: COOKIE_SECRET,
+        secureCookie: false,
+        passwordFingerprint: createPasswordFingerprint(sql),
+      }),
       emailCodeFailures: openLockout,
       requestEmailCode: () => Promise.resolve(),
     }),

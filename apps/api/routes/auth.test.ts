@@ -34,6 +34,7 @@ import {
   memoryStore,
   send,
   sessionRoutes,
+  testSignInDevice,
   withEmail,
 } from "../_testing/auth-routes.ts"
 
@@ -264,6 +265,7 @@ describe("auth routes rate-limit", () => {
         rateLimits: createAuthRateLimits(tightLimits),
         totpFailures: fakeTotpFailures([]),
         passwordFailures: fakeTotpFailures([]),
+        signInDevice: testSignInDevice,
         emailCodeFailures: fakeTotpFailures([]),
         requestEmailCode: () => Promise.resolve(),
       }),
@@ -742,5 +744,126 @@ describe("auth routes on the public demo (docs/demo.md)", () => {
     const other = buildApp(null, { demo: { adminHost: `admin.example.com` } })
     expect((await checkPassword(other.app, credentials)).status).toBe(200)
     expect(other.passwordFailureCalls).toEqual([`begin`, `refund`])
+  })
+
+  it("keeps the public admin account on the address's budget, with no device cookie set or honoured", async () => {
+    const oneAddress = {
+      ...sameOriginWithoutCookieHeaders,
+      "content-type": "application/json",
+      "x-real-ip": "192.0.2.1",
+    }
+    // A device cookie the same login earned while the demo was off.
+    const earned = await checkPassword(buildApp(null).app, demoLogin)
+    const cookie = earned.headers.getSetCookie().find((line) => line.startsWith(`sign_in_device=`))
+    if (!cookie) throw new Error(`the sign-in set no device cookie`)
+    let deviceChecks = 0
+    const limits = createAuthRateLimits({ ...deviceLimits, strictLimit: 2 })
+    const { app, passwordFailureCalls } = buildApp(null, {
+      demo: { adminHost: HERE },
+      rateLimits: {
+        ...limits,
+        deviceSignIn: (loginKey) => (deviceChecks++, limits.deviceSignIn(loginKey)),
+      },
+    })
+
+    const answers = []
+    for (let attempt = 0; attempt < 3; attempt++) {
+      answers.push(
+        await app.request(`${API_URL}/auth/password/check`, {
+          method: "POST",
+          headers: { ...oneAddress, cookie: cookie.split(`;`)[0] },
+          body: JSON.stringify(demoLogin),
+        }),
+      )
+    }
+
+    expect(answers.map((answer) => answer.status)).toEqual([200, 200, 429])
+    expect(answers.some((answer) => answer.headers.getSetCookie().length > 0)).toBe(false)
+    expect(deviceChecks).toBe(0)
+    expect(passwordFailureCalls).toEqual([])
+  })
+})
+
+/** Strict limits for the device cookie's budgets: three sign-ins per address and window. */
+const deviceLimits = {
+  windowMs: 60_000,
+  strictLimit: 3,
+  limit: 1_000,
+  otpWindowMs: 900_000,
+  otpLimit: 1_000,
+  store: memoryStore,
+  onStoreError: () => {},
+}
+
+describe("password/check budgets around the device cookie (#1071)", () => {
+  const signInRoute = anonymousRoutes.find((route) => route.path === "/auth/password/check")!
+  const oneAddress = { ...sameOriginWithoutCookieHeaders, "x-real-ip": "192.0.2.1" }
+
+  /** The device cookie a right password earns, as the browser sends it back. */
+  async function deviceCookie(): Promise<string> {
+    const { app } = buildApp(null)
+    const response = await send(app, signInRoute, oneAddress)
+    expect(response.status).toBe(200)
+    const cookie = response.headers.getSetCookie().find((line) =>
+      line.startsWith(`sign_in_device=`)
+    )
+    if (!cookie) throw new Error(`the sign-in set no device cookie`)
+    return cookie.split(`;`)[0]
+  }
+
+  it("spends the address's strict budget on bodies it cannot read or validate", async () => {
+    const { app, calls } = buildApp(null, {
+      rateLimits: createAuthRateLimits(deviceLimits),
+      succeed: false,
+    })
+    const unreadable = await app.request(`${API_URL}/auth/password/check`, {
+      method: "POST",
+      headers: oneAddress,
+      body: MALFORMED_JSON,
+    })
+    const invalid = await send(app, { ...signInRoute, body: { login: 1 } }, oneAddress)
+    const tooLarge = await app.request(`${API_URL}/auth/password/check`, {
+      method: "POST",
+      headers: oneAddress,
+      body: oversizedJson(credentials),
+    })
+    const valid = await send(app, signInRoute, oneAddress)
+
+    expect([unreadable.status, invalid.status, tooLarge.status, valid.status])
+      .toEqual([400, 400, 413, 429])
+    expect(calls).toEqual([])
+  })
+
+  it("sets the device cookie when the right password still owes a second factor", async () => {
+    const { app } = buildApp(null, { secondFactor: SecondFactorStatus.Pending })
+
+    const response = await send(app, signInRoute, oneAddress)
+
+    expect(response.status).toBe(202)
+    expect(response.headers.getSetCookie().some((line) => line.startsWith(`sign_in_device=`)))
+      .toBe(true)
+  })
+
+  it("sets no device cookie after a wrong password", async () => {
+    const { app } = buildApp(null, { succeed: false })
+
+    const response = await send(app, signInRoute, oneAddress)
+
+    expect(response.status).toBe(401)
+    expect(response.headers.getSetCookie().some((line) => line.startsWith(`sign_in_device=`)))
+      .toBe(false)
+  })
+
+  it("refuses a sign-in with a device cookie without checking the password while the device budget's store is down", async () => {
+    const cookie = await deviceCookie()
+    const { app, calls, passwordFailureCalls } = buildApp(null, {
+      rateLimits: createAuthRateLimits({ ...deviceLimits, store: brokenStore }),
+    })
+
+    const response = await send(app, signInRoute, { ...oneAddress, cookie })
+
+    expect(response.status).toBe(500)
+    expect(calls).toEqual([])
+    expect(passwordFailureCalls).toEqual([])
   })
 })

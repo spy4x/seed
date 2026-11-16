@@ -32,6 +32,10 @@ import {
 } from "../../apps/api/features/notes/handlers.ts"
 import { createApiTokensRoute } from "../../apps/api/routes/api-tokens.ts"
 import { createAuthRoute } from "../../apps/api/routes/auth.ts"
+import {
+  createPasswordFingerprint,
+  createSignInDevice,
+} from "../../apps/api/services/sign-in-device.ts"
 import type { AuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits.ts"
 import {
   createTokenRateLimits,
@@ -105,6 +109,7 @@ const openAuthLimits: AuthRateLimits = {
   signInCode: notCalled,
   emailChangeByUser: notCalled,
   emailChangeByAddress: notCalled,
+  deviceSignIn: () => Promise.resolve({ allowed: true, remaining: 1, retryAfterMs: 0 } as never),
 }
 const openLockout = {
   begin: () => Promise.resolve(0),
@@ -211,6 +216,11 @@ async function buildApp(sql: postgres.Sql, { countPasswords = true } = {}) {
       rateLimits: openAuthLimits,
       totpFailures: openLockout,
       passwordFailures: openLockout,
+      signInDevice: createSignInDevice({
+        cookieSecret: COOKIE_SECRET,
+        secureCookie: false,
+        passwordFingerprint: createPasswordFingerprint(sql),
+      }),
       emailCodeFailures: openLockout,
       requestEmailCode: () => Promise.resolve(),
     }),

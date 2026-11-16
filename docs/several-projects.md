@@ -44,6 +44,19 @@ refuses such a request when it names a client address (`X-Real-IP` and the like)
 the project's own website may name one. So a neighbour cannot pose as many visitors to dodge the
 sign-in limits, but it can still call the API as one.
 
+Behind a tunnel or proxy that passes no client address on, every request reaches the API from the
+same address, so the per-address limits are one budget for every visitor. The password sign-in
+keeps the owner out of that budget, and out of the lock on their name that strangers' wrong
+passwords set off: a right password leaves a signed device cookie for that login, and the browser's
+later sign-ins to it spend a budget of their own, 10 attempts in 15 minutes per login, shared by
+its devices so that minting more cookies buys no more attempts
+([#1071](https://github.com/spy4x/seed/issues/1071), `apps/api/services/sign-in-device.ts`). The
+cookie works only with the password it was earned with: a password reset or change ends every older
+cookie of that login. Each device also has its own lock, with the policy of the lock per name, so a
+stolen cookie gets no more guesses than a name does. A browser without a working cookie, after 180
+days, after a new password or in a new browser, signs in as any visitor does. So do the sign-in
+codes, passkeys and the public demo's admin account, which never get a device cookie.
+
 Share a server only between projects you trust alike.
 
 On that network, address your own services by container name (`<PROJECT>-api`, `<PROJECT>-db`).
