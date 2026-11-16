@@ -48,7 +48,7 @@ export function FeatureLoop(
   return (
     <div data-no-zoom data-e2e={`loop-${loop}`}>
       {loop === `speed` && (
-        <p class="mb-2 grid grid-cols-2 gap-4 text-sm font-medium text-muted" dir="ltr">
+        <p class="mb-2 grid grid-cols-2 text-sm font-medium text-muted" dir="ltr">
           <span>{t.t(`Loops.speedUsualLabel`)}</span>
           <span class="text-primary">{t.t(`Loops.speedSeedLabel`)}</span>
         </p>

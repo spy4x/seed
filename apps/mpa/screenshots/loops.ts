@@ -242,7 +242,7 @@ async function speed(
   frames: string,
 ): Promise<Take> {
   const half = LOOP_SIZE.width / 2
-  const start = { x: 300, y: 420 }
+  const start = { x: 300, y: 250 }
   const left = await openWindow(browser, contexts, seeded, half, frames, start)
   const right = await openWindow(browser, contexts, seeded, half, frames, start)
   const rightItems = right.page.locator("[data-e2e=note-item-title]")
