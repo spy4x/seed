@@ -116,6 +116,8 @@ test.describe("keyboard shortcuts", () => {
             dialog.getAnimations({ subtree: true }).map((animation) => animation.finished),
           )
         )
+        // The palette's commands make the list longer than a phone's screen: bring the switch in.
+        await toggle.scrollIntoViewIfNeeded()
         const before = await toggle.boundingBox()
         await toggle.click()
         await expect(toggle).toHaveAttribute("aria-checked", "false")
