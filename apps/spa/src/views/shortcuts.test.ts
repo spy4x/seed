@@ -83,18 +83,20 @@ describe("SPA keyboard shortcuts", () => {
 const RU = createTranslator({ language: `ru`, catalogs: [{ source: app, translation: appRu }] })
 
 describe("the open page's commands in the search palette", () => {
-  it("label the overview's commands in the person's language and keep their English as aliases", () => {
+  it("label the overview's commands in the person's language and keep their English as English words", () => {
     expect(pageCommands(RU, { overview: true, benchmark: false, noteEditor: null }, [])).toEqual([
       {
         id: "overview-range",
         label: RU.t(`Shortcuts.dateRange`),
-        aliases: ["Change date range"],
+        aliases: undefined,
+        englishWords: ["Change date range"],
         kbd: undefined,
       },
       {
         id: "overview-customise",
         label: RU.t(`Shortcuts.customise`),
-        aliases: ["Customise overview"],
+        aliases: undefined,
+        englishWords: ["Customise overview"],
         kbd: undefined,
       },
     ])
@@ -117,7 +119,8 @@ describe("the open page's commands in the search palette", () => {
     ])
     const del = commands?.find((c) => c.id === "note-delete")
     expect(del?.label).toBe(RU.t(`AppShell.deleteNote`))
-    expect(del?.aliases).toEqual(["Delete this note", "remove note", "trash", "удалить заметку"])
+    expect(del?.englishWords).toEqual(["Delete this note"])
+    expect(del?.aliases).toEqual(["remove note", "trash", "удалить заметку"])
     expect(commands?.find((c) => c.id === "note-duplicate")?.aliases).toContain("дублировать")
     expect(commands?.find((c) => c.id === "note-copy-link")?.aliases).toContain("ссылка")
   })
@@ -145,7 +148,7 @@ describe("the tag and group pages' commands in the search palette", () => {
     const commands = pageCommands(RU, { ...closed, tagEditor: { delete: noop } }, [])
     expect(commands?.map((c) => c.id)).toEqual(["tag-delete"])
     expect(commands?.[0].label).toBe(RU.t(`AppShell.deleteTag`))
-    expect(commands?.[0].aliases).toContain("Delete this tag")
+    expect(commands?.[0].englishWords).toEqual(["Delete this tag"])
     expect(commands?.[0].aliases).toContain("удалить метку")
   })
 
@@ -160,8 +163,8 @@ describe("the tag and group pages' commands in the search palette", () => {
     expect(pageCommands(RU, { ...closed, groupEditor: { leave: noop } }, [])?.map((c) => c.id))
       .toEqual(["group-leave"])
     const leave = pageCommands(RU, { ...closed, groupEditor: { leave: noop } }, [])?.[0]
+    expect(leave?.englishWords).toEqual(["Leave this group"])
     expect(leave?.aliases).toEqual([
-      "Leave this group",
       "quit group",
       "exit group",
       "покинуть группу",

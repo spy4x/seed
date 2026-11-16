@@ -1,17 +1,17 @@
 /**
- * The SPA palette's command registry, ranked by the palette's own `matchOptions` as `SearchPalette`
+ * The SPA palette's command registry, ranked by the palette's own `matchCommands` as `SearchPalette`
  * ranks it: which commands a person finds by which words, which are offered when, and what a pick
  * asks the app to do.
  */
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { matchOptions } from "@spy4x/preact-ui/command-palette"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import type { ThemePreference } from "@domain/identity"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
 import {
   groupRow,
+  matchCommands,
   paletteCommands,
   type PaletteContext,
   type PaletteOption,
@@ -43,7 +43,7 @@ function context(overrides: Partial<PaletteContext> = {}): PaletteContext {
 
 /** The label of the first command `query` finds. */
 function top(query: string, overrides: Partial<PaletteContext> = {}): string | undefined {
-  return matchOptions(paletteCommands(context(overrides), () => {}), query)[0]?.label
+  return matchCommands(paletteCommands(context(overrides), () => {}), query)[0]?.label
 }
 
 function labels(overrides: Partial<PaletteContext> = {}): string[] {
@@ -56,9 +56,23 @@ describe(`the palette's commands`, () => {
     expect(top(`dark`, { t: RU }), `dark in Russian`).toBe(`Тема`)
   })
 
+  it(`find a command in Russian by its English label and detail, which are not aliases`, () => {
+    const commands = paletteCommands(context({ t: RU }), () => {})
+    const first = (query: string) => matchCommands(commands, query)[0]?.id
+    expect(first(`new note`)).toBe(`action-new-note`)
+    expect(first(`theme`)).toBe(`action-theme`)
+    expect(matchCommands(commands, `in home`).map((option) => option.id))
+      .toContain(`action-new-tag`)
+    for (const option of commands) {
+      for (const word of option.englishWords ?? []) {
+        expect(option.aliases ?? [], option.id).not.toContain(word)
+      }
+    }
+  })
+
   it(`put Go to Notes first for notse and заметки`, () => {
     for (const query of [`notse`, `заметки`]) {
-      const found = matchOptions(paletteCommands(context(), () => {}), query)[0]
+      const found = matchCommands(paletteCommands(context(), () => {}), query)[0]
       expect([found?.label, found?.choice], query).toEqual([
         `Notes`,
         { kind: `page`, href: `/notes` },
@@ -85,7 +99,7 @@ describe(`the palette's commands`, () => {
 
   it(`find Theme and every profile section by settings and настройки`, () => {
     for (const query of [`settings`, `настройки`]) {
-      const found = matchOptions(paletteCommands(context(), () => {}), query).map((option) =>
+      const found = matchCommands(paletteCommands(context(), () => {}), query).map((option) =>
         option.id
       )
       expect(found, query).toContain(`action-theme`)
@@ -187,7 +201,7 @@ describe(`a group row`, () => {
   })
 
   it(`is found by "switch to" and its name`, () => {
-    expect(matchOptions([row], `switch to acme`)).toEqual([row])
+    expect(matchCommands([row], `switch to acme`)).toEqual([row])
   })
 })
 

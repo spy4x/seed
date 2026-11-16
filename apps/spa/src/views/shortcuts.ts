@@ -281,7 +281,8 @@ export function pageCommands(
   return commands?.map((command) => ({
     id: command.id,
     label: t.t(command.label),
-    aliases: [englishText(command.label), ...command.aliases ?? []],
+    aliases: command.aliases,
+    englishWords: [englishText(command.label)],
     kbd: rows.find((row) => row.description === command.label)?.keys,
   }))
 }

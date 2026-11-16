@@ -565,7 +565,7 @@ describe("the person page's palette commands", () => {
 
   it("finds Block by its English name and by Russian words", () => {
     const block = commands({}).find((command) => command.id === `user-block`)!
-    expect(block.aliases).toContain(`Block`)
+    expect(block.englishWords).toEqual([`Block`])
     expect(block.aliases).toContain(`заблокировать`)
   })
 })

@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import { useRef } from "preact/hooks"
-import { CommandPalette, matchOptions } from "@spy4x/preact-ui/command-palette"
+import { CommandPalette } from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { ThemePreference } from "@domain/identity"
@@ -12,6 +12,7 @@ import {
   type AdminPaletteOption,
   type AdminSearchChoice,
 } from "./admin-palette-commands.ts"
+import { matchCommands } from "./palette-commands.ts"
 import { type PageCommand, paletteLabels } from "./search-palette.tsx"
 import { useAdminText } from "./i18n.ts"
 
@@ -91,7 +92,7 @@ export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element 
   const options = adminPaletteCommands(adminPaletteContext(t, props, () => latest.current), select)
   const shown = new Set(props.goTo.map((entry) => entry.id))
   const filter = (rows: readonly AdminPaletteOption[], query: string) => [
-    ...matchOptions(rows, query, rows.length),
+    ...matchCommands(rows, query, rows.length),
     ...adminFindCommands(t, query, shown),
   ]
 
