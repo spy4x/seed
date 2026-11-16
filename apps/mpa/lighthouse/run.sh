@@ -87,4 +87,12 @@ fi
 # config, would not cover them (infra/ci/playwright.dockerfile). So the repository's minimum
 # dependency age does not hold here: what Lighthouse CI pulls in is resolved without it, in CI
 # once, when the CI image is built.
-deno run -A --no-config --no-lock npm:@lhci/cli@0.15.1 autorun --config="$CONFIG"
+# Lighthouse CI starts Lighthouse with Node, which finds Lighthouse's own packages only in a
+# node_modules folder, never in Deno's cache. `--node-modules-dir=auto` makes one in the working
+# directory, linked from that cache, so it runs in a scratch folder, away from the repository's
+# own node_modules; the reports still land in .lighthouseci/reports.
+ROOT=$PWD
+case "$CONFIG" in /*) ;; *) CONFIG="$ROOT/$CONFIG" ;; esac
+mkdir "$SCRATCH/lhci"
+(cd "$SCRATCH/lhci" && deno run -A --no-config --no-lock --node-modules-dir=auto \
+  npm:@lhci/cli@0.15.1 autorun --config="$CONFIG" --upload.outputDir="$ROOT/.lighthouseci/reports")
