@@ -73,7 +73,7 @@ shared by several projects on the host) and **off** (nothing of it runs and noth
 
 | Part | Bundled | External | Off |
 | ---- | ------- | -------- | --- |
-| Monitoring ("Monitoring" below) | `monitoring` in `COMPOSE_PROFILES`; `VM_REMOTE_WRITE_URL=` and `VLOGS_URL=` empty | `telemetry` in `COMPOSE_PROFILES`, not `monitoring`; `VM_REMOTE_WRITE_URL=https://…/api/v1/write`, `VLOGS_URL=https://…` and their user names and passwords | neither `monitoring` nor `telemetry` |
+| Monitoring ("Monitoring" below) | `monitoring` in `COMPOSE_PROFILES`; `VM_REMOTE_WRITE_URL=` and `VLOGS_URL=` empty | `telemetry` in `COMPOSE_PROFILES`, not `monitoring`; `VM_REMOTE_WRITE_URL=https://…/api/v1/write`, `VLOGS_URL=https://…` and their user names and passwords; for a stack on the same host, `MONITORING_NETWORK=…` and `VLOGS_SHIP=false` instead ("Shared stack on the same host" below) | neither `monitoring` nor `telemetry` |
 | Host metrics (node-exporter, cAdvisor) | `host-monitoring` next to `monitoring` or `telemetry` | leave `host-monitoring` out; the host's own exporters report it | leave `host-monitoring` out |
 | Error tracking ("Error tracking" below) | `errors` in `COMPOSE_PROFILES` and `ERRORS_DOMAIN=errors.example.com`, then `deno task errors:setup` once, which fills both DSNs; for readable SPA traces, the four `SOURCEMAPS_*` settings ("Source maps" below) | `ERROR_REPORT_DSN=https://…` and `SPA_ERROR_REPORT_DSN=https://…`, and the `SOURCEMAPS_*` settings | both DSNs and `SOURCEMAPS_URL` empty |
 | Files ([files.md](files.md)) | `files` in `COMPOSE_PROFILES`; `S3_ENDPOINT=`, `S3_PUBLIC_ENDPOINT=`, `S3_BUCKET=` empty | leave `files` out; the six `S3_*` settings name the store | leave `files` out; `FILES=false` |
@@ -137,7 +137,8 @@ Two parts ship them, in the bundled and the external mode:
   every sample on, with a `project` label.
 - **Vector** reads the log of every container of this Compose project, and of no other container
   on the host, and sends each line on with `project`, `container_name` and `stream`
-  (`infra/configs/vector.yml`). It picks them by the label Compose sets
+  (`infra/configs/vector.yml`, and `infra/configs/vector-logs.yml` for the sending, which
+  `VLOGS_SHIP=false` leaves out). It picks them by the label Compose sets
   (`com.docker.compose.project`), which is exact: a project named `app` does not get the logs of
   a project named `app-staging`. It also counts the API's answers from its request log as
   `api_requests_total`, one series per status class (`status="2xx"` to `"5xx"`), because the API
@@ -185,8 +186,8 @@ back; Vector retries too, with a small queue in memory. Grafana, the alert rules
 are then the other server's.
 
 **Off**: leave both `monitoring` and `telemetry` out of `COMPOSE_PROFILES`. None of these
-containers starts, nothing is collected and nothing retries; the six addresses and passwords are
-not read. A project that ran another mode before removes the running ones once, as above, adding
+containers starts, nothing is collected and nothing retries; the six addresses and passwords,
+`MONITORING_NETWORK` and `VLOGS_SHIP` are not read. A project that ran another mode before removes the running ones once, as above, adding
 `vmagent vector socket-proxy postgres-prometheus-exporter` to the list.
 
 A project with `telemetry` but without the two addresses still runs: vmagent and Vector keep
@@ -196,9 +197,53 @@ trying the bundled addresses, which do not exist, and nothing is stored.
 the Postgres exporter used to start in every project. A deployment in the external mode adds
 `telemetry` to `COMPOSE_PROFILES`, or they stop shipping; the bundled mode needs no change.
 
+### Shared stack on the same host
+
+A host that already runs a shared monitoring stack, such as rostok's `victoria-metrics` stack,
+keeps its stores on internal Docker networks with no route from outside and no password. A
+project there joins vmagent to that stack's metrics network and sends no logs itself:
+
+```sh
+COMPOSE_PROFILES=telemetry
+MONITORING_NETWORK=victoria-metrics_metrics
+VM_REMOTE_WRITE_URL=http://hl-victoria-metrics:8428/api/v1/write
+VLOGS_SHIP=false
+```
+
+- **Metrics.** With `MONITORING_NETWORK` set, `deno task compose` adds
+  `infra/compose/compose.monitoring-network.yml`, which puts vmagent on that network next to
+  this project's own, and swaps its scrape list for `infra/configs/vmagent.shared-host.yml`. That
+  list holds only what runs in this mode: vmagent itself, Vector and the Postgres exporter. On the
+  host's network the names `vmagent` and `cadvisor` are the host's own containers too, and the
+  bundled-only targets would stay down and fire the host's `TargetDown` rule. No other service
+  joins the network.
+- **Logs.** The host's own shipper (promtail in rostok's stack) already stores every container's
+  log, labelled with `project`, the Compose project name. `VLOGS_SHIP=false` stops Vector from
+  sending them a second time; it still reads them and makes `api_requests_total` and the backup's
+  gauge for vmagent. Query them in the host's Grafana as `project:<PROJECT>`. Any value of
+  `VLOGS_SHIP` but empty, `true` or `false` stops Vector at its start.
+- **Alerts.** Copy `infra/configs/alerts.yml` once per host into the stack's alert folder (rostok:
+  `configs/victoria-metrics/alerts/` on the server), deploy it, and restart `hl-vmalert`. Every
+  rule fires per project, for each Seed project on the host ("Alerts" below). Keep
+  `host-monitoring` off: the host's own exporters report the host.
+
+Check each part (`app` is `PROJECT`):
+
+```sh
+# Metrics: the counter with "project":"app".
+docker exec app-vmagent wget -qO- \
+  'http://hl-victoria-metrics:8428/api/v1/query?query=api_requests_total'
+# Alerts: the rule groups of alerts.yml are listed.
+docker exec hl-vmalert wget -qO- http://localhost:8880/api/v1/rules
+# Logs: one line of this project's log, from a throwaway container on the logs network.
+docker run --rm --network victoria-metrics_logs alpine:3 wget -qO- \
+  'http://hl-victoria-logs:9428/select/logsql/query?query=project:app&limit=1'
+```
+
 ### Alerts
 
-Bundled mode only. vmalert evaluates `infra/configs/alerts.yml` every minute:
+In the bundled mode this project's vmalert evaluates `infra/configs/alerts.yml` every minute; on a
+shared host the host's vmalert does ("Shared stack on the same host" below):
 
 - **ApiErrors** - the API answered 5 or more requests with a 5xx status within 5 minutes.
 - **DataDiskSpaceLow** - the disk holding `.volumes` (Postgres' data too) has under 2 GiB free
@@ -219,7 +264,9 @@ topic). ntfy formats the message itself (`?template=alertmanager`, ntfy 2.14 or 
 message starts with the project's name, so several projects can share a topic. With
 `ALERT_NTFY_URL` empty the alerts show in vmalert and Alertmanager and are sent nowhere. In the
 external mode, give the same rules file to the other server's vmalert: every series carries the
-`project` label.
+`project` label. Each rule fires per project, and the two disk rules take only series with a
+`project` label, so the file loads as is next to a host's own rules, which watch the host's own
+disks.
 
 There is no alert for failing event listeners yet: the API counts them
 (`event_listener_failures_total`) but exposes no endpoint to scrape.
