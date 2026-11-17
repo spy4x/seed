@@ -361,6 +361,14 @@ describe("AdminSearchPalette", () => {
     expect(listed()[0]).toBe("# Go to")
   })
 
+  it("lists no theme row before anything is typed, only the Theme command", async () => {
+    await mountPalette()
+    await pressCtrlK()
+
+    expect(listed().some((row) => row.startsWith("Theme →"))).toBe(false)
+    expect(listed().some((row) => row.startsWith("Theme"))).toBe(true)
+  })
+
   it("turns the single-key shortcuts off and on, and stays open", async () => {
     const picked = await mountPalette()
     await pressCtrlK()
