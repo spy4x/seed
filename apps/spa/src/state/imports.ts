@@ -3,6 +3,7 @@ import type { ColumnMap } from "@spy4x/preact-ui/import-mapper"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
   type ImportCheckResult,
+  type ImportChoices,
   type ImportMapping,
   ImportStatus,
   type ImportSummary,
@@ -24,6 +25,12 @@ export type ImportsResult<T> = { ok: true; data: T } | {
   code?: string
 }
 
+/** What the person answered to a review, as a save sends it: both left out when empty. */
+export interface ImportReviewAnswer {
+  choices?: ImportChoices
+  keep?: number[]
+}
+
 /** The calls to `/api/groups/:groupId/imports`. Injected so tests need no network. */
 export interface ImportsTransport {
   upload(
@@ -31,6 +38,7 @@ export interface ImportsTransport {
     kind: string,
     file: File,
     key: string,
+    options?: Record<string, string>,
   ): Promise<ImportsResult<ImportSummary>>
   list(groupId: string): Promise<ImportsResult<{ imports: ImportSummary[] }>>
   get(groupId: string, importId: string): Promise<ImportsResult<ImportSummary>>
@@ -44,6 +52,7 @@ export interface ImportsTransport {
     importId: string,
     mapping: ImportMapping,
     key: string,
+    review?: ImportReviewAnswer,
   ): Promise<ImportsResult<ImportSummary>>
   undo(groupId: string, importId: string, key: string): Promise<ImportsResult<ImportSummary>>
 }
@@ -76,10 +85,21 @@ const post = (body: unknown, key?: string): RequestInit => ({
   headers: key ? { "idempotency-key": key } : undefined,
 })
 
+/** An upload's query: the kind, the file's name and, when given, the options as JSON. */
+function uploadQuery(
+  kind: string,
+  name: string,
+  options?: Record<string, string>,
+): URLSearchParams {
+  const query = new URLSearchParams({ kind, name })
+  if (options) query.set(`options`, JSON.stringify(options))
+  return query
+}
+
 /** The calls the SPA makes, through `apiFetch`. */
 export const importsHttp: ImportsTransport = {
-  upload: (groupId, kind, file, key) =>
-    call(`${base(groupId)}?${new URLSearchParams({ kind, name: file.name })}`, {
+  upload: (groupId, kind, file, key, options) =>
+    call(`${base(groupId)}?${uploadQuery(kind, file.name, options)}`, {
       method: `POST`,
       // The file goes as it is; the server reads its bytes and guesses its encoding.
       body: file,
@@ -88,8 +108,8 @@ export const importsHttp: ImportsTransport = {
   list: (groupId) => call(base(groupId), {}),
   get: (groupId, importId) => call(one(groupId, importId), {}),
   check: (groupId, importId, mapping) => call(`${one(groupId, importId)}/check`, post({ mapping })),
-  commit: (groupId, importId, mapping, key) =>
-    call(`${one(groupId, importId)}/commit`, post({ mapping }, key)),
+  commit: (groupId, importId, mapping, key, review) =>
+    call(`${one(groupId, importId)}/commit`, post({ mapping, ...review }, key)),
   undo: (groupId, importId, key) => call(`${one(groupId, importId)}/undo`, post({}, key)),
 }
 
@@ -138,6 +158,12 @@ export function createImportsStore(
   const committing = signal(false)
   const undoing = signal(false)
   const error = signal<string | null>(null)
+  /** The picker's upload options as the person set them; `null` for the kind's initial ones. */
+  const options = signal<Record<string, string> | null>(null)
+  /** The person's values for the review's choice fields, only those that differ from it. */
+  const choices = signal<ImportChoices>({})
+  /** Rows to save despite an overridable skip. */
+  const keep = signal<readonly number[]>([])
   let openId: string | null = null
   /** Bumped by every open and close, so a late answer for another import is dropped. */
   let opened = 0
@@ -224,6 +250,9 @@ export function createImportsStore(
     committing,
     undoing,
     error,
+    options,
+    choices,
+    keep,
 
     /** Reads the person's recent imports in `group`, newest first. */
     async loadRecent(group: string): Promise<void> {
@@ -237,18 +266,30 @@ export function createImportsStore(
       uploadError.value = null
       forbidden.value = false
       recent.value = null
+      options.value = null
+    },
+
+    /** Sets the kind's upload options as the person filled them in. */
+    setOptions(value: Record<string, string>): void {
+      options.value = value
     },
 
     /**
-     * Uploads `file` as a `kind` import into `group`. Resolves to the new import's id, or `null`
-     * with `uploadError` set; a guest's refusal is the app frame's to say, so it sets nothing here.
+     * Uploads `file` as a `kind` import into `group`, with the kind's `options` when it has them.
+     * Resolves to the new import's id, or `null` with `uploadError` set; a guest's refusal is the
+     * app frame's to say, so it sets nothing here.
      */
-    async upload(group: string, kind: string, file: File): Promise<string | null> {
+    async upload(
+      group: string,
+      kind: string,
+      file: File,
+      sentOptions?: Record<string, string>,
+    ): Promise<string | null> {
       if (uploading.value !== null) return null
       uploading.value = file.name
       uploadError.value = null
       keys.upload ??= uuidV7()
-      const result = await transport.upload(group, kind, file, keys.upload)
+      const result = await transport.upload(group, kind, file, keys.upload, sentOptions)
       uploading.value = null
       if (result.ok) {
         keys.upload = null
@@ -278,6 +319,8 @@ export function createImportsStore(
       committing.value = false
       undoing.value = false
       error.value = null
+      choices.value = {}
+      keep.value = []
       keys.commit = null
       keys.undo = null
       await read()
@@ -297,7 +340,26 @@ export function createImportsStore(
       }, IMPORT_CHECK_DELAY_MS)
     },
 
-    /** Saves the rows with the mapping; the import then shows as being saved. */
+    /**
+     * Sets the person's value of choice field `field` on `row`. A value equal to the review's
+     * suggestion is no choice at all, so it is dropped rather than sent.
+     */
+    choose(row: number, field: string, value: string): void {
+      const suggestion = check.value?.reviews?.find((review) => review.row === row)
+        ?.suggestions[field] ?? ``
+      const { [String(row)]: before = {}, ...others } = choices.value
+      const { [field]: _, ...rest } = before
+      const after = value === suggestion ? rest : { ...rest, [field]: value }
+      choices.value = Object.keys(after).length > 0 ? { ...others, [row]: after } : others
+    },
+
+    /** Saves `row` despite its overridable skip (`on`), or leaves it skipped again. */
+    setKeep(row: number, on: boolean): void {
+      const others = keep.value.filter((kept) => kept !== row)
+      keep.value = on ? [...others, row] : others
+    },
+
+    /** Saves the rows with the mapping, the choices and the kept rows; then shows it saving. */
     async commit(): Promise<void> {
       const group = groupId.value
       const id = openId
@@ -307,7 +369,16 @@ export function createImportsStore(
       committing.value = true
       error.value = null
       keys.commit ??= uuidV7()
-      const result = await transport.commit(group, id, sent(mapping.value), keys.commit)
+      const answer: ImportReviewAnswer = {}
+      if (Object.keys(choices.value).length > 0) answer.choices = choices.value
+      if (keep.value.length > 0) answer.keep = [...keep.value]
+      const result = await transport.commit(
+        group,
+        id,
+        sent(mapping.value),
+        keys.commit,
+        answer.choices || answer.keep ? answer : undefined,
+      )
       if (mine !== opened) return
       committing.value = false
       if (result.ok || result.status !== 0) keys.commit = null
@@ -350,6 +421,8 @@ export function createImportsStore(
       mapping.value = {}
       check.value = null
       error.value = null
+      choices.value = {}
+      keep.value = []
       keys.upload = null
       keys.commit = null
       keys.undo = null

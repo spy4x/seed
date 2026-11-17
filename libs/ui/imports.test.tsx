@@ -11,7 +11,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { type ImportCheckResult, ImportStatus, type ImportSummary } from "@domain/imports"
 import { NOTE_RESTORE_DAYS } from "@domain/notes"
-import { importKindView } from "./import-kinds.ts"
+import { type ImportKindView, importKindView } from "./import-kinds.ts"
 import {
   IMPORT_MAPPER_ID,
   ImportNewScreen,
@@ -108,6 +108,152 @@ async function pick(file: File): Promise<void> {
 
 const NOTES = importKindView(`notes`, true)!
 
+const WORDS = { account: `Account` }
+const ACCOUNTS = [[``, `Choose`], [`a1`, `Main`]]
+
+/** A product's kind with upload options and a review, as a bank statement has. */
+const BANK: ImportKindView = {
+  ...NOTES,
+  limits: { ...NOTES.limits, id: `bank` },
+  options: {
+    initial: { accountId: `` },
+    // The test kind's own words come from a variable: the product's kind takes its catalog's.
+    render: ({ value, onChange, disabled }) => (
+      <label>
+        {WORDS.account}
+        <select
+          id="bank-account"
+          value={value.accountId}
+          disabled={disabled}
+          onChange={(event) => onChange({ accountId: event.currentTarget.value })}
+        >
+          {ACCOUNTS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+        </select>
+      </label>
+    ),
+    ready: (value) => value.accountId !== ``,
+  },
+  review: {
+    // A control for the category only: the transfer falls back to its suggestion as text.
+    choice: (field, { id, label, value, onChange, disabled }) =>
+      field === `category`
+        ? (
+          <select
+            id={id}
+            aria-label={label}
+            value={value}
+            disabled={disabled}
+            onChange={(event) => onChange(event.currentTarget.value)}
+          >
+            {CATEGORIES.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        )
+        : undefined,
+  },
+}
+const CATEGORIES = [``, `food`, `rent`]
+
+/** A statement read with a header: date, amount and payee, and two choice fields. */
+function bankSummary(overrides: Partial<ImportSummary> = {}): ImportSummary {
+  return summary({
+    kind: `bank`,
+    fileName: `bank.csv`,
+    fields: [
+      { key: `date`, label: `Date`, required: true },
+      { key: `amount`, label: `Amount`, required: true },
+      { key: `payee`, label: `Payee` },
+      { key: `category`, label: `Category`, choice: true },
+      { key: `transfer`, label: `Transfer`, choice: true },
+    ],
+    preview: {
+      columns: [`Date`, `Amount`, `Payee`],
+      sample: [[`2026-11-01`, `-12.50`, `Cafe`]],
+      mapping: { date: 0, amount: 1, payee: 2 },
+    },
+    rowCount: 3,
+    ...overrides,
+  })
+}
+
+/** Row 1 is saved, row 2 was saved before, row 3 matches a transfer the person may override. */
+const REVIEWED: ImportCheckResult = {
+  rowCount: 3,
+  valid: 3,
+  withErrors: 0,
+  rows: [],
+  reviews: [
+    {
+      row: 1,
+      cells: [`2026-11-01`, `-12.50`, `Cafe`],
+      skip: null,
+      suggestions: { category: `food` },
+      overridable: false,
+    },
+    {
+      row: 2,
+      cells: [`2026-11-02`, `-900.00`, `Landlord`],
+      skip: `Saved before`,
+      suggestions: {},
+      overridable: false,
+    },
+    {
+      row: 3,
+      cells: [`2026-11-03`, `-50.00`, `Savings`],
+      skip: `Matches a transfer`,
+      suggestions: { transfer: `t1` },
+      overridable: true,
+    },
+  ],
+}
+
+/** `count` reviewed rows, every one saved. */
+function manyReviewed(count: number): ImportCheckResult {
+  return {
+    rowCount: count,
+    valid: count,
+    withErrors: 0,
+    rows: [],
+    reviews: Array.from({ length: count }, (_, index) => ({
+      row: index + 1,
+      cells: [`2026-11-01`, `-1.00`, `Payee ${index + 1}`],
+      skip: null,
+      suggestions: {},
+      overridable: false,
+    })),
+  }
+}
+
+function bankScreen(overrides: Partial<ImportScreenProps> = {}): VNode {
+  return screen({
+    kind: BANK,
+    summary: bankSummary(),
+    mapping: { date: 0, amount: 1, payee: 2, category: null, transfer: null },
+    check: REVIEWED,
+    ...overrides,
+  })
+}
+
+/** Presses the filter's segment named `name`. */
+async function filterBy(name: string): Promise<void> {
+  const segment = [...document.querySelectorAll(`[role=radio]`)]
+    .find((element) => element.textContent!.trim() === name)
+  if (!segment) throw new Error(`no segment ${name}`)
+  await act(async () => {
+    segment.dispatchEvent(new window.MouseEvent(`click`, { bubbles: true }) as unknown as Event)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+}
+
+/** Sets a native select or checkbox the way a person does: the value, then `change`. */
+async function change(selector: string, set: (element: HTMLInputElement) => void): Promise<void> {
+  const element = find<HTMLInputElement>(selector)
+  set(element)
+  await act(async () => {
+    element.dispatchEvent(new window.Event(`change`, { bubbles: true }) as unknown as Event)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+}
+
 function summary(overrides: Partial<ImportSummary> = {}): ImportSummary {
   return {
     id: `0190a000-0000-7000-8000-000000000001`,
@@ -180,14 +326,14 @@ describe("the import picker", () => {
   })
 
   it("says the kind's limits and hands over a file of its type", async () => {
-    const chosen: File[] = []
-    await mount(picker({ onFile: (file) => chosen.push(file) }))
+    const chosen: [string, unknown][] = []
+    await mount(picker({ onFile: (file, options) => chosen.push([file.name, options]) }))
     expect(find(`#import-file`).getAttribute(`accept`)).toBe(`.csv,.txt`)
     expect(document.body.textContent).toContain(
       `A .csv or .txt file, up to 2 MB and 5,000 rows. The first row can name the columns.`,
     )
     await pick(new window.File([`Title\nA`], `notes.csv`, { type: `text/csv` }) as unknown as File)
-    expect(chosen.map((file) => file.name)).toEqual([`notes.csv`])
+    expect(chosen).toEqual([[`notes.csv`, undefined]])
   })
 
   it("refuses a file of another type itself, so it never reaches the app", async () => {
@@ -221,6 +367,56 @@ describe("the import picker", () => {
       `/imports/0190a000-0000-7000-8000-000000000001`,
     )
     expect(find(`[data-e2e="import-recent-item"]`).textContent).toContain(`Imported`)
+  })
+
+  it("shows the notes picker with no options form and the picker open", async () => {
+    await mount(picker())
+    expect(has(`[data-e2e="import-options"]`)).toBe(false)
+    expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(false)
+    expect(document.body.textContent).not.toContain(`Fill in the fields above first.`)
+  })
+
+  it("refuses a file chosen before the kind's options are ready, then hands them on", async () => {
+    const set: Record<string, string>[] = []
+    const chosen: [string, unknown][] = []
+    await mount(picker({
+      kind: BANK,
+      onOptions: (value) => set.push(value),
+      onFile: (file, options) => chosen.push([file.name, options]),
+    }))
+    expect(find<HTMLSelectElement>(`#bank-account`).value).toBe(``)
+    // The picker stays open, so it keeps its full contrast; a file chosen now is not uploaded.
+    expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(false)
+    expect(find(`#import-file-hint`).textContent).toBe(
+      `A .csv or .txt file, up to 2 MB and 5,000 rows. The first row can name the columns.`,
+    )
+    expect(has(`#import-file-error`)).toBe(false)
+    const first = find<HTMLInputElement>(`#import-file`)
+    await pick(new window.File([`Date\n1`], `bank.csv`, { type: `text/csv` }) as unknown as File)
+    expect(chosen).toEqual([])
+    // A fresh picker lists no file, so choosing the same one again fires a change.
+    expect(find<HTMLInputElement>(`#import-file`)).not.toBe(first)
+    expect(find(`#import-file-error`).textContent).toBe(`Fill in the fields above first.`)
+    expect(document.activeElement?.id).toBe(`bank-account`)
+    const account = find<HTMLSelectElement>(`#bank-account`)
+    account.value = `a1`
+    await act(() => {
+      account.dispatchEvent(new window.Event(`change`, { bubbles: true }) as unknown as Event)
+    })
+    expect(set).toEqual([{ accountId: `a1` }])
+    await rerender(picker({
+      kind: BANK,
+      options: { accountId: `a1` },
+      onFile: (file, options) => chosen.push([file.name, options]),
+    }))
+    expect(has(`#import-file-error`)).toBe(false)
+    await pick(new window.File([`Date\n1`], `bank.csv`, { type: `text/csv` }) as unknown as File)
+    expect(chosen).toEqual([[`bank.csv`, { accountId: `a1` }]])
+  })
+
+  it("disables the kind's options while a file uploads", async () => {
+    await mount(picker({ kind: BANK, options: { accountId: `a1` }, uploading: `bank.csv` }))
+    expect(find<HTMLSelectElement>(`#bank-account`).disabled).toBe(true)
   })
 
   it("says which file is uploading and takes no second one meanwhile", async () => {
@@ -285,6 +481,148 @@ describe("one import, ready to save", () => {
     await mount(screen({ onCommit: () => commits++ }))
     await submit(`[data-e2e="import-submit"]`)
     expect(commits).toBe(1)
+  })
+})
+
+describe("one import's review", () => {
+  it("shows no review for a check without one, as the notes have", async () => {
+    await mount(screen())
+    expect(has(`[data-e2e="import-review"]`)).toBe(false)
+  })
+
+  it("lists each reviewed row with its line, values, status and the kind's choices", async () => {
+    await mount(bankScreen())
+    expect(find(`#import-review`).textContent).toBe(`Check the rows`)
+    expect(find(`[data-e2e="import-review-summary"]`).textContent).toBe(
+      `1 to import · 2 skipped`,
+    )
+    // The header is line 1, so row 1 is line 2.
+    expect(texts(`[data-e2e="import-review-line"]`)).toEqual([`Line 2`, `Line 3`, `Line 4`])
+    expect(texts(`[data-e2e="import-review-row"] bdi`).slice(0, 3)).toEqual([
+      `2026-11-01`,
+      `-12.50`,
+      `Cafe`,
+    ])
+    expect(texts(`[data-e2e="import-review-status"]`)).toEqual([
+      `Will be imported`,
+      `Saved before`,
+      `Matches a transfer`,
+    ])
+    const category = find<HTMLSelectElement>(`#import-choice-1-category`)
+    expect(category.value).toBe(`food`)
+    expect(category.getAttribute(`aria-label`)).toBe(`Category, line 2`)
+    // The kind draws no transfer control, and row 1 has no transfer suggestion: nothing shows.
+    expect(has(`[data-e2e="import-suggestion"]`)).toBe(false)
+    expect(find(`[data-e2e="import-submit"]`).textContent).toContain(`Import 1 note`)
+  })
+
+  it("offers Import anyway only on an overridable skip, with no choices on it", async () => {
+    await mount(bankScreen())
+    expect(has(`#import-keep-1`)).toBe(false)
+    expect(has(`#import-keep-2`)).toBe(false)
+    const keep = find<HTMLInputElement>(`#import-keep-3`)
+    expect(keep.checked).toBe(false)
+    expect(keep.getAttribute(`aria-label`)).toBe(`Import anyway, line 4`)
+    expect(keep.closest(`label`)!.textContent).toBe(`Import anyway`)
+    expect(has(`#import-choice-2-category`)).toBe(false)
+    expect(has(`#import-choice-3-category`)).toBe(false)
+  })
+
+  it("keeps a row the person ticks, counts it, and shows its choices", async () => {
+    const kept: [number, boolean][] = []
+    await mount(bankScreen({ onKeep: (row, on) => kept.push([row, on]) }))
+    await change(`#import-keep-3`, (box) => (box.checked = true))
+    expect(kept).toEqual([[3, true]])
+    await rerender(bankScreen({ keep: [3], onKeep: (row, on) => kept.push([row, on]) }))
+    expect(find<HTMLInputElement>(`#import-keep-3`).checked).toBe(true)
+    expect(find(`[data-e2e="import-review-summary"]`).textContent).toBe(`2 to import · 1 skipped`)
+    expect(find(`[data-e2e="import-submit"]`).textContent).toContain(`Import 2 notes`)
+    expect(has(`#import-choice-3-category`)).toBe(true)
+    expect(texts(`[data-e2e="import-suggestion"]`)).toEqual([`t1`])
+    await change(`#import-keep-3`, (box) => (box.checked = false))
+    expect(kept).toEqual([[3, true], [3, false]])
+  })
+
+  it("hands on a changed choice and shows the person's value over the suggestion", async () => {
+    const chosen: [number, string, string][] = []
+    const onChoose = (row: number, field: string, value: string) => chosen.push([row, field, value])
+    await mount(bankScreen({ onChoose }))
+    await change(`#import-choice-1-category`, (select) => (select.value = `rent`))
+    expect(chosen).toEqual([[1, `category`, `rent`]])
+    await rerender(bankScreen({ onChoose, choices: { "1": { category: `rent` } } }))
+    expect(find<HTMLSelectElement>(`#import-choice-1-category`).value).toBe(`rent`)
+  })
+
+  it("disables the review's controls while the save runs or offline", async () => {
+    await mount(bankScreen({ keep: [3], offline: true }))
+    expect(find<HTMLInputElement>(`#import-keep-3`).disabled).toBe(true)
+    expect(find<HTMLSelectElement>(`#import-choice-1-category`).disabled).toBe(true)
+    await rerender(bankScreen({ keep: [3], committing: true }))
+    expect(find<HTMLInputElement>(`#import-keep-3`).disabled).toBe(true)
+  })
+
+  it("filters the rows to import or the skipped ones, and says when none match", async () => {
+    await mount(bankScreen())
+    await filterBy(`Skipped`)
+    expect(texts(`[data-e2e="import-review-line"]`)).toEqual([`Line 3`, `Line 4`])
+    await filterBy(`To import`)
+    expect(texts(`[data-e2e="import-review-line"]`)).toEqual([`Line 2`])
+    await filterBy(`All`)
+    expect(texts(`[data-e2e="import-review-line"]`)).toEqual([`Line 2`, `Line 3`, `Line 4`])
+    await rerender(bankScreen({ check: manyReviewed(2) }))
+    await filterBy(`Skipped`)
+    expect(has(`[data-e2e="import-review-row"]`)).toBe(false)
+    expect(find(`[data-e2e="import-review-none"]`).textContent).toBe(`No rows here.`)
+  })
+
+  it("shows 50 rows at a time and moves focus to the first row each press adds", async () => {
+    await mount(bankScreen({ check: manyReviewed(120) }))
+    expect(document.querySelectorAll(`[data-e2e="import-review-row"]`).length).toBe(50)
+    expect(find(`[data-e2e="import-review-more"]`).textContent).toBe(`Show 50 more`)
+    await click(`[data-e2e="import-review-more"]`)
+    expect(document.querySelectorAll(`[data-e2e="import-review-row"]`).length).toBe(100)
+    // Row 51 is line 52: the header is line 1.
+    expect(document.activeElement?.id).toBe(`import-review-line-51`)
+    expect(find(`[data-e2e="import-review-more"]`).textContent).toBe(`Show 20 more`)
+    await click(`[data-e2e="import-review-more"]`)
+    expect(document.querySelectorAll(`[data-e2e="import-review-row"]`).length).toBe(120)
+    expect(document.activeElement?.id).toBe(`import-review-line-101`)
+    expect(has(`[data-e2e="import-review-more"]`)).toBe(false)
+  })
+
+  it("starts a filter over at its first 50 rows", async () => {
+    await mount(bankScreen({ check: manyReviewed(120) }))
+    await click(`[data-e2e="import-review-more"]`)
+    await filterBy(`To import`)
+    expect(document.querySelectorAll(`[data-e2e="import-review-row"]`).length).toBe(50)
+  })
+
+  it("blocks the save when every row is skipped, until one is kept", async () => {
+    let commits = 0
+    const skipped = {
+      ...REVIEWED,
+      reviews: REVIEWED.reviews!.map((review) => ({ ...review, skip: `Saved before` })),
+    }
+    await mount(bankScreen({ check: skipped, onCommit: () => commits++ }))
+    expect(find(`[data-e2e="import-submit"]`).textContent).toContain(`Import 0 notes`)
+    await submit(`[data-e2e="import-submit"]`)
+    expect(commits).toBe(0)
+    expect(find(`[data-e2e="import-no-valid"]`).textContent).toContain(
+      `Every row is skipped, so nothing would be imported.`,
+    )
+    expect(document.activeElement?.getAttribute(`data-e2e`)).toBe(`import-no-valid`)
+    // Keeping a row makes one to save: the press goes through.
+    await rerender(bankScreen({ check: skipped, keep: [3], onCommit: () => commits++ }))
+    expect(has(`[data-e2e="import-no-valid"]`)).toBe(false)
+    await submit(`[data-e2e="import-submit"]`)
+    expect(commits).toBe(1)
+  })
+
+  it("counts the save in progress without the skipped rows", async () => {
+    await mount(
+      bankScreen({ summary: bankSummary({ status: ImportStatus.COMMITTING }), keep: [3] }),
+    )
+    expect(find(`[data-e2e="import-heading"]`).textContent).toBe(`Importing 2 notes…`)
   })
 })
 

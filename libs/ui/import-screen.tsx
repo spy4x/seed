@@ -9,6 +9,7 @@
 import type { JSX, RefObject } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
+import { Checkbox } from "@spy4x/preact-ui/checkbox"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { FileInput } from "@spy4x/preact-ui/file-input"
 import { useFormat, When } from "@spy4x/preact-ui/format"
@@ -18,11 +19,19 @@ import { Link } from "@spy4x/preact-ui/link"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
+import { SegmentedControl } from "@spy4x/preact-ui/segmented-control"
 import { Table } from "@spy4x/preact-ui/table"
 import type { Translator } from "@spy4x/platform/universal/i18n"
-import { type ImportCheckResult, ImportStatus, type ImportSummary } from "@domain/imports"
+import {
+  type ImportCheckResult,
+  type ImportChoices,
+  type ImportField,
+  type ImportRowReview,
+  ImportStatus,
+  type ImportSummary,
+} from "@domain/imports"
 import { useAppText } from "./i18n.ts"
-import type { ImportKindView, ImportKindWords } from "./import-kinds.ts"
+import type { ImportKindView, ImportKindWords, ImportOptions } from "./import-kinds.ts"
 import { IMPORT_PATHS, type Navigate, ScreenForm } from "./progressive.tsx"
 
 /** The mapper's root id: a field's select is `import-mapper-<key>`, which the main button focuses. */
@@ -50,14 +59,31 @@ export interface ImportNewScreenProps extends ImportPageProps {
   error?: string | null
   /** The person's imports of this kind in the group, newest first; `null` while they load. */
   recent: readonly ImportSummary[] | null
-  /** A file was chosen and passed the kind's type and size; the app uploads it. */
-  onFile?: (file: File) => void
+  /**
+   * A file was chosen and passed the kind's type and size; the app uploads it, with `options` for
+   * a kind that has them.
+   */
+  onFile?: (file: File, options?: ImportOptions) => void
+  /** The kind's upload options as the person set them; `null` or absent for its `initial`. */
+  options?: ImportOptions | null
+  onOptions?: (value: ImportOptions) => void
 }
+
+/** The controls a person can move focus to: where a file chosen too early sends it. */
+const FOCUSABLE = [
+  `input:not([type="hidden"]):not(:disabled)`,
+  `select:not(:disabled)`,
+  `textarea:not(:disabled)`,
+  `button:not(:disabled)`,
+  `[tabindex]:not([tabindex="-1"])`,
+].join(`, `)
 
 /**
  * `/imports/new?kind=`: one file picker that uploads the file it is given at once, with the kind's
  * limits in its hint, and "Your recent imports" under it. The picker refuses a wrong type or an
  * oversized file itself, so the API never sees one. A viewer sees why they cannot import instead.
+ * A kind with upload options draws its form above the picker. A file chosen before the form is
+ * ready is not uploaded: the picker says to fill in the form, and focus moves into it.
  */
 export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
   const { kind, offline = false, uploading = null, recent } = props
@@ -67,6 +93,27 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
   const types = listOf(t, kind.limits.accept)
   const size = megabytes(kind.limits.maxBytes)
   const mine = recent?.filter((item) => item.kind === kind.limits.id) ?? []
+  const options = kind.options
+  const value = props.options ?? options?.initial ?? {}
+  const ready = options ? options.ready(value) : true
+  const limits = t.t(`Import.fileHint`, { types, size, rows: format.number(kind.limits.maxRows) })
+  const form = useRef<HTMLDivElement>(null)
+  // A file was chosen before the options were ready; the picker says so until they are.
+  const [early, setEarly] = useState(false)
+  // Each refusal draws a fresh picker, so it lists no file and the same file can be chosen again.
+  const [picks, setPicks] = useState(0)
+  const onFiles = (files: readonly File[]) => {
+    const file = files[0]
+    if (!file) return
+    if (!ready) {
+      setEarly(true)
+      setPicks((count) => count + 1)
+      form.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus()
+      return
+    }
+    setEarly(false)
+    props.onFile?.(file, options ? value : undefined)
+  }
   return (
     <Stack gap="xl">
       <PageHeader
@@ -79,18 +126,24 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
         {props.forbidden ? <Viewer {...props} words={words} /> : (
           <>
             {offline && <Offline />}
+            {options && (
+              <div ref={form} class="flex flex-col gap-4" data-e2e="import-options">
+                {options.render({
+                  value,
+                  onChange: (next) => props.onOptions?.(next),
+                  disabled: uploading !== null || offline,
+                })}
+              </div>
+            )}
             <FileInput
+              key={picks}
               id="import-file"
               name="file"
               accept={kind.limits.accept.join(`,`)}
               maxSize={kind.limits.maxBytes}
               label={t.t(`Import.file`)}
-              hint={t.t(`Import.fileHint`, {
-                types,
-                size,
-                rows: format.number(kind.limits.maxRows),
-              })}
-              error={props.error ?? undefined}
+              hint={limits}
+              error={early && !ready ? t.t(`Import.optionsFirst`) : props.error ?? undefined}
               disabled={uploading !== null || offline}
               previews={false}
               labels={{
@@ -98,7 +151,7 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
                 tooLarge: (name) => t.t(`Import.tooLarge`, { name, size }),
                 wrongType: (name) => t.t(`Import.wrongType`, { name, types }),
               }}
-              onFiles={(files) => files[0] && props.onFile?.(files[0])}
+              onFiles={onFiles}
             />
             <p role="status" aria-live="polite" class="text-sm text-muted" data-e2e="import-upload">
               {uploading !== null && t.t(`Import.uploading`, { file: uploading })}
@@ -158,6 +211,14 @@ export interface ImportScreenProps extends ImportPageProps {
   onUndo?: () => void
   /** Opens the list with the removed records shown, after an undo. */
   onShowRemoved?: () => void
+  /** The person's values for the review's choice fields, by row: only those unlike the review's. */
+  choices?: ImportChoices
+  /** Rows to save despite an overridable skip. */
+  keep?: readonly number[]
+  /** The person set choice field `field` of `row` to `value`. */
+  onChoose?: (row: number, field: string, value: string) => void
+  /** The person ticked or cleared "Import anyway" on `row`. */
+  onKeep?: (row: number, on: boolean) => void
 }
 
 /**
@@ -183,7 +244,7 @@ export function ImportScreen(props: ImportScreenProps): JSX.Element {
     }
     heading.current?.focus()
   }, [status])
-  const title = summary === null ? `` : headingOf(t, words, summary, props.check)
+  const title = summary === null ? `` : headingOf(t, words, summary, props.check, props.keep ?? [])
   return (
     <Stack gap="xl">
       <PageHeader
@@ -255,6 +316,7 @@ function headingOf(
   words: ImportKindWords,
   summary: ImportSummary,
   check: ImportCheckResult | null,
+  keep: readonly number[],
 ): string {
   switch (summary.status) {
     case ImportStatus.READING:
@@ -267,7 +329,7 @@ function headingOf(
         : t.t(`Import.saveFailed`)
     case ImportStatus.COMMITTING:
       // After a reload the last check is gone, and the server keeps no count until the save ends.
-      return check ? words.committing(check.valid) : words.committingUncounted
+      return check ? words.committing(toSave(check, keep)) : words.committingUncounted
     case ImportStatus.COMMITTED:
       return words.committed(summary.savedCount ?? 0)
     case ImportStatus.UNDONE:
@@ -405,14 +467,14 @@ function Committed(
 }
 
 /**
- * A read import: the mapper, the check's line, the refused rows past the preview, and the main
- * button. The button is never disabled: with a required field unmapped it moves focus to that
- * field, and with no valid row it says why.
+ * A read import: the mapper, the check's line, the review's rows when the kind has a review, the
+ * refused rows past the preview, and the main button. The button is never disabled: with a required
+ * field unmapped it moves focus to that field, and with no row to save it says why.
  */
 function Ready(
   props: ImportScreenProps & { summary: ImportSummary; words: ImportKindWords },
 ): JSX.Element {
-  const { summary, words, check, mapping, committing = false } = props
+  const { summary, words, check, mapping, committing = false, keep = [] } = props
   const t = useAppText()
   const format = useFormat()
   const [noValid, setNoValid] = useState(false)
@@ -421,8 +483,8 @@ function Ready(
   useEffect(() => {
     if (noValid) noValidRef.current?.focus()
   }, [noValid])
-  // A new mapping is a new check: the message waits for the next press.
-  useEffect(() => setNoValid(false), [check])
+  // A new check or a kept row changes the count: the message waits for the next press.
+  useEffect(() => setNoValid(false), [check, props.keep])
   const preview = summary.preview
   const offset = preview?.columns ? 1 : 0
   const sample = preview?.sample ?? []
@@ -454,7 +516,7 @@ function Ready(
           form.current?.querySelector<HTMLElement>(`#${IMPORT_MAPPER_ID}-${missing.key}`)?.focus()
           return
         }
-        if (check?.valid === 0) {
+        if (check && toSave(check, keep) === 0) {
           setNoValid(true)
           noValidRef.current?.focus()
           return
@@ -478,6 +540,15 @@ function Ready(
           {check &&
             t.t(`Import.checked`, { valid: format.number(check.valid), count: check.rowCount })}
         </p>
+        {check?.reviews && (
+          <ReviewRows
+            {...props}
+            reviews={check.reviews}
+            fields={summary.fields}
+            offset={offset}
+            keep={keep}
+          />
+        )}
         {(further.length > 0 || more > 0) && (
           <section aria-labelledby="import-further" data-e2e="import-further">
             <h3 id="import-further" class="text-base font-semibold text-foreground">
@@ -489,7 +560,9 @@ function Ready(
         <ActionError error={props.error} />
         {noValid && (
           <div ref={noValidRef} tabIndex={-1} class="outline-none" data-e2e="import-no-valid">
-            <Notice tone="danger" live={false}>{t.t(`Import.noValid`)}</Notice>
+            <Notice tone="danger" live={false}>
+              {check?.valid === 0 ? t.t(`Import.noValid`) : t.t(`Import.allSkipped`)}
+            </Notice>
           </div>
         )}
         <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -501,11 +574,249 @@ function Ready(
             disabled={props.offline}
             data-e2e="import-submit"
           >
-            {words.submit(check?.valid ?? total)}
+            {words.submit(check ? toSave(check, keep) : total)}
           </Button>
         </div>
       </div>
     </ScreenForm>
+  )
+}
+
+/** How many reviewed rows the table shows at first, and how many more each press adds. */
+export const IMPORT_REVIEW_PAGE = 50
+
+/**
+ * The rows a save writes: the valid ones, less those the review skips, plus the overridable skips
+ * the person kept.
+ */
+export function toSave(check: ImportCheckResult, keep: readonly number[]): number {
+  const skipped = check.reviews?.filter((review) => !willSave(review, keep)).length ?? 0
+  return check.valid - skipped
+}
+
+/** Whether a save writes this reviewed row: not skipped, or skipped overridably and kept. */
+function willSave(review: ImportRowReview, keep: readonly number[]): boolean {
+  return review.skip === null || (review.overridable && keep.includes(review.row))
+}
+
+type ReviewFilter = `all` | `import` | `skipped`
+
+/**
+ * Smaller than `sm`, the table becomes one card per row: the header is read by screen readers
+ * only, and each cell is a line of its own with its column's name before it. Each card is the
+ * library Card's `pc-card` with its `shadow-raised`. A stopgap until preact-components' `Table`
+ * has a card mode of its own.
+ */
+const STACKED = [
+  `mt-3 min-h-0`,
+  `max-sm:bg-transparent max-sm:ring-0 max-sm:[&_table]:block max-sm:[&_table]:divide-y-0`,
+  `max-sm:[&_thead]:sr-only max-sm:[&_tbody]:flex max-sm:[&_tbody]:flex-col max-sm:[&_tbody]:gap-3`,
+  `max-sm:[&_tbody]:divide-y-0 max-sm:[&_tbody]:bg-transparent`,
+  `max-sm:[&_tbody_tr]:flex max-sm:[&_tbody_tr]:flex-col max-sm:[&_tbody_tr]:gap-3`,
+  `max-sm:[&_tbody_tr]:pc-card max-sm:[&_tbody_tr]:shadow-raised max-sm:[&_tbody_tr]:p-4`,
+  `max-sm:[&_tbody_td]:p-0 max-sm:[&_tbody_th]:p-0`,
+].join(` `)
+
+/** A row's line number: the row's header, and where "Show more" puts focus. */
+const LINE_HEADER = `text-start font-medium tabular-nums focus-visible:outline-hidden ` +
+  `focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset max-sm:font-semibold`
+
+/** A column's name before its value in a phone's card; the header names it from `sm`. */
+function CardLabel({ children }: { children: string }): JSX.Element {
+  return <span aria-hidden="true" class="text-sm text-muted sm:hidden">{children}</span>
+}
+
+/**
+ * "Check the rows": what the kind's review said of each valid row, under the mapper. A summary of
+ * how many rows a save writes and skips, a filter, and the rows 50 at a time. Each row shows its
+ * line, its mapped values, whether it is saved or why it is skipped, "Import anyway" on a skip the
+ * person may override, and the kind's control for each choice field. "Show more" moves focus to the
+ * first row it adds.
+ */
+function ReviewRows(
+  props: ImportScreenProps & {
+    reviews: readonly ImportRowReview[]
+    fields: readonly ImportField[]
+    offset: number
+    keep: readonly number[]
+    words: ImportKindWords
+  },
+): JSX.Element {
+  const { reviews, fields, offset, keep, words, kind, mapping } = props
+  const t = useAppText()
+  const disabled = props.committing === true || props.offline === true
+  const [filter, setFilter] = useState<ReviewFilter>(`all`)
+  const [shown, setShown] = useState(IMPORT_REVIEW_PAGE)
+  const table = useRef<HTMLDivElement>(null)
+  const focusRow = useRef<number | null>(null)
+  useEffect(() => {
+    if (focusRow.current === null) return
+    table.current?.querySelector<HTMLElement>(`#import-review-line-${focusRow.current}`)?.focus()
+    focusRow.current = null
+  }, [shown])
+  const columns = fields.filter((field) => !field.choice && mapping[field.key] != null)
+  const choiceFields = fields.filter((field) => field.choice)
+  const saved = reviews.filter((review) => willSave(review, keep)).length
+  const listed = filter === `all`
+    ? reviews
+    : reviews.filter((review) => (review.skip === null) === (filter === `import`))
+  const visible = listed.slice(0, shown)
+  const left = listed.length - visible.length
+  const label = (field: ImportField) => words.field(field.key, field.label)
+  return (
+    <section aria-labelledby="import-review" class="flex flex-col gap-3" data-e2e="import-review">
+      <h3 id="import-review" class="text-base font-semibold text-foreground">
+        {t.t(`Import.review`)}
+      </h3>
+      <p class="text-sm text-muted" data-e2e="import-review-summary">
+        {t.t(`Import.toImport`, { count: saved })}
+        <span aria-hidden="true">{` · `}</span>
+        {t.t(`Import.skipped`, { count: reviews.length - saved })}
+      </p>
+      <SegmentedControl<ReviewFilter>
+        ariaLabel={t.t(`Import.filter`)}
+        class="self-start"
+        value={filter}
+        onChange={(value) => {
+          setFilter(value)
+          setShown(IMPORT_REVIEW_PAGE)
+        }}
+        options={[
+          { value: `all`, label: t.t(`Import.filterAll`) },
+          { value: `import`, label: t.t(`Import.filterToImport`) },
+          { value: `skipped`, label: t.t(`Import.filterSkipped`) },
+        ]}
+      />
+      {visible.length === 0
+        ? <p class="text-sm text-muted" data-e2e="import-review-none">{t.t(`Import.reviewNone`)}</p>
+        : (
+          <div ref={table}>
+            <Table
+              class={STACKED}
+              caption={t.t(`Import.reviewTable`)}
+              captionClass="sr-only"
+              rowDataE2E="import-review-row"
+              headerSlot={
+                <>
+                  <th scope="col" class="text-start">{t.t(`Import.line`)}</th>
+                  {columns.map((field) => (
+                    <th key={field.key} scope="col" class="text-start">{label(field)}</th>
+                  ))}
+                  <th scope="col" class="text-start">{t.t(`Import.status`)}</th>
+                  {choiceFields.map((field) => (
+                    <th key={field.key} scope="col" class="min-w-40 text-start">{label(field)}</th>
+                  ))}
+                </>
+              }
+              bodyKeys={visible.map((review) => review.row)}
+              bodySlots={visible.map((review) => {
+                const line = review.row + offset
+                const kept = keep.includes(review.row)
+                const saving = willSave(review, keep)
+                return (
+                  <>
+                    <th
+                      scope="row"
+                      id={`import-review-line-${review.row}`}
+                      tabIndex={-1}
+                      class={LINE_HEADER}
+                      data-e2e="import-review-line"
+                    >
+                      <span aria-hidden="true" class="sm:hidden">{`${t.t(`Import.line`)} `}</span>
+                      {line}
+                    </th>
+                    {columns.map((field) => (
+                      <td
+                        key={field.key}
+                        class="max-sm:flex max-sm:justify-between max-sm:gap-4"
+                      >
+                        <CardLabel>{label(field)}</CardLabel>
+                        <bdi class="max-sm:text-end">
+                          {review.cells[mapping[field.key] as number] ?? ``}
+                        </bdi>
+                      </td>
+                    ))}
+                    <td>
+                      <div class="flex flex-col gap-2">
+                        <div class="max-sm:flex max-sm:justify-between max-sm:gap-4">
+                          <CardLabel>{t.t(`Import.status`)}</CardLabel>
+                          <span
+                            class={review.skip === null
+                              ? `text-muted max-sm:text-end`
+                              : `font-medium text-foreground max-sm:text-end`}
+                            data-e2e="import-review-status"
+                          >
+                            {review.skip ?? t.t(`Import.willImport`)}
+                          </span>
+                        </div>
+                        {review.skip !== null && review.overridable && (
+                          <Checkbox
+                            id={`import-keep-${review.row}`}
+                            checked={kept}
+                            disabled={disabled}
+                            aria-label={t.t(`Import.keepLine`, { line })}
+                            labelClass="min-h-11 w-full sm:min-h-9 sm:w-auto"
+                            data-e2e="import-keep"
+                            onChange={(event) =>
+                              props.onKeep?.(review.row, event.currentTarget.checked)}
+                          >
+                            {t.t(`Import.keep`)}
+                          </Checkbox>
+                        )}
+                      </div>
+                    </td>
+                    {choiceFields.map((field) => {
+                      const suggestion = review.suggestions[field.key]
+                      const control = saving
+                        ? kind.review?.choice?.(field.key, {
+                          row: review,
+                          value: props.choices?.[review.row]?.[field.key] ?? suggestion ?? ``,
+                          suggestion,
+                          onChange: (value) => props.onChoose?.(review.row, field.key, value),
+                          disabled,
+                          id: `import-choice-${review.row}-${field.key}`,
+                          label: t.t(`Import.choiceLine`, { field: label(field), line }),
+                        })
+                        : undefined
+                      // A skipped row, or a field with neither a control nor a suggestion, shows
+                      // an empty cell, and no line at all in a phone's card.
+                      const shows = saving && (control != null || !!suggestion)
+                      return (
+                        <td key={field.key} class={shows ? `` : `max-sm:hidden`}>
+                          {shows && (
+                            // From `sm`, a kind's control is as wide as its longest value, so the
+                            // column grows to it instead of cutting the chosen value.
+                            <div class="flex flex-col gap-1 sm:[&_select]:w-auto">
+                              <CardLabel>{label(field)}</CardLabel>
+                              {control ?? <bdi data-e2e="import-suggestion">{suggestion}</bdi>}
+                            </div>
+                          )}
+                        </td>
+                      )
+                    })}
+                  </>
+                )
+              })}
+            />
+          </div>
+        )}
+      {left > 0 && (
+        <div>
+          <Button
+            type="button"
+            variant="secondary"
+            class={WIDE}
+            data-e2e="import-review-more"
+            onClick={() => {
+              focusRow.current = listed[visible.length].row
+              setShown(shown + IMPORT_REVIEW_PAGE)
+            }}
+          >
+            {t.t(`Import.showMore`, { count: Math.min(left, IMPORT_REVIEW_PAGE) })}
+          </Button>
+        </div>
+      )}
+    </section>
   )
 }
 

@@ -55,9 +55,11 @@ export function ImportNewView() {
       uploading={store.uploading.value}
       error={store.uploadError.value}
       recent={store.recent.value}
-      onFile={(file) => {
+      options={store.options.value}
+      onOptions={store.setOptions}
+      onFile={(file, options) => {
         if (!groupId) return
-        void store.upload(groupId, kind.limits.id, file).then((id) => {
+        void store.upload(groupId, kind.limits.id, file, options).then((id) => {
           if (id) navigate(IMPORT_PATHS.import(id), { replace: true })
         })
       }}
@@ -100,6 +102,10 @@ export function ImportView({ importId }: { importId: string }) {
       committing={store.committing.value}
       undoing={store.undoing.value}
       error={store.error.value}
+      choices={store.choices.value}
+      keep={store.keep.value}
+      onChoose={store.choose}
+      onKeep={store.setKeep}
       onCommit={() => void store.commit()}
       onUndo={() => void store.undo()}
       onShowRemoved={() => {
