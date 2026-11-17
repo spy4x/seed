@@ -435,6 +435,19 @@ describe("SearchPalette", () => {
     expect(listed()).not.toContain("# Best match")
   })
 
+  it("pins a group as Best match for the start of its name, and switches to it on Enter", async () => {
+    const { picked } = await mount({}, () => ({ notes: [], onDevice: false }))
+    await open()
+
+    await type("acme")
+    await until(quickCreateListed)
+
+    expect(listed()[0]).toBe("# Best match")
+    expect(listed()[1]).toContain("Acme Studio")
+    await enter()
+    expect(picked).toEqual([{ kind: "switch-group", groupId: STUDIO.id }])
+  })
+
   it("pins Theme → Dark as Best match for dark, and Enter turns the theme dark with the palette open", async () => {
     const { picked } = await mount({}, () => ({ notes: [], onDevice: false }))
     const dialog = find<HTMLDialogElement>("dialog[data-e2e=search]")
@@ -1171,6 +1184,20 @@ describe("SearchPalette Recent", () => {
   })
 })
 
+describe("SearchPalette notes that answer at once", () => {
+  it("lists them with the rest in one answer, the highlight on the first note", async () => {
+    await mount({}, () => ({ notes: [{ ...PLAN, title: "Weekly tomato" }], onDevice: false }))
+    await open()
+
+    await type("tomato")
+    await until(() => listed().includes("# Notes"))
+
+    expect(listed()[0]).toBe("# Notes")
+    expect(text(find("[data-e2e=search] [role=option][aria-selected=true]")))
+      .toContain("Weekly tomato")
+  })
+})
+
 describe("SearchPalette notes that answer late", () => {
   /** A note search whose typed answer waits until `answer` is called. */
   const late = () => {
@@ -1189,6 +1216,7 @@ describe("SearchPalette notes that answer late", () => {
     await open()
 
     await type("new")
+    await until(quickCreateListed)
     expect(listed().slice(0, 2)).toEqual(["# Best match", "New note | In Home"])
     expect(listed()).not.toContain("# Notes")
     await act(() => {
@@ -1219,6 +1247,7 @@ describe("SearchPalette notes that answer late", () => {
     await open()
 
     await type("new")
+    await until(quickCreateListed)
     await enter()
 
     expect(picked).toEqual([{ kind: "new-note" }])

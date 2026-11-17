@@ -208,6 +208,11 @@ export const EMPTY_COMMANDS = 3
 /** How many commands a typed query lists under "Commands", best first. */
 export const TYPED_COMMANDS = 6
 
+/**
+ * Milliseconds the note search has before the rest of a typed query's answer is listed without it.
+ */
+export const EARLY_ANSWER_MS = 150
+
 /** How many recent picks `CommandPalette` pins under "Recent" (its own `RECENT_SHOWN`). */
 const RECENT_SHOWN = 5
 
@@ -256,7 +261,7 @@ export function recentExtras<T extends { id: string }>(
 ): T[] {
   // A listed row wins over a candidate with its id: that is the one the palette pins.
   const byId = new Map([...candidates, ...listed].map((option) => [option.id, option]))
-  const pinned = [...new Set(ids)].flatMap((id) => byId.get(id) ?? []).slice(0, RECENT_SHOWN)
+  const pinned = ids.flatMap((id) => byId.get(id) ?? []).slice(0, RECENT_SHOWN)
   return pinned.filter((option) => !listed.includes(option))
 }
 
@@ -281,9 +286,9 @@ export function recentExtras<T extends { id: string }>(
  * and last Create: its commands that match, then the quick-create rows ({@link quickCreateRows}),
  * where Enter opens the create form with the text filled in and Ctrl Enter (⌘Enter) creates the
  * item and opens it. Each section is ranked by the palette's matcher (`matchOptions`: aliases, word
- * order, one typo, the other keyboard layout and alphabet). Everything but the notes is listed at
- * once, before the note search answers; the notes then join above it without moving the
- * highlighted row. A query that starts with ">" lists only the commands: every one under its
+ * order, one typo, the other keyboard layout and alphabet). A note search that takes longer than
+ * {@link EARLY_ANSWER_MS} lists everything but the notes first; the notes then join above it
+ * without moving the highlighted row. A query that starts with ">" lists only the commands: every one under its
  * section for ">" alone, else those that match the rest.
  *
  * When the notes come from the device, their heading says so, and when none of them matched, a
@@ -401,17 +406,20 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       return [...listed, ...recentExtras(recentIds.current, listed, [...others, ...groupRows])]
     }
 
-    // Everything but the notes answers from memory, so it is listed before the note search ends.
+    // Everything but the notes answers from memory, so it can be listed before the notes.
     const rest = [
       ...matchCommands(groupRows, text, groupRows.length),
       ...underCommands(t, matchCommands(others, text, TYPED_COMMANDS)),
       ...recordRows(latest.current.records ?? [], text),
       ...matchCommands(create, text, create.length),
       // Built from the query, so they list for any text; under Create, after its commands.
-      ...quickCreateRows(registry, text).map(runnable),
+      ...quickCreateRows(registry, text),
     ]
-    if (asksNotes) show(rest)
+    // Notes that answer quickly (from the device) list with the rest, so the highlight starts on
+    // the first note. A slower search lists the rest first, and its notes keep the highlight there.
+    const early = asksNotes ? setTimeout(() => show(rest), EARLY_ANSWER_MS) : undefined
     const answer = await notesFound()
+    clearTimeout(early)
     const notes = noteRows(answer)
     const hint = notesHint(
       t,
