@@ -1711,7 +1711,7 @@ export default {
   "SignedInDevices.lastActive": "Last active <when></when>",
   "SignedInDevices.ip": "<label>IP address</label> <ip>{ip}</ip>",
   "Search.search": "Search",
-  "Search.placeholder": "Search or type a command",
+  "Search.placeholder": "Search or command",
   "Search.close": "Close search",
   "Search.loading": "Searching…",
   "Search.error": "Could not search. Change your search to try again.",

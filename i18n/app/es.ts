@@ -1866,7 +1866,7 @@ export default {
   "SignedInDevices.lastActive": "Última actividad <when></when>",
   "SignedInDevices.ip": "<label>Dirección IP</label> <ip>{ip}</ip>",
   "Search.search": "Buscar",
-  "Search.placeholder": "Busca o escribe un comando",
+  "Search.placeholder": "Buscar o comando",
   "Search.close": "Cerrar la búsqueda",
   "Search.loading": "Buscando…",
   "Search.error": "No se pudo buscar. Cambia la búsqueda para volver a intentarlo.",

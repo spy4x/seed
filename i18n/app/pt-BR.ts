@@ -1852,7 +1852,7 @@ export default {
   "SignedInDevices.lastActive": "Ativo pela última vez <when></when>",
   "SignedInDevices.ip": "<label>Endereço IP</label> <ip>{ip}</ip>",
   "Search.search": "Buscar",
-  "Search.placeholder": "Buscar ou digitar um comando",
+  "Search.placeholder": "Buscar ou comando",
   "Search.close": "Fechar a busca",
   "Search.loading": "Buscando…",
   "Search.error": "Não foi possível buscar. Mude o texto da busca para tentar de novo.",

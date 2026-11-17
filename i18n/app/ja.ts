@@ -1648,7 +1648,7 @@ export default {
   "SignedInDevices.lastActive": "最終アクティブ<when></when>",
   "SignedInDevices.ip": "<label>IPアドレス</label> <ip>{ip}</ip>",
   "Search.search": "検索",
-  "Search.placeholder": "検索またはコマンドを入力",
+  "Search.placeholder": "検索またはコマンド",
   "Search.close": "検索を閉じる",
   "Search.loading": "検索しています…",
   "Search.error": "検索できませんでした。検索語を変えてもう一度お試しください。",
