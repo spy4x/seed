@@ -1807,7 +1807,7 @@ export default {
   "SignedInDevices.lastActive": "Zuletzt aktiv <when></when>",
   "SignedInDevices.ip": "<label>IP-Adresse</label> <ip>{ip}</ip>",
   "Search.search": "Suche",
-  "Search.placeholder": "Suchen oder Befehl ausführen",
+  "Search.placeholder": "Suchen oder Befehl eingeben",
   "Search.close": "Suche schließen",
   "Search.loading": "Wird gesucht …",
   "Search.error":
@@ -1838,6 +1838,8 @@ export default {
   "Search.importNotes": "Notizen importieren",
   "Search.newGroup": "Neue Gruppe",
   "Search.withText": "{label}: „{text}“",
+  "Search.commands": "Befehle",
+  "Search.themeRow": "Design → {theme}",
   "Search.openOverview": "Übersicht öffnen",
   "Search.openNotifications": "Benachrichtigungen öffnen",
   "Search.openProfile": "Profil öffnen",

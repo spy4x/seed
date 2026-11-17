@@ -1419,6 +1419,7 @@ Search.account	7e1b0d5641f2640c
 Search.benchmarkDetail	65e9dd29b595b64b
 Search.changePicture	57fb7654cf37637d
 Search.close	55656b5e434f4c06
+Search.commands	b269dc4e81a528a4
 Search.create	4759498ac2a719c6
 Search.current	e0d1b68224bf0b31
 Search.downloadData	edbfbe26317edf70
@@ -1443,10 +1444,11 @@ Search.openBenchmark	da082d4ee0cb4353
 Search.openNotifications	4e2fa50f7e951e42
 Search.openOverview	0a418ca54f2a4a89
 Search.openProfile	7234213a42c2635b
-Search.placeholder	307374ce6cbe1d84
+Search.placeholder	e86449d653d29660
 Search.search	49c266baaaa70981
 Search.settings	74a883a037bc227f
 Search.switchTo	8428ee28478a5415
+Search.themeRow	6b142216a78ea688
 Search.tooShort	ebd779b78fd1ed75
 Search.turnOffTwoFactor	0de6a15d48759944
 Search.untitled	e93736573a33ef40
