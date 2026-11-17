@@ -29,6 +29,7 @@
     "jsr:@spy4x/preact-server@16.3.0": "16.3.0",
     "jsr:@spy4x/preact-signals@16.3.0": "16.3.0",
     "jsr:@spy4x/preact-system@16.3.0": "16.3.0",
+    "jsr:@spy4x/preact-theme@16.0.0": "16.0.0",
     "jsr:@spy4x/preact-theme@16.3.0": "16.3.0",
     "jsr:@spy4x/preact-theme@^16.3.0": "16.3.0",
     "jsr:@spy4x/preact-ui@16.3.0": "16.3.0",
@@ -310,6 +311,9 @@
         "npm:@preact/signals@^2.5.1",
         "npm:preact@^10.29.8"
       ]
+    },
+    "@spy4x/preact-theme@16.0.0": {
+      "integrity": "c01e5715044a1f7a859e0e2a1c035d84665ab70f1693396e961fbd0926b30032"
     },
     "@spy4x/preact-theme@16.3.0": {
       "integrity": "14b086f00c51ddc646c42ea14bde4baa34946f259a6f29716813cad62944162e",
