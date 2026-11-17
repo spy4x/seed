@@ -400,6 +400,7 @@ describe("what the device keeps", () => {
       "theme": "dark",
       "language": "de",
       "install-prompt-dismissed": "1",
+      "seed:palette-recent": `["go-notes"]`,
       "last-sign-in": `{"method":"password","email":"a***@example.com"}`,
     })
     const sent = `{"email":"ann@example.com","sentAt":1}`

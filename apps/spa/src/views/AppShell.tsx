@@ -33,6 +33,7 @@ import { type ActionPages, pageCommands, runActionCommand, spaShortcutRows } fro
 import { spaRoutePaths } from "./spa-paths.ts"
 import { runChoice } from "./palette-choice.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
+import { paletteRecent } from "@platform/palette-recent.ts"
 import type { SessionUser } from "../state/session.ts"
 import {
   callQuery,
@@ -359,6 +360,7 @@ export function AppShell(
     benchmark: benchmarkOpen(),
     notes,
     files: filesOn(),
+    recent: paletteRecent,
   }
   return (
     <AppFrame
