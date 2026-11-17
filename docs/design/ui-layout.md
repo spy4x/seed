@@ -64,7 +64,8 @@ screens were redesigned against these rules in October 2026.
 11. **The rail is the only chrome.** No header bar and no brand mark: a signed-in page starts with
     its `PageHeader`. `AppFrame` and `AdminShell` are thin wrappers over the library's `AppShell`;
     no app draws `RailShell` itself (`tests/ui-boundary.test.ts`). From `md` the frame is a 72 px
-    rail of 48 px icon cells, each named by a tooltip on hover and focus, and the page's column is
+    rail of 48 px icon cells, each named by a tooltip on hover and focus, which adds the cell's
+    `g` keys while they work ("Notes (G N)"), and the page's column is
     centred in the rest of the window. The rail's top is the group switcher: a 40 px tile with the
     current group's mark or initial in a `RailCell`, with the rail's own tooltip (the group and the
     person's role) and focus ring, opening a short menu of checked items (`DropdownItem checked`)
