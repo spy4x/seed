@@ -100,11 +100,14 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
   const form = useRef<HTMLDivElement>(null)
   // A file was chosen before the options were ready; the picker says so until they are.
   const [early, setEarly] = useState(false)
+  // Each refusal draws a fresh picker, so it lists no file and the same file can be chosen again.
+  const [picks, setPicks] = useState(0)
   const onFiles = (files: readonly File[]) => {
     const file = files[0]
     if (!file) return
     if (!ready) {
       setEarly(true)
+      setPicks((count) => count + 1)
       form.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus()
       return
     }
@@ -133,6 +136,7 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
               </div>
             )}
             <FileInput
+              key={picks}
               id="import-file"
               name="file"
               accept={kind.limits.accept.join(`,`)}
@@ -700,7 +704,7 @@ function ReviewRows(
                   ))}
                   <th scope="col" class="text-start">{t.t(`Import.status`)}</th>
                   {choiceFields.map((field) => (
-                    <th key={field.key} scope="col" class="text-start">{label(field)}</th>
+                    <th key={field.key} scope="col" class="min-w-40 text-start">{label(field)}</th>
                   ))}
                 </>
               }

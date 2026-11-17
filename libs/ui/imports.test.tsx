@@ -391,8 +391,11 @@ describe("the import picker", () => {
       `A .csv or .txt file, up to 2 MB and 5,000 rows. The first row can name the columns.`,
     )
     expect(has(`#import-file-error`)).toBe(false)
+    const first = find<HTMLInputElement>(`#import-file`)
     await pick(new window.File([`Date\n1`], `bank.csv`, { type: `text/csv` }) as unknown as File)
     expect(chosen).toEqual([])
+    // A fresh picker lists no file, so choosing the same one again fires a change.
+    expect(find<HTMLInputElement>(`#import-file`)).not.toBe(first)
     expect(find(`#import-file-error`).textContent).toBe(`Fill in the fields above first.`)
     expect(document.activeElement?.id).toBe(`bank-account`)
     const account = find<HTMLSelectElement>(`#bank-account`)
