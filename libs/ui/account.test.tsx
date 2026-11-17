@@ -604,9 +604,11 @@ describe("AppFrame", () => {
         page
       </AppFrame>
     )
-    /** The rail's tooltips of its destinations and its bell, in order. */
+    /** The column's tooltips of its destinations and its bell (in the bottom zone), in order. */
     const tips = () =>
-      [...document.querySelectorAll("[data-e2e=rail-shell-rail] [data-e2e=rail-shell-tooltip]")]
+      [...document.querySelectorAll(
+        "[data-e2e=rail-shell-column] [data-e2e=rail-shell-entry] ~ [data-e2e=rail-shell-tooltip]",
+      )]
         .map((tip) => tip.textContent)
         .filter((tip) => !tip?.startsWith("Search") && !tip?.startsWith("Home"))
     /** The key hint drawn in the element `selector` finds, or `null` without one. */
@@ -626,7 +628,9 @@ describe("AppFrame", () => {
         "Notifications (G I)",
       ])
       // A sequence is shown but not announced: `aria-keyshortcuts` has no syntax for one.
-      expect(document.querySelectorAll("[data-e2e=rail-shell-column] [aria-keyshortcuts]").length)
+      // The account menu's Keyboard shortcuts entry announces `?`, a single press; no destination
+      // and not the bell announces anything.
+      expect(document.querySelectorAll("[data-e2e=rail-shell-entry][aria-keyshortcuts]").length)
         .toBe(0)
     })
 
