@@ -308,6 +308,59 @@ describe("AdminSearchPalette", () => {
     expect(dialog().open).toBe(true)
   })
 
+  it("pins Theme → Dark as Best match for dark, and Enter turns the theme dark with the palette open", async () => {
+    const picked = await mountPalette()
+    await pressCtrlK()
+
+    await type("dark")
+    expect(listed().slice(0, 2)).toEqual(["# Best match", "Theme → Dark"])
+    await act(() => {
+      find("[data-e2e=search] input").dispatchEvent(
+        new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }) as unknown as Event,
+      )
+    })
+
+    expect(picked).toEqual([{ kind: "theme", theme: "dark" }])
+    expect(dialog().open).toBe(true)
+  })
+
+  it("pins the open page's command as Best match for the start of its name, and runs it on Enter", async () => {
+    const picked = await mountPalette({ page: [{ id: "user-block", label: "Block user" }] })
+    await pressCtrlK()
+
+    await type("block")
+    expect(listed().slice(0, 2)).toEqual(["# Best match", "Block user"])
+    await act(() => {
+      find("[data-e2e=search] input").dispatchEvent(
+        new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }) as unknown as Event,
+      )
+    })
+
+    expect(picked).toEqual([{ kind: "command", id: "user-block" }])
+  })
+
+  it("lists the operator's last picks under Recent before anything is typed, and none without storage", async () => {
+    const entries = new Map<string, string>()
+    const store = {
+      getItem: (key: string) => entries.get(key) ?? null,
+      setItem: (key: string, value: string) => void entries.set(key, value),
+      removeItem: (key: string) => void entries.delete(key),
+    }
+    const recent = { storageKey: "recent", storage: () => store }
+    await mountPalette({ recent })
+    await pressCtrlK()
+    await pick("Groups")
+    await pressCtrlK()
+
+    expect(listed().slice(0, 2)).toEqual(["# Recent", "Groups"])
+    expect(listed().filter((row) => row === "Groups")).toHaveLength(1)
+
+    await act(() => render(null, root!))
+    await mountPalette()
+    await pressCtrlK()
+    expect(listed()[0]).toBe("# Go to")
+  })
+
   it("turns the single-key shortcuts off and on, and stays open", async () => {
     const picked = await mountPalette()
     await pressCtrlK()
