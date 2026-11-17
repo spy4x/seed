@@ -64,13 +64,14 @@ checkout are therefore commands of one step, `browser` (the reasons are in `ci-b
 step shares the CPU; `ci.yml`'s steps run at the same time in their own workflow, and may share
 the host with it.
 
-- `check` runs `deno task check`: format, lint, type check and unit tests. On a pull request, the
-  unit tests and `integration` run only the test files whose imports reach a file the pull request
-  changes, against the tip of its target branch, and the log says how many ran and how many were
-  skipped. A change the imports cannot show (`deno.lock`, a `deno.json`, `.woodpecker/`, the
-  migrations, `schema.sql`, fixtures, the test scripts: `RUN_ALL` in `infra/scripts/test.ts`), or
-  a git failure, runs them all. Test groups that read the source tree from disk or run a program
-  always run whole. A push to `main`, a tag and the nightly run test everything.
+- `check` runs `deno task check`: format, lint, type check and unit tests. On a pull request or
+  its title edit, the unit tests and `integration` run only the test files whose imports reach a
+  file the pull request changes, against the tip of its target branch, and the log says how many
+  ran and how many were skipped. A change the imports cannot show (`deno.lock`, a `deno.json`,
+  `.woodpecker/`, the migrations, `schema.sql`, fixtures, the test scripts: `RUN_ALL` in
+  `infra/scripts/test.ts`) runs them all. A git failure fails the step, so a broken selection
+  shows instead of silently costing a full run. Test groups that read the source tree from disk or
+  run a program always run whole. A push to `main`, a tag and the nightly run test everything.
 - `secrets` scans commits for secrets with gitleaks, beside `check`, on every event. A pull request
   scans its own commits since it left the target branch, so a key added and then removed in the
   same pull request still fails it; every other event scans the whole history. The log
