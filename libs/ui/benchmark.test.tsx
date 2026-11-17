@@ -71,6 +71,11 @@ function count(selector: string): number {
   return document.querySelectorAll(selector).length
 }
 
+/** The key hint a button draws for its hotkey, or `null` without one. */
+function hintOf(button: Element): string | null {
+  return button.querySelector("[data-hotkey-hint]")?.textContent ?? null
+}
+
 /** Clicks `element` and returns whether its default action was cancelled. */
 async function clickOn(element: Element): Promise<boolean> {
   const event = new window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
@@ -170,6 +175,25 @@ describe("BenchmarkScreen", () => {
       .filter((button) => button.classList.contains("bg-accent-900"))
       .map((button) => button.getAttribute("data-e2e"))
     expect(primary).toEqual(["benchmark-copy"])
+  })
+
+  it("shows r on Run and Run again and c on Copy results, announced, while the single keys are on", async () => {
+    const keys = (selector: string) => {
+      const button = find(selector)
+      return [button.getAttribute("aria-keyshortcuts"), hintOf(button)]
+    }
+    await mount(screen({ singleKeys: true }))
+    expect(keys("[data-e2e=benchmark-run]")).toEqual(["R", "R"])
+    await rerender(screen({ singleKeys: true, state: "done", steps: done, json }))
+    expect(keys("[data-e2e=benchmark-run-again]")).toEqual(["R", "R"])
+    expect(keys("[data-e2e=benchmark-copy]")).toEqual(["C", "C"])
+  })
+
+  it("shows and announces no key on Run, Run again or Copy results while the single keys are off", async () => {
+    await mount(screen({ singleKeys: false }))
+    expect(count("[aria-keyshortcuts], [data-hotkey-hint]")).toBe(0)
+    await rerender(screen({ singleKeys: false, state: "done", steps: done, json }))
+    expect(count("[aria-keyshortcuts], [data-hotkey-hint]")).toBe(0)
   })
 
   it("selects the results line when the browser refuses to copy it", async () => {
