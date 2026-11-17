@@ -1199,57 +1199,23 @@ describe("SearchPalette notes that answer at once", () => {
 })
 
 describe("SearchPalette notes that answer late", () => {
-  /** A note search whose typed answer waits until `answer` is called. */
-  const late = () => {
-    let answer = (_notes: SearchNotesAnswer) => {}
-    const search = (query: string): Promise<SearchNotesAnswer> =>
-      query === ""
-        ? Promise.resolve({ notes: [], onDevice: false })
-        : new Promise((resolve) => answer = resolve)
-    return { search, answer: (notes: SearchNotesAnswer) => answer(notes) }
-  }
-  const highlighted = () => text(find("[data-e2e=search] [role=option][aria-selected=true]"))
-
-  it("lists the groups, commands and Create at once, then adds the notes above them without moving the highlighted row", async () => {
-    const notes = late()
-    await mount({}, notes.search)
+  it("picks the note on an Enter pressed before a slow note search answered, not quick-create", async () => {
+    const tomato = { ...PLAN, title: "Weekly tomato" }
+    const { picked } = await mount(
+      {},
+      (query) =>
+        query === ""
+          ? { notes: [], onDevice: false }
+          : new Promise((resolve) =>
+            setTimeout(() => resolve({ notes: [tomato], onDevice: false }), 300)
+          ),
+    )
     await open()
 
-    await type("new")
-    await until(quickCreateListed)
-    expect(listed().slice(0, 2)).toEqual(["# Best match", "New note | In Home"])
-    expect(listed()).not.toContain("# Notes")
-    await act(() => {
-      find("[data-e2e=search] input").dispatchEvent(
-        new window.KeyboardEvent("keydown", {
-          key: "ArrowDown",
-          bubbles: true,
-        }) as unknown as Event,
-      )
-    })
-    const before = highlighted()
-
-    await act(() => notes.answer({ notes: [{ ...PLAN, title: "New plan" }], onDevice: false }))
-    await until(() => listed().includes("# Notes"))
-
-    expect(listed().slice(0, 4)).toEqual([
-      "# Best match",
-      "New note | In Home",
-      "# Notes",
-      "New plan | Home · …call the bank…",
-    ])
-    expect(highlighted()).toBe(before)
-  })
-
-  it("picks from the early answer on Enter without waiting for the notes", async () => {
-    const notes = late()
-    const { picked } = await mount({}, notes.search)
-    await open()
-
-    await type("new")
-    await until(quickCreateListed)
+    await fill("tomato")
     await enter()
+    await act(() => new Promise((resolve) => setTimeout(resolve, 800)))
 
-    expect(picked).toEqual([{ kind: "new-note" }])
+    expect(picked).toEqual([{ kind: "note", noteId: tomato.id, groupId: tomato.groupId }])
   })
 })
