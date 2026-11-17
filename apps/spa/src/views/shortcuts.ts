@@ -33,7 +33,8 @@ export interface SpaShortcutPorts {
  * The SPA's keyboard shortcuts, the one list the "Keyboard shortcuts" dialog shows and the frame
  * binds, each described by a key of the `app` catalog. Search's keys, the New note dialog's and Undo's (`useUndoToast`) are bound where they act
  * and listed here; Activity is listed and bound only while the rail shows it, and the overview's
- * `d` and `c` only while it is open, and the benchmark's `r` and `c` only while it is.
+ * `d` and `c` only while it is open, and the benchmark's `r` and `c` only while it is. A `g` row
+ * names the page it opens (`href`), so the frame shows its keys on that page's entry.
  */
 export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
   const { general, goTo, newNote, page } = SHORTCUT_GROUPS
@@ -42,6 +43,7 @@ export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
     description,
     group: goTo,
     run: () => ports.navigate(href),
+    href,
   })
   const [show, close] = generalRows(ports.openShortcuts)
   const notes = ports.notes ?? true
