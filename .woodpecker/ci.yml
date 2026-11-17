@@ -97,7 +97,7 @@ steps:
     # (`relatedFlags` in infra/scripts/test.ts); every other event runs them all.
     image: denoland/deno:2.9.7
     commands:
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates
       - deno install --frozen
       - deno task check
 
@@ -154,7 +154,7 @@ steps:
     commands:
       # On a pull request, the task runs only the test files whose imports reach a change, which it
       # finds with git, as `check` does.
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates
       - deno install --frozen
       # Wait over TCP. Postgres first runs a temporary server that listens on a unix socket only,
       # so a successful TCP connection means the real server is up (docs/handoff.md, trap 3).

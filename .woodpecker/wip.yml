@@ -18,7 +18,7 @@ steps:
   check:
     image: denoland/deno:2.9.7
     commands:
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates
       - deno install --frozen
       - deno task check
 
