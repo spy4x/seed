@@ -99,7 +99,7 @@ export interface ImportKindView {
   words(t: Translator<string>): ImportKindWords
   /** The kind's upload options; a kind without them uploads with none. */
   options?: ImportKindOptions
-  /** How the kind draws its review's choices; the review itself shows whenever the check has one. */
+  /** How the kind draws its review's choices; the review shows whenever the check has one. */
   review?: ImportKindReview
 }
 

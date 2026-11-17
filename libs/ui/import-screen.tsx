@@ -59,8 +59,11 @@ export interface ImportNewScreenProps extends ImportPageProps {
   error?: string | null
   /** The person's imports of this kind in the group, newest first; `null` while they load. */
   recent: readonly ImportSummary[] | null
-  /** A file was chosen and passed the kind's type and size; the app uploads it. */
-  onFile?: (file: File) => void
+  /**
+   * A file was chosen and passed the kind's type and size; the app uploads it, with `options` for
+   * a kind that has them.
+   */
+  onFile?: (file: File, options?: ImportOptions) => void
   /** The kind's upload options as the person set them; `null` or absent for its `initial`. */
   options?: ImportOptions | null
   onOptions?: (value: ImportOptions) => void
@@ -120,7 +123,8 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
                 tooLarge: (name) => t.t(`Import.tooLarge`, { name, size }),
                 wrongType: (name) => t.t(`Import.wrongType`, { name, types }),
               }}
-              onFiles={(files) => ready && files[0] && props.onFile?.(files[0])}
+              onFiles={(files) =>
+                ready && files[0] && props.onFile?.(files[0], options ? value : undefined)}
             />
             <p role="status" aria-live="polite" class="text-sm text-muted" data-e2e="import-upload">
               {uploading !== null && t.t(`Import.uploading`, { file: uploading })}
@@ -585,6 +589,10 @@ const STACKED = [
   `max-sm:[&_tbody_td]:p-0 max-sm:[&_tbody_th]:p-0`,
 ].join(` `)
 
+/** A row's line number: the row's header, and where "Show more" puts focus. */
+const LINE_HEADER = `text-start font-medium tabular-nums outline-none focus-visible:outline-2 ` +
+  `focus-visible:outline-focus max-sm:font-semibold`
+
 /** A column's name before its value in a phone's card; the header names it from `sm`. */
 function CardLabel({ children }: { children: string }): JSX.Element {
   return <span aria-hidden="true" class="text-sm text-muted sm:hidden">{children}</span>
@@ -683,7 +691,7 @@ function ReviewRows(
                       scope="row"
                       id={`import-review-line-${review.row}`}
                       tabIndex={-1}
-                      class="text-start font-medium tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-focus max-sm:font-semibold"
+                      class={LINE_HEADER}
                       data-e2e="import-review-line"
                     >
                       <span aria-hidden="true" class="sm:hidden">{`${t.t(`Import.line`)} `}</span>

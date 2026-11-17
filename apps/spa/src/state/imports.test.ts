@@ -264,7 +264,7 @@ describe(`the imports store`, () => {
     expect(of(`upload`).map((c) => c.args[4])).toEqual([{ accountId: `a1` }, undefined])
   })
 
-  it(`sends the options in the upload's query, and choices and keep in the save's body`, async () => {
+  it(`sends options in the upload's query, and choices and keep in the save`, async () => {
     const sent: { url: string; body: unknown }[] = []
     const realFetch = globalThis.fetch
     globalThis.fetch = (input, init) => {

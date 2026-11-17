@@ -57,9 +57,8 @@ export function ImportNewView() {
       recent={store.recent.value}
       options={store.options.value}
       onOptions={store.setOptions}
-      onFile={(file) => {
+      onFile={(file, options) => {
         if (!groupId) return
-        const options = kind.options ? store.options.value ?? kind.options.initial : undefined
         void store.upload(groupId, kind.limits.id, file, options).then((id) => {
           if (id) navigate(IMPORT_PATHS.import(id), { replace: true })
         })

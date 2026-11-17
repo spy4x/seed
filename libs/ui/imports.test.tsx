@@ -326,14 +326,14 @@ describe("the import picker", () => {
   })
 
   it("says the kind's limits and hands over a file of its type", async () => {
-    const chosen: File[] = []
-    await mount(picker({ onFile: (file) => chosen.push(file) }))
+    const chosen: [string, unknown][] = []
+    await mount(picker({ onFile: (file, options) => chosen.push([file.name, options]) }))
     expect(find(`#import-file`).getAttribute(`accept`)).toBe(`.csv,.txt`)
     expect(document.body.textContent).toContain(
       `A .csv or .txt file, up to 2 MB and 5,000 rows. The first row can name the columns.`,
     )
     await pick(new window.File([`Title\nA`], `notes.csv`, { type: `text/csv` }) as unknown as File)
-    expect(chosen.map((file) => file.name)).toEqual([`notes.csv`])
+    expect(chosen).toEqual([[`notes.csv`, undefined]])
   })
 
   it("refuses a file of another type itself, so it never reaches the app", async () => {
@@ -378,11 +378,11 @@ describe("the import picker", () => {
 
   it("keeps the picker closed until the kind's options are ready, then hands them on", async () => {
     const set: Record<string, string>[] = []
-    const chosen: File[] = []
+    const chosen: [string, unknown][] = []
     await mount(picker({
       kind: BANK,
       onOptions: (value) => set.push(value),
-      onFile: (file) => chosen.push(file),
+      onFile: (file, options) => chosen.push([file.name, options]),
     }))
     expect(find<HTMLSelectElement>(`#bank-account`).value).toBe(``)
     expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(true)
@@ -390,6 +390,9 @@ describe("the import picker", () => {
       `Fill in the fields above first. A .csv or .txt file, up to 2 MB and 5,000 rows. ` +
         `The first row can name the columns.`,
     )
+    // A file dropped meanwhile is not taken either.
+    await pick(new window.File([`Date\n1`], `bank.csv`, { type: `text/csv` }) as unknown as File)
+    expect(chosen).toEqual([])
     const account = find<HTMLSelectElement>(`#bank-account`)
     account.value = `a1`
     await act(() => {
@@ -399,12 +402,12 @@ describe("the import picker", () => {
     await rerender(picker({
       kind: BANK,
       options: { accountId: `a1` },
-      onFile: (file) => chosen.push(file),
+      onFile: (file, options) => chosen.push([file.name, options]),
     }))
     expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(false)
     expect(document.body.textContent).not.toContain(`Fill in the fields above first.`)
     await pick(new window.File([`Date\n1`], `bank.csv`, { type: `text/csv` }) as unknown as File)
-    expect(chosen.map((file) => file.name)).toEqual([`bank.csv`])
+    expect(chosen).toEqual([[`bank.csv`, { accountId: `a1` }]])
   })
 
   it("disables the kind's options while a file uploads", async () => {
@@ -509,7 +512,7 @@ describe("one import's review", () => {
     expect(find(`[data-e2e="import-submit"]`).textContent).toContain(`Import 1 note`)
   })
 
-  it("offers Import anyway only on an overridable skip, and no choices on a skipped row", async () => {
+  it("offers Import anyway only on an overridable skip, with no choices on it", async () => {
     await mount(bankScreen())
     expect(has(`#import-keep-1`)).toBe(false)
     expect(has(`#import-keep-2`)).toBe(false)
@@ -590,7 +593,7 @@ describe("one import's review", () => {
     expect(document.querySelectorAll(`[data-e2e="import-review-row"]`).length).toBe(50)
   })
 
-  it("says nothing would be imported when the review skips every row, instead of saving", async () => {
+  it("blocks the save when every row is skipped, until one is kept", async () => {
     let commits = 0
     const skipped = {
       ...REVIEWED,
