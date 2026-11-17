@@ -18,6 +18,7 @@ import {
   type SearchNotesAnswer,
   SearchPalette,
   type SearchPaletteProps,
+  storedRecent,
 } from "./search-palette.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
@@ -177,6 +178,11 @@ function isolated(text: string): string {
   return `\u2068${text}\u2069`
 }
 
+/** Whether the answer for typed text is listed: it has a quick-create row such as `New group: “…”`. */
+function quickCreateListed(): boolean {
+  return listed().some((row) => row.includes(": “"))
+}
+
 /** Presses Enter, or Ctrl Enter with `ctrlKey`, in the palette's field. */
 async function enter(ctrlKey = false): Promise<void> {
   await act(() => {
@@ -234,45 +240,50 @@ describe("SearchPalette", () => {
     expect(document.activeElement).toBe(find("[data-e2e=search] input"))
   })
 
-  it("lists the current group's recent notes, then Go to, Create, Settings and Account, before anything is typed", async () => {
-    const { asked } = await mount()
+  it("lists three of This page's commands, the current group's recent notes and three of Create's, before anything is typed", async () => {
+    const { asked } = await mount({
+      pageCommands: ["Copy link", "Move", "Duplicate", "Delete this note"].map((label) => ({
+        id: label,
+        label,
+      })),
+    })
 
     await open()
 
     expect(asked).toEqual([""])
     expect(listed()).toEqual([
+      "# This page",
+      "Copy link",
+      "Move",
+      "Duplicate",
       "# Notes",
       "Weekly plan | …call the bank…",
       "Untitled note",
-      "# Go to",
-      "Overview",
-      "Notes",
-      "Tags",
-      "Groups",
-      "Notifications",
-      "Profile",
       "# Create",
       "New note | In Home",
       "New tag | In Home",
       "Import notes | In Home",
-      "New group",
-      "# Settings",
-      "Theme | System",
-      "Account | Your picture, name, email and a copy of your data.",
-      "Sign-in and security | How you sign in, and where your account is signed in.",
-      "Language and region | Your language, and how dates, times and numbers look.",
-      "Appearance | How the app looks on this device.",
-      "Notifications | Where we notify you when something changes in your groups.",
-      "API tokens | Let a script or another service use one of your groups without your password.",
-      "Delete account | Delete your account and everything only you can see.",
-      "Download my data | A ZIP of your profile, groups and notes",
-      "Change profile picture | JPEG, PNG, WebP or HEIC, up to 10 MB.",
-      "Keyboard shortcuts",
-      "# Account",
-      "Delete my account",
-      "Sign out of all other devices",
-      "Sign out",
     ])
+    // The empty field invites ">", which lists the commands alone.
+    expect(find("[data-e2e=search]").textContent).toContain("> for commands")
+  })
+
+  it("lists every command under its section for > alone, and only the commands that match for > and text", async () => {
+    const { asked } = await mount()
+    await open()
+
+    await type(">")
+    const headings = listed().filter((row) => row.startsWith("# "))
+    expect(headings).toEqual(["# Go to", "# Create", "# Settings", "# Account"])
+    expect(listed()).toContain("Sign out")
+
+    // No note, group or record: only the empty query's notes were ever asked for.
+    await type("> home")
+    expect(asked).toEqual([""])
+    expect(listed().some((row) => row.startsWith("Home |"))).toBe(false)
+    await type(">sign out")
+    expect(listed()[0]).toBe("# Commands")
+    expect(listed()[1]).toBe("Sign out | Account")
   })
 
   it("lists the open page's own commands first under This page, and hands back the picked one", async () => {
@@ -284,7 +295,7 @@ describe("SearchPalette", () => {
     })
     await open()
 
-    expect(listed().slice(3, 6)).toEqual(["# This page", "Change date range", "Customise overview"])
+    expect(listed().slice(0, 3)).toEqual(["# This page", "Change date range", "Customise overview"])
 
     await type("customise")
     const row = [...document.querySelectorAll("[role=option]")]
@@ -319,14 +330,16 @@ describe("SearchPalette", () => {
     )
     await open()
 
+    // Under one heading, each naming its section. Only the label in the person's language starts a
+    // Best match ("Best match" is preact-ui's own word, whose catalog this test leaves out).
     await type("notifications")
-    expect(listed().slice(0, 2)).toEqual(["# Переход", "Уведомления"])
+    expect(listed().slice(0, 2)).toEqual(["# Команды", "Уведомления | Переход"])
     await type("уведомления")
-    expect(listed().slice(0, 2)).toEqual(["# Переход", "Уведомления"])
+    expect(listed().slice(0, 2)).toEqual(["# Best match", "Уведомления | Переход"])
     await type("open notifications")
-    expect(listed().slice(0, 2)).toEqual(["# Переход", "Уведомления"])
+    expect(listed().slice(0, 2)).toEqual(["# Команды", "Уведомления | Переход"])
     await type("date range")
-    expect(listed()).toContain("Изменить период")
+    expect(listed()).toContain("Изменить период | На этой странице")
     // The English detail finds its command too.
     await type("where your account")
     expect(listed().some((row) => row.startsWith("Вход и безопасность"))).toBe(true)
@@ -339,41 +352,109 @@ describe("SearchPalette", () => {
     expect(listed()).not.toContain("Overview")
   })
 
-  it("lists matching notes with their group above the groups and commands, with the role and the current group", async () => {
-    await mount()
+  it("lists matching notes with their group, then the groups with the role and the current group, then the commands, records and Create", async () => {
+    await mount({
+      records: [{
+        heading: "Accounts",
+        records: () => [{ id: "a1", label: "Studio rent", href: "/accounts/a1" }],
+      }],
+    })
     await open()
 
-    await type("  ho ")
+    await type("  studio ")
 
+    expect(listed().filter((row) => row.startsWith("# "))).toEqual([
+      "# Notes",
+      "# Groups",
+      "# Accounts",
+      "# Create",
+    ])
     expect(listed().slice(0, 5)).toEqual([
       "# Notes",
       "Weekly plan | Home · …call the bank…",
       "Untitled note | Acme Studio",
       "# Groups",
-      "Home | Owner | Current",
+      "Acme Studio | Viewer",
     ])
-    expect(listed()).toContain("New note | In Home")
+    await type("home")
+    expect(listed()).toContain("Home | Owner | Current")
+    await type("theme")
+    expect(listed().filter((row) => row.startsWith("# ")).slice(-2)).toEqual([
+      "# Commands",
+      "# Create",
+    ])
   })
 
-  it("highlights the strongest match first across groups and commands", async () => {
-    const TEAM = { id: "group-team", name: "Acme design team", role: GroupRole.EDITOR }
-    const PARK = { id: "group-park", name: "Park rangers", role: GroupRole.EDITOR }
-    await mount({ groups: [HOME, TEAM, PARK] }, () => ({ notes: [], onDevice: false }))
+  it("lists at most six commands, the Best match among them, each naming its section", async () => {
+    await mount({}, () => ({ notes: [], onDevice: false }))
     await open()
-    const highlighted = () => text(find("[data-e2e=search] [role=option][aria-selected=true]"))
 
-    for (const query of ["тема", "ntvf"]) {
-      await type(query)
-      expect(highlighted()).toMatch(/^Theme \|/)
-      expect(listed()).toContain("Acme design team | Editor")
+    // "settings" is an alias of the Theme command and of every one of the seven profile sections.
+    await type("settings")
+    const rows = listed()
+    // The Best match is the first of the six, taken out from under Commands.
+    const commands = rows.slice(1, rows.indexOf("# Create"))
+      .filter((row) => !row.startsWith("# "))
+    expect(rows[0]).toBe("# Best match")
+    expect(commands.length).toBe(6)
+    for (const row of commands) expect(row).toMatch(/\| Settings( · | \||$)/)
+  })
+
+  it("pins the page's Delete command as Best match above a note whose text matches, and picks it on Enter", async () => {
+    const WELCOME = {
+      id: "note-welcome",
+      groupId: HOME.id,
+      title: "Welcome",
+      snippet: "…delete it…",
     }
+    const { picked } = await mount(
+      { pageCommands: [{ id: "note-delete", label: "Delete this note" }] },
+      () => ({ notes: [WELCOME], onDevice: false }),
+    )
+    await open()
 
-    await type("dark")
-    expect(highlighted()).toMatch(/^Theme \|/)
-    expect(listed()).toContain("Park rangers | Editor")
+    await type("delete this")
+    expect(listed().slice(0, 4)).toEqual([
+      "# Best match",
+      "Delete this note | This page",
+      "# Notes",
+      "Welcome | Home · …delete it…",
+    ])
+    await enter()
 
-    await type("design team")
-    expect(highlighted()).toBe("Acme design team | Editor")
+    expect(picked).toEqual([{ kind: "command", id: "note-delete" }])
+  })
+
+  it("pins no Best match for a query that starts no command's name", async () => {
+    await mount({}, () => ({ notes: [PLAN], onDevice: false }))
+    await open()
+
+    await type("weekly")
+
+    expect(listed()[0]).toBe("# Notes")
+    expect(listed()).not.toContain("# Best match")
+  })
+
+  it("pins Theme → Dark as Best match for dark, and Enter turns the theme dark with the palette open", async () => {
+    const { picked } = await mount({}, () => ({ notes: [], onDevice: false }))
+    const dialog = find<HTMLDialogElement>("dialog[data-e2e=search]")
+    await open()
+
+    for (const query of ["dark", "dark mode", "тёмная"]) {
+      await type(query)
+      expect(listed().slice(0, 2)).toEqual(["# Best match", "Theme → Dark | Settings"])
+    }
+    await enter()
+
+    expect(picked).toEqual([{ kind: "theme", theme: "dark" }])
+    expect(dialog.open).toBe(true)
+  })
+
+  it("lists no theme row before anything is typed", async () => {
+    await mount()
+    await open()
+
+    expect(listed().some((row) => row.startsWith("Theme →"))).toBe(false)
   })
 
   it("names no group in a found note's row when the person has one group", async () => {
@@ -399,7 +480,7 @@ describe("SearchPalette", () => {
     await open()
 
     await fill("groceries")
-    await until(() => listed()[0] === "# Create")
+    await until(quickCreateListed)
 
     expect(listed()).toEqual([
       "# Create",
@@ -437,7 +518,7 @@ describe("SearchPalette", () => {
     await open()
 
     await fill("snorkel")
-    await until(() => listed()[0] === "# Create")
+    await until(quickCreateListed)
 
     expect(listed().some((row) => row.startsWith("Nothing"))).toBe(false)
     expect(document.querySelector("[data-e2e=search] [role=option][aria-disabled=true]")).toBeNull()
@@ -464,7 +545,7 @@ describe("SearchPalette", () => {
     await open()
 
     await fill(long)
-    await until(() => listed()[0] === "# Create")
+    await until(quickCreateListed)
     await enter()
 
     expect(listed()[1]).toBe(`New note: “${isolated(`${"🛒".repeat(40)}…`)}” | In Home`)
@@ -476,7 +557,7 @@ describe("SearchPalette", () => {
     await open()
 
     await fill(`<img src=x onerror=alert(1)>`)
-    await until(() => listed()[0] === "# Create")
+    await until(quickCreateListed)
 
     expect(listed()[1]).toBe(`New note: “${isolated(`<img src=x onerror=alert(1)>`)}” | In Home`)
     expect(document.querySelector("[data-e2e=search] img")).toBeNull()
@@ -500,7 +581,7 @@ describe("SearchPalette", () => {
     for (const ctrlKey of [false, true]) {
       await open()
       await fill("  groceries ")
-      await until(() => listed()[0] === "# Create")
+      await until(quickCreateListed)
       await enter(ctrlKey)
     }
     expect(picked).toEqual([
@@ -519,13 +600,7 @@ describe("SearchPalette", () => {
     await type("tag")
 
     expect(asked).toEqual([])
-    expect(before.slice(0, 5)).toEqual([
-      "# Go to",
-      "Overview",
-      "Groups",
-      "Notifications",
-      "Profile",
-    ])
+    expect(before).toEqual(["# Create", "New group"])
     for (const row of [...before, ...notesQuery, ...listed()]) {
       expect(row).not.toMatch(/^(# Notes|Notes|Tags|New note|New tag)\b/)
     }
@@ -537,7 +612,7 @@ describe("SearchPalette", () => {
 
     await type("download")
 
-    expect(listed()).toContain("Download my data | A ZIP of your profile and groups")
+    expect(listed()).toContain("Download my data | Settings · A ZIP of your profile and groups")
   })
 
   it("lists Download my data and Change profile picture while files are on", async () => {
@@ -553,7 +628,7 @@ describe("SearchPalette", () => {
     await open()
 
     await fill("7")
-    await until(() => listed()[0] === "# Create")
+    await until(quickCreateListed)
 
     expect(listed()).toEqual(["# Create", `New group: “${isolated("7")}”`])
   })
@@ -574,7 +649,7 @@ describe("SearchPalette", () => {
 
     // A letter can start a word in the other layout or alphabet ("q" is "й"), a digit cannot.
     await fill("7")
-    await until(() => listed()[0] === "# Create")
+    await until(quickCreateListed)
 
     expect(asked).toEqual([""])
     expect(listed()[0]).toBe("# Create")
@@ -664,7 +739,7 @@ describe("SearchPalette", () => {
       await open()
       await type(query)
       const row = [...document.querySelectorAll("[role=option]")]
-        .find((candidate) => text(candidate) === label)
+        .find((candidate) => text(candidate) === `${label} | Account`)
       expect(row, query).toBeDefined()
       await act(() => {
         row!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
@@ -685,7 +760,7 @@ describe("SearchPalette", () => {
       await mount(props)
       await open()
       await type("two-factor")
-      const found = listed().includes("Turn off two-factor sign-in")
+      const found = listed().includes("Turn off two-factor sign-in | Account")
       await act(() => render(null, root!))
       return found
     }
@@ -697,6 +772,7 @@ describe("SearchPalette", () => {
   it("lists Delete my account and Sign out of all other devices for a guest too", async () => {
     await mount({ guest: true })
     await open()
+    await type(">")
     expect(listed()).toEqual(expect.arrayContaining([
       "Delete my account",
       "Sign out of all other devices",
@@ -797,6 +873,7 @@ describe("SearchPalette", () => {
       ],
     })
     await open()
+    await type(">")
     const keys = (label: string) =>
       [...document.querySelectorAll("[role=option]")]
         .find((candidate) => text(candidate).startsWith(label))
@@ -829,16 +906,17 @@ describe("SearchPalette", () => {
   it("applies Dark from the Theme submenu at once and keeps the palette open", async () => {
     const { picked } = await mount()
     const dialog = find<HTMLDialogElement>("dialog[data-e2e=search]")
+    /** Clicks the row whose label is `label`. */
     const pick = async (label: string) => {
       const row = [...document.querySelectorAll("[role=option]")]
-        .find((candidate) => text(candidate).startsWith(label))!
+        .find((candidate) => text(candidate).split(" | ")[0] === label)!
       await act(() => {
         row.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
       })
       await settle()
     }
     await open()
-    await type("dark")
+    await type("color scheme")
 
     await pick("Theme")
     await pick("Dark")
@@ -921,14 +999,13 @@ describe("SearchPalette records", () => {
     expect(under("Accounts")).toEqual(["Savings account | $1,200"])
   })
 
-  it("lists a source after the groups and commands, even when its record matches best", async () => {
+  it("lists a source after the commands and before Create, even when its record matches best", async () => {
     await mount({ records: [accounts([{ id: "t", label: "Theme", href: "/accounts/t" }])] })
     await open()
     await type("theme")
 
     const headings = listed().filter((row) => row.startsWith("# "))
-    expect(headings.length).toBeGreaterThan(1)
-    expect(headings.at(-1)).toBe("# Accounts")
+    expect(headings.slice(-3)).toEqual(["# Commands", "# Accounts", "# Create"])
   })
 
   it("opens a picked record's page", async () => {
@@ -996,5 +1073,154 @@ describe("SearchPalette records", () => {
 
     await pick("Savings goal")
     expect(picked).toEqual([{ kind: "page", href: "/goals/a1" }])
+  })
+})
+
+describe("SearchPalette Recent", () => {
+  const KEY = "palette-recent"
+  /** A key-value store in memory, as the app's `browserStorage()` is. */
+  const memory = (initial: Record<string, string> = {}) => {
+    const entries = new Map(Object.entries(initial))
+    return {
+      entries,
+      getItem: (key: string) => entries.get(key) ?? null,
+      setItem: (key: string, value: string) => void entries.set(key, value),
+      removeItem: (key: string) => void entries.delete(key),
+    }
+  }
+  const recentOf = (store: ReturnType<typeof memory>) => ({ storageKey: KEY, storage: () => store })
+  const kept = (ids: readonly string[]) => memory({ [KEY]: JSON.stringify(ids) })
+  /** The rows listed under "Recent", or none. */
+  const recentRows = () => {
+    const rows = listed()
+    if (rows[0] !== "# Recent") return []
+    const end = rows.findIndex((row, index) => index > 0 && row.startsWith("# "))
+    return rows.slice(1, end === -1 ? undefined : end)
+  }
+
+  it("lists a Go to or Settings command picked before under Recent, once, with nothing typed", async () => {
+    const store = memory()
+    await mount({ recent: recentOf(store) })
+    await open()
+    await type("notifications")
+    await enter()
+    await open()
+
+    expect(store.entries.get(KEY)).toBe(`["action-notifications"]`)
+    expect(recentRows()).toEqual(["Notifications"])
+    expect(listed().filter((row) => row === "Notifications")).toHaveLength(1)
+    expect(listed()).not.toContain("# Go to")
+  })
+
+  it("lists at most five recent picks, newest first, and no other heading for the rest", async () => {
+    await mount({
+      recent: recentOf(
+        kept([
+          `action-profile`,
+          `action-shortcuts`,
+          `note-${PLAN.id}`,
+          `group-${STUDIO.id}`,
+          `action-sign-out`,
+          `action-notifications`,
+        ]),
+      ),
+    })
+    await open()
+
+    expect(recentRows()).toEqual([
+      "Profile",
+      "Keyboard shortcuts",
+      "Weekly plan | …call the bank…",
+      "Acme Studio | Viewer",
+      "Sign out",
+    ])
+    expect(listed().filter((row) => row.startsWith("# "))).toEqual([
+      "# Recent",
+      "# Notes",
+      "# Create",
+    ])
+  })
+
+  it("skips a recent pick that no row has any more", async () => {
+    await mount({ recent: recentOf(kept([`action-gone`, `group-deleted`, `action-profile`])) })
+    await open()
+
+    expect(recentRows()).toEqual(["Profile"])
+  })
+
+  it("lists no Recent heading while storage refuses the read, holds broken JSON, or nothing is kept", async () => {
+    const refusing = {
+      storageKey: KEY,
+      storage: () => {
+        throw new DOMException("blocked", "SecurityError")
+      },
+    }
+    for (const recent of [refusing, recentOf(memory({ [KEY]: "{not json" })), recentOf(memory())]) {
+      await mount({ recent })
+      await open()
+      expect(listed()[0]).toBe("# Notes")
+      await act(() => render(null, root!))
+    }
+  })
+
+  it("reads the stored picks as strings only, and none from anything but an array", () => {
+    const read = (raw: string) => storedRecent(recentOf(memory({ [KEY]: raw })))
+    expect(read(`["a", 1, null, "b"]`)).toEqual(["a", "b"])
+    expect(read(`{"a": 1}`)).toEqual([])
+    expect(storedRecent(undefined)).toEqual([])
+  })
+})
+
+describe("SearchPalette notes that answer late", () => {
+  /** A note search whose typed answer waits until `answer` is called. */
+  const late = () => {
+    let answer = (_notes: SearchNotesAnswer) => {}
+    const search = (query: string): Promise<SearchNotesAnswer> =>
+      query === ""
+        ? Promise.resolve({ notes: [], onDevice: false })
+        : new Promise((resolve) => answer = resolve)
+    return { search, answer: (notes: SearchNotesAnswer) => answer(notes) }
+  }
+  const highlighted = () => text(find("[data-e2e=search] [role=option][aria-selected=true]"))
+
+  it("lists the groups, commands and Create at once, then adds the notes above them without moving the highlighted row", async () => {
+    const notes = late()
+    await mount({}, notes.search)
+    await open()
+
+    await type("new")
+    expect(listed().slice(0, 2)).toEqual(["# Best match", "New note | In Home"])
+    expect(listed()).not.toContain("# Notes")
+    await act(() => {
+      find("[data-e2e=search] input").dispatchEvent(
+        new window.KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          bubbles: true,
+        }) as unknown as Event,
+      )
+    })
+    const before = highlighted()
+
+    await act(() => notes.answer({ notes: [{ ...PLAN, title: "New plan" }], onDevice: false }))
+    await until(() => listed().includes("# Notes"))
+
+    expect(listed().slice(0, 4)).toEqual([
+      "# Best match",
+      "New note | In Home",
+      "# Notes",
+      "New plan | Home · …call the bank…",
+    ])
+    expect(highlighted()).toBe(before)
+  })
+
+  it("picks from the early answer on Enter without waiting for the notes", async () => {
+    const notes = late()
+    const { picked } = await mount({}, notes.search)
+    await open()
+
+    await type("new")
+    await enter()
+
+    expect(picked).toEqual([{ kind: "new-note" }])
   })
 })
