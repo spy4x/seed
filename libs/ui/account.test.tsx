@@ -28,7 +28,15 @@ import { createFormatters } from "@spy4x/time/format"
 import { AppFrame, PublicFrame } from "./frame.tsx"
 import { railFocusRing } from "@spy4x/preact-system/rail"
 import { ProfileScreen, type ProfileScreenProps } from "./profile-screen.tsx"
-import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "./progressive.tsx"
+import {
+  GROUP_PATHS,
+  NOTE_PATHS,
+  OVERVIEW_PATHS,
+  profilePath,
+  SCREEN_PATHS,
+  TAG_PATHS,
+} from "./progressive.tsx"
+import { SHORTCUT_GROUPS, type ShortcutRow } from "./shortcuts.tsx"
 import { TwoFactorProof } from "./two-factor.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -557,6 +565,99 @@ describe("AppFrame", () => {
     )
     expect(menuItems(ACCOUNT)).toEqual([HEADER, "Tags", "Sign out"])
     expect(document.querySelector("[data-e2e=app-shell-sheet-theme]")).toBe(null)
+  })
+
+  describe("the keys of each destination", () => {
+    /** The app's `g` rows, as the SPA builds them: each names the page it opens. */
+    const go = (keys: string, href: string): ShortcutRow => ({
+      keys,
+      description: keys,
+      group: SHORTCUT_GROUPS.goTo,
+      run: () => {},
+      href,
+    })
+    const rows = [
+      go("g o", OVERVIEW_PATHS.root),
+      go("g n", NOTE_PATHS.list),
+      go("g t", TAG_PATHS.list),
+      go("g a", GROUP_PATHS.activity("g-1")),
+      go("g g", SCREEN_PATHS.groups),
+      go("g i", SCREEN_PATHS.notifications),
+      go("g p", SCREEN_PATHS.profile),
+    ]
+    const frame = (singleKeys: boolean, selectedId: string | null = "g-1") => (
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        unreadCount={0}
+        groupPicker={{ groups, selectedId, onSelect: () => {} }}
+        shortcuts={{
+          rows,
+          open: false,
+          onOpen: () => {},
+          onClose: () => {},
+          singleKeys,
+          onSingleKeys: () => {},
+          inMenu: true,
+        }}
+      >
+        page
+      </AppFrame>
+    )
+    /** The column's tooltips of its destinations and its bell (in the bottom zone), in order. */
+    const tips = () =>
+      [...document.querySelectorAll(
+        "[data-e2e=rail-shell-column] [data-e2e=rail-shell-entry] ~ [data-e2e=rail-shell-tooltip]",
+      )]
+        .map((tip) => tip.textContent)
+        .filter((tip) => !tip?.startsWith("Search") && !tip?.startsWith("Home"))
+    /** The key hint drawn in the element `selector` finds, or `null` without one. */
+    const hint = (selector: string) =>
+      find(selector).querySelector("[data-hotkey-hint]")?.textContent ?? null
+    const tags = () =>
+      [...menuOf(ACCOUNT).querySelectorAll<HTMLElement>("[role=menuitem]")]
+        .find((item) => item.textContent?.startsWith("Tags"))!
+
+    it("names each one's g keys in its rail tooltip, the bell's too, and announces none of them", async () => {
+      await mount(frame(true))
+      expect(tips()).toEqual([
+        "Overview (G O)",
+        "Notes (G N)",
+        "Activity (G A)",
+        "Groups (G G)",
+        "Notifications (G I)",
+      ])
+      // A sequence is shown but not announced: `aria-keyshortcuts` has no syntax for one.
+      // The account menu's Keyboard shortcuts entry announces `?`, a single press; no destination
+      // and not the bell announces anything.
+      expect(document.querySelectorAll("[data-e2e=rail-shell-entry][aria-keyshortcuts]").length)
+        .toBe(0)
+    })
+
+    it("shows the tags' keys on Tags, and none on the account header, which has no room", async () => {
+      await mount(frame(true))
+      expect(hint("[data-e2e=account-menu-header]")).toBe(null)
+      expect(tags().querySelector("[data-hotkey-hint]")?.textContent).toBe("G then T")
+    })
+
+    it("shows no key anywhere while the single keys are off", async () => {
+      await mount(frame(false))
+      expect(tips()).toEqual(["Overview", "Notes", "Activity", "Groups", "Notifications"])
+      expect(hint("[data-e2e=account-menu-header]")).toBe(null)
+      expect(tags().querySelector("[data-hotkey-hint]")).toBe(null)
+      // `?` is a single key too: the Keyboard shortcuts entry names none either.
+      expect(document.querySelectorAll("[data-hotkey-hint]").length).toBe(0)
+    })
+
+    it("shows no Activity keys while no group with a readable log is selected", async () => {
+      await mount(frame(true, null))
+      expect(tips()).toEqual([
+        "Overview (G O)",
+        "Notes (G N)",
+        "Groups (G G)",
+        "Notifications (G I)",
+      ])
+    })
   })
 
   it("offers no Notes destination and no Tags entry, in the rail, the phone bar or the menu, when the notes are off", async () => {

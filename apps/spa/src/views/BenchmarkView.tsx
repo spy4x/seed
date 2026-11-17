@@ -1,6 +1,7 @@
 import { useSignal } from "@preact/signals"
 import { useEffect, useRef } from "preact/hooks"
 import { copyToClipboard } from "@spy4x/platform/browser/clipboard"
+import { singleKeys } from "@platform/shortcuts.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { rangeForPreset } from "@spy4x/preact-ui/date-range"
 import { useFormat } from "@spy4x/preact-ui/format"
@@ -318,6 +319,7 @@ export function BenchmarkView() {
       json={json.value}
       stoppedRun={stopped.value}
       formError={formError.value}
+      singleKeys={singleKeys.on.value}
       generatorCommand={`${GENERATOR} ${emailStore.status.value?.email ?? `<your e-mail>`}`}
       testArea={shown && (
         <NotesScreen

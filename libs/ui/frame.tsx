@@ -32,7 +32,7 @@ import {
   TAG_PATHS,
 } from "./progressive.tsx"
 import { openSearch, searchHotkeys } from "./search-palette.tsx"
-import { ShortcutsList, type ShortcutsProps } from "./shortcuts.tsx"
+import { entryKeys, ShortcutsList, type ShortcutsProps } from "./shortcuts.tsx"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "./i18n.ts"
 
@@ -41,30 +41,29 @@ import { useAppText } from "./i18n.ts"
  * the phone bar keeps its last slot for the Account sheet. Activity belongs to the selected group and
  * shows only while there is one whose log the person may read. Profile and Tags are in the account
  * menu; Tags is in Notes' "More actions" too. With `notes` off, neither Notes nor Tags shows. Labels
- * come from `t`, the app's translator.
+ * come from `t`, the app's translator. Each entry names the keys `keys` holds for its address
+ * ({@link entryKeys}): its tooltip reads "Notes (G N)".
  */
 export function navItems(
   activityGroupId: string | null,
   t: Translator<string>,
   notes = true,
+  keys: ReadonlyMap<string, readonly string[]> = new Map(),
 ): AppShellItem[] {
+  const item = (key: string, label: string, href: string, Icon: AppShellItem["Icon"]) => ({
+    key,
+    label: t.t(label),
+    href,
+    Icon,
+    keyshortcuts: keys.get(href),
+  })
   return [
-    {
-      key: "overview",
-      label: t.t("Frame.overview"),
-      href: OVERVIEW_PATHS.root,
-      Icon: IconChartPie,
-    },
-    ...(notes
-      ? [{ key: "notes", label: t.t("Frame.notes"), href: NOTE_PATHS.list, Icon: IconDocumentText }]
-      : []),
-    ...(activityGroupId === null ? [] : [{
-      key: "activity",
-      label: t.t("Frame.activity"),
-      href: GROUP_PATHS.activity(activityGroupId),
-      Icon: IconClock,
-    }]),
-    { key: "groups", label: t.t("Frame.groups"), href: SCREEN_PATHS.groups, Icon: IconUsers },
+    item("overview", "Frame.overview", OVERVIEW_PATHS.root, IconChartPie),
+    ...(notes ? [item("notes", "Frame.notes", NOTE_PATHS.list, IconDocumentText)] : []),
+    ...(activityGroupId === null
+      ? []
+      : [item("activity", "Frame.activity", GROUP_PATHS.activity(activityGroupId), IconClock)]),
+    item("groups", "Frame.groups", SCREEN_PATHS.groups, IconUsers),
   ]
 }
 
@@ -198,6 +197,9 @@ export function shortcutsMenuItems(
  * the palette; closing the palette gives focus back to "Account" again.
  *
  * `shortcuts` draws the "Keyboard shortcuts" dialog; the app binds the keys ({@link ShortcutsList}).
+ * A row that opens a page (`href`) names its keys on that page's entry while they work: a rail
+ * cell, the bell or an account menu item ({@link entryKeys}). The account header shows none yet:
+ * the desktop menu is too narrow for its hint beside the name.
  *
  * `search` is drawn once, at the end of the page's column, with no trigger of its own (such as
  * `SearchPalette`, which binds Ctrl K and `/` itself). Both "Search" entries open it by clicking
@@ -259,9 +261,11 @@ export function AppFrame(
   const email = user.email && user.email !== name ? user.email : undefined
   const hasSearch = search !== undefined
   const searchEntries = useSearchEntries(shortcuts?.singleKeys ?? true, t.t("Frame.search"))
+  // The keys of the `g` rows that work now, shown on the entry each opens.
+  const keys = entryKeys(shortcuts?.rows ?? [], shortcuts?.singleKeys ?? true)
   return (
     <AppShell
-      items={navItems(activityGroupId, t, notes)}
+      items={navItems(activityGroupId, t, notes, keys)}
       currentPath={currentPath}
       navigate={navigate}
       switcher={groupPicker || hasSearch
@@ -280,14 +284,22 @@ export function AppFrame(
               </div>
             ))
         : undefined}
-      notifications={unreadCount === undefined
-        ? undefined
-        : { href: SCREEN_PATHS.notifications, unread: unreadCount }}
+      notifications={unreadCount === undefined ? undefined : {
+        href: SCREEN_PATHS.notifications,
+        unread: unreadCount,
+        keyshortcuts: keys.get(SCREEN_PATHS.notifications),
+      }}
       account={{
         user: { name, email, avatarUrl: user.avatarUrl },
         headerHref: SCREEN_PATHS.profile,
         items: [
-          ...(notes ? [{ label: t.t("Frame.tags"), href: TAG_PATHS.list }] : []),
+          ...(notes
+            ? [{
+              label: t.t("Frame.tags"),
+              href: TAG_PATHS.list,
+              keyshortcuts: keys.get(TAG_PATHS.list),
+            }]
+            : []),
           ...shortcutsMenuItems(shortcuts, t.t("Frame.shortcuts")),
         ],
         signOut: { label: t.t("Frame.signOut"), onClick: onSignOut },

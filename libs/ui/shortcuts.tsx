@@ -23,6 +23,26 @@ export interface ShortcutRow {
   group: string
   /** What the keys do. Left out, the row is listed only. */
   run?: () => void
+  /**
+   * The page the keys open, such as `"/notes"` for `g n`. `AppFrame` shows the keys on the
+   * navigation entry with this address while they work ({@link entryKeys}).
+   */
+  href?: string
+}
+
+/**
+ * The keys of each page a row opens ({@link ShortcutRow.href}), by its address, counting only the
+ * rows that work now: none of the single keys while they are off (preact-ui's `activeShortcuts`).
+ */
+export function entryKeys(
+  rows: readonly ShortcutRow[],
+  singleKeys: boolean,
+): ReadonlyMap<string, readonly string[]> {
+  const keys = new Map<string, string[]>()
+  for (const row of activeShortcuts(rows, singleKeys)) {
+    if (row.href !== undefined) keys.set(row.href, [...keys.get(row.href) ?? [], row.keys])
+  }
+  return keys
 }
 
 /**

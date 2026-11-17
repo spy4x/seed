@@ -39,7 +39,13 @@ async function smallGroup(page: Page, name: string, count: number): Promise<stri
   return id
 }
 
-test("runs every measure on a small group and gives one results line without the person in it", async ({ page, request }) => {
+/** Presses a key on the page itself, with nothing focused, as a person who clicked the page. */
+async function pressOnPage(page: Page, key: string): Promise<void> {
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+  await page.keyboard.press(key)
+}
+
+test("runs every measure on a small group with r and gives one results line without the person in it, and r runs nothing with the single keys off", async ({ page, request }) => {
   const email = `bench-${uuidV7()}@example.com`
   try {
     const signedUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
@@ -57,7 +63,9 @@ test("runs every measure on a small group and gives one results line without the
       `deno task load:group M --member ${email}`,
     )
     await page.locator("[data-e2e=benchmark-group]").selectOption(groupId)
-    await page.locator("[data-e2e=benchmark-run]").click()
+    // `r` presses Run while the single keys are on, as the button's key hint says.
+    await expect(page.locator("[data-e2e=benchmark-run] [data-hotkey-hint]")).toHaveText("R")
+    await pressOnPage(page, "r")
     await expect(page.locator("[data-e2e=benchmark-stop]")).toBeFocused()
 
     await expect(page.locator("[data-e2e=benchmark-summary]")).toBeFocused({ timeout: 60_000 })
@@ -74,6 +82,19 @@ test("runs every measure on a small group and gives one results line without the
     expect(results.errors).toEqual([])
     expect(line).not.toContain(email)
     expect(line).not.toContain(groupId)
+
+    // With the single keys off, `r` runs nothing and Run again shows no key.
+    await pressOnPage(page, "?")
+    const list = page.getByRole("dialog", { name: "Keyboard shortcuts" })
+    await list.getByRole("switch", { name: "Single-key shortcuts" }).click()
+    await page.keyboard.press("Escape")
+    await expect(list).toBeHidden()
+    await expect(page.locator("[data-e2e=benchmark-run-again] [data-hotkey-hint]")).toHaveCount(0)
+    await pressOnPage(page, "r")
+    // A run would draw Stop in the same task as the key press; give it a frame to show.
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(done)))
+    await expect(page.locator("[data-e2e=benchmark-stop]")).toHaveCount(0)
+    await expect(page.locator("[data-e2e=benchmark-run-again]")).toBeVisible()
   } finally {
     await cleanup(request, email)
   }

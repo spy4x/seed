@@ -45,6 +45,25 @@ describe("SPA keyboard shortcuts", () => {
     ])
   })
 
+  it("names on each g row the page it opens, so the frame shows its keys on that page's entry", () => {
+    const { list, seen } = rows("0190a000-0000-7000-8000-000000000001")
+    const goTo = list.filter((row) => row.keys.startsWith("g "))
+    for (const row of goTo) row.run!()
+    expect(goTo.map((row) => row.href)).toEqual(seen.navigated)
+    expect(list.filter((row) => !row.keys.startsWith("g ") && row.href !== undefined)).toEqual([])
+  })
+
+  it("lists the benchmark's r and c while it is open without binding them, since its buttons do", () => {
+    const page = spaShortcutRows({
+      navigate: () => {},
+      openShortcuts: () => {},
+      openNewNote: () => {},
+      activityGroupId: null,
+      benchmarkPage: true,
+    }).filter((row) => row.group === SHORTCUT_GROUPS.page)
+    expect(page.map((row) => [row.keys, row.run])).toEqual([["r", undefined], ["c", undefined]])
+  })
+
   it("lists Activity only while the rail shows it", () => {
     expect(rows(null).list.some((row) => row.keys === "g a")).toBe(false)
   })
@@ -235,7 +254,7 @@ function commandsFor(page: "none" | "overview" | "benchmark") {
     openNewNote: () => {},
     activityGroupId: "0190a000-0000-7000-8000-000000000001",
     overviewPage: page === "overview" ? { openRange: () => {}, openCustomise: () => {} } : null,
-    benchmarkPage: page === "benchmark" ? { run: () => {}, copy: () => {} } : null,
+    benchmarkPage: page === "benchmark",
   })
   const open = { overview: page === "overview", benchmark: page === "benchmark", noteEditor: null }
   const commands = paletteCommands({

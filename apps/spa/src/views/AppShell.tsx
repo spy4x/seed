@@ -281,7 +281,7 @@ export function AppShell(
     openNewNote: newNoteStore.show,
     activityGroupId,
     overviewPage: overviewPageActions.value,
-    benchmarkPage: benchmarkPageActions.value,
+    benchmarkPage: benchmarkPageActions.value !== null,
     notes,
   })
   useShortcuts(rows, singleKeys.on.value)
