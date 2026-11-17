@@ -242,8 +242,8 @@ export function storedRecent(recent: CommandPaletteRecent | undefined): string[]
 /**
  * The rows the empty query adds so "Recent" can show them: of `candidates`, those among the first
  * {@link RECENT_SHOWN} recent picks that `listed` does not hold already. `CommandPalette` pins a
- * recent pick only when the answer lists it, and takes it out of its own heading, so a recent Go to
- * or Settings pick shows under Recent alone. An id no row has any more is skipped.
+ * recent pick only when the answer lists it, and takes it out of its own heading, so a recent
+ * Go to, Settings or theme pick shows under Recent alone. An id no row has any more is skipped.
  *
  * @param ids The recent picks, newest first.
  * @param listed The rows the empty query lists anyway.
@@ -269,7 +269,7 @@ export function recentExtras<T extends { id: string }>(
  * binding and one dialog at every width.
  *
  * Before anything is typed it lists, under "Recent", the last picks `recent` keeps (pinned by
- * `CommandPalette`, at most five, Go to and Settings commands too), then the first
+ * `CommandPalette`, at most five, Go to and Settings commands and theme rows too), then the first
  * {@link EMPTY_COMMANDS} of This page, the current group's {@link RECENT_NOTES} most recent notes,
  * and the first {@link EMPTY_COMMANDS} of Create.
  *
@@ -281,9 +281,10 @@ export function recentExtras<T extends { id: string }>(
  * and last Create: its commands that match, then the quick-create rows ({@link quickCreateRows}),
  * where Enter opens the create form with the text filled in and Ctrl Enter (⌘Enter) creates the
  * item and opens it. Each section is ranked by the palette's matcher (`matchOptions`: aliases, word
- * order, one typo, the other keyboard layout and alphabet). Everything is listed in one answer, once
- * the notes are found, so an Enter pressed before it waits for the notes. A query that starts with ">" lists only the commands: every one under its
- * section for ">" alone, else those that match the rest.
+ * order, one typo, the other keyboard layout and alphabet). Everything is listed in one answer,
+ * once the notes are found, so an Enter pressed before it waits for the notes. A query that starts
+ * with ">" lists only the commands: every one under its section for ">" alone, else those that
+ * match the rest.
  *
  * When the notes come from the device, their heading says so, and when none of them matched, a
  * dimmed row says that only this device was searched; a query too short to search notes gets a
