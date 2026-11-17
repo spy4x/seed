@@ -101,11 +101,9 @@ test.describe("the palette's commands", () => {
       await gotoApp(page, "/groups", page.locator("[data-e2e=shell-ws-status]"))
       await page.keyboard.press("Control+k")
       await expect(field).toBeFocused()
+      // "Theme → Dark" is the Best match for "dark": Enter turns the page dark at once.
       await field.fill("dark")
-      await page.keyboard.press("Enter")
-      await expect(palette.getByRole("option", { name: /Dark/ })).toBeVisible()
-      await expect(html).not.toHaveClass(/\bdark\b/)
-      await field.fill("dark")
+      await expect(palette.getByRole("option").first()).toContainText("Theme → Dark")
       await page.keyboard.press("Enter")
 
       await expect(html).toHaveClass(/\bdark\b/)
