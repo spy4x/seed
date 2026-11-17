@@ -2,7 +2,12 @@ import type { JSX } from "preact"
 import { createPortal } from "preact/compat"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { useFormat } from "@spy4x/preact-ui/format"
-import { CommandPalette, type CommandPaletteLabels } from "@spy4x/preact-ui/command-palette"
+import {
+  CommandPalette,
+  type CommandPaletteLabels,
+  type CommandPaletteRecent,
+  type CommandPaletteSelectDetails,
+} from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { searchEntries } from "@spy4x/platform/universal/text"
@@ -21,6 +26,8 @@ import {
   quickCreateRows,
   quoted,
   type SearchChoice,
+  themeRows,
+  withRun,
 } from "./palette-commands.ts"
 import { useAppText } from "./i18n.ts"
 
@@ -107,6 +114,11 @@ export interface SearchPaletteProps {
    * query.
    */
   records?: readonly PaletteRecordSource[]
+  /**
+   * Where the palette keeps the person's last picks, listed under "Recent" before anything is
+   * typed. Left out, nothing is remembered. The app clears it on sign-out.
+   */
+  recent?: CommandPaletteRecent
 }
 
 /**
@@ -190,6 +202,15 @@ export const NOTE_QUERY_MIN = 2
 /** How many of the current group's notes the palette lists before anything is typed. */
 export const RECENT_NOTES = 5
 
+/** How many of This page's and of Create's commands the palette lists before anything is typed. */
+export const EMPTY_COMMANDS = 3
+
+/** How many commands a typed query lists under "Commands", best first. */
+export const TYPED_COMMANDS = 6
+
+/** How many recent picks `CommandPalette` pins under "Recent" (its own `RECENT_SHOWN`). */
+const RECENT_SHOWN = 5
+
 /** The palette's fixed words, the admin's too. */
 export function paletteLabels(
   t: Translator<string>,
@@ -204,6 +225,42 @@ export function paletteLabels(
 }
 
 /**
+ * The ids of the recent picks `recent` keeps, newest first, as `CommandPalette` stores them: none
+ * when it is left out, its storage refuses the read, or it holds anything but a JSON array. Entries
+ * that are not strings are skipped. Never throws.
+ */
+export function storedRecent(recent: CommandPaletteRecent | undefined): string[] {
+  if (recent === undefined) return []
+  try {
+    const parsed: unknown = JSON.parse(recent.storage().getItem(recent.storageKey) ?? `[]`)
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === `string`) : []
+  } catch (_error) {
+    return []
+  }
+}
+
+/**
+ * The rows the empty query adds so "Recent" can show them: of `candidates`, those among the first
+ * {@link RECENT_SHOWN} recent picks that `listed` does not hold already. `CommandPalette` pins a
+ * recent pick only when the answer lists it, and takes it out of its own heading, so a recent
+ * Go to, Settings or theme pick shows under Recent alone. An id no row has any more is skipped.
+ *
+ * @param ids The recent picks, newest first.
+ * @param listed The rows the empty query lists anyway.
+ * @param candidates Every other row a recent pick may name.
+ */
+export function recentExtras<T extends { id: string }>(
+  ids: readonly string[],
+  listed: readonly T[],
+  candidates: readonly T[],
+): T[] {
+  // A listed row wins over a candidate with its id: that is the one the palette pins.
+  const byId = new Map([...candidates, ...listed].map((option) => [option.id, option]))
+  const pinned = ids.flatMap((id) => byId.get(id) ?? []).slice(0, RECENT_SHOWN)
+  return pinned.filter((option) => !listed.includes(option))
+}
+
+/**
  * The search of the signed-in shell, opened with Ctrl K (⌘K on a Mac) or `/` from every page, at
  * every width. It draws no trigger of its own: the frame's "Search" entries, in the rail and in the
  * phone's Account sheet, open it by clicking its hidden one ({@link openSearch}). So the hotkeys
@@ -211,19 +268,29 @@ export function paletteLabels(
  * always drawn, as what has to be on screen (`clickByHotkey`'s `shown`). One palette, so one
  * binding and one dialog at every width.
  *
- * Before anything is typed it lists the current group's most recent notes, then the commands of
- * {@link paletteCommands}. A query lists the notes that match (from `searchNotes`), then the
- * person's groups and the commands that match, ranked together as the palette ranks a submenu
- * (`matchOptions`: aliases, word order, one typo, the other keyboard layout and alphabet), so the
- * strongest match is the first row after the notes and its heading comes first. Then each of the
- * product's `records` sources that matches, under its own heading. Any typed text also gets the
- * Create section's quick-create rows ({@link quickCreateRows}): Enter opens the create form with
- * the text filled in, and Ctrl Enter (⌘Enter) creates the item and opens it.
+ * Before anything is typed it lists, under "Recent", the last picks `recent` keeps (pinned by
+ * `CommandPalette`, at most five, Go to and Settings commands and theme rows too), then the first
+ * {@link EMPTY_COMMANDS} of This page, the current group's {@link RECENT_NOTES} most recent notes,
+ * and the first {@link EMPTY_COMMANDS} of Create.
+ *
+ * A query lists, first and under "Best match", the first command whose name or alias starts with
+ * it, such as "Delete this note" for "delete this" (pinned by `CommandPalette`). Then the notes
+ * that match (from `searchNotes`), the person's groups, at most {@link TYPED_COMMANDS} commands of
+ * {@link paletteCommands} and the theme rows ({@link themeRows}) under one "Commands" heading, each
+ * naming its section in its detail, each of the product's `records` sources under its own heading,
+ * and last Create: its commands that match, then the quick-create rows ({@link quickCreateRows}),
+ * where Enter opens the create form with the text filled in and Ctrl Enter (⌘Enter) creates the
+ * item and opens it. Each section is ranked by the palette's matcher (`matchOptions`: aliases, word
+ * order, one typo, the other keyboard layout and alphabet). Everything is listed in one answer,
+ * once the notes are found, so an Enter pressed before it waits for the notes. A query that starts
+ * with ">" lists only the commands: every one under its section for ">" alone, else those that
+ * match the rest.
+ *
  * When the notes come from the device, their heading says so, and when none of them matched, a
  * dimmed row says that only this device was searched; a query too short to search notes gets a
- * dimmed row that says so too ({@link notesHint}). Enter on a
- * group makes it the current one, and Ctrl Enter (⌘Enter) opens its settings. Theme opens a
- * submenu whose rows change the theme at once and keep the palette open.
+ * dimmed row that says so too ({@link notesHint}). Enter on a group makes it the current one, and
+ * Ctrl Enter (⌘Enter) opens its settings. Theme opens a submenu whose rows change the theme at
+ * once and keep the palette open.
  */
 export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   const root = useRef<HTMLDivElement>(null)
@@ -241,6 +308,9 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   // Sizes in an action's detail follow the person's region format, as their dates do.
   const region = useRef(``)
   region.current = useFormat().locale
+  // The recent picks as storage held them when the palette opened, which is when `CommandPalette`
+  // reads them for its Recent heading too.
+  const recentIds = useRef<string[]>([])
   // The palette's own status line says nothing for a failed note search, since the rest of the
   // list is still answered, so this line says it. It sits inside the palette's dialog: the page
   // outside an open modal dialog is inert, and a screen reader would not hear a change there.
@@ -248,47 +318,97 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   const [dialog, setDialog] = useState<HTMLDialogElement | null>(null)
   useEffect(() => setDialog(root.current?.querySelector(`dialog`) ?? null), [])
 
+  /** A command's pick, after the palette has closed or with it open for a kept-open row. */
+  const pick = (choice: SearchChoice, details: CommandPaletteSelectDetails) =>
+    latest.current.onSelect(pickedChoice(choice, details.alternative))
+  const runnable = (option: PaletteOption) => withRun(option, pick)
+
   const search = async (query: string, signal: AbortSignal): Promise<PaletteOption[]> => {
     const { groups, currentGroup } = latest.current
     const t = words.current
     const text = query.trim()
+    const registry = context(t)
+    const heading = {
+      page: t.t(`Shortcuts.page`),
+      create: t.t(`Search.create`),
+      settings: t.t(`Search.settings`),
+    }
+    const commands = paletteCommands(registry, select).map(runnable)
+    const themes = themeRows(
+      t,
+      registry.theme,
+      heading.settings,
+      (theme) => select({ kind: "theme", theme }),
+    )
+    const create = commands.filter((option) => option.group === heading.create)
+    const others = [...commands.filter((option) => option.group !== heading.create), ...themes]
+    const groupRows = groups.map((group) =>
+      runnable(groupRow(t, group, roleName(t, group.role), group.id === currentGroup?.id))
+    )
+    /** The commands `needle` matches, best first, at most {@link TYPED_COMMANDS}, then Create's. */
+    const matched = (needle: string) => [
+      ...underCommands(t, matchCommands(others, needle, TYPED_COMMANDS)),
+      ...matchCommands(create, needle, create.length),
+    ]
+
+    if (text.startsWith(`>`)) {
+      const rest = text.slice(1).trim()
+      return rest === `` ? commands : matched(rest)
+    }
+
     const notesOn = latest.current.notes ?? true
     const asksNotes = notesOn && (text === "" || Array.from(text).length >= NOTE_QUERY_MIN)
     // A failed note search shows under Notes and keeps the rest of the list. A stale answer,
     // failed or not, the palette drops.
     let failed = false
-    const answer = asksNotes
-      ? await latest.current.searchNotes(text, signal).catch(() => {
+    const notesFound = async (): Promise<SearchNotesAnswer> => {
+      if (!asksNotes) return { notes: [], onDevice: false }
+      const answer = await latest.current.searchNotes(text, signal).catch(() => {
         failed = true
         return { notes: [], onDevice: false }
       })
-      : { notes: [], onDevice: false }
-    // Said only when the error row is listed: for the empty query it is not.
-    if (!signal.aborted) setNotesError(failed && text !== `` ? t.t(`Search.error`) : ``)
-    // The recent notes are all the current group's, so only a query's rows name their group.
-    const namesGroup = text !== "" && groups.length > 1
-    const groupName = new Map(groups.map((group) => [group.id, group.name]))
-    const notesHeading = answer.onDevice ? t.t(`Search.notesOnDevice`) : t.t(`Search.notes`)
-    const notes = answer.notes.slice(0, text === "" ? RECENT_NOTES : undefined).map((
-      note,
-    ): PaletteOption => ({
-      id: `note-${note.id}`,
-      label: note.title.trim() || t.t(`Search.untitled`),
-      detail: noteDetail(note, namesGroup ? groupName.get(note.groupId) : undefined),
-      group: notesHeading,
-      choice: { kind: "note", noteId: note.id, groupId: note.groupId },
-    }))
-    const groupRows = text === ""
-      ? []
-      : groups.map((group) =>
-        groupRow(t, group, roleName(t, group.role), group.id === currentGroup?.id)
-      )
-    // Groups and commands are ranked together, so the strongest match of either is highlighted
-    // first; the palette lists each heading where its first row falls.
-    const rows = [...groupRows, ...paletteCommands(context(t), select)]
-    const matched = matchCommands(rows, text, rows.length)
-    // Built from the query, so they list for any text; under Create, after the plain commands.
-    const quickCreate = quickCreateRows(context(t), text)
+      // Said only when the error row is listed: for the empty query it is not.
+      if (!signal.aborted) setNotesError(failed && text !== `` ? t.t(`Search.error`) : ``)
+      return answer
+    }
+    /** The note rows of `answer`; only a query's rows name their group, when there are several. */
+    const noteRows = (answer: SearchNotesAnswer) => {
+      const namesGroup = text !== "" && groups.length > 1
+      const groupName = new Map(groups.map((group) => [group.id, group.name]))
+      const notesHeading = answer.onDevice ? t.t(`Search.notesOnDevice`) : t.t(`Search.notes`)
+      return answer.notes.slice(0, text === "" ? RECENT_NOTES : undefined).map((
+        note,
+      ): PaletteOption => ({
+        id: `note-${note.id}`,
+        label: note.title.trim() || t.t(`Search.untitled`),
+        detail: noteDetail(note, namesGroup ? groupName.get(note.groupId) : undefined),
+        group: notesHeading,
+        choice: { kind: "note", noteId: note.id, groupId: note.groupId },
+      }))
+    }
+
+    if (text === ``) {
+      const notes = noteRows(await notesFound())
+      const listed = [
+        ...commands.filter((option) => option.group === heading.page).slice(0, EMPTY_COMMANDS),
+        ...notes,
+        ...create.slice(0, EMPTY_COMMANDS),
+      ]
+      return [...listed, ...recentExtras(recentIds.current, listed, [...others, ...groupRows])]
+    }
+
+    const rest = [
+      ...matchCommands(groupRows, text, groupRows.length),
+      ...underCommands(t, matchCommands(others, text, TYPED_COMMANDS)),
+      ...recordRows(latest.current.records ?? [], text),
+      ...matchCommands(create, text, create.length),
+      // Built from the query, so they list for any text; under Create, after its commands.
+      ...quickCreateRows(registry, text),
+    ]
+    // One answer, notes included: an Enter pressed before it waits for it, so it never picks a
+    // quick-create row while the note it was meant for is still on its way.
+    const answer = await notesFound()
+    const notes = noteRows(answer)
     const hint = notesHint(
       t,
       text,
@@ -296,13 +416,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       asksNotes && answer.onDevice && notes.length === 0,
       failed,
     )
-    return [
-      ...notes,
-      ...matched,
-      ...quickCreate,
-      ...recordRows(latest.current.records ?? [], text),
-      ...hint,
-    ]
+    return [...notes, ...rest, ...hint]
   }
   /** A pick made inside a submenu, with the palette still open. */
   const select = (choice: SearchChoice) => latest.current.onSelect(choice)
@@ -313,8 +427,13 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     <div ref={root} data-e2e="search-root">
       <CommandPalette<PaletteOption>
         search={search}
+        // Notes and records: every command runs itself.
         onSelect={(option, details) =>
           option.choice && props.onSelect(pickedChoice(option.choice, details.alternative))}
+        onOpenChange={(open) => {
+          if (open) recentIds.current = storedRecent(latest.current.recent)
+        }}
+        recent={props.recent}
         // Bound above, so they work while the trigger is hidden.
         hotkeys={[]}
         labels={paletteLabels(t)}
@@ -327,6 +446,21 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       )}
     </div>
   )
+}
+
+/**
+ * `options` under one "Commands" heading, each naming the section it belongs to in its detail,
+ * before its own: "Settings · How the app looks on this device." Getters are kept.
+ */
+function underCommands(t: Translator<string>, options: readonly PaletteOption[]): PaletteOption[] {
+  const heading = t.t(`Search.commands`)
+  return options.map((option) => {
+    const copy = Object.defineProperties({}, Object.getOwnPropertyDescriptors(option))
+    return Object.assign(copy as PaletteOption, {
+      detail: [option.group, option.detail].filter(Boolean).join(` · `),
+      group: heading,
+    })
+  })
 }
 
 /** The palette's own trigger inside its root: hidden, and clicked to open it. */

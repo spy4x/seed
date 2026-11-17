@@ -48,6 +48,7 @@ import type { SessionState, SessionUser } from "./state/session.ts"
 import type { NoteItem } from "./state/notes.ts"
 import type { TagItem } from "./state/tags.ts"
 import { toasts } from "./state/toasts.ts"
+import { paletteRecent } from "@platform/palette-recent.ts"
 
 /**
  * The composition root (ADR 003): the one file that imports the WebSocket module
@@ -413,9 +414,11 @@ const KEPT_SESSION_KEYS: ReadonlySet<string> = new Set([
 /**
  * Deletes every `localStorage` key of the app but {@link KEPT_KEYS}, and every `sessionStorage` key
  * but {@link KEPT_SESSION_KEYS}: the selected group, the socket's cursors, the kept time zone, the
- * remembered user. Blocked storage holds nothing to delete.
+ * remembered user, the palette's recent picks. Blocked storage holds nothing to delete, but the
+ * palette's picks are forgotten through its own store, which keeps a refused write in memory.
  */
 export function clearBrowserStorage(): void {
+  paletteRecent.forget()
   try {
     const keys: string[] = []
     for (let index = 0; index < localStorage.length; index++) keys.push(localStorage.key(index)!)

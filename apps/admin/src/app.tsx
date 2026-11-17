@@ -58,6 +58,7 @@ import {
   singleKeys as deviceSingleKeys,
   useShortcuts,
 } from "@platform/shortcuts.ts"
+import { paletteRecent } from "@platform/palette-recent.ts"
 
 export interface AppProps {
   store: AdminStore
@@ -295,6 +296,7 @@ function Operator(
     singleKeys: singleKeys.on.value,
     page,
     onSelect: pick,
+    recent: paletteRecent,
   }
   return (
     <FormatContext.Provider value={own.format.value}>

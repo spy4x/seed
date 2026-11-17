@@ -5,6 +5,7 @@ import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import type { AdminOperator } from "@ui/admin-user-screen.tsx"
 import { type ErrorAnswer, errorText, translatedError } from "@ui/message.ts"
 import { adminText } from "./i18n.ts"
+import { type PaletteRecent, paletteRecent } from "@platform/palette-recent.ts"
 
 /** One answer of the API: the data, or its status and message. */
 export type AdminApiResult<T> = Awaited<ReturnType<typeof apiFetch<T>>>
@@ -134,8 +135,14 @@ export async function attempt<T>(
  * The admin app's session: being read, signed out, owing its code, or signed in. Every module
  * calls the API through {@link request}: a 401 from any call means the session is gone (it ended
  * or the operator was blocked), and the app goes back to the sign-in.
+ *
+ * @param api The session calls and every module's own.
+ * @param recent The palette's recent picks on this device, forgotten on sign-out.
  */
-export function createAdminStore(api: AdminApi) {
+export function createAdminStore(
+  api: AdminApi,
+  recent: Pick<PaletteRecent, "forget"> = paletteRecent,
+) {
   const session = signal<AdminSessionState>({
     step: "loading",
     user: null,
@@ -200,8 +207,12 @@ export function createAdminStore(api: AdminApi) {
       }
     },
 
-    /** Ends the session. The page signs out even when the server cannot be reached. */
+    /**
+     * Ends the session. The page signs out even when the server cannot be reached, and the
+     * palette forgets its recent picks, so the next operator on the device sees none.
+     */
     async signOut(): Promise<void> {
+      recent.forget()
       await attempt(() => api.signOut())
       signedOut()
     },

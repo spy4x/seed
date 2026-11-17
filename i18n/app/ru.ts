@@ -1975,6 +1975,8 @@ export default {
   "Search.importNotes": "Импорт заметок",
   "Search.newGroup": "Новая группа",
   "Search.withText": "{label}: «{text}»",
+  "Search.commands": "Команды",
+  "Search.themeRow": "Тема → {theme}",
   "Search.openOverview": "Открыть обзор",
   "Search.openNotifications": "Открыть уведомления",
   "Search.openProfile": "Открыть профиль",

@@ -123,6 +123,15 @@ it("signing out ends the session even when the server cannot be reached", async 
   expect(store.session.value.user).toBe(null)
 })
 
+it("signing out forgets the palette's recent picks, so the next operator sees none", async () => {
+  const { api } = fakeApi()
+  let forgotten = 0
+  const store = createAdminStore(api, { forget: () => forgotten++ })
+  await store.start()
+  await store.signOut()
+  expect(forgotten).toBe(1)
+})
+
 it("names an operator with no name by their address, and Operator only without one", () => {
   expect(operatorName(operator, `olga@example.com`)).toBe(`Olga Operator`)
   const nameless = { ...operator, firstName: ``, lastName: `` }

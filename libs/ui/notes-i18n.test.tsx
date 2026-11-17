@@ -308,10 +308,20 @@ describe(`the notes, tags, search and shortcuts screens in en-XA`, () => {
     })
     await settle()
     expect(english()).toEqual([])
+    expectReached([`Search.notesOnDevice`, `Search.create`])
+    const field = document.querySelector<HTMLInputElement>(`[data-e2e=search] input`)!
+    const type = async (query: string) => {
+      field.value = query
+      await act(() => {
+        field.dispatchEvent(new window.Event(`input`, { bubbles: true }) as unknown as Event)
+      })
+      await settle()
+    }
+    // ">" lists every command under its section.
+    await type(`>`)
+    expect(english()).toEqual([])
     expectReached([
-      `Search.notesOnDevice`,
       `Shortcuts.goTo`,
-      `Search.create`,
       `Search.settings`,
       `Search.account`,
       [`ProfilePicture.rule`, {
@@ -319,14 +329,16 @@ describe(`the notes, tags, search and shortcuts screens in en-XA`, () => {
       }],
     ])
     // A query lists the groups too, each with the person's role in it.
-    const field = document.querySelector<HTMLInputElement>(`[data-e2e=search] input`)!
-    field.value = team.name
-    await act(() => {
-      field.dispatchEvent(new window.Event(`input`, { bubbles: true }) as unknown as Event)
-    })
-    await settle()
+    await type(team.name)
     expect(english()).toEqual([])
     expectReached([`Search.groups`, `Groups.roleOwner`])
+    // And the commands under one heading, a theme row among them.
+    await type(PSEUDO.t(`Preferences.themeDark`).slice(1, 4))
+    expect(english()).toEqual([])
+    expectReached([
+      `Search.commands`,
+      [`Search.themeRow`, { theme: PSEUDO.t(`Preferences.themeDark`) }],
+    ])
   })
   it(`draw the overview's note widgets with no English outside the catalogs`, async () => {
     const periods = overviewPeriods({ from: `2026-10-19`, to: `2026-10-21` })!

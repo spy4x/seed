@@ -6,6 +6,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
+import type { CommandPaletteOption } from "@spy4x/preact-ui/command-palette"
 import type { ThemePreference } from "@domain/identity"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
@@ -18,6 +19,8 @@ import {
   pickedChoice,
   quickCreateRows,
   type SearchChoice,
+  themeRows,
+  withRun,
 } from "./palette-commands.ts"
 
 const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
@@ -281,5 +284,55 @@ describe(`the quick-create rows`, () => {
     const choice: SearchChoice = { kind: `quick-create`, entity: `tag`, title: `milk` }
     expect(pickedChoice(choice, false)).toEqual(choice)
     expect(pickedChoice(choice, true)).toEqual({ ...choice, now: true })
+  })
+})
+
+describe(`the theme rows`, () => {
+  it(`offer Theme → Dark for dark, dark mode and тёмная, mark the current one, and stay open`, () => {
+    let theme: ThemePreference = `system`
+    const set: ThemePreference[] = []
+    const rows = themeRows(EN, () => theme, `Settings`, (next) => void set.push(next))
+    expect(matchCommands(rows, `dark`)[0]?.label).toBe(`Theme → Dark`)
+    expect(matchCommands(rows, `dark mode`)[0]?.label).toBe(`Theme → Dark`)
+    const ru = themeRows(RU, () => theme, `Настройки`, () => {})
+    expect(matchCommands(ru, `тёмная`)[0]?.label).toBe(`Тема → Тёмная`)
+
+    const dark = rows.find((row) => row.label === `Theme → Dark`)!
+    expect([dark.state, dark.keepOpen, dark.group]).toEqual([undefined, true, `Settings`])
+    dark.run!({ alternative: false })
+    theme = `dark`
+    expect(set).toEqual([`dark`])
+    expect(dark.state).toBe(`Current`)
+  })
+})
+
+describe(`withRun`, () => {
+  it(`runs a row's choice with the modifier, and keeps the row's live getters`, () => {
+    let theme = `System`
+    const row = {
+      id: `a`,
+      label: `Theme`,
+      choice: `x`,
+      get state() {
+        return theme
+      },
+    }
+    const picked: [string, boolean][] = []
+    const runnable = withRun<string, CommandPaletteOption & { choice: string }>(
+      row,
+      (choice, details) => void picked.push([choice, details.alternative]),
+    )
+    runnable.run!({ alternative: true })
+    theme = `Dark`
+    expect(picked).toEqual([[`x`, true]])
+    expect(runnable.state).toBe(`Dark`)
+    expect(row).not.toHaveProperty(`run`)
+  })
+
+  it(`leaves a row without a choice, and a submenu, as they are`, () => {
+    const plain = { id: `a`, label: `A` }
+    const submenu = { id: `b`, label: `B`, choice: `b`, children: [] }
+    expect(withRun(plain, () => {})).toBe(plain)
+    expect(withRun(submenu, () => {})).toBe(submenu)
   })
 })
