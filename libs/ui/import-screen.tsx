@@ -784,7 +784,9 @@ function ReviewRows(
                       return (
                         <td key={field.key} class={shows ? `` : `max-sm:hidden`}>
                           {shows && (
-                            <div class="flex flex-col gap-1">
+                            // From `sm`, a kind's control is as wide as its longest value, so the
+                            // column grows to it instead of cutting the chosen value.
+                            <div class="flex flex-col gap-1 sm:[&_select]:w-auto">
                               <CardLabel>{label(field)}</CardLabel>
                               {control ?? <bdi data-e2e="import-suggestion">{suggestion}</bdi>}
                             </div>
