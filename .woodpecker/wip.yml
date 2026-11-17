@@ -20,6 +20,11 @@ when:
       include: ["**"]
       on_empty: false
 
+# Light work: any agent may take it, the laptop's too, which takes only workflows with this label
+# (homelab#180). A label no agent reports would leave the workflow waiting.
+labels:
+  size: small
+
 steps:
   check:
     image: denoland/deno:2.9.7
