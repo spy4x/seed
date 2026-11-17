@@ -576,7 +576,9 @@ type ReviewFilter = `all` | `import` | `skipped`
 
 /**
  * Smaller than `sm`, the table becomes one card per row: the header is read by screen readers
- * only, and each cell is a line of its own with its column's name before it.
+ * only, and each cell is a line of its own with its column's name before it. Each card is the
+ * library Card's `pc-card` with its `shadow-raised`. A stopgap until preact-components' `Table`
+ * has a card mode of its own.
  */
 const STACKED = [
   `mt-3 min-h-0`,
@@ -584,8 +586,7 @@ const STACKED = [
   `max-sm:[&_thead]:sr-only max-sm:[&_tbody]:flex max-sm:[&_tbody]:flex-col max-sm:[&_tbody]:gap-3`,
   `max-sm:[&_tbody]:divide-y-0 max-sm:[&_tbody]:bg-transparent`,
   `max-sm:[&_tbody_tr]:flex max-sm:[&_tbody_tr]:flex-col max-sm:[&_tbody_tr]:gap-3`,
-  `max-sm:[&_tbody_tr]:rounded-lg max-sm:[&_tbody_tr]:border max-sm:[&_tbody_tr]:border-subtle`,
-  `max-sm:[&_tbody_tr]:bg-surface max-sm:[&_tbody_tr]:p-4`,
+  `max-sm:[&_tbody_tr]:pc-card max-sm:[&_tbody_tr]:shadow-raised max-sm:[&_tbody_tr]:p-4`,
   `max-sm:[&_tbody_td]:p-0 max-sm:[&_tbody_th]:p-0`,
 ].join(` `)
 
