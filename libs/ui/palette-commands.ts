@@ -7,6 +7,7 @@
  */
 import {
   type CommandPaletteOption,
+  type CommandPaletteSelectDetails,
   type MatchableOption,
   matchOptions,
 } from "@spy4x/preact-ui/command-palette"
@@ -587,6 +588,59 @@ export function themeCommand(
     group,
     children: rows,
   }
+}
+
+/**
+ * One top-level row per theme, such as "Theme → Dark", under `group`: found by the theme's name in
+ * the person's language and in English, and by words such as "dark mode", so typing "dark" pins
+ * it as the Best match. Enter calls `setTheme` at once and keeps the palette open, as the Theme
+ * submenu's rows do; the row's badge says which theme is chosen now, read when it is drawn.
+ */
+export function themeRows(
+  t: Translator<string>,
+  current: () => ThemePreference,
+  group: string,
+  setTheme: (theme: ThemePreference) => void,
+): EnglishWordsOption[] {
+  return THEMES.map((theme): EnglishWordsOption => {
+    const english = englishText(THEME_KEYS[theme]).toLowerCase()
+    return {
+      id: `action-theme-${theme}`,
+      label: t.t(`Search.themeRow`, { theme: themeName(t, theme) }),
+      // Aliases, not English words, so each of them can start a Best match in every language;
+      // the shortcuts dialog does not list these rows.
+      aliases: [
+        themeName(t, theme),
+        ...THEME_ALIASES[theme],
+        english,
+        `${english} mode`,
+        `${english} theme`,
+      ],
+      englishWords: [englishText(`Search.themeRow`, { theme: englishText(THEME_KEYS[theme]) })],
+      get state() {
+        return current() === theme ? t.t(`Search.current`) : undefined
+      },
+      group,
+      keepOpen: true,
+      run: () => setTheme(theme),
+    }
+  })
+}
+
+/**
+ * `option` with a `run` that hands its `choice` to `pick`, so the palette treats it as a command:
+ * it can be the Best match, and a query that starts with ">" lists it. An option without a choice,
+ * or with a submenu, comes back as it is. Getters, such as a badge read when drawn, are kept.
+ */
+export function withRun<C, T extends CommandPaletteOption & { choice?: C }>(
+  option: T,
+  pick: (choice: C, details: CommandPaletteSelectDetails) => void,
+): T {
+  const choice = option.choice
+  if (choice === undefined || option.children !== undefined) return option
+  const copy = Object.defineProperties({}, Object.getOwnPropertyDescriptors(option)) as T
+  copy.run = (details) => pick(choice, details)
+  return copy
 }
 
 /**
