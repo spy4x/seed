@@ -449,6 +449,7 @@ export default {
   "Import.noValid": "في كل صف مشكلة. أصلِح الملف أو غيّر الأعمدة.",
   "Import.allSkipped": "كل الصفوف متخطّاة، لذا لن يُستورد شيء.",
   "Import.review": "راجع الصفوف",
+  "Import.reviewTable": "صفوف الملف",
   "Import.toImport": {
     "zero": "لا صفوف للاستيراد",
     "one": "صف واحد للاستيراد",

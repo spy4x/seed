@@ -666,7 +666,7 @@ function ReviewRows(
           <div ref={table}>
             <Table
               class={STACKED}
-              caption={t.t(`Import.review`)}
+              caption={t.t(`Import.reviewTable`)}
               captionClass="sr-only"
               rowDataE2E="import-review-row"
               headerSlot={

@@ -412,6 +412,7 @@ export default {
   "Import.noValid": "Chaque ligne a un problème. Corrigez le fichier ou changez les colonnes.",
   "Import.allSkipped": "Toutes les lignes sont ignorées, donc rien ne serait importé.",
   "Import.review": "Vérifiez les lignes",
+  "Import.reviewTable": "Les lignes du fichier",
   "Import.toImport": {
     "one": "{count} à importer",
     "many": "{count} à importer",

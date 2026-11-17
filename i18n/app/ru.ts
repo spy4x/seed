@@ -418,6 +418,7 @@ export default {
   "Import.noValid": "В каждой строке есть проблема. Исправьте файл или измените столбцы.",
   "Import.allSkipped": "Все строки пропускаются, поэтому ничего не будет импортировано.",
   "Import.review": "Проверьте строки",
+  "Import.reviewTable": "Строки файла",
   "Import.toImport": {
     "one": "{count} к импорту",
     "few": "{count} к импорту",

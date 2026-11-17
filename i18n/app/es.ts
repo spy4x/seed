@@ -395,6 +395,7 @@ export default {
   "Import.noValid": "Todas las filas tienen un problema. Corrige el archivo o cambia las columnas.",
   "Import.allSkipped": "Se omiten todas las filas, así que no se importaría nada.",
   "Import.review": "Revisa las filas",
+  "Import.reviewTable": "Las filas del archivo",
   "Import.toImport": {
     "one": "{count} para importar",
     "many": "{count} para importar",

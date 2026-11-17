@@ -385,6 +385,7 @@ export default {
   "Import.noValid": "Jede Zeile hat ein Problem. Korrigiere die Datei oder ändere die Spalten.",
   "Import.allSkipped": "Jede Zeile wird übersprungen, es würde also nichts importiert.",
   "Import.review": "Zeilen prüfen",
+  "Import.reviewTable": "Die Zeilen der Datei",
   "Import.toImport": {
     "one": "{count} zum Importieren",
     "other": "{count} zum Importieren",

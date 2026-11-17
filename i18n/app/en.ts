@@ -359,6 +359,7 @@ export default {
   "Import.noValid": "Every row has a problem. Fix the file, or change the columns.",
   "Import.allSkipped": "Every row is skipped, so nothing would be imported.",
   "Import.review": "Check the rows",
+  "Import.reviewTable": "Rows in the file",
   "Import.toImport": {
     "one": "{count} to import",
     "other": "{count} to import",

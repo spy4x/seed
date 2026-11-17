@@ -341,6 +341,7 @@ export default {
   "Import.noValid": "すべての行に問題があります。ファイルを直すか、列を変えてください。",
   "Import.allSkipped": "すべての行がスキップされるため、何もインポートされません。",
   "Import.review": "行を確認",
+  "Import.reviewTable": "ファイルの行",
   "Import.toImport": {
     "other": "インポート {count} 件",
   },

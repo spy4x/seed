@@ -308,6 +308,7 @@ export default {
   "Import.noValid": "每一行都有问题。请修改文件，或更改列。",
   "Import.allSkipped": "所有行都被跳过，不会导入任何内容。",
   "Import.review": "检查各行",
+  "Import.reviewTable": "文件中的行",
   "Import.toImport": {
     "other": "{count} 行待导入",
   },
