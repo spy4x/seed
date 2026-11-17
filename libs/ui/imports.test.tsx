@@ -504,8 +504,8 @@ describe("one import's review", () => {
     const category = find<HTMLSelectElement>(`#import-choice-1-category`)
     expect(category.value).toBe(`food`)
     expect(category.getAttribute(`aria-label`)).toBe(`Category, line 2`)
-    // The kind draws no transfer control: its suggestion shows as text, empty here.
-    expect(texts(`[data-e2e="import-suggestion"]`)).toEqual([``])
+    // The kind draws no transfer control, and row 1 has no transfer suggestion: nothing shows.
+    expect(has(`[data-e2e="import-suggestion"]`)).toBe(false)
     expect(find(`[data-e2e="import-submit"]`).textContent).toContain(`Import 1 note`)
   })
 
@@ -531,7 +531,7 @@ describe("one import's review", () => {
     expect(find(`[data-e2e="import-review-summary"]`).textContent).toBe(`2 to import · 1 skipped`)
     expect(find(`[data-e2e="import-submit"]`).textContent).toContain(`Import 2 notes`)
     expect(has(`#import-choice-3-category`)).toBe(true)
-    expect(texts(`[data-e2e="import-suggestion"]`)).toEqual([``, `t1`])
+    expect(texts(`[data-e2e="import-suggestion"]`)).toEqual([`t1`])
     await change(`#import-keep-3`, (box) => (box.checked = false))
     expect(kept).toEqual([[3, true], [3, false]])
   })

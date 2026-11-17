@@ -683,7 +683,7 @@ function ReviewRows(
                       scope="row"
                       id={`import-review-line-${review.row}`}
                       tabIndex={-1}
-                      class="text-start font-medium tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-focus"
+                      class="text-start font-medium tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-focus max-sm:font-semibold"
                       data-e2e="import-review-line"
                     >
                       <span aria-hidden="true" class="sm:hidden">{`${t.t(`Import.line`)} `}</span>
@@ -702,12 +702,17 @@ function ReviewRows(
                     ))}
                     <td>
                       <div class="flex flex-col gap-2">
-                        <span
-                          class={review.skip === null ? `text-foreground` : `text-muted`}
-                          data-e2e="import-review-status"
-                        >
-                          {review.skip ?? t.t(`Import.willImport`)}
-                        </span>
+                        <div class="max-sm:flex max-sm:justify-between max-sm:gap-4">
+                          <CardLabel>{t.t(`Import.status`)}</CardLabel>
+                          <span
+                            class={review.skip === null
+                              ? `text-muted max-sm:text-end`
+                              : `font-medium text-foreground max-sm:text-end`}
+                            data-e2e="import-review-status"
+                          >
+                            {review.skip ?? t.t(`Import.willImport`)}
+                          </span>
+                        </div>
                         {review.skip !== null && review.overridable && (
                           <Checkbox
                             id={`import-keep-${review.row}`}
@@ -726,21 +731,26 @@ function ReviewRows(
                     </td>
                     {choiceFields.map((field) => {
                       const suggestion = review.suggestions[field.key]
-                      const control = saving && (kind.review?.choice?.(field.key, {
-                        row: review,
-                        value: props.choices?.[review.row]?.[field.key] ?? suggestion ?? ``,
-                        suggestion,
-                        onChange: (value) => props.onChoose?.(review.row, field.key, value),
-                        disabled,
-                        id: `import-choice-${review.row}-${field.key}`,
-                        label: t.t(`Import.choiceLine`, { field: label(field), line }),
-                      }) ?? <bdi data-e2e="import-suggestion">{suggestion ?? ``}</bdi>)
+                      const control = saving
+                        ? kind.review?.choice?.(field.key, {
+                          row: review,
+                          value: props.choices?.[review.row]?.[field.key] ?? suggestion ?? ``,
+                          suggestion,
+                          onChange: (value) => props.onChoose?.(review.row, field.key, value),
+                          disabled,
+                          id: `import-choice-${review.row}-${field.key}`,
+                          label: t.t(`Import.choiceLine`, { field: label(field), line }),
+                        })
+                        : undefined
+                      // A skipped row, or a field with neither a control nor a suggestion, shows
+                      // an empty cell, and no line at all in a phone's card.
+                      const shows = saving && (control != null || !!suggestion)
                       return (
-                        <td key={field.key} class={saving ? `` : `max-sm:hidden`}>
-                          {saving && (
+                        <td key={field.key} class={shows ? `` : `max-sm:hidden`}>
+                          {shows && (
                             <div class="flex flex-col gap-1">
                               <CardLabel>{label(field)}</CardLabel>
-                              {control}
+                              {control ?? <bdi data-e2e="import-suggestion">{suggestion}</bdi>}
                             </div>
                           )}
                         </td>
