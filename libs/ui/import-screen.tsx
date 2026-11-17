@@ -590,8 +590,8 @@ const STACKED = [
 ].join(` `)
 
 /** A row's line number: the row's header, and where "Show more" puts focus. */
-const LINE_HEADER = `text-start font-medium tabular-nums outline-none focus-visible:outline-2 ` +
-  `focus-visible:outline-focus max-sm:font-semibold`
+const LINE_HEADER = `text-start font-medium tabular-nums focus-visible:outline-hidden ` +
+  `focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset max-sm:font-semibold`
 
 /** A column's name before its value in a phone's card; the header names it from `sm`. */
 function CardLabel({ children }: { children: string }): JSX.Element {
