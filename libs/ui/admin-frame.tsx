@@ -18,7 +18,7 @@ import {
   shortcutsMenuItems,
   useSearchEntries,
 } from "./frame.tsx"
-import { ShortcutsList } from "./shortcuts.tsx"
+import { entryKeys, ShortcutsList } from "./shortcuts.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useAdminText, useAppText } from "./i18n.ts"
 import { Rich } from "@spy4x/preact-ui/i18n"
@@ -132,9 +132,17 @@ export function AdminShell(
   // `/` focuses a list's own search field here, so only Ctrl K (⌘K) opens the palette.
   const entries = useSearchEntries(false, useAppText().t("Frame.search"))
   const hasSearch = search !== undefined
+  // Each module's `g` keys while they work, on its rail cell: "Users (G U)".
+  const keys = entryKeys(shortcuts?.rows ?? [], shortcuts?.singleKeys ?? true)
   return (
     <AppShell
-      items={navItems.map(({ name, href, Icon }) => ({ key: href, label: name, href, Icon }))}
+      items={navItems.map(({ name, href, Icon }) => ({
+        key: href,
+        label: name,
+        href,
+        Icon,
+        keyshortcuts: keys.get(href),
+      }))}
       currentPath={currentPath}
       navigate={navigate}
       // The same places and wrappers as the product's frame, so the cell sits where it does there.

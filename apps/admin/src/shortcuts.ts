@@ -165,7 +165,7 @@ export interface AdminShortcutPorts {
 /**
  * The admin app's keyboard shortcuts, the one list its "Keyboard shortcuts" dialog shows and its
  * shell binds: `?`, Ctrl K (⌘K, listed: the palette binds it) and Escape, a `g` sequence per
- * module shown, named as the rail names it, `/` while a list with a search field is open, and the
+ * module shown, named as the rail names it and shown in its tooltip (`href`), `/` while a list with a search field is open, and the
  * open page's own actions (`c` on the blog's list; Ctrl S, listed, in its editor). There is no New note: operators write no notes.
  */
 export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
@@ -174,6 +174,7 @@ export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
     description: ports.t.t(entry.key),
     group: SHORTCUT_GROUPS.goTo,
     run: () => ports.navigate(entry.href),
+    href: entry.href,
   }))
   const filter: ShortcutRow[] = onListPage(ports.modules, ports.path)
     ? [{

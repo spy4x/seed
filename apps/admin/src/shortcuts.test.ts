@@ -39,6 +39,8 @@ describe("admin keyboard shortcuts", () => {
     expect(new Set(keys).size).toBe(keys.length)
     for (const row of goTo) row.run!()
     expect(seen.navigated).toEqual(ADMIN_MODULES.map((m) => m.nav.href))
+    // The rail shows each module's keys on the entry with the address its row names.
+    expect(goTo.map((row) => row.href)).toEqual(ADMIN_MODULES.map((m) => m.nav.href))
   })
 
   it("opens the sharing channels with g h and the posts that need sharing with g n, while the blog is shown", () => {
