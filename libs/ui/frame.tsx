@@ -198,7 +198,8 @@ export function shortcutsMenuItems(
  *
  * `shortcuts` draws the "Keyboard shortcuts" dialog; the app binds the keys ({@link ShortcutsList}).
  * A row that opens a page (`href`) names its keys on that page's entry while they work: a rail
- * cell, the bell, the account header or an account menu item ({@link entryKeys}).
+ * cell, the bell or an account menu item ({@link entryKeys}). The account header shows none yet:
+ * the desktop menu is too narrow for its hint beside the name.
  *
  * `search` is drawn once, at the end of the page's column, with no trigger of its own (such as
  * `SearchPalette`, which binds Ctrl K and `/` itself). Both "Search" entries open it by clicking
@@ -291,7 +292,6 @@ export function AppFrame(
       account={{
         user: { name, email, avatarUrl: user.avatarUrl },
         headerHref: SCREEN_PATHS.profile,
-        headerKeyshortcuts: keys.get(SCREEN_PATHS.profile),
         items: [
           ...(notes
             ? [{

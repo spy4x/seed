@@ -634,9 +634,9 @@ describe("AppFrame", () => {
         .toBe(0)
     })
 
-    it("shows the profile's keys on the account header and the tags' keys on Tags", async () => {
+    it("shows the tags' keys on Tags, and none on the account header, which has no room", async () => {
       await mount(frame(true))
-      expect(hint("[data-e2e=account-menu-header]")).toBe("G then P")
+      expect(hint("[data-e2e=account-menu-header]")).toBe(null)
       expect(tags().querySelector("[data-hotkey-hint]")?.textContent).toBe("G then T")
     })
 
