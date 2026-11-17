@@ -361,6 +361,31 @@ describe("AdminSearchPalette", () => {
     expect(listed()[0]).toBe("# Go to")
   })
 
+  it("lists a theme row picked before under Recent, with nothing typed", async () => {
+    const entries = new Map<string, string>()
+    const store = {
+      getItem: (key: string) => entries.get(key) ?? null,
+      setItem: (key: string, value: string) => void entries.set(key, value),
+      removeItem: (key: string) => void entries.delete(key),
+    }
+    const recent = { storageKey: "recent", storage: () => store }
+    await mountPalette({ recent })
+    await pressCtrlK()
+    await type("dark")
+    await act(() => {
+      find("[data-e2e=search] input").dispatchEvent(
+        new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }) as unknown as Event,
+      )
+    })
+
+    await act(() => render(null, root!))
+    await mountPalette({ recent })
+    await pressCtrlK()
+
+    expect(listed().slice(0, 2)).toEqual(["# Recent", "Theme → Dark"])
+    expect(listed().filter((row) => row.startsWith("Theme →"))).toHaveLength(1)
+  })
+
   it("lists no theme row before anything is typed, only the Theme command", async () => {
     await mountPalette()
     await pressCtrlK()

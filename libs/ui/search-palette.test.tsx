@@ -1125,6 +1125,21 @@ describe("SearchPalette Recent", () => {
     expect(listed()).not.toContain("# Go to")
   })
 
+  it("lists a theme row picked before under Recent, with nothing typed", async () => {
+    const store = memory()
+    await mount({ recent: recentOf(store) })
+    await open()
+    await type("dark")
+    await enter()
+
+    await act(() => render(null, root!))
+    await mount({ recent: recentOf(store) })
+    await open()
+
+    expect(recentRows()).toEqual(["Theme → Dark"])
+    expect(listed().filter((row) => row.startsWith("Theme →"))).toHaveLength(1)
+  })
+
   it("lists at most five recent picks, newest first, and no other heading for the rest", async () => {
     await mount({
       recent: recentOf(

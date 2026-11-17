@@ -13,7 +13,7 @@ import {
   type AdminSearchChoice,
 } from "./admin-palette-commands.ts"
 import { matchCommands, themeRows, withRun } from "./palette-commands.ts"
-import { type PageCommand, paletteLabels } from "./search-palette.tsx"
+import { type PageCommand, paletteLabels, recentExtras, storedRecent } from "./search-palette.tsx"
 import { useAdminText } from "./i18n.ts"
 
 export type { AdminGoTo, AdminPageCommand, AdminSearchChoice } from "./admin-palette-commands.ts"
@@ -108,12 +108,18 @@ export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element 
     (theme) => select({ kind: "theme", theme }),
   )
   const shown = new Set(props.goTo.map((entry) => entry.id))
-  // The theme rows are for a typed query: the empty one lists the Theme command and its submenu.
-  const filter = (rows: readonly AdminPaletteOption[], query: string) =>
-    query.trim() === `` ? rows.filter((row) => !themes.includes(row)) : [
-      ...matchCommands(rows, query, rows.length),
-      ...adminFindCommands(t, query, shown).map(runnable),
-    ]
+  // The theme rows are for a typed query: the empty one lists the Theme command and its submenu,
+  // and only the theme rows picked before, so "Recent" can show them.
+  const filter = (rows: readonly AdminPaletteOption[], query: string) => {
+    if (query.trim() !== ``) {
+      return [
+        ...matchCommands(rows, query, rows.length),
+        ...adminFindCommands(t, query, shown).map(runnable),
+      ]
+    }
+    const listed = rows.filter((row) => !themes.includes(row))
+    return [...listed, ...recentExtras(storedRecent(latest.current.recent), listed, themes)]
+  }
 
   return (
     <div ref={root} data-e2e="search-root">
