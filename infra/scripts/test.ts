@@ -321,32 +321,36 @@ async function git(args: string[]): Promise<string> {
   return decoder.decode(stdout)
 }
 
+/** The Woodpecker events of a pull request: a push to it, and an edit of its title. */
+const PULL_REQUEST_EVENTS = [`pull_request`, `pull_request_metadata`]
+
 /**
  * The `--related` flags that limit a Woodpecker pull request's tests to the files whose imports
- * reach a change, or none to run every test; on a pull request, with a note for the log that
- * says which.
+ * reach a change, or none to run every test; on a pull request or its title edit, with a note for
+ * the log that says which.
  *
  * The changes are the diff between the head and the target branch's tip. That needs no shared
  * history, which Woodpecker's one-commit clone lacks, and it also counts the target's newer
  * changes: a test whose imports reach neither runs the same code the target already passed.
- * Any failure on the way runs every test. `env` and `run` stand in for the process's in tests.
+ * A git failure throws, so the run fails instead of quietly running every test.
+ * `env` and `run` stand in for the process's in tests.
  */
 export async function relatedFlags(
   env = (name: string) => Deno.env.get(name),
   run = git,
 ): Promise<{ flags: string[]; note?: string }> {
-  const target = env(`CI_PIPELINE_EVENT`) === `pull_request` && env(`CI_COMMIT_TARGET_BRANCH`)
+  const event = env(`CI_PIPELINE_EVENT`) ?? ``
+  const target = PULL_REQUEST_EVENTS.includes(event) && env(`CI_COMMIT_TARGET_BRANCH`)
   if (!target) return { flags: [] }
   const ref = `refs/remotes/origin/${target}`
-  let reason: string | undefined
-  let changes: Change[] = []
+  let changes: Change[]
   try {
     await run([`fetch`, `--no-tags`, `origin`, `+refs/heads/${target}:${ref}`])
     changes = changesOf(await run([`diff`, `--name-status`, `--no-renames`, `-z`, ref, `HEAD`]))
-    reason = runAllReason(changes)
   } catch (error) {
-    reason = (error as Error).message
+    throw new Error(`cannot find the files this pull request changed: ${(error as Error).message}`)
   }
+  const reason = runAllReason(changes)
   if (reason) return { flags: [], note: `every test runs: ${reason}` }
   return {
     flags: changes.filter((change) => !change.deleted).map((change) => `--related=${change.path}`),

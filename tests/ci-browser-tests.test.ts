@@ -576,6 +576,11 @@ Deno.test("ci.yml and ci-browser.yml run on a pull request or a title edit only 
   ])
 })
 
+Deno.test("wip.yml skips a pull request that changes no file yet", async () => {
+  const paths = list((parse(await read(WIP)) as Step).when).map(({ path }) => path)
+  expect(paths).toEqual([{ include: [`**`], on_empty: false }])
+})
+
 Deno.test("wip.yml runs exactly ci.yml's check and secrets steps", async () => {
   // YAML anchors do not cross files, so wip.yml holds copies; a fix in ci.yml must reach both.
   const ci = (await workflow()).steps ?? {}

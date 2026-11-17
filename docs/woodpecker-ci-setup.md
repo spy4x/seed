@@ -21,7 +21,9 @@ A pull request opened before the split into two workflows reports no `ci/woodpec
 until it merges `main`, so it cannot merge before that.
 
 A pull request whose title starts with `[WIP]` runs `.woodpecker/wip.yml` instead: `check` and
-`secrets` only, copies of `ci.yml`'s steps, reported as `ci/woodpecker/pr/wip`. Removing `[WIP]`
+`secrets` only, copies of `ci.yml`'s steps, reported as `ci/woodpecker/pr/wip`. While the pull
+request changes no file, as with only the empty commit that claims an issue, it runs nothing
+(`on_empty: false`). Removing `[WIP]`
 from the title starts `ci.yml` and `ci-browser.yml` without a new push (Woodpecker's
 `pull_request_metadata` event with the reason `edited`), and every later push runs them too. A
 commit pushed while the title starts with `[WIP]` has neither `ci/woodpecker/pr/ci` nor
@@ -64,13 +66,14 @@ checkout are therefore commands of one step, `browser` (the reasons are in `ci-b
 step shares the CPU; `ci.yml`'s steps run at the same time in their own workflow, and may share
 the host with it.
 
-- `check` runs `deno task check`: format, lint, type check and unit tests. On a pull request, the
-  unit tests and `integration` run only the test files whose imports reach a file the pull request
-  changes, against the tip of its target branch, and the log says how many ran and how many were
-  skipped. A change the imports cannot show (`deno.lock`, a `deno.json`, `.woodpecker/`, the
-  migrations, `schema.sql`, fixtures, the test scripts: `RUN_ALL` in `infra/scripts/test.ts`), or
-  a git failure, runs them all. Test groups that read the source tree from disk or run a program
-  always run whole. A push to `main`, a tag and the nightly run test everything.
+- `check` runs `deno task check`: format, lint, type check and unit tests. On a pull request or
+  its title edit, the unit tests and `integration` run only the test files whose imports reach a
+  file the pull request changes, against the tip of its target branch, and the log says how many
+  ran and how many were skipped. A change the imports cannot show (`deno.lock`, a `deno.json`,
+  `.woodpecker/`, the migrations, `schema.sql`, fixtures, the test scripts: `RUN_ALL` in
+  `infra/scripts/test.ts`) runs them all. A git failure fails the step, so a broken selection
+  shows instead of silently costing a full run. Test groups that read the source tree from disk or
+  run a program always run whole. A push to `main`, a tag and the nightly run test everything.
 - `secrets` scans commits for secrets with gitleaks, beside `check`, on every event. A pull request
   scans its own commits since it left the target branch, so a key added and then removed in the
   same pull request still fails it; every other event scans the whole history. The log
@@ -206,9 +209,13 @@ branch runs the deploy. A failed deploy turns that push pipeline red; fix it bef
 2. Leave the repository's **Pipeline path** empty. Woodpecker then uses `.woodpecker/`. Setting it
    to another path (for example `infra/configs/`) hides the pipeline from every copy of the
    template.
-3. Check that a pull request without `[WIP]` in its title shows both statuses,
+3. In the repository's settings, set **Cancel previous pipelines** to the events `push`,
+   `pull_request` and `pull_request_metadata`. Removing `[WIP]` from a title starts a
+   `pull_request_metadata` run; a push or another title edit right after it supersedes that run,
+   and without this event it would keep an agent busy until it ends.
+4. Check that a pull request without `[WIP]` in its title shows both statuses,
    `ci/woodpecker/pr/ci` and `ci/woodpecker/pr/ci-browser` (`gh pr checks <number>`).
-4. In the forge's branch protection of `main`, require both statuses.
+5. In the forge's branch protection of `main`, require both statuses.
 
 ## Releases
 

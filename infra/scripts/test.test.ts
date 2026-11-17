@@ -113,12 +113,30 @@ Deno.test("tests everything without asking git when the run is not a pull reques
   }
 })
 
-Deno.test("tests everything when git fails or nothing is left to trace", async () => {
+Deno.test("selects the tests on a title edit as on a push to the pull request", async () => {
+  const { flags } = await related({ ...PR, CI_PIPELINE_EVENT: `pull_request_metadata` }, {
+    diff: `M\0apps/a.ts\0`,
+  })
+  expect(flags).toEqual([`--related=apps/a.ts`])
+})
+
+Deno.test("fails a pull request's run when git cannot list its changes", async () => {
+  for (
+    const [git, cause] of [
+      [{ fetch: new Error(`git fetch failed: offline`), diff: `` }, `git fetch failed: offline`],
+      [{ diff: new Error(`git diff failed: bad ref`) }, `git diff failed: bad ref`],
+    ] as const
+  ) {
+    await expect(related(PR, git)).rejects.toThrow(
+      `cannot find the files this pull request changed: ${cause}`,
+    )
+  }
+})
+
+Deno.test("tests everything, without failing, when nothing is left to trace", async () => {
   const diff = `M\0apps/a.ts\0`
   for (
     const [git, note] of [
-      [{ fetch: new Error(`git fetch failed: offline`), diff }, `git fetch failed: offline`],
-      [{ diff: new Error(`git diff failed: bad ref`) }, `git diff failed: bad ref`],
       [{ diff: `` }, `no changed file is left to trace`],
       [{ diff: `M\0deno.lock\0${diff}` }, `deno.lock changed, which the import graph cannot see`],
     ] as const
