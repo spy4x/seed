@@ -69,11 +69,21 @@ export interface ImportNewScreenProps extends ImportPageProps {
   onOptions?: (value: ImportOptions) => void
 }
 
+/** The controls a person can move focus to: where a file chosen too early sends it. */
+const FOCUSABLE = [
+  `input:not([type="hidden"]):not(:disabled)`,
+  `select:not(:disabled)`,
+  `textarea:not(:disabled)`,
+  `button:not(:disabled)`,
+  `[tabindex]:not([tabindex="-1"])`,
+].join(`, `)
+
 /**
  * `/imports/new?kind=`: one file picker that uploads the file it is given at once, with the kind's
  * limits in its hint, and "Your recent imports" under it. The picker refuses a wrong type or an
  * oversized file itself, so the API never sees one. A viewer sees why they cannot import instead.
- * A kind with upload options draws its form above the picker, which waits until the form is ready.
+ * A kind with upload options draws its form above the picker. A file chosen before the form is
+ * ready is not uploaded: the picker says to fill in the form, and focus moves into it.
  */
 export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
   const { kind, offline = false, uploading = null, recent } = props
@@ -87,6 +97,20 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
   const value = props.options ?? options?.initial ?? {}
   const ready = options ? options.ready(value) : true
   const limits = t.t(`Import.fileHint`, { types, size, rows: format.number(kind.limits.maxRows) })
+  const form = useRef<HTMLDivElement>(null)
+  // A file was chosen before the options were ready; the picker says so until they are.
+  const [early, setEarly] = useState(false)
+  const onFiles = (files: readonly File[]) => {
+    const file = files[0]
+    if (!file) return
+    if (!ready) {
+      setEarly(true)
+      form.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus()
+      return
+    }
+    setEarly(false)
+    props.onFile?.(file, options ? value : undefined)
+  }
   return (
     <Stack gap="xl">
       <PageHeader
@@ -100,7 +124,7 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
           <>
             {offline && <Offline />}
             {options && (
-              <div class="flex flex-col gap-4" data-e2e="import-options">
+              <div ref={form} class="flex flex-col gap-4" data-e2e="import-options">
                 {options.render({
                   value,
                   onChange: (next) => props.onOptions?.(next),
@@ -114,17 +138,16 @@ export function ImportNewScreen(props: ImportNewScreenProps): JSX.Element {
               accept={kind.limits.accept.join(`,`)}
               maxSize={kind.limits.maxBytes}
               label={t.t(`Import.file`)}
-              hint={ready ? limits : `${t.t(`Import.optionsFirst`)} ${limits}`}
-              error={props.error ?? undefined}
-              disabled={uploading !== null || offline || !ready}
+              hint={limits}
+              error={early && !ready ? t.t(`Import.optionsFirst`) : props.error ?? undefined}
+              disabled={uploading !== null || offline}
               previews={false}
               labels={{
                 browse: t.t(`Import.browse`),
                 tooLarge: (name) => t.t(`Import.tooLarge`, { name, size }),
                 wrongType: (name) => t.t(`Import.wrongType`, { name, types }),
               }}
-              onFiles={(files) =>
-                ready && files[0] && props.onFile?.(files[0], options ? value : undefined)}
+              onFiles={onFiles}
             />
             <p role="status" aria-live="polite" class="text-sm text-muted" data-e2e="import-upload">
               {uploading !== null && t.t(`Import.uploading`, { file: uploading })}

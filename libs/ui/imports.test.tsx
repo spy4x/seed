@@ -376,7 +376,7 @@ describe("the import picker", () => {
     expect(document.body.textContent).not.toContain(`Fill in the fields above first.`)
   })
 
-  it("keeps the picker closed until the kind's options are ready, then hands them on", async () => {
+  it("refuses a file chosen before the kind's options are ready, then hands them on", async () => {
     const set: Record<string, string>[] = []
     const chosen: [string, unknown][] = []
     await mount(picker({
@@ -385,14 +385,16 @@ describe("the import picker", () => {
       onFile: (file, options) => chosen.push([file.name, options]),
     }))
     expect(find<HTMLSelectElement>(`#bank-account`).value).toBe(``)
-    expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(true)
+    // The picker stays open, so it keeps its full contrast; a file chosen now is not uploaded.
+    expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(false)
     expect(find(`#import-file-hint`).textContent).toBe(
-      `Fill in the fields above first. A .csv or .txt file, up to 2 MB and 5,000 rows. ` +
-        `The first row can name the columns.`,
+      `A .csv or .txt file, up to 2 MB and 5,000 rows. The first row can name the columns.`,
     )
-    // A file dropped meanwhile is not taken either.
+    expect(has(`#import-file-error`)).toBe(false)
     await pick(new window.File([`Date\n1`], `bank.csv`, { type: `text/csv` }) as unknown as File)
     expect(chosen).toEqual([])
+    expect(find(`#import-file-error`).textContent).toBe(`Fill in the fields above first.`)
+    expect(document.activeElement?.id).toBe(`bank-account`)
     const account = find<HTMLSelectElement>(`#bank-account`)
     account.value = `a1`
     await act(() => {
@@ -404,8 +406,7 @@ describe("the import picker", () => {
       options: { accountId: `a1` },
       onFile: (file, options) => chosen.push([file.name, options]),
     }))
-    expect(find<HTMLInputElement>(`#import-file`).disabled).toBe(false)
-    expect(document.body.textContent).not.toContain(`Fill in the fields above first.`)
+    expect(has(`#import-file-error`)).toBe(false)
     await pick(new window.File([`Date\n1`], `bank.csv`, { type: `text/csv` }) as unknown as File)
     expect(chosen).toEqual([[`bank.csv`, { accountId: `a1` }]])
   })
