@@ -24,9 +24,9 @@ The SPA's two pages name no kind, so a product's kind reuses them:
 A kind's `ImportKindView` may add two parts; the notes kind uses neither:
 
 - **`options`** draws the kind's own form above the picker, such as the account a statement
-  belongs to: `initial`, `render({ value, onChange, disabled })` and `ready(value)`. The picker
-  stays disabled, its hint starting "Fill in the fields above first.", until `ready` holds, and
-  the upload sends the value as `options`.
+  belongs to: `initial`, `render({ value, onChange, disabled })` and `ready(value)`. A file chosen
+  before `ready` holds is not uploaded: the picker shows "Fill in the fields above first." and
+  focus moves to the form's first control. Once it holds, the upload sends the value as `options`.
 - **`review`** draws the choice fields. When a check answers `reviews`, a "Check the rows" section
   under the mapper says how many rows a save writes and skips, filters them (All, To import,
   Skipped, by the review's skip) and lists them 50 at a time; "Show 50 more" moves focus to the
@@ -36,7 +36,8 @@ A kind's `ImportKindView` may add two parts; the notes kind uses neither:
   disabled, id, label })` per choice field, or the suggestion as text without one. The store sends
   only the choices that differ from the suggestion, with `keep`, and forgets both when another
   import opens. The save button counts the valid rows less the skipped ones plus the kept ones.
-  Below `sm` each row is a card with its controls at full width.
+  Below `sm` each row is a card with its controls at full width. While the review shows, the
+  page takes `AppFrame`'s wide column, so every column fits.
 
 The notes menu's "Import notes…" and the palette's "Import notes" open the picker, for an editor
 or above with the notes on. The screens are `libs/ui/import-screen.tsx`, their words per kind are

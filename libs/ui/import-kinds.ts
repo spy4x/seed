@@ -46,8 +46,8 @@ export interface ImportKindWords {
 export type ImportOptions = Record<string, string>
 
 /**
- * The kind's own form above the file picker, such as the account a statement belongs to. The
- * picker stays disabled until `ready` holds, and the upload sends the value as its `options`.
+ * The kind's own form above the file picker, such as the account a statement belongs to. A file
+ * chosen before `ready` holds is not uploaded; the upload sends the value as its `options`.
  */
 export interface ImportKindOptions {
   /** The value before the person touched the form. */
