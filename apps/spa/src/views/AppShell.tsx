@@ -5,6 +5,7 @@ import { matchRoute, useLocation, useRouter, useSearch } from "wouter-preact"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
 import { UserMFAStatus } from "@domain/identity"
+import { ImportStatus } from "@domain/imports"
 import { homePath, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
@@ -19,6 +20,7 @@ import { NewNoteDialog } from "@ui/new-note-dialog.tsx"
 import { emailStore } from "../state/email.ts"
 import { signOut } from "../state/auth.ts"
 import { groupsStore } from "../state/groups.ts"
+import { importsStore } from "../state/imports.ts"
 import { notesStore } from "../state/notes.ts"
 import { notificationsStore } from "../state/notifications.ts"
 import { createNoteSearch } from "../state/search.ts"
@@ -255,6 +257,12 @@ export function AppShell(
   const { parser } = useRouter()
   const notes = notesOn()
   const routed = spaRoutePaths(notes).some((path) => matchRoute(parser, path, location)[0])
+  // An import's "Check the rows" is a data table, so its page takes the wide column
+  // (docs/design/ui-layout.md, rule 6). The store holds the open import, its check and its review.
+  const review = location !== `/imports/new` &&
+    matchRoute(parser, `/imports/:importId`, location)[0] &&
+    importsStore.current.value?.status === ImportStatus.READY &&
+    importsStore.check.value?.reviews != null
   const t = useAppText()
   // The palette's registry reads it for sizes in a detail; the shortcuts dialog lists its commands.
   const { locale } = useFormat()
@@ -395,6 +403,7 @@ export function AppShell(
       connection={wsStatus}
       unreadCount={notificationsStore.unreadCount.value}
       currentPath={routed ? location : undefined}
+      wide={review}
       navigate={navigate}
       onSignOut={onSignOut}
       language={languageChoice()}

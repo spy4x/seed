@@ -312,6 +312,7 @@ export default {
   "Import.file": "ファイル",
   "Import.fileHint":
     "{types} ファイル、{size} MB・{rows} 行まで。1 行目に列名を書くこともできます。",
+  "Import.optionsFirst": "先に上の項目を入力してください。",
   "Import.browse": "ファイルを選択",
   "Import.tooLarge": "{name} は {size} MB を超えています。",
   "Import.wrongType": "{name} は {types} ファイルではありません。",
@@ -338,6 +339,28 @@ export default {
     "other": "ほか{count}件",
   },
   "Import.noValid": "すべての行に問題があります。ファイルを直すか、列を変えてください。",
+  "Import.allSkipped": "すべての行がスキップされるため、何もインポートされません。",
+  "Import.review": "行を確認",
+  "Import.reviewTable": "ファイルの行",
+  "Import.toImport": {
+    "other": "インポート {count} 件",
+  },
+  "Import.skipped": {
+    "other": "スキップ {count} 件",
+  },
+  "Import.filter": "表示する行",
+  "Import.filterAll": "すべて",
+  "Import.filterToImport": "インポートする行",
+  "Import.filterSkipped": "スキップ",
+  "Import.reviewNone": "該当する行はありません。",
+  "Import.status": "状態",
+  "Import.willImport": "インポートされます",
+  "Import.keep": "それでもインポート",
+  "Import.keepLine": "{line} 行目をそれでもインポート",
+  "Import.choiceLine": "{field}（{line} 行目）",
+  "Import.showMore": {
+    "other": "さらに {count} 件表示",
+  },
   "Import.committing": "インポート中…",
   "Import.leave": "このページを離れても、インポートは続きます。",
   "Import.leftOut": {
