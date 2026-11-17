@@ -21,7 +21,9 @@ A pull request opened before the split into two workflows reports no `ci/woodpec
 until it merges `main`, so it cannot merge before that.
 
 A pull request whose title starts with `[WIP]` runs `.woodpecker/wip.yml` instead: `check` and
-`secrets` only, copies of `ci.yml`'s steps, reported as `ci/woodpecker/pr/wip`. Removing `[WIP]`
+`secrets` only, copies of `ci.yml`'s steps, reported as `ci/woodpecker/pr/wip`. While the pull
+request changes no file, as with only the empty commit that claims an issue, it runs nothing
+(`on_empty: false`). Removing `[WIP]`
 from the title starts `ci.yml` and `ci-browser.yml` without a new push (Woodpecker's
 `pull_request_metadata` event with the reason `edited`), and every later push runs them too. A
 commit pushed while the title starts with `[WIP]` has neither `ci/woodpecker/pr/ci` nor
@@ -207,9 +209,13 @@ branch runs the deploy. A failed deploy turns that push pipeline red; fix it bef
 2. Leave the repository's **Pipeline path** empty. Woodpecker then uses `.woodpecker/`. Setting it
    to another path (for example `infra/configs/`) hides the pipeline from every copy of the
    template.
-3. Check that a pull request without `[WIP]` in its title shows both statuses,
+3. In the repository's settings, set **Cancel previous pipelines** to the events `push`,
+   `pull_request` and `pull_request_metadata`. Removing `[WIP]` from a title starts a
+   `pull_request_metadata` run; a push or another title edit right after it supersedes that run,
+   and without this event it would keep an agent busy until it ends.
+4. Check that a pull request without `[WIP]` in its title shows both statuses,
    `ci/woodpecker/pr/ci` and `ci/woodpecker/pr/ci-browser` (`gh pr checks <number>`).
-4. In the forge's branch protection of `main`, require both statuses.
+5. In the forge's branch protection of `main`, require both statuses.
 
 ## Releases
 
