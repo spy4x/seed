@@ -389,15 +389,18 @@ Deno.test(`a green full check deletes markers older than 14 days and keeps newer
     const dir = `${repo.work}/.git/pre-push-passed`
     await Deno.mkdir(dir)
     await Deno.writeTextFile(`${dir}/old`, ``)
+    await Deno.writeTextFile(`${dir}/just-over`, ``)
     await Deno.writeTextFile(`${dir}/recent`, ``)
     const day = 24 * 60 * 60
     const now = Math.floor(Date.now() / 1000)
     await Deno.utime(`${dir}/old`, now - 16 * day, now - 16 * day)
-    await Deno.utime(`${dir}/recent`, now - 2 * day, now - 2 * day)
+    await Deno.utime(`${dir}/just-over`, now - 14.5 * day, now - 14.5 * day)
+    await Deno.utime(`${dir}/recent`, now - 13.5 * day, now - 13.5 * day)
     await pushFiles(repo, [`code.ts`])
     const left = await Array.fromAsync(Deno.readDir(dir), (entry) => entry.name)
     expect(left).toContain(`recent`)
     expect(left).not.toContain(`old`)
+    expect(left).not.toContain(`just-over`)
     expect(left).toHaveLength(2)
   }))
 

@@ -89,7 +89,7 @@ fi
 if [ -n "$tree_before" ] && [ "$tree_before" = "$(clean_tree)" ]; then
   {
     mkdir -p "$passed_dir" && touch "$passed_dir/$tree_before" &&
-      find "$passed_dir" -type f -mtime +14 -delete
+      find "$passed_dir" -type f -mtime +13 -delete
   } 2>/dev/null || true
 fi
 exit 0
