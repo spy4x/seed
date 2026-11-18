@@ -12,6 +12,8 @@ import { createTranslator } from "@spy4x/platform/universal/i18n"
 import app from "@i18n/app/en.ts"
 import appRu from "@i18n/app/ru.ts"
 import { paletteCommands, type PaletteOption } from "@ui/palette-commands.ts"
+import { GroupRole } from "@domain/groups"
+import { groupMenuActions } from "@ui/group-editor-screen.tsx"
 import { pageCommands, readyActions, runActionCommand, spaShortcutRows } from "./shortcuts.ts"
 
 function rows(activityGroupId: string | null, onOverview = false) {
@@ -176,9 +178,25 @@ describe("the tag and group pages' commands in the search palette", () => {
   })
 
   it("offer the group page's commands in its menu's order, only those it offers", () => {
-    const owner = { transfer: noop, export: noop, delete: noop }
+    const owner = { transfer: noop, export: noop, exportSpreadsheets: noop, delete: noop }
     expect(pageCommands(RU, { ...closed, groupEditor: owner }, [])?.map((c) => c.id))
-      .toEqual(["group-transfer", "group-export", "group-delete"])
+      .toEqual(["group-transfer", "group-export", "group-export-spreadsheets", "group-delete"])
+    const facts = {
+      role: GroupRole.OWNER,
+      members: null,
+      hasTransfer: false,
+      hasExport: true,
+      isLastGroup: false,
+      hasSubscription: false,
+      offline: false,
+      exporting: false,
+    }
+    expect(readyActions(groupMenuActions(facts))).toEqual([
+      "export",
+      "exportSpreadsheets",
+      "delete",
+    ])
+    expect(readyActions(groupMenuActions({ ...facts, offline: true }))).toEqual(["delete"])
     expect(pageCommands(RU, { ...closed, groupEditor: { leave: noop } }, [])?.map((c) => c.id))
       .toEqual(["group-leave"])
     const leave = pageCommands(RU, { ...closed, groupEditor: { leave: noop } }, [])?.[0]
@@ -189,6 +207,27 @@ describe("the tag and group pages' commands in the search palette", () => {
       "покинуть группу",
       "уйти из группы",
     ])
+  })
+
+  it("find the spreadsheet export by the words a person looks for, and run it", () => {
+    const ran: string[] = []
+    const groupEditor = {
+      export: () => ran.push("json"),
+      exportSpreadsheets: () => ran.push("csv"),
+    }
+    const sheets = pageCommands(RU, { ...closed, groupEditor }, [])?.[1]
+    expect(sheets?.id).toBe("group-export-spreadsheets")
+    expect(sheets?.englishWords).toEqual(["Export group as spreadsheets"])
+    expect(sheets?.aliases).toEqual([
+      "csv",
+      "excel",
+      "zip",
+      "spreadsheet",
+      "accountant",
+      "таблицы",
+    ])
+    runActionCommand("group-export-spreadsheets", { noteEditor: null, groupEditor })
+    expect(ran).toEqual(["csv"])
   })
 })
 

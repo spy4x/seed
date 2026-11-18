@@ -61,24 +61,58 @@ describe("group export store", () => {
     sessionState.value = { ...sessionState.value, user: { id: 7 } as User }
     const { ports, sent, saved } = harness({ "GET /api/groups/g-1/export": [200, `{"a":1}`] })
     const store = createGroupExportStore(ports)
-    expect(await store.download("g-1")).toBe(true)
+    expect(await store.download("g-1", "json", "de")).toBe(true)
+    expect(sent[0].url).toBe("/api/groups/g-1/export")
     expect(saved).toEqual([{ filename: "family-2026-10-21.json", text: `{"a":1}` }])
     expect(sent[0].headers.get("x-realtime-user")).toBe("7")
     expect(store.exporting.value).toBe(null)
     expect(store.failed.value).toBe(null)
   })
 
-  it("marks the group's export as failed when the server refuses or the network drops", async () => {
+  it("asks for the spreadsheets in the page's language, encoded", async () => {
+    const url = "/api/groups/g-1/export?format=csv&language=pt%26BR"
+    const { ports, sent } = harness({ [`GET ${url}`]: [200, "zip"] })
+    expect(await createGroupExportStore(ports).download("g-1", "csv", "pt&BR")).toBe(true)
+    expect(sent[0].url).toBe(url)
+  })
+
+  it("saves spreadsheets the server did not name as group-export.zip", async () => {
+    const { ports, saved } = harness({
+      "GET /api/groups/g-1/export?format=csv&language=en": [200, "zip"],
+    })
+    expect(await createGroupExportStore(ports).download("g-1", "csv", "en")).toBe(true)
+    expect(saved).toEqual([{ filename: "group-export.zip", text: "zip" }])
+  })
+
+  it("refuses a second download while one runs", async () => {
+    let answer = (_response: Response) => {}
+    const sent: string[] = []
+    const store = createGroupExportStore({
+      fetch: (url) => {
+        sent.push(url)
+        return new Promise((resolve) => answer = resolve)
+      },
+      save: () => Promise.resolve(),
+    })
+    const first = store.download("g-1", "json", "en")
+    expect(store.exporting.value).toEqual({ groupId: "g-1", format: "json" })
+    expect(await store.download("g-1", "csv", "en")).toBe(false)
+    expect(sent).toEqual(["/api/groups/g-1/export"])
+    answer(new Response("{}"))
+    expect(await first).toBe(true)
+  })
+
+  it("records the group and format of an export the server refuses or the network drops", async () => {
     const refused = createGroupExportStore(
       harness({ "GET /api/groups/g-1/export": [403, { error: { code: "ROLE_INSUFFICIENT" } }] })
         .ports,
     )
-    expect(await refused.download("g-1")).toBe(false)
-    expect(refused.failed.value).toBe("g-1")
-    const dropped = harness({ "GET /api/groups/g-1/export": "offline" })
+    expect(await refused.download("g-1", "json", "en")).toBe(false)
+    expect(refused.failed.value).toEqual({ groupId: "g-1", format: "json" })
+    const dropped = harness({ "GET /api/groups/g-1/export?format=csv&language=en": "offline" })
     const offline = createGroupExportStore(dropped.ports)
-    expect(await offline.download("g-1")).toBe(false)
-    expect(offline.failed.value).toBe("g-1")
+    expect(await offline.download("g-1", "csv", "en")).toBe(false)
+    expect(offline.failed.value).toEqual({ groupId: "g-1", format: "csv" })
     expect(dropped.saved).toEqual([])
   })
 })

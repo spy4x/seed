@@ -8,7 +8,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
-import { GROUP_IMPORT_MAX_BYTES, GroupRole } from "@domain/groups"
+import { GROUP_IMPORT_MAX_BYTES, type GroupExportFormat, GroupRole } from "@domain/groups"
 import { type GroupDraft, GroupEditorScreen } from "./group-editor-screen.tsx"
 import {
   fileContents,
@@ -375,36 +375,70 @@ describe("group file menu items", () => {
     />
   )
 
-  it("gives only the owner Export group…, and exports through the app's callback", async () => {
-    const exported = spy<[]>()
+  const json = "[data-e2e=group-export]"
+  const sheets = "[data-e2e=group-export-spreadsheets]"
+  const disabled = (selector: string) => find<HTMLButtonElement>(selector).disabled
+
+  it("offers an online owner both exports, each with its own hint, and downloads the one picked", async () => {
+    const exported = spy<[GroupExportFormat]>()
     await mount(editor({ onExport: exported.fn }))
-    expect(find("[data-e2e=group-export]").textContent).toContain("Export group…")
-    await click("[data-e2e=group-export]")
-    expect(exported.calls).toHaveLength(1)
+    expect(disabled(json)).toBe(false)
+    expect(disabled(sheets)).toBe(false)
+    expect(find(json).textContent).toBe("Export as JSONThe only file you can import back")
+    expect(find(sheets).textContent).toBe(
+      "Export as spreadsheetsA ZIP for a spreadsheet app or an accountant",
+    )
+    expect(has("[data-e2e=group-export-why]")).toBe(false)
+    expect(has("[data-e2e=group-export-spreadsheets-why]")).toBe(false)
+    await click(json)
+    await click(sheets)
+    expect(exported.calls).toEqual([["json"], ["csv"]])
+  })
+
+  it("offers neither export to anyone but the owner", async () => {
+    await mount(editor())
     for (const role of [GroupRole.ADMIN, GroupRole.EDITOR, GroupRole.VIEWER]) {
       await rerender(editor({ group: { ...team, role } }))
-      expect(has("[data-e2e=group-export]")).toBe(false)
+      expect(has(json)).toBe(false)
+      expect(has(sheets)).toBe(false)
     }
   })
 
-  it("disables Export group… offline with the reason, and says Preparing… while it runs", async () => {
+  it("disables both exports offline, each saying why", async () => {
     await mount(editor({ offline: true }))
-    expect(find<HTMLButtonElement>("[data-e2e=group-export]").disabled).toBe(true)
+    expect(disabled(json)).toBe(true)
+    expect(disabled(sheets)).toBe(true)
     expect(find("[data-e2e=group-export-why]").textContent).toBe("You're offline")
-    await rerender(editor({ exporting: true }))
-    expect(find<HTMLButtonElement>("[data-e2e=group-export]").disabled).toBe(true)
-    expect(find("[data-e2e=group-export]").textContent).toContain("Preparing…")
+    expect(find("[data-e2e=group-export-spreadsheets-why]").textContent).toBe("You're offline")
   })
 
-  it("says a failed export changed nothing, with Try again", async () => {
-    const exported = spy<[]>()
-    await mount(editor({ exportFailed: true, onExport: exported.fn }))
-    expect(find("[data-e2e=group-export-failed]").textContent).toContain(
-      "We could not prepare the file. Nothing in your group changed.",
-    )
-    await click("[data-e2e=group-export-failed] button")
-    expect(exported.calls).toHaveLength(1)
+  it("says Preparing… on the JSON export while it runs, with both disabled", async () => {
+    await mount(editor({ exporting: "json" }))
+    expect(find(json).textContent).toContain("Preparing…")
+    expect(find(sheets).textContent).toContain("Export as spreadsheets")
+    expect(disabled(json)).toBe(true)
+    expect(disabled(sheets)).toBe(true)
   })
+
+  it("says Preparing… on the spreadsheet export while it runs, with both disabled", async () => {
+    await mount(editor({ exporting: "csv" }))
+    expect(find(sheets).textContent).toContain("Preparing…")
+    expect(find(json).textContent).toContain("Export as JSON")
+    expect(disabled(json)).toBe(true)
+    expect(disabled(sheets)).toBe(true)
+  })
+
+  for (const format of ["json", "csv"] as const) {
+    it(`says a failed ${format} export changed nothing, and Try again repeats ${format}`, async () => {
+      const exported = spy<[GroupExportFormat]>()
+      await mount(editor({ exportFailed: format, onExport: exported.fn }))
+      expect(find("[data-e2e=group-export-failed]").textContent).toContain(
+        "We could not prepare the file. Nothing in your group changed.",
+      )
+      await click("[data-e2e=group-export-failed] button")
+      expect(exported.calls).toEqual([[format]])
+    })
+  }
 
   it("puts Import a group… in the groups page's menu, leaving New group the one primary action", async () => {
     await mount(<GroupsScreen groups={[team]} selectedId={groupId} loading={false} error={null} />)

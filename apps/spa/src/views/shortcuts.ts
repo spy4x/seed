@@ -131,8 +131,8 @@ export type NotePageActions = Partial<Record<NoteAction, () => void>>
 export type TagPageActions = Partial<Record<"delete", () => void>>
 
 /**
- * The open group page's commands, as its "More actions" menu offers them to the person now. Export
- * downloads at once, as the menu's does; Transfer, Leave and Delete only open their dialogs.
+ * The open group page's commands, as its "More actions" menu offers them to the person now. Both
+ * exports download at once, as the menu's do; Transfer, Leave and Delete only open their dialogs.
  */
 export type GroupPageActions = Partial<Record<GroupAction, () => void>>
 
@@ -208,6 +208,12 @@ const GROUP_COMMANDS: readonly ActionCommand<GroupAction>[] = [
     action: "export",
     label: `AppShell.exportGroup`,
     aliases: [`download`, `backup`, `экспорт`, `скачать группу`],
+  },
+  {
+    id: "group-export-spreadsheets",
+    action: "exportSpreadsheets",
+    label: `AppShell.exportGroupSpreadsheets`,
+    aliases: [`csv`, `excel`, `zip`, `spreadsheet`, `accountant`, `таблицы`],
   },
   {
     id: "group-leave",
