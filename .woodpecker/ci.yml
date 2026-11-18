@@ -49,7 +49,8 @@ variables:
   # took about 20 minutes (homelab#131). `check` still runs, and so do Lighthouse and the images
   # when their own lists name a changed file. Woodpecker skips a step with an `exclude` list only
   # when every changed file matches it. A push to main runs none of the steps that start the
-  # stack. ci-browser.yml holds a copy of this list; this file is the source.
+  # stack. ci-browser.yml holds a copy of this list; this file is the source. .githooks/pre-push
+  # holds the Markdown part of it.
   - &markdown_only
     - "*.md"
     - "**/README.md"
