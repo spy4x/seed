@@ -216,19 +216,20 @@ test.describe("the palette's commands", () => {
         memberPage.locator("[data-e2e=group-general-name]"),
       )
       await expect(memberPage.locator("[data-e2e=group-general-role]")).toHaveText("Editor")
-      const asMember = await search(memberPage, "this group")
+      const asMember = await search(memberPage, "group")
       await expect(asMember.option("Leave this group")).toBeVisible()
-      for (const name of ["Transfer ownership of this group", "Delete this group"]) {
+      for (
+        const name of [
+          "Transfer ownership of this group",
+          "Export group as JSON",
+          "Export group as spreadsheets",
+          "Delete this group",
+        ]
+      ) {
         await expect(asMember.option(name)).toHaveCount(0)
       }
       await memberPage.keyboard.press("Escape")
       await expect(asMember.palette).toBeHidden()
-      const memberExports = await search(memberPage, "export group")
-      for (const name of ["Export group as JSON", "Export group as spreadsheets"]) {
-        await expect(memberExports.option(name)).toHaveCount(0)
-      }
-      await memberPage.keyboard.press("Escape")
-      await expect(memberExports.palette).toBeHidden()
       await opensOnly(memberPage, "покинуть группу", "Leave this group", "group-leave-dialog")
       await expect(memberPage).toHaveURL(`/groups/${groupId}`)
       expect(await rolesIn(memberPage)).toEqual([2])
