@@ -88,7 +88,7 @@ fi
 # Records only the tree the check really saw: an edit made while it ran leaves no marker.
 if [ -n "$tree_before" ] && [ "$tree_before" = "$(clean_tree)" ]; then
   {
-    mkdir -p "$passed_dir" && : >"$passed_dir/$tree_before" &&
+    mkdir -p "$passed_dir" && touch "$passed_dir/$tree_before" &&
       find "$passed_dir" -type f -mtime +14 -delete
   } 2>/dev/null || true
 fi

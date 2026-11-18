@@ -408,3 +408,12 @@ Deno.test(`a marker that cannot be written never refuses the push`, () =>
     expect(push.code).toBe(0)
     expect(await repo.remoteSha(`feature`)).not.toBe(``)
   }))
+
+// A failed redirection on the shell's `:` builtin ends the hook, past any `|| true`.
+Deno.test(`a read-only marker folder never refuses the push`, () =>
+  withRepo(async (repo) => {
+    await Deno.mkdir(`${repo.work}/.git/pre-push-passed`, { mode: 0o555 })
+    const push = await pushFiles(repo, [`code.ts`])
+    expect(push.code).toBe(0)
+    expect(await repo.remoteSha(`feature`)).not.toBe(``)
+  }))

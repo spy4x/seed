@@ -80,10 +80,11 @@ shares, so run it once. Before each push the hook runs `deno task check` in CI's
 A push that changes only internal Markdown runs `deno task fmt:check` instead: root `*.md`, any
 `README.md`, `docs/**/*.md` and `i18n/*.md`, the Markdown part of `markdown_only` in
 `.woodpecker/ci.yml`. Other Markdown, such as a blog post, counts as code because tests parse it.
+`deno fmt` leaves out `docs/` and `media/demo/`, so the format check does not cover Markdown there.
 The hook skips a branch deletion, a branch with no change against `origin/main`, and a commit whose
 tree already passed the full check. It records such a tree only when the working tree matched the
-commit for the whole check, in `pre-push-passed/` inside the git directory, for 14 days. CI still
-runs `check` on every pull request.
+commit before and after the check, in `pre-push-passed/` inside the git directory, and a later
+green full check deletes records older than 14 days. CI still runs `check` on every pull request.
 
 Each app also has tasks of its own, in its `deno.json`. Run one from the root with
 `deno task --cwd apps/<app> <task>`. The website's `screenshots` and `loops` tasks record its
