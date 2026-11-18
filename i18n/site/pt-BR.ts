@@ -425,7 +425,7 @@ export default {
   "FeatureExport.nav": "Exportar e importar",
   "FeatureExport.title": "Seus dados vão com você",
   "FeatureExport.lead":
-    "Exporte qualquer grupo para um arquivo JSON aberto e importe depois como um grupo novo. O grupo original nunca é sobrescrito.",
+    "Exporte qualquer grupo para um arquivo JSON aberto e importe depois como um grupo novo, ou baixe em planilhas. O grupo original nunca é sobrescrito.",
   "FeatureExport.fact1": "O dono exporta; quem pode criar um grupo pode importar",
   "FeatureExport.fact2":
     "O arquivo inteiro é verificado antes de qualquer gravação e depois importado de uma vez",

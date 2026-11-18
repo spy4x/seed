@@ -1108,6 +1108,11 @@ AdminGroup.doneTransfer	1daaa2627ec2024e
 AdminGroup.endsOn	24b334ebef4fcf95
 AdminGroup.expired	424a2551d356754c
 AdminGroup.expires	6d85fe0371f54f07
+AdminGroup.exportFormatCsv	fdae6602c2bebdcc
+AdminGroup.exportFormatJson	db1a21a0bc2ef8fb
+AdminGroup.exportFormatUnknown	04829b3942af89ed
+AdminGroup.exports	2f4dcf59ff0cc41c
+AdminGroup.exportsNewest	6e7aeea29cdd9099
 AdminGroup.fileGone	4934c5510a708f4f
 AdminGroup.fileInNote	b9bcf3f300bf7e0f
 AdminGroup.fileInNoteTrash	e7c5b1575fffb6c1
@@ -1133,6 +1138,7 @@ AdminGroup.loadingFiles	07fdbe5557dcd7c6
 AdminGroup.memberActions	aac6defa1846338b
 AdminGroup.members	1044a4c056d0d685
 AdminGroup.newOwner	1cf8bc7ff36fdae7
+AdminGroup.noExports	42851bebd0c57e5e
 AdminGroup.noFilesMatch	adbc4608457d6f6b
 AdminGroup.noFilesMatchHint	daf868ddfed684aa
 AdminGroup.noFilesMatchQuery	edc1fb2b306d0832
@@ -1151,6 +1157,7 @@ AdminGroup.ownedBy	9f2f4550d59de6ad
 AdminGroup.owner	4b1b8aa3608a26da
 AdminGroup.pending	331551b0de4157c9
 AdminGroup.planBadge	1f5a6bbd6477a7fc
+AdminGroup.recentActivity	6cb44b56336af70b
 AdminGroup.removeFile	fffa2e32da712d49
 AdminGroup.removeFileText	023feaf4892b1e83
 AdminGroup.removeFileTitle	7ad877bc4fa7c4e3
