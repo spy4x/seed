@@ -152,10 +152,10 @@ Every Deno step runs `deno install --frozen` first, so a `deno.lock` that does n
 A cron run on `main` every night runs both workflows: `check`, `secrets`, the stack's steps
 (`integration`, `backup-restore`, `alert-rules`, `runtimes`), and in `ci-browser.yml` `browser`,
 the full `lighthouse` run and `e2e-full`. It skips the images, which the push to `main` built, and `e2e-smoke`, whose specs
-`e2e-full` runs too. The slow steps, `e2e-full` (about 27 minutes) and the full Lighthouse run
-(about 13), run here rather than on each push to `main` for two reasons: the repository cancels a
+`e2e-full` runs too. The slow steps, `e2e-full` (about 40 minutes) and the full Lighthouse run
+(about 15), run here rather than on each push to `main` for two reasons: the repository cancels a
 running push or pull-request pipeline when a newer one starts, but never a cron one, so the run
-finishes; and a merge, and a deploy that waits for `ci.yml`, no longer waits about 40 minutes. A red
+finishes; and a merge, and a deploy that waits for `ci.yml`, no longer waits about 55 minutes. A red
 nightly run is the sign that a merge broke something pull requests do not test. It blocks nothing.
 
 Woodpecker keeps crons on the server, not in the workflow files, so create it once per repository:
