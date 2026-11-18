@@ -14,6 +14,7 @@ import { seedAutomaticLocale } from "@platform/i18n.ts"
 import {
   ADMIN_GROUP_NO_FILTER,
   type AdminGroupDetail,
+  type AdminGroupExport,
   type AdminGroupFiles,
   type AdminGroupMember,
   type AdminGroupRow,
@@ -455,6 +456,8 @@ const detail: AdminGroupDetail = {
     details: { role: GroupRole.EDITOR },
     byOperator: true,
   }],
+  exports: [],
+  exportsMore: false,
   imported: null,
 }
 
@@ -880,6 +883,65 @@ describe(`one group in the admin app`, () => {
     const notice = `This file is gone. Someone may have removed it already.`
     await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, fileNotice: notice })} />)
     expect(find(`[data-e2e=admin-group-file-notice]`).textContent).toContain(notice)
+  })
+
+  describe(`the Activity tab's exports`, () => {
+    const entry = (id: number, format: AdminGroupExport[`format`]): AdminGroupExport => ({
+      id: String(id),
+      at: `2026-10-14T10:00:00.000Z`,
+      actor: { userId: 42, name: `Ada Lovelace` },
+      format,
+    })
+    const open = (exports: AdminGroupExport[], exportsMore = false) =>
+      mount(
+        <AdminGroupScreen
+          {...groupProps([], { tab: `activity`, detail: { ...detail, exports, exportsMore } })}
+        />,
+      )
+    const rows = () => [...document.querySelectorAll(`[data-e2e=admin-group-export-row]`)]
+    const more = `[data-e2e=admin-group-exports-more]`
+
+    it(`says so when the group was never exported, above the recent activity`, async () => {
+      await open([])
+      expect(find(`[data-e2e=admin-group-exports]`).textContent).toContain(`No exports yet.`)
+      expect(rows()).toHaveLength(0)
+      expect([...document.querySelectorAll(`[role=tabpanel] h2`)].map((h) => h.textContent))
+        .toEqual([`Exports`, `Recent activity`])
+      expect(find(`[data-e2e=admin-group-activity]`).textContent).toContain(`Bob Builder`)
+    })
+
+    it(`lists ten exports without saying older ones exist`, async () => {
+      await open(Array.from({ length: 10 }, (_, id) => entry(id, `json`)))
+      expect(rows()).toHaveLength(10)
+      expect(document.querySelector(more)).toBe(null)
+    })
+
+    it(`says only the newest are shown when the group has more`, async () => {
+      await open(Array.from({ length: 10 }, (_, id) => entry(id, `json`)), true)
+      expect(rows()).toHaveLength(10)
+      expect(find(more).textContent).toBe(`Showing the newest 10 exports.`)
+    })
+
+    it(`names each format, and marks a missing one as not recorded`, async () => {
+      await open([entry(1, `json`), entry(2, `csv`), entry(3, null)])
+      const formats = rows().map((row) => row.querySelector(`span`)!)
+      expect(formats.map((format) => format.textContent)).toEqual([
+        `JSON`,
+        `Spreadsheets`,
+        `Format not recorded`,
+      ])
+      expect(formats.map((format) => format.className)).toEqual([
+        `font-medium`,
+        `font-medium`,
+        `text-muted`,
+      ])
+      expect(rows()[0].querySelector(`bdi`)!.textContent).toBe(`Ada Lovelace`)
+    })
+
+    it(`names an export whose account is gone as a deleted user`, async () => {
+      await open([{ ...entry(1, `csv`), actor: { userId: null, name: `` } }])
+      expect(rows()[0].textContent).toContain(`Deleted user`)
+    })
   })
 
   it(`colours what removes access as a warning and what adds it as good news`, () => {

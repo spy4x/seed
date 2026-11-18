@@ -2,7 +2,15 @@
 import { expect } from "@std/expect"
 import postgres from "postgres"
 import { PlanError } from "@domain/billing"
-import { GROUP_EXPORT_VERSION, GroupError, GroupImportError, GroupRole } from "@domain/groups"
+import {
+  type AuditDetails,
+  GROUP_EXPORT_VERSION,
+  GROUP_FILE_EVENTS,
+  GroupError,
+  GroupImportError,
+  GroupRole,
+} from "@domain/groups"
+import { writeAuditEvent } from "@server/groups/audit.ts"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { PostgresGroupPorter } from "@server/groups/postgres-group-porter.ts"
 import { readAdminGroup } from "@server/groups/admin-groups.ts"
@@ -490,6 +498,40 @@ Deno.test("a former owner who handed the group over and was removed cannot expor
 
 /** The group files of an API that runs with `NOTES=false`, as its database service builds them. */
 const notesOffPorter = (sql: postgres.Sql) => new AppDbBase({ sql, notes: NOTES_OFF }).groupFiles
+
+Deno.test("the admin page lists a group's newest exports, each format as recorded, and no other group's", async () => {
+  await withSchema(async (sql) => {
+    const { owner, groupId } = await seed(sql)
+    const other = await seed(sql)
+    const exported = (groupId: string, actorId: number, details: AuditDetails) =>
+      writeAuditEvent(sql, { eventKind: GROUP_FILE_EVENTS.exported, actorId, groupId, details })
+
+    expect(await readAdminGroup(sql, groupId)).toMatchObject({ exports: [], exportsMore: false })
+
+    await exported(other.groupId, other.owner, { format: "json" })
+    expect((await readAdminGroup(sql, groupId))?.exports).toEqual([])
+
+    await exported(groupId, owner, { format: "json" })
+    await exported(groupId, owner, { format: "csv" })
+    await exported(groupId, owner, {})
+    await exported(groupId, owner, { format: "<b>" })
+    const formats = await readAdminGroup(sql, groupId)
+    expect(formats?.exports.map((row) => row.format)).toEqual([null, null, "csv", "json"])
+    expect(formats?.exports[0].actor.userId).toBe(owner)
+
+    // Ten fit the list; the eleventh pushes the oldest off and says older ones exist.
+    for (let row = 0; row < 6; row++) await exported(groupId, owner, { format: "csv" })
+    const ten = await readAdminGroup(sql, groupId)
+    expect(ten?.exports).toHaveLength(10)
+    expect(ten?.exportsMore).toBe(false)
+
+    await exported(groupId, owner, { format: "json" })
+    const eleven = await readAdminGroup(sql, groupId)
+    expect(eleven?.exports).toHaveLength(10)
+    expect(eleven?.exportsMore).toBe(true)
+    expect(eleven?.exports[0].format).toBe("json")
+  })
+})
 
 Deno.test("with the notes off, a group's export file and spreadsheets hold no note or tag", async () => {
   await withSchema(async (sql) => {
