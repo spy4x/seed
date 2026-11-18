@@ -125,7 +125,10 @@ ones without. Nothing imports it; it is for a person to open.
    field that is not text: a date as its ISO 8601 text, a list joined into one cell. The writer
    adds the byte order mark and guards every text cell against spreadsheet formulas; never write a
    second guard. Without a `csv` part the aggregate is listed in the ZIP's `README.txt` as not
-   available as a spreadsheet.
+   available as a spreadsheet. When the entry is not enough for a person to read, give the `csv`
+   part its own `read(sql, groupId, { t })` that yields pages of its own row type: names instead of
+   ids, values worked out at export time (a balance today, a converted amount), a fixed value in
+   the person's language with `t`. Its columns then read that row, and the type requires the `read`.
 
 | Part                           | What it does                                                               |
 | ------------------------------ | -------------------------------------------------------------------------- |
@@ -135,7 +138,7 @@ ones without. Nothing imports it; it is for a person to open.
 | `parse`, `check`               | One entry, and what is wrong across entries, such as a duplicate name      |
 | `read(sql, groupId)`           | The group's live rows, in pages                                            |
 | `write(tx, entries, context)`  | Writes the rows with new ids, and returns the new id of each file id      |
-| `csv`                          | The columns of its spreadsheet, if it has one                              |
+| `csv`                          | Its spreadsheet's columns, and its own row reader when the entry falls short |
 
 `write` gives every row a new `uuidV7()` id and stamps it with `context.changeSequence`. It maps
 what a row points at with `context.newIdOf(kind, fileId)`.
