@@ -487,6 +487,20 @@ const SCREENS: Screen[] = [
     },
   },
   {
+    // The palette answering the wrong keyboard layout: "ntvf" is "тема" typed on the English
+    // layout, and Theme still comes first. The picture keeps the dialog and a margin around it.
+    name: "palette",
+    forms: ["desktop"],
+    async open(page) {
+      await gotoApp(page, "/notes", page.locator("[data-e2e=note-item-title]").nth(5))
+      await page.keyboard.press("Control+k")
+      const palette = page.locator("[data-e2e=search]")
+      await palette.getByRole("combobox").fill("ntvf")
+      await palette.getByRole("option", { name: /Theme/ }).first().waitFor()
+    },
+    clip: { x: 272, y: 24, width: 736, height: 556 },
+  },
+  {
     name: "profile-security",
     forms: ["desktop"],
     async open(page) {
