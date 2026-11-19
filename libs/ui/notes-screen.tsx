@@ -199,6 +199,11 @@ export interface NotesScreenProps {
   /** The person's own id, for "Created by me". Left out, there is no such toggle. */
   youId?: string | null
   navigate?: Navigate
+  /**
+   * Whether the app binds `n` to a new note: it passes its single-keys setting. Only then does New
+   * note show `n`. Left out, no key is shown.
+   */
+  singleKeys?: boolean
   /** Drawn right under the page header, above the list: the app's offline status and first steps. */
   intro?: ComponentChildren
 }
@@ -446,6 +451,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             Icon={IconPlus}
             href={NOTE_PATHS.new}
             navigate={navigate}
+            keyshortcuts={props.singleKeys ? [`n`] : undefined}
             dataE2E="note-new"
           />
         )}

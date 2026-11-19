@@ -391,6 +391,17 @@ describe("the group overview", () => {
     expect(customise().querySelector("[data-hotkey-hint]")).toBe(null)
   })
 
+  it("shows d on the date range's button, announced, only while the single keys are on", async () => {
+    const range = () => find("[data-e2e=overview-range]")
+    await mount(READY, { singleKeys: true })
+    expect(range().getAttribute("aria-keyshortcuts")).toBe("D")
+    expect(range().querySelector("[data-hotkey-hint]")?.textContent).toBe("D")
+    await act(() => render(null, root!))
+    await mount(READY, { singleKeys: false })
+    expect(range().hasAttribute("aria-keyshortcuts")).toBe(false)
+    expect(range().querySelector("[data-hotkey-hint]")).toBe(null)
+  })
+
   it("returns focus to More actions when Customise closes with Done or the ✕", async () => {
     // The menu gives focus back to More actions before the dialog opens, so the dialog's own restore
     // lands there, here and in Chromium alike. This guards that behaviour, not the screen's effect.

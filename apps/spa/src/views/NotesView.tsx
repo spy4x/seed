@@ -21,6 +21,7 @@ import { OfflineStatus } from "../modules.ts"
 import { OnboardingView } from "./OnboardingView.tsx"
 import { useAppText } from "@ui/i18n.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
+import { singleKeys } from "@platform/shortcuts.ts"
 
 /** The filter parameters "Clear filters" takes out of the address; search and sort stay. */
 const FILTER_PARAMS = ["tag", "match", "author", "mine"]
@@ -151,6 +152,8 @@ export function NotesView() {
           : undefined,
       }))}
       tags={tagsStore.tags.value}
+      // `n` is bound while the notes are on (`shortcutRows`), and only then is this page routed.
+      singleKeys={singleKeys.on.value}
       filters={filters}
       onFiltersChange={(next) => {
         if (next.tagIds.join() !== filters.tagIds.join()) return setTags(next.tagIds)
