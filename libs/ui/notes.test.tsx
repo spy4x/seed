@@ -603,6 +603,16 @@ describe("NotesScreen in the browser", () => {
     expect(focused()).toBe("note-menu")
   })
 
+  it("shows n on New note, announced, only while the single keys are on", async () => {
+    const add = () => find("[data-e2e=note-new]")
+    await mount(<NotesScreen {...listDefaults} singleKeys />)
+    expect(add().getAttribute("aria-keyshortcuts")).toBe("N")
+    expect(add().querySelector("[data-hotkey-hint]")?.textContent).toBe("N")
+    await rerender(<NotesScreen {...listDefaults} singleKeys={false} />)
+    expect(add().hasAttribute("aria-keyshortcuts")).toBe(false)
+    expect(add().querySelector("[data-hotkey-hint]")).toBe(null)
+  })
+
   it("leaves focus where the person put it when a refused delete's note leaves the list later", async () => {
     await mount(<NotesScreen {...listDefaults} />)
     await click(`${row(trip)} [data-e2e=note-menu]`)
