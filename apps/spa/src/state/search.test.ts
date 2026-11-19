@@ -108,6 +108,17 @@ describe("the palette's note search", () => {
     expect(ids(await search("тщеу", signal))).toEqual(["n-1"])
   })
 
+  it("finds the blog post's Palette demo note offline by pallette and зфдуееу", async () => {
+    const search = createNoteSearch(sources({
+      canCall: () => false,
+      deviceNotes: () => Promise.resolve([note("n-1", HOME, "Palette demo", "")]),
+    }))
+
+    expect(ids(await search("pallette", signal))).toEqual(["n-1"])
+    expect(ids(await search("зфдуееу", signal))).toEqual(["n-1"])
+    expect(ids(await search("paltete", signal))).toEqual([])
+  })
+
   it("ranks the best match first offline, the newest first among equal matches", async () => {
     const search = createNoteSearch(sources({
       canCall: () => false,
