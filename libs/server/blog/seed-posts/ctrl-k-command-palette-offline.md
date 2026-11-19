@@ -13,7 +13,7 @@ topic: Deep dive
 intro: "Seed's Ctrl+K palette runs the whole app, finds things through typos and the wrong keyboard layout, and keeps working with no network. Here is what it does and the one file it is built from."
 relatedFeature: shortcuts
 cover: covers/ctrl-k-command-palette-offline.webp
-coverAlt: "A glowing violet key lies on a desk and a fan of paper cards rises from it, each with a small icon: a note, a tag, a moon, a group of people. One card is slightly crooked and still lit."
+coverAlt: "A blank violet keyboard key glows on a desk beside an unplugged cable, and four paper cards rise from it, showing a moon, a sun, a page and a house."
 author: Anton Shubin
 authorUrl: https://antonshubin.com/about
 publishAt: 2026-11-19T08:00:00Z
