@@ -132,6 +132,12 @@ export interface OverviewScreenProps {
   choosePlanHref?: string | null
   /** `data-e2e` of the range picker's button, so the page's `d` key can open it. */
   rangeDataE2E?: string
+  /**
+   * Whether the page's single keys (`d` for the range, `c` for Customise) work: the app passes its
+   * single-keys setting and binds them. Only then does the menu's Customise show `c`. Left out, no
+   * key is shown.
+   */
+  singleKeys?: boolean
   navigate?: Navigate
   /**
    * Drawn right under the page header, above everything else: the app's first steps, when the
@@ -252,7 +258,11 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
           menuDataE2E="overview-menu"
           menu={group && !noWidgets && (
             <>
-              <DropdownItem onClick={props.onCustomise} dataE2E="overview-customise">
+              <DropdownItem
+                onClick={props.onCustomise}
+                keyshortcuts={props.singleKeys ? [`c`] : undefined}
+                dataE2E="overview-customise"
+              >
                 {t.t(`OverviewScreen.customise`)}
               </DropdownItem>
               <DropdownItem onClick={props.onResetLayout} dataE2E="overview-reset">

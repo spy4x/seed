@@ -412,7 +412,7 @@ export default {
   "FeatureExport.nav": "Export and import",
   "FeatureExport.title": "Your data leaves with you",
   "FeatureExport.lead":
-    "Export any group to an open JSON file, and import it later as a new group. The original group is never overwritten.",
+    "Export any group to an open JSON file and import it later as a new group, or download it as spreadsheets. The original group is never overwritten.",
   "FeatureExport.fact1": "The owner exports; anyone who can create a group can import",
   "FeatureExport.fact2":
     "The whole file is checked before anything is written, then imported in one step",

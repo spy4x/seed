@@ -12,6 +12,7 @@ import { OVERVIEW_DEFAULT_PRESET, OVERVIEW_PRESETS, OverviewScreen } from "@ui/o
 import { OVERVIEW_VIEWS, overviewWidgets } from "@ui/overview-widgets.ts"
 import { GROUP_PATHS, OVERVIEW_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { useAppText } from "@ui/i18n.ts"
+import { singleKeys } from "@platform/shortcuts.ts"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { isGuestSession } from "../state/guest.ts"
@@ -212,6 +213,7 @@ export function OverviewView(
         : null}
       choosePlanHref={choosePlan ? GROUP_PATHS.billing(groupId) : null}
       rangeDataE2E={RANGE_E2E}
+      singleKeys={singleKeys.on.value}
       navigate={navigate}
       intro={notesOn() ? null : <OnboardingView store={onboarding} />}
     />

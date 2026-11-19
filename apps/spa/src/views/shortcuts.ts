@@ -20,8 +20,11 @@ export interface SpaShortcutPorts {
   activityGroupId: string | null
   /** The overview's own keys while it is open; `null` or left out on every other page. */
   overviewPage?: { openRange(): void; openCustomise(): void } | null
-  /** The benchmark page's keys while it is open; `null` or left out on every other page. */
-  benchmarkPage?: { run(): void; copy(): void } | null
+  /**
+   * Whether the benchmark page is open; left out, it is not. Its Run and Copy buttons bind `r` and
+   * `c` themselves (`BenchmarkScreen`), so these rows are listed only.
+   */
+  benchmarkPage?: boolean
   /**
    * Whether the notes example is on (`SPA_NOTES`); left out, it is. Off, no row names notes or
    * tags: no `n`, Undo, `g n`, `g t` or the New note dialog's keys.
@@ -31,9 +34,11 @@ export interface SpaShortcutPorts {
 
 /**
  * The SPA's keyboard shortcuts, the one list the "Keyboard shortcuts" dialog shows and the frame
- * binds, each described by a key of the `app` catalog. Search's keys, the New note dialog's and Undo's (`useUndoToast`) are bound where they act
- * and listed here; Activity is listed and bound only while the rail shows it, and the overview's
- * `d` and `c` only while it is open, and the benchmark's `r` and `c` only while it is.
+ * binds, each described by a key of the `app` catalog. Search's keys, the New note dialog's and Undo's
+ * (`useUndoToast`) are bound where they act and listed here, as are the benchmark's `r` and `c`,
+ * which its buttons bind while it is open. Activity is listed and bound only while the rail shows
+ * it, and the overview's `d` and `c` only while it is open. A `g` row names the page it opens
+ * (`href`), so the frame shows its keys on that page's entry.
  */
 export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
   const { general, goTo, newNote, page } = SHORTCUT_GROUPS
@@ -42,6 +47,7 @@ export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
     description,
     group: goTo,
     run: () => ports.navigate(href),
+    href,
   })
   const [show, close] = generalRows(ports.openShortcuts)
   const notes = ports.notes ?? true
@@ -84,18 +90,8 @@ export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
       : []),
     ...(ports.benchmarkPage
       ? [
-        {
-          keys: "r",
-          description: `Shortcuts.runBenchmark`,
-          group: page,
-          run: ports.benchmarkPage.run,
-        },
-        {
-          keys: "c",
-          description: `Shortcuts.copyResults`,
-          group: page,
-          run: ports.benchmarkPage.copy,
-        },
+        { keys: "r", description: `Shortcuts.runBenchmark`, group: page },
+        { keys: "c", description: `Shortcuts.copyResults`, group: page },
       ]
       : []),
     ...(notes
@@ -135,8 +131,8 @@ export type NotePageActions = Partial<Record<NoteAction, () => void>>
 export type TagPageActions = Partial<Record<"delete", () => void>>
 
 /**
- * The open group page's commands, as its "More actions" menu offers them to the person now. Export
- * downloads at once, as the menu's does; Transfer, Leave and Delete only open their dialogs.
+ * The open group page's commands, as its "More actions" menu offers them to the person now. Both
+ * exports download at once, as the menu's do; Transfer, Leave and Delete only open their dialogs.
  */
 export type GroupPageActions = Partial<Record<GroupAction, () => void>>
 
@@ -212,6 +208,12 @@ const GROUP_COMMANDS: readonly ActionCommand<GroupAction>[] = [
     action: "export",
     label: `AppShell.exportGroup`,
     aliases: [`download`, `backup`, `экспорт`, `скачать группу`],
+  },
+  {
+    id: "group-export-spreadsheets",
+    action: "exportSpreadsheets",
+    label: `AppShell.exportGroupSpreadsheets`,
+    aliases: [`csv`, `excel`, `zip`, `spreadsheet`, `accountant`, `таблицы`],
   },
   {
     id: "group-leave",

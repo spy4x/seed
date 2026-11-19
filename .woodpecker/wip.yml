@@ -9,16 +9,27 @@
 #
 # YAML anchors do not cross files, so both steps are copies of ci.yml's: ci.yml is the source, and
 # tests/ci-browser-tests.test.ts fails when the two differ.
+#
+# A pull request that changes no file yet, such as one holding only the empty commit that claims
+# its issue, runs nothing: `on_empty: false` skips it, and its first real commit runs the checks.
 
 when:
   - event: pull_request
     evaluate: 'CI_COMMIT_MESSAGE startsWith "[WIP]"'
+    path:
+      include: ["**"]
+      on_empty: false
+
+# Light work: any agent may take it, the laptop's too, which takes only workflows with this label
+# (homelab#180). A label no agent reports would leave the workflow waiting.
+labels:
+  size: small
 
 steps:
   check:
     image: denoland/deno:2.9.7
     commands:
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates
       - deno install --frozen
       - deno task check
 

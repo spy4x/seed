@@ -1,17 +1,65 @@
 #!/bin/sh
-# Refuses a push while `deno task check` is red, so CI never fails on what the local check reports.
-# It checks the working tree, not the pushed commit. Install: `deno task hooks:install`.
+# Refuses a push while the local check is red, so CI never fails on what that check reports.
+# A push of internal Markdown runs `deno task fmt:check`; any other change runs `deno task check`.
+# Both check the working tree, not the pushed commit. Install: `deno task hooks:install`.
 # Git passes one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
+
+# One empty file per tree that passed the full check, shared by every linked worktree.
+passed_dir=$(git rev-parse --path-format=absolute --git-common-dir)/pre-push-passed
+
+# The Markdown part of `markdown_only` in .woodpecker/ci.yml. Any other Markdown counts as code:
+# tests parse the blog posts. Git quotes an unusual path, and its closing quote matches nothing here.
+is_internal_markdown() {
+  case $1 in
+    */README.md) return 0 ;;
+    i18n/*/*) return 1 ;;
+    i18n/*.md | docs/*.md) return 0 ;;
+    */*) return 1 ;;
+    *.md) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Prints what a pushed commit needs: `full`, `format`, or nothing when it changes nothing.
+# `--no-renames` lists a renamed file's old path too, so renaming code to Markdown stays code.
+check_for() {
+  git rev-parse --verify -q origin/main >/dev/null || {
+    echo full
+    return
+  }
+  files=$(git diff --name-only --no-renames "origin/main...$1") || {
+    echo full
+    return
+  }
+  [ -z "$files" ] && return
+  while IFS= read -r file; do
+    is_internal_markdown "$file" || {
+      echo full
+      return
+    }
+  done <<EOF
+$files
+EOF
+  echo format
+}
+
+# Prints HEAD's tree when the working tree is exactly that commit, untracked files included.
+clean_tree() {
+  changes=$(git status --porcelain --untracked-files=normal) && [ -z "$changes" ] &&
+    git rev-parse --verify -q 'HEAD^{tree}'
+}
+
 needed=
 while read -r _ local_sha _ _; do
   # A deletion's local sha is all zeros.
   case $local_sha in *[!0]*) ;; *) continue ;; esac
-  # No change against main (an empty claim commit) needs no check.
-  if git rev-parse --verify -q origin/main >/dev/null &&
-    git diff --quiet "origin/main...$local_sha"; then
-    continue
-  fi
-  needed=1
+  # A tree that passed the full check gives the same result again.
+  tree=$(git rev-parse --verify -q "$local_sha^{tree}")
+  [ -n "$tree" ] && [ -e "$passed_dir/$tree" ] && continue
+  case $(check_for "$local_sha") in
+    full) needed=full ;;
+    format) [ -z "$needed" ] && needed=format ;;
+  esac
 done
 [ -z "$needed" ] && exit 0
 
@@ -20,7 +68,28 @@ done
 unset $(git rev-parse --local-env-vars)
 
 # CI's locale: some tests format dates and numbers differently in another one.
-LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 deno task check
+export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+if [ "$needed" = format ]; then
+  deno task fmt:check
+  status=$?
+  [ $status -ne 0 ] && echo "Push refused: format check is red. Run \`deno task fmt:fix\`." >&2
+  exit $status
+fi
+
+tree_before=$(clean_tree)
+deno task check
 status=$?
-[ $status -ne 0 ] && echo "Push refused: check is red. Run \`deno task check\` to see why." >&2
-exit $status
+if [ $status -ne 0 ]; then
+  echo "Push refused: check is red. Run \`deno task check\` to see why." >&2
+  exit $status
+fi
+
+# Records only the tree the check really saw: an edit made while it ran leaves no marker.
+if [ -n "$tree_before" ] && [ "$tree_before" = "$(clean_tree)" ]; then
+  {
+    mkdir -p "$passed_dir" && touch "$passed_dir/$tree_before" &&
+      find "$passed_dir" -type f -mtime +13 -delete
+  } 2>/dev/null || true
+fi
+exit 0

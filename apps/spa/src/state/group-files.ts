@@ -3,6 +3,7 @@ import { readPlanRefusal } from "@domain/billing"
 import { type ApiErrorAnswer, readApiError } from "@domain/errors"
 import {
   GROUP_IMPORT_MAX_BYTES,
+  type GroupExportFormat,
   type GroupImportProblem,
   type GroupImportResult,
   type GroupImportSummary,
@@ -28,10 +29,17 @@ const browserPorts: GroupFilePorts = {
   save: (response, filename) => downloadResponseAsFile(response, filename),
 }
 
-/** The file name the server gave in `Content-Disposition`, or a plain one. */
-function fileNameOf(response: Response): string {
+/** The file name the server gave in `Content-Disposition`, or a plain one for the format. */
+function fileNameOf(response: Response, format: GroupExportFormat): string {
   const header = response.headers.get("content-disposition") ?? ""
-  return /filename="([^"]+)"/.exec(header)?.[1] ?? "group-export.json"
+  return /filename="([^"]+)"/.exec(header)?.[1] ??
+    (format === "csv" ? "group-export.zip" : "group-export.json")
+}
+
+/** The address of a group's file: spreadsheets name the language of their headings. */
+function exportUrl(groupId: string, format: GroupExportFormat, language: string): string {
+  const url = `/api/groups/${encodeURIComponent(groupId)}/export`
+  return format === "csv" ? `${url}?format=csv&language=${encodeURIComponent(language)}` : url
 }
 
 /** Reads a JSON body, or `null` when there is none. */
@@ -43,32 +51,46 @@ async function bodyOf(response: Response): Promise<Record<string, unknown> | nul
   }
 }
 
+/** One export of a group: which group, in which format. */
+export interface GroupExportJob {
+  groupId: string
+  format: GroupExportFormat
+}
+
 /**
  * Downloading a group's export file. One export at a time; the group page shows "Preparing…"
  * while it runs and a notice when it failed.
  */
 export function createGroupExportStore(ports: GroupFilePorts = browserPorts) {
-  /** The group whose file is being prepared, or `null`. */
-  const exporting = signal<string | null>(null)
-  /** The group whose last export failed, or `null`. */
-  const failed = signal<string | null>(null)
+  /** The group and format of the file being prepared, or `null`. */
+  const exporting = signal<GroupExportJob | null>(null)
+  /** The group and format of the last export, when it failed; otherwise `null`. */
+  const failed = signal<GroupExportJob | null>(null)
 
-  /** Downloads the file; resolves to whether it was saved. */
-  async function download(groupId: string): Promise<boolean> {
+  /**
+   * Downloads the file; resolves to whether it was saved.
+   *
+   * @param language The page's language, for the headings of the spreadsheets.
+   */
+  async function download(
+    groupId: string,
+    format: GroupExportFormat,
+    language: string,
+  ): Promise<boolean> {
     if (exporting.value !== null) return false
-    exporting.value = groupId
+    exporting.value = { groupId, format }
     failed.value = null
     try {
       const response = await fetchAsUser(
-        `/api/groups/${encodeURIComponent(groupId)}/export`,
+        exportUrl(groupId, format, language),
         undefined,
         ports.fetch,
       )
       if (!response.ok) throw new Error(`Export answered ${response.status}`)
-      await ports.save(response, fileNameOf(response))
+      await ports.save(response, fileNameOf(response, format))
       return true
     } catch {
-      failed.value = groupId
+      failed.value = { groupId, format }
       return false
     } finally {
       exporting.value = null

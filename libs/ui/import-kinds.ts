@@ -5,9 +5,10 @@
  *
  * @module
  */
+import type { ComponentChildren } from "preact"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { canMutateNotes, type GroupRole } from "@domain/groups"
-import type { ImportKindLimits } from "@domain/imports"
+import type { ImportKindLimits, ImportRowReview } from "@domain/imports"
 import { NOTE_IMPORT_KIND, NOTE_RESTORE_DAYS } from "@domain/notes"
 import { NOTE_PATHS } from "./progressive.tsx"
 
@@ -41,6 +42,51 @@ export interface ImportKindWords {
   field(key: string, label: string): string
 }
 
+/** An upload's options as the API takes them: field keys to text (`docs/imports.md`). */
+export type ImportOptions = Record<string, string>
+
+/**
+ * The kind's own form above the file picker, such as the account a statement belongs to. A file
+ * chosen before `ready` holds is not uploaded; the upload sends the value as its `options`.
+ */
+export interface ImportKindOptions {
+  /** The value before the person touched the form. */
+  initial: ImportOptions
+  /** The form's fields, each with its own label. `disabled` while a file uploads or offline. */
+  render(props: {
+    value: ImportOptions
+    onChange(value: ImportOptions): void
+    disabled: boolean
+  }): ComponentChildren
+  /** Whether `value` is complete enough to upload with. */
+  ready(value: ImportOptions): boolean
+}
+
+/** What a choice control of one reviewed row is given. */
+export interface ImportChoiceProps {
+  /** The reviewed row: its number, cells, skip and suggestions. */
+  row: ImportRowReview
+  /** The value the save will use: the person's choice, or else the suggestion, or else empty. */
+  value: string
+  /** What the review proposed for this field, if anything. */
+  suggestion: string | undefined
+  onChange(value: string): void
+  disabled: boolean
+  /** The control's `id`, unique on the page. */
+  id: string
+  /** The control's accessible name, naming the field and the line: "Category, line 12". */
+  label: string
+}
+
+/** How a kind with a review draws its choice fields in the "Check the rows" table. */
+export interface ImportKindReview {
+  /**
+   * The control for choice field `field` of one row. Full width and 44 px tall on a phone
+   * (`min-h-11 w-full sm:min-h-9 sm:w-auto`). Without it, the suggestion shows as text.
+   */
+  choice?(field: string, props: ImportChoiceProps): ComponentChildren
+}
+
 /** One kind the pages take: the files it takes, who may import it, and its words. */
 export interface ImportKindView {
   limits: ImportKindLimits
@@ -51,6 +97,10 @@ export interface ImportKindView {
   /** Where "Go to" leads once saved. */
   href: string
   words(t: Translator<string>): ImportKindWords
+  /** The kind's upload options; a kind without them uploads with none. */
+  options?: ImportKindOptions
+  /** How the kind draws its review's choices; the review shows whenever the check has one. */
+  review?: ImportKindReview
 }
 
 /** The notes kind's words, every key written out so the catalog check finds it. */

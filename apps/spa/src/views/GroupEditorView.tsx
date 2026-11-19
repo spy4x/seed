@@ -14,7 +14,7 @@ import { useAppText } from "@ui/i18n.ts"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { PendingInvitations } from "@ui/group-invitations.tsx"
 import { GroupTransferForm } from "@ui/group-transfer.tsx"
-import { canManageInvitations, GroupRole } from "@domain/groups"
+import { canManageInvitations, type GroupExportFormat, GroupRole } from "@domain/groups"
 import type { GroupRow } from "@ui/groups-screen.tsx"
 import { moveTargetsOf } from "@ui/notes-screen.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
@@ -30,6 +30,7 @@ import { GroupActivityView } from "./GroupActivityView.tsx"
 import { toasts } from "../state/toasts.ts"
 import { isSpaPath } from "./spa-paths.ts"
 import { currentLayer } from "../modules.ts"
+import { languages } from "../i18n.ts"
 import { isolate } from "@spy4x/preact-ui/bdi"
 import { afterPalette } from "./palette-attach.ts"
 import { type GroupPageActions, readyActions } from "./shortcuts.ts"
@@ -254,10 +255,14 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
   const isLastGroup = store.groups.value.length <= 1
   const hasSubscription = billingOurs?.subscribed ?? false
   const offline = offlineNow()
-  const exporting = groupExportStore.exporting.value === groupId
-  const exportGroup = () => void groupExportStore.download(groupId)
-  // The palette offers what the menu lets the person pick now. Export runs at once, as the menu's
-  // does; the others open the menu's dialog through the screen, once the palette has closed.
+  const exportJob = groupExportStore.exporting.value
+  const exporting = exportJob?.groupId === groupId ? exportJob.format : null
+  const failedExport = groupExportStore.failed.value
+  // The language is read at the click: the palette keeps this function across a language switch.
+  const exportGroup = (format: GroupExportFormat) =>
+    void groupExportStore.download(groupId, format, languages.translator.peek().language)
+  // The palette offers what the menu lets the person pick now. Both exports run at once, as the
+  // menu's do; the others open the menu's dialog through the screen, once the palette has closed.
   const requestDialog = useSignal<GroupDialog | null>(null)
   const ready = group
     ? readyActions(groupMenuActions({
@@ -268,14 +273,16 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
       isLastGroup,
       hasSubscription,
       offline,
-      exporting,
+      exporting: exporting !== null,
     }))
     : []
   useEffect(() => {
     groupEditorPageActions.value = Object.fromEntries(ready.map((action) => [
       action,
       action === `export`
-        ? exportGroup
+        ? () => exportGroup(`json`)
+        : action === `exportSpreadsheets`
+        ? () => exportGroup(`csv`)
         : () => afterPalette(document, () => requestDialog.value = action),
     ]))
     return () => groupEditorPageActions.value = null
@@ -300,7 +307,7 @@ function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
       onSave={() => void saveAndAnnounce(store, groupId, toasts, t)}
       onExport={exportGroup}
       exporting={exporting}
-      exportFailed={groupExportStore.failed.value === groupId}
+      exportFailed={failedExport?.groupId === groupId ? failedExport.format : null}
       onDiscard={() => store.discard()}
       isLastGroup={isLastGroup}
       hasSubscription={hasSubscription}

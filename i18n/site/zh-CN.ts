@@ -383,7 +383,7 @@ export default {
   "FeatureExport.nav": "导出与导入",
   "FeatureExport.title": "你的数据，随你带走",
   "FeatureExport.lead":
-    "可以把任意群组导出为开放的 JSON 文件，之后再作为新群组导入。原来的群组永远不会被覆盖。",
+    "可以把任意群组导出为开放的 JSON 文件，之后再作为新群组导入，也可以下载为电子表格。原来的群组永远不会被覆盖。",
   "FeatureExport.fact1": "所有者负责导出；任何能创建群组的人都可以导入",
   "FeatureExport.fact2": "写入任何数据之前会先检查整个文件，然后一步完成导入",
   "FeatureExport.fact3": "每条笔记和每个标签都会获得新的 ID，因此导入永远不会与现有数据冲突",

@@ -36,6 +36,7 @@ A screen that fails is listed at the end and the run exits 1; the others are sti
 | Screen             | Form               | Delivered widths          |
 | ------------------ | ------------------ | ------------------------- |
 | `notes`            | desktop and mobile | 1280, 800, 640 / 780, 390 |
+| `palette`          | desktop            | 1280, 800, 640            |
 | `profile-security` | desktop            | 1280, 800, 640            |
 | `group-members`    | desktop            | 1280, 800, 640            |
 | `billing`          | desktop            | 1280, 800, 640            |

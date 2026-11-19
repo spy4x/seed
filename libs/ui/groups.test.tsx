@@ -1092,8 +1092,13 @@ describe("groupMenuActions", () => {
     exporting: false,
   }
 
-  it("offers the owner Transfer, Export and Delete, and no Leave", () => {
-    expect(groupMenuActions(facts)).toEqual({ transfer: null, export: null, delete: null })
+  it("offers the owner Transfer, both Exports and Delete, and no Leave", () => {
+    expect(groupMenuActions(facts)).toEqual({
+      transfer: null,
+      export: null,
+      exportSpreadsheets: null,
+      delete: null,
+    })
   })
 
   it("offers an admin, an editor and a viewer only Leave", () => {
@@ -1103,8 +1108,9 @@ describe("groupMenuActions", () => {
   })
 
   it("leaves out Transfer with nobody to take the group, and what the app does not wire", () => {
-    expect(groupMenuActions({ ...facts, members: [owner] })).toEqual({ export: null, delete: null })
-    expect(groupMenuActions({ ...facts, members: null })).toEqual({ export: null, delete: null })
+    const noTransfer = { export: null, exportSpreadsheets: null, delete: null }
+    expect(groupMenuActions({ ...facts, members: [owner] })).toEqual(noTransfer)
+    expect(groupMenuActions({ ...facts, members: null })).toEqual(noTransfer)
     expect(groupMenuActions({ ...facts, hasTransfer: false, hasExport: false }))
       .toEqual({ delete: null })
   })
@@ -1113,6 +1119,7 @@ describe("groupMenuActions", () => {
     expect(groupMenuActions({ ...facts, hasSubscription: true })).toEqual({
       transfer: "subscription",
       export: null,
+      exportSpreadsheets: null,
       delete: "subscription",
     })
     expect(groupMenuActions({ ...facts, isLastGroup: true, hasSubscription: true }).delete)
@@ -1120,7 +1127,9 @@ describe("groupMenuActions", () => {
     expect(groupMenuActions({ ...facts, role: GroupRole.EDITOR, isLastGroup: true }))
       .toEqual({ leave: "lastGroup" })
     expect(groupMenuActions({ ...facts, offline: true }).export).toBe("offline")
+    expect(groupMenuActions({ ...facts, offline: true }).exportSpreadsheets).toBe("offline")
     expect(groupMenuActions({ ...facts, exporting: true }).export).toBe("exporting")
+    expect(groupMenuActions({ ...facts, exporting: true }).exportSpreadsheets).toBe("exporting")
   })
 })
 
@@ -2290,7 +2299,7 @@ describe("the group screens in the en-XA pseudo-language", () => {
       members: [owner, editor, viewer],
       transfer: () => <p>⟦transfer⟧</p>,
       onExport: () => {},
-      exportFailed: true,
+      exportFailed: `json` as const,
       moveTargets: [{ id: `g-2`, name: `Family` }],
       onMoveAll: () => {},
       onSwitch: () => {},

@@ -181,7 +181,7 @@ describe("the SPA with the notes off", () => {
     expect(overviewWidgets(false).filter((widget) => notes.has(widget.id))).toEqual([])
   })
 
-  it("draws a shell with no notes or tags link and no New note dialog", () => {
+  it("draws a shell with no notes or tags link, no Notes keys and no New note dialog", () => {
     const draw = () =>
       renderToString(
         <Router ssrPath={OVERVIEW_PATHS.root}>
@@ -204,9 +204,13 @@ describe("the SPA with the notes off", () => {
 
     expect(hrefs(on).filter((href) => NOTES_ADDRESS.test(href)).length).toBeGreaterThan(0)
     expect(on).toContain(`data-e2e="new-note-dialog"`)
+    // The rail names each destination's `g` keys, from the same rows that bind them.
+    expect(on).toContain(`>Notes (G N)<`)
     expect(hrefs(off).filter((href) => NOTES_ADDRESS.test(href))).toEqual([])
     expect(off).not.toContain(`data-e2e="new-note-dialog"`)
     expect(hrefs(off)).toContain(OVERVIEW_PATHS.root)
+    expect(off).not.toContain(`(G N)`)
+    expect(off).toContain(`>Overview (G O)<`)
     newNoteStore.open.value = false
   })
 })

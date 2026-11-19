@@ -21,6 +21,7 @@ import {
   parseGroupFile,
   portable,
   type PortableAggregate,
+  type PortableEntry,
   writeGroupFile,
   writeGroupSpreadsheets,
 } from "./portable.ts"
@@ -428,6 +429,35 @@ describe("writeGroupSpreadsheets", () => {
       new Date(at),
     )
     await expect(pieces.next()).rejects.toThrow("the database is down")
+  })
+
+  it("writes the rows of a spreadsheet's own reader, which gets the person's translator", async () => {
+    const notes = portable<PortableEntry, { tagNames: string; kind: string }>({
+      ...notePortable,
+      // deno-lint-ignore require-yield
+      async *read() {
+        throw new Error("the spreadsheet must not read the export entries")
+      },
+      csv: {
+        columns: [
+          { key: "tagNames", header: "NoteSpreadsheet.tagIds" },
+          { key: "kind", header: "NoteSpreadsheet.title" },
+        ],
+        async *read(_sql, _groupId, { t }) {
+          yield [{ tagNames: "Blue, Green", kind: t("NoteSpreadsheet.created") }]
+        },
+      },
+    })
+    const files = await spreadsheets([notes], "de")
+    expect(cells(files["notes.csv"])).toEqual([["Tag-IDs", "Titel"], ["Blue, Green", "Erstellt"]])
+  })
+
+  it("refuses at type check a spreadsheet of another row type without its own reader", () => {
+    portable<PortableEntry, { tagNames: string }>({
+      ...notePortable,
+      // @ts-expect-error: rows of another type than the entry need the spreadsheet's own `read`
+      csv: { columns: [{ key: "tagNames", header: "NoteSpreadsheet.tagIds" }] },
+    })
   })
 })
 

@@ -431,7 +431,7 @@ export default {
   "FeatureExport.nav": "Export et import",
   "FeatureExport.title": "Vos données partent avec vous",
   "FeatureExport.lead":
-    "Exportez n’importe quel groupe dans un fichier JSON ouvert, et importez-le plus tard comme nouveau groupe. Le groupe d’origine n’est jamais écrasé.",
+    "Exportez n’importe quel groupe dans un fichier JSON ouvert et importez-le plus tard comme nouveau groupe, ou téléchargez-le en feuilles de calcul. Le groupe d’origine n’est jamais écrasé.",
   "FeatureExport.fact1":
     "Le propriétaire exporte ; toute personne pouvant créer un groupe peut importer",
   "FeatureExport.fact2":

@@ -47,11 +47,17 @@ test.describe("exporting and importing a group", () => {
       await gotoApp(page, `/groups/${groupId}`, page.locator("[data-e2e=group-general-name]"))
       await page.locator("[data-e2e=group-menu]").click()
       const downloading = page.waitForEvent("download")
-      await page.getByRole("menuitem", { name: "Export group…" }).click()
+      await page.getByRole("menuitem", { name: "Export as JSON" }).click()
       const download = await downloading
       expect(download.suggestedFilename()).toMatch(/^family-\d{4}-\d{2}-\d{2}\.json$/)
       const file = test.info().outputPath("family.json")
       await download.saveAs(file)
+
+      // The same menu downloads the group as spreadsheets, in one ZIP.
+      await page.locator("[data-e2e=group-menu]").click()
+      const zipping = page.waitForEvent("download")
+      await page.getByRole("menuitem", { name: "Export as spreadsheets" }).click()
+      expect((await zipping).suggestedFilename()).toMatch(/^family-\d{4}-\d{2}-\d{2}\.zip$/)
 
       await openGroups(page)
       await page.locator("[data-e2e=groups-menu]").click()

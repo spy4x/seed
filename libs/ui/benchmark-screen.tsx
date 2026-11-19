@@ -131,6 +131,11 @@ export interface BenchmarkScreenProps {
   testArea?: ComponentChildren
   onRun?: () => void
   onStop?: () => void
+  /**
+   * Whether the single-key shortcuts are on, on this device. Only then does `r` press Run (or Run
+   * again) and `c` press Copy, each button showing its key. Left out, they are off.
+   */
+  singleKeys?: boolean
   /** Copies text to the clipboard; `false` when the browser refused. */
   copy?: (text: string) => boolean | Promise<boolean>
   /** Shares the results line; left out where the browser cannot share. */
@@ -359,6 +364,9 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
         : `${group.name} · ${t.t(`GroupImport.notes`, { count: group.notes })}`,
     }))
 
+  /** `key` while the single keys are on: the button binds it and shows it. */
+  const pageKey = (key: string) => props.singleKeys ? key : undefined
+
   /** Copies the line; where the browser refuses, selects it so the person can copy it by hand. */
   const copyResults = async (text: string) => {
     const copied = await (props.copy?.(text) ?? false)
@@ -383,6 +391,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
       failedLabel={t.t(`Benchmark.copyFailed`)}
       copy={copyResults}
       class={TOUCH}
+      hotkey={pageKey(`c`)}
       data-e2e="benchmark-copy"
     />
   )
@@ -535,6 +544,7 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
                 variant="secondary"
                 class={TOUCH}
                 onClick={run}
+                hotkey={pageKey(`r`)}
                 data-e2e="benchmark-run-again"
               >
                 {t.t(`Benchmark.runAgain`)}
@@ -576,7 +586,13 @@ export function BenchmarkScreen(props: BenchmarkScreenProps): JSX.Element {
               </Field>
               {offlineNotice}
               <div>
-                <Button ref={runButton} type="submit" class={TOUCH} data-e2e="benchmark-run">
+                <Button
+                  ref={runButton}
+                  type="submit"
+                  class={TOUCH}
+                  hotkey={pageKey(`r`)}
+                  data-e2e="benchmark-run"
+                >
                   {t.t(`Benchmark.run`)}
                 </Button>
               </div>

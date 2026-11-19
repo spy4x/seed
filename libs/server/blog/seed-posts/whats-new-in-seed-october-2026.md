@@ -59,7 +59,8 @@ Notes are the example every new feature copies, so they gained what a real featu
 
 - **Tags** in any colour, with note counts.
 - **Attachments** with quotas: images and PDFs in the bundled file store ([files](/docs/files)).
-- **Search** across notes and groups with Ctrl+K.
+- **Search** across notes and groups with Ctrl+K. It has since grown into
+  [a command palette that works offline](/blog/ctrl-k-command-palette-offline).
 - **Delete with undo**, restore, sort, and **move** notes between groups.
 
 If you are building your first feature, [the notes walkthrough](/blog/your-first-feature-copy-the-notes-aggregate)

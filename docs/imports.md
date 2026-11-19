@@ -18,8 +18,26 @@ The SPA's two pages name no kind, so a product's kind reuses them:
 - `/imports/:importId` follows the import through its steps. While it is ready, the person matches
   columns to fields; every change checks all the rows again 400 ms later. Problems show on the
   20 preview rows, and the refused rows further down are listed by line, counted as a spreadsheet
-  counts them (the header is line 1). The save button names the count of valid rows. A saved import
-  offers the kind's list and an undo behind a confirmation.
+  counts them (the header is line 1). The save button names the count of rows a save writes. A
+  saved import offers the kind's list and an undo behind a confirmation.
+
+A kind's `ImportKindView` may add two parts; the notes kind uses neither:
+
+- **`options`** draws the kind's own form above the picker, such as the account a statement
+  belongs to: `initial`, `render({ value, onChange, disabled })` and `ready(value)`. A file chosen
+  before `ready` holds is not uploaded: the picker shows "Fill in the fields above first." and
+  focus moves to the form's first control. Once it holds, the upload sends the value as `options`.
+- **`review`** draws the choice fields. When a check answers `reviews`, a "Check the rows" section
+  under the mapper says how many rows a save writes and skips, filters them (All, To import,
+  Skipped, by the review's skip) and lists them 50 at a time; "Show 50 more" moves focus to the
+  first row it adds. Each row shows its line, its mapped values, and "Will be imported" or the
+  review's reason. An overridable skip has an "Import anyway" checkbox that adds the row to
+  `keep`. Each row the save writes gets `review.choice(field, { row, value, suggestion, onChange,
+  disabled, id, label })` per choice field, or the suggestion as text without one. The store sends
+  only the choices that differ from the suggestion, with `keep`, and forgets both when another
+  import opens. The save button counts the valid rows less the skipped ones plus the kept ones.
+  Below `sm` each row is a card with its controls at full width. While the review shows, the
+  page takes `AppFrame`'s wide column, so every column fits.
 
 The notes menu's "Import notes…" and the palette's "Import notes" open the picker, for an editor
 or above with the notes on. The screens are `libs/ui/import-screen.tsx`, their words per kind are

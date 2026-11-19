@@ -114,6 +114,8 @@ const detail: AdminGroupDetail = {
   invitations: [],
   imported: null,
   activity: [],
+  exports: [],
+  exportsMore: false,
 }
 
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()

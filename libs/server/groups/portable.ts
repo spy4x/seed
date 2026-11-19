@@ -51,12 +51,35 @@ export interface PortableContext {
 }
 
 /**
+ * An aggregate's spreadsheet, `<kind>.csv` in the ZIP export. Each column's `header` is an `app`
+ * catalog key, translated into the person's language, and its `format` turns the row's field into
+ * the cell (a `Date` into its ISO 8601 text). The writer guards every text cell against spreadsheet
+ * formulas. Its rows come from `read` when it has one, else from the aggregate's own `read`, so a
+ * row type `R` the export entry `E` does not satisfy requires `read`.
+ */
+export type PortableSpreadsheet<E, R> =
+  & {
+    columns: readonly CsvColumn<R>[]
+    /**
+     * The group's rows for the spreadsheet, in pages, when the export entry is not enough: names
+     * instead of ids, values worked out at export time, a fixed value in the person's words (`t`).
+     */
+    read?(
+      sql: postgres.Sql,
+      groupId: string,
+      context: SpreadsheetTranslator,
+    ): AsyncIterable<readonly R[]>
+  }
+  & ([E] extends [R] ? unknown : { read: unknown })
+
+/**
  * An aggregate that joins export and import (`docs/aggregate-lifecycle.md`, "Make it
  * exportable"). The exporter reads it into the file, the importer checks every entry with `parse`
  * and `check` before anything is written, then calls `write` in one transaction, in the order of
- * the registry, so an aggregate other aggregates point at is written first.
+ * the registry, so an aggregate other aggregates point at is written first. `R` is the row of its
+ * spreadsheet, the entry itself unless the spreadsheet reads its own rows.
  */
-export interface PortableAggregate<E extends PortableEntry = PortableEntry> {
+export interface PortableAggregate<E extends PortableEntry = PortableEntry, R = E> {
   /** Its key in the file's `aggregates`, such as `notes`. Never rename it: files keep it. */
   kind: string
   /** The nouns its count is said with: `note`, `notes`. */
@@ -72,13 +95,8 @@ export interface PortableAggregate<E extends PortableEntry = PortableEntry> {
   ): readonly { index: number | null; problem: string; issue?: GroupImportIssue }[]
   /** The group's entities, in pages, for the file. Never a person, a secret or a deleted row. */
   read(sql: postgres.Sql, groupId: string): AsyncIterable<readonly E[]>
-  /**
-   * Its spreadsheet, `<kind>.csv` in the ZIP export; left out, the aggregate is not in the ZIP and
-   * its `README.txt` says so. Each column's `header` is an `app` catalog key, translated into the
-   * person's language, and its `format` turns the entry's field into the cell (a `Date` into its
-   * ISO 8601 text). The writer guards every text cell against spreadsheet formulas.
-   */
-  csv?: { columns: readonly CsvColumn<E>[] }
+  /** Its spreadsheet; left out, the aggregate is not in the ZIP and its `README.txt` says so. */
+  csv?: PortableSpreadsheet<E, R>
   /**
    * Writes the entries into the new group under new UUID v7 ids, mapping what they name through
    * `context.newIdOf`, and answers the new id of each by its id in the file.
@@ -91,8 +109,8 @@ export interface PortableAggregate<E extends PortableEntry = PortableEntry> {
 }
 
 /** Registers a typed aggregate in the registry, which holds them all under one type. */
-export function portable<E extends PortableEntry>(
-  aggregate: PortableAggregate<E>,
+export function portable<E extends PortableEntry, R = E>(
+  aggregate: PortableAggregate<E, R>,
 ): PortableAggregate {
   return aggregate as unknown as PortableAggregate
 }
@@ -377,8 +395,9 @@ export type SpreadsheetTranslator = Pick<Translator<string>, "t">
  * A group's spreadsheets, as the bytes of one ZIP in pieces: a `<kind>.csv` for every registered
  * aggregate with a `csv` part (UTF-8 with a byte order mark, so spreadsheets read accents, a
  * heading row in the person's language, CRLF rows), then a `README.txt` that names every aggregate
- * left out. Rows go into the ZIP page by page as `read` gives them, and the compressed bytes are
- * handed on after each page, so a large group is never held whole. Nothing is handed on before the
+ * left out. Rows go into the ZIP page by page as the `csv` part's `read` gives them, else the
+ * aggregate's own `read`, and the compressed bytes are handed on after each page, so a large group
+ * is never held whole. Nothing is handed on before the
  * first page is read: a read that fails at once fails the first piece.
  */
 export async function* writeGroupSpreadsheets(
@@ -415,7 +434,8 @@ export async function* writeGroupSpreadsheets(
     const columns = aggregate.csv.columns.map((column) => ({ ...column, header: t(column.header) }))
     const csv = file(`${aggregate.kind}.csv`)
     csv.write(`${CSV_BYTE_ORDER_MARK}${csvHeaderRow(columns)}\r\n`)
-    for await (const page of aggregate.read(sql, groupId)) {
+    const rows = aggregate.csv.read?.(sql, groupId, { t }) ?? aggregate.read(sql, groupId)
+    for await (const page of rows) {
       csv.write(page.map((entry) => `${csvRow(columns, entry)}\r\n`).join(""))
       yield* take()
     }

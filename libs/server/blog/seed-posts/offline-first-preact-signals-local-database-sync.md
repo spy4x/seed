@@ -64,7 +64,9 @@ The store never knows whether a list came from the server or from the device. It
 through injected dependencies, and one file, `apps/spa/src/modules.ts`, decides what sits behind
 them. When a screen opens with nothing to show, the store paints the device's copy at once and
 swaps in the server's answer when it arrives. Search and filters run over the list the store
-already holds, so they work the same with the network off.
+already holds, so they work the same with the network off. The Ctrl+K palette leans on the same
+copy: [how it keeps finding notes offline](/blog/ctrl-k-command-palette-offline) has a post of its
+own.
 
 That separation is the whole trick. Signals make the swap cheap: write the new array into
 `notes.value` and only the parts of the screen that read it draw again. No reducer, no cache

@@ -49,7 +49,8 @@ variables:
   # took about 20 minutes (homelab#131). `check` still runs, and so do Lighthouse and the images
   # when their own lists name a changed file. Woodpecker skips a step with an `exclude` list only
   # when every changed file matches it. A push to main runs none of the steps that start the
-  # stack. ci-browser.yml holds a copy of this list; this file is the source.
+  # stack. ci-browser.yml holds a copy of this list; this file is the source. .githooks/pre-push
+  # holds the Markdown part of it.
   - &markdown_only
     - "*.md"
     - "**/README.md"
@@ -92,12 +93,13 @@ variables:
 steps:
   check:
     # The deploy tests (infra/scripts/deploy.test.ts) run the real `git status` in a repository of
-    # their own; the Deno image has no git. On a pull request, `deno task test` also fetches the
-    # target branch with git and runs only the test files whose imports reach a change
-    # (`relatedFlags` in infra/scripts/test.ts); every other event runs them all.
+    # their own; the Deno image has no git. On a pull request or its title edit, `deno task test`
+    # also fetches the target branch with git over HTTPS, which needs ca-certificates, and runs
+    # only the test files whose imports reach a change (`relatedFlags` in infra/scripts/test.ts);
+    # it fails when git does. Every other event runs them all.
     image: denoland/deno:2.9.7
     commands:
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates
       - deno install --frozen
       - deno task check
 
@@ -152,9 +154,9 @@ steps:
       KV_PORT: "6379"
       KV_PASSWORD: ci-throwaway
     commands:
-      # On a pull request, the task runs only the test files whose imports reach a change, which it
-      # finds with git, as `check` does.
-      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git
+      # On a pull request or its title edit, the task runs only the test files whose imports reach
+      # a change, which it finds with git, as `check` does.
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends git ca-certificates
       - deno install --frozen
       # Wait over TCP. Postgres first runs a temporary server that listens on a unix socket only,
       # so a successful TCP connection means the real server is up (docs/handoff.md, trap 3).

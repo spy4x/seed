@@ -18,6 +18,7 @@ import {
   IconUsers,
 } from "@spy4x/preact-icons"
 import { AdminFrame, adminPageTitle, AdminShell, ComingSoonPanel } from "./admin-frame.tsx"
+import { SHORTCUT_GROUPS } from "./shortcuts.tsx"
 
 /** Stand-ins for a page's content: data to the frame, so never translated. */
 const PAGE = `page`
@@ -169,6 +170,40 @@ describe("AdminShell", () => {
     expect(entryLabels("[data-e2e=rail-shell-rail]")).toEqual(modules.map((module) => module.name))
     expect(nav.querySelector("[aria-current]:not([aria-current=false])")?.getAttribute("href"))
       .toBe("/users")
+  })
+
+  it("names a module's g keys in its rail tooltip while the single keys are on, and none while off", async () => {
+    const shell = (singleKeys: boolean) => (
+      <AdminShell
+        navItems={modules}
+        operator={operator}
+        onSignOut={() => {}}
+        shortcuts={{
+          rows: [{
+            keys: "g u",
+            description: "Users",
+            group: SHORTCUT_GROUPS.goTo,
+            run: () => {},
+            href: "/users",
+          }],
+          open: false,
+          onOpen: () => {},
+          onClose: () => {},
+          singleKeys,
+          onSingleKeys: () => {},
+          inMenu: true,
+        }}
+      >
+        {PAGE}
+      </AdminShell>
+    )
+    const tip = (href: string) =>
+      find(`[data-e2e=rail-shell-rail] a[href="${href}"]`).closest("[data-rail-cell]")!
+        .querySelector("[data-e2e=rail-shell-tooltip]")?.textContent
+    await mount(shell(true))
+    expect([tip("/users"), tip("/groups")]).toEqual(["Users (G U)", "Groups"])
+    await act(() => render(shell(false), root!))
+    expect(tip("/users")).toBe("Users")
   })
 
   it("keeps the first four modules as phone tabs and ends the bar with Admin, whose sheet holds the rest", async () => {

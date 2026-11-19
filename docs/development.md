@@ -40,7 +40,7 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `e2e:local`                  | The same browser tests against a stack of their own                                             |
 | `e2e:report`                 | Opens the report of the last browser test run                                                   |
 | `load`, `load:group`         | Load tests against the local stack ([capacity](capacity.md))                                    |
-| `hooks:install`              | Turns on `.githooks/pre-push` in every worktree: it runs `check` and refuses a red push         |
+| `hooks:install`              | Turns on `.githooks/pre-push` in every worktree: it refuses a push that fails its check         |
 | **Apps**                     |                                                                                                 |
 | `build`                      | Builds the SPA for production                                                                   |
 | `api:dev`, `api:prod`        | Starts the API, with or without reloading on change. Compose runs them                          |
@@ -77,7 +77,14 @@ variables, runs them all.
 `deno task hooks:install` sets `core.hooksPath`, which git keeps in the config every worktree
 shares, so run it once. Before each push the hook runs `deno task check` in CI's locale
 (`en_US.UTF-8`) on the working tree, not on the pushed commit, and refuses the push when it fails.
-It skips a branch deletion and a branch with no change against `origin/main`.
+A push that changes only internal Markdown runs `deno task fmt:check` instead: root `*.md`, any
+`README.md`, `docs/**/*.md` and `i18n/*.md`, the Markdown part of `markdown_only` in
+`.woodpecker/ci.yml`. Other Markdown, such as a blog post, counts as code because tests parse it.
+`deno fmt` leaves out `docs/` and `media/demo/`, so the format check does not cover Markdown there.
+The hook skips a branch deletion, a branch with no change against `origin/main`, and a commit whose
+tree already passed the full check. It records such a tree only when the working tree matched the
+commit before and after the check, in `pre-push-passed/` inside the git directory, and a later
+green full check deletes records older than 14 days. CI still runs `check` on every pull request.
 
 Each app also has tasks of its own, in its `deno.json`. Run one from the root with
 `deno task --cwd apps/<app> <task>`. The website's `screenshots` and `loops` tasks record its

@@ -24,10 +24,12 @@ import { BillingStatus, FREE_PLAN_ID } from "@domain/billing"
 import {
   ADMIN_GROUP_ACTIVITY_LIMIT,
   ADMIN_GROUP_DEFAULT_SORT,
+  ADMIN_GROUP_EXPORTS_LIMIT,
   ADMIN_GROUP_INVITATION_LIMIT,
   ADMIN_GROUP_TRANSFER_ROLE,
   type AdminGroupActivityEvent,
   type AdminGroupDetail,
+  type AdminGroupExport,
   type AdminGroupFileFilter,
   type AdminGroupFiles,
   type AdminGroupFilter,
@@ -38,6 +40,7 @@ import {
   type AdminGroupSortKey,
   type AdminInvitationState,
   type AuditDetails,
+  GROUP_FILE_EVENTS,
   type GroupColor,
   GroupError,
   GroupRole,
@@ -322,6 +325,11 @@ interface ActivityRowRaw {
   details: AuditDetails
 }
 
+type ExportRowRaw = Pick<
+  ActivityRowRaw,
+  "id" | "at" | "actorId" | "actorName" | "actorEmail" | "details"
+>
+
 /**
  * The invitation's state, in the order its own refusal checks it: revoked, declined, used up,
  * expired, else pending.
@@ -351,10 +359,16 @@ export function numericDetails(details: AuditDetails): Record<string, number> {
   return kept
 }
 
+/** The format an export's audit row names. Only the two known words leave the API. */
+function exportFormatOf(details: AuditDetails): AdminGroupExport["format"] {
+  const format = details?.format
+  return format === `json` || format === `csv` ? format : null
+}
+
 /**
  * One group's page: the group as the list shows it, its counts, its subscription, every member,
- * its newest invitations and the newest entries of its activity log. A group in the trash is shown
- * too. `null` when there is no such group.
+ * its newest invitations, its newest exports and the newest entries of its activity log. A group
+ * in the trash is shown too. `null` when there is no such group.
  */
 export async function readAdminGroup(
   sql: postgres.Sql,
@@ -451,6 +465,18 @@ export async function readAdminGroup(
     ORDER BY a.id DESC
     LIMIT ${ADMIN_GROUP_ACTIVITY_LIMIT}
   `
+  // One row past the limit says whether older exports exist.
+  const exportRows = await sql<ExportRowRaw[]>`
+    SELECT
+      a.id::text AS id, a.created_at AS at,
+      ${personColumns(sql, `actor`, `actor`)},
+      a.details
+    FROM audit_events a
+    LEFT JOIN users actor ON actor.id = a.actor_user_id
+    WHERE a.group_id = ${groupId} AND a.event_kind = ${GROUP_FILE_EVENTS.exported}
+    ORDER BY a.id DESC
+    LIMIT ${ADMIN_GROUP_EXPORTS_LIMIT + 1}
+  `
   return {
     group: toGroupRow(group),
     counts: {
@@ -509,6 +535,13 @@ export async function readAdminGroup(
       details: numericDetails(row.details),
       byOperator: row.details?.[OPERATOR_DETAIL] === 1,
     })),
+    exports: exportRows.slice(0, ADMIN_GROUP_EXPORTS_LIMIT).map((row): AdminGroupExport => ({
+      id: row.id,
+      at: row.at.toISOString(),
+      actor: { userId: row.actorId, name: row.actorName || row.actorEmail || `` },
+      format: exportFormatOf(row.details),
+    })),
+    exportsMore: exportRows.length > ADMIN_GROUP_EXPORTS_LIMIT,
   }
 }
 

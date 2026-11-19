@@ -85,6 +85,8 @@ const detail: AdminGroupDetail = {
   }],
   invitations: [],
   activity: [],
+  exports: [],
+  exportsMore: false,
   imported: null,
 }
 

@@ -9,6 +9,7 @@ import { render } from "preact"
 import { act } from "preact/test-utils"
 import {
   commandRows,
+  entryKeys,
   type PaletteCommandRow,
   SHORTCUT_GROUPS,
   type ShortcutRow,
@@ -343,5 +344,26 @@ describe("the account menu's Keyboard shortcuts entry", () => {
   it("is left out on a device without a fine pointer", () => {
     expect(shortcutsMenuItems({ ...base, inMenu: false }, "")).toEqual([])
     expect(shortcutsMenuItems(undefined, "")).toEqual([])
+  })
+})
+
+describe("entryKeys", () => {
+  const goTo = SHORTCUT_GROUPS.goTo
+  const rows: ShortcutRow[] = [
+    { keys: "?", description: "Shortcuts.show", group: SHORTCUT_GROUPS.general, run },
+    { keys: "g n", description: "Frame.notes", group: goTo, run, href: "/notes" },
+    { keys: "mod+g s", description: "Frame.groups", group: goTo, run, href: "/groups" },
+    { keys: "g s", description: "Frame.groups", group: goTo, run, href: "/groups" },
+  ]
+
+  it("names the keys of each page a row opens, by its address, and nothing for a row that opens none", () => {
+    expect(Object.fromEntries(entryKeys(rows, true))).toEqual({
+      "/notes": ["g n"],
+      "/groups": ["mod+g s", "g s"],
+    })
+  })
+
+  it("drops the single-key sequences while single keys are off, and keeps a combination", () => {
+    expect(Object.fromEntries(entryKeys(rows, false))).toEqual({ "/groups": ["mod+g s"] })
   })
 })

@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import { useRef } from "preact/hooks"
-import { CommandPalette } from "@spy4x/preact-ui/command-palette"
+import { CommandPalette, type CommandPaletteRecent } from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { ThemePreference } from "@domain/identity"
@@ -12,8 +12,8 @@ import {
   type AdminPaletteOption,
   type AdminSearchChoice,
 } from "./admin-palette-commands.ts"
-import { matchCommands } from "./palette-commands.ts"
-import { type PageCommand, paletteLabels } from "./search-palette.tsx"
+import { matchCommands, themeRows, withRun } from "./palette-commands.ts"
+import { type PageCommand, paletteLabels, recentExtras, storedRecent } from "./search-palette.tsx"
 import { useAdminText } from "./i18n.ts"
 
 export type { AdminGoTo, AdminPageCommand, AdminSearchChoice } from "./admin-palette-commands.ts"
@@ -35,6 +35,11 @@ export interface AdminSearchPaletteProps {
    * a theme or the single keys.
    */
   onSelect: (choice: AdminSearchChoice) => void
+  /**
+   * Where the palette keeps the operator's last picks, listed under "Recent" before anything is
+   * typed. Left out, nothing is remembered. The app clears it on sign-out.
+   */
+  recent?: CommandPaletteRecent
 }
 
 /**
@@ -73,9 +78,13 @@ const ADMIN_SEARCH_HOTKEYS: readonly string[] = [`mod+k`]
  * It lists the commands of {@link adminPaletteCommands}, the open page's own first, ranked as the
  * product's palette ranks them (`matchOptions`: aliases, word order, one typo, the other keyboard
  * layout and alphabet). A query
- * adds "Find user …" and "Find group …" after them ({@link adminFindCommands}). Theme opens a
- * submenu whose rows change the theme at once, and Single-key shortcuts switches at once; both
- * keep the palette open.
+ * adds "Find user …" and "Find group …" after them ({@link adminFindCommands}), and a row per
+ * theme ("Theme → Dark", {@link themeRows}). Theme opens a submenu whose rows change the theme at
+ * once, and Single-key shortcuts and the theme rows switch at once; all keep the palette open.
+ *
+ * Every row is a command (it has `run`), so `CommandPalette` pins above the rest, for a query, the
+ * first one whose name or alias starts with it under "Best match", and before anything is typed
+ * the operator's last picks under "Recent", kept in `recent`.
  */
 export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element {
   const root = useRef<HTMLDivElement>(null)
@@ -89,19 +98,37 @@ export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element 
   const latest = useRef(props)
   latest.current = props
   const select = (choice: AdminSearchChoice) => latest.current.onSelect(choice)
-  const options = adminPaletteCommands(adminPaletteContext(t, props, () => latest.current), select)
+  const runnable = (option: AdminPaletteOption) => withRun(option, select)
+  const registry = adminPaletteContext(t, props, () => latest.current)
+  const commands = adminPaletteCommands(registry, select).map(runnable)
+  const themes = themeRows(
+    t,
+    registry.theme,
+    t.t(`Search.settings`),
+    (theme) => select({ kind: "theme", theme }),
+  )
   const shown = new Set(props.goTo.map((entry) => entry.id))
-  const filter = (rows: readonly AdminPaletteOption[], query: string) => [
-    ...matchCommands(rows, query, rows.length),
-    ...adminFindCommands(t, query, shown),
-  ]
+  // The theme rows are for a typed query: the empty one lists the Theme command and its submenu,
+  // and only the theme rows picked before, so "Recent" can show them.
+  const filter = (rows: readonly AdminPaletteOption[], query: string) => {
+    if (query.trim() !== ``) {
+      return [
+        ...matchCommands(rows, query, rows.length),
+        ...adminFindCommands(t, query, shown).map(runnable),
+      ]
+    }
+    const listed = rows.filter((row) => !themes.includes(row))
+    return [...listed, ...recentExtras(storedRecent(latest.current.recent), listed, themes)]
+  }
 
   return (
     <div ref={root} data-e2e="search-root">
       <CommandPalette<AdminPaletteOption>
-        options={options}
+        options={[...commands, ...themes]}
         filter={filter}
+        // Every row runs itself; this is only a fallback.
         onSelect={(option) => option.choice && props.onSelect(option.choice)}
+        recent={props.recent}
         // Bound above, so they work while the trigger is hidden.
         hotkeys={[]}
         // Every admin row is a command, so "> for commands" would hide most of them: no hint.
