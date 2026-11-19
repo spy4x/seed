@@ -1,9 +1,7 @@
-import { FORM_ACTIONS } from "@ui/progressive.tsx"
 import { sitemapXml } from "@spy4x/platform/universal/seo"
-import { API_DOCS_PATH } from "../api-docs.ts"
 import { blogPages } from "../blog.ts"
 import { catalogPages } from "../catalog.ts"
-import { SITE_PAGES } from "../pages.ts"
+import { livePages } from "../pages.ts"
 import { languageAlternates } from "../site.tsx"
 import { define } from "../utils.ts"
 import { localePath, SITE_LANGUAGES } from "../languages.ts"
@@ -27,18 +25,15 @@ export const handler = define.handlers({
     const everyLanguage = (path: string, oneLanguage = false) =>
       oneLanguage ? [path] : SITE_LANGUAGES.map((language) => localePath(language, path))
     const body = sitemapXml([
-      ...SITE_PAGES
-        .filter(({ path }) => ctx.state.newsletter || path !== FORM_ACTIONS.subscribe)
-        .filter(({ path }) => ctx.state.notes || path !== API_DOCS_PATH)
-        .flatMap(({ path, updated, oneLanguage }) => {
-          const alternates = languageAlternates(origin, path, { oneLanguage })
-            .map(({ hreflang, href }) => ({ lang: hreflang, url: href }))
-          return everyLanguage(path, oneLanguage).map((address) => ({
-            url: `${origin}${address}`,
-            lastmod: new Date(`${updated}T00:00:00Z`),
-            ...(alternates.length > 0 ? { alternates } : {}),
-          }))
-        }),
+      ...livePages(ctx.state).flatMap(({ path, updated, oneLanguage }) => {
+        const alternates = languageAlternates(origin, path, { oneLanguage })
+          .map(({ hreflang, href }) => ({ lang: hreflang, url: href }))
+        return everyLanguage(path, oneLanguage).map((address) => ({
+          url: `${origin}${address}`,
+          lastmod: new Date(`${updated}T00:00:00Z`),
+          ...(alternates.length > 0 ? { alternates } : {}),
+        }))
+      }),
       ...(await blogPages(ctx.state.api)).map(({ path, lastmod }) => ({
         url: `${origin}${path}`,
         lastmod: new Date(lastmod),

@@ -16,6 +16,7 @@ import { CHANGELOG_HEAD } from "./routes/[[lang]]/changelog.tsx"
 import { DOCS_HEAD } from "./routes/[[lang]]/docs/index.tsx"
 import { docTitle } from "./routes/[[lang]]/docs/[slug].tsx"
 import { siteEnglishText } from "@ui/site-text.ts"
+import { FORM_ACTIONS } from "@ui/progressive.tsx"
 
 /** One public page, as `sitemap.xml` and `llms.txt` describe it. */
 export interface SitePage {
@@ -92,3 +93,13 @@ export const SITE_PAGES: readonly SitePage[] = [
   sitePage(`/privacy`, PRIVACY_HEAD, PRIVACY_HEAD.updated, true),
   sitePage(`/terms`, TERMS_HEAD, TERMS_HEAD.updated, true),
 ]
+
+/**
+ * The pages a visitor can open now: {@link SITE_PAGES} without the newsletter page while
+ * subscriptions are off, and without the API reference while the notes are off.
+ */
+export function livePages(flags: { newsletter: boolean; notes: boolean }): readonly SitePage[] {
+  return SITE_PAGES
+    .filter(({ path }) => flags.newsletter || path !== FORM_ACTIONS.subscribe)
+    .filter(({ path }) => flags.notes || path !== API_DOCS_PATH)
+}
