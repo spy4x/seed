@@ -134,8 +134,8 @@ export interface OverviewScreenProps {
   rangeDataE2E?: string
   /**
    * Whether the page's single keys (`d` for the range, `c` for Customise) work: the app passes its
-   * single-keys setting and binds them. Only then does the menu's Customise show `c`. Left out, no
-   * key is shown.
+   * single-keys setting and binds them. Only then does the range's button show `d` and the menu's
+   * Customise `c`. Left out, no key is shown.
    */
   singleKeys?: boolean
   navigate?: Navigate
@@ -323,6 +323,7 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                 now={props.now}
                 onRangeChange={props.onRangeChange}
                 dataE2E={props.rangeDataE2E}
+                singleKeys={props.singleKeys}
               />
               {props.emptyGroup && (
                 <Card data-e2e="overview-empty-group">
@@ -438,6 +439,8 @@ export interface OverviewRangeRowProps {
   onRangeChange: (choice: DateRangeChoice) => void
   /** `data-e2e` of the picker's button. Defaults to `"overview-range"`. */
   dataE2E?: string
+  /** Whether the app binds `d` to open the picker; only then does its button show `d`. */
+  singleKeys?: boolean
 }
 
 /**
@@ -464,6 +467,7 @@ export function OverviewRangeRow(props: OverviewRangeRowProps): JSX.Element {
         }))}
         timeZone={props.timeZone}
         now={props.now}
+        keyshortcuts={props.singleKeys ? [`d`] : undefined}
         onChange={(range, chosen) => props.onRangeChange({ range, preset: chosen })}
         formatRange={() =>
           preset && preset.preset !== "custom"
