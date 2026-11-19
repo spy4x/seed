@@ -116,6 +116,11 @@ describe("the site search index", () => {
     expect(best(`free`)).toBe(`/pricing`)
   })
 
+  // Without its alias, the demo's terms, full of "is" and "it", rank above Pricing.
+  it("answers “is it free” with Pricing", () => {
+    expect(best(`is it free`)).toBe(`/pricing`)
+  })
+
   it("answers “stripe” with the billing section of Features", () => {
     expect(best(`stripe`)).toBe(`/features#billing-title`)
   })

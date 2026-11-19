@@ -52,7 +52,7 @@ const SKIPPED_HEADINGS: ReadonlySet<string> = new Set([`cta-title`])
  * `<path>#<heading id>`, each on the entry that answers it.
  */
 export const SEARCH_ALIASES: Readonly<Record<string, readonly string[]>> = {
-  "/pricing": [`price`, `cost`, `free`, `licence`, `license`, `MIT`],
+  "/pricing": [`price`, `cost`, `free`, `is it free`, `licence`, `license`, `MIT`],
   // Each compared starter has a section of its own, its name the heading, so a name finds that
   // section before the page. Seed's own site: see docs/start-a-product.md
   "/compare": [`vs`, `versus`, `alternative`, `alternatives`],
