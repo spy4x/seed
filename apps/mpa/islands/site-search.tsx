@@ -44,12 +44,15 @@ const theme = createThemeStore()
 export default function SiteSearchIsland(props: SiteSearchIslandProps): JSX.Element {
   useEffect(() => theme.attach(), [])
   const dark = theme.actual.value === ThemeValue.DARK
+  const links: SiteSearchCommand[] = props.links.map(({ id, label, href }) => ({
+    id,
+    label,
+    run: () => location.assign(href),
+  }))
+  // When nothing matches, the palette offers the docs, then the demo, as `/search` does.
+  const fallback = [`docs`, `try`].flatMap((id) => links.filter((link) => link.id === id))
   const commands: SiteSearchCommand[] = [
-    ...props.links.map(({ id, label, href }) => ({
-      id,
-      label,
-      run: () => location.assign(href),
-    })),
+    ...links,
     {
       id: `theme`,
       label: props.theme.label,
@@ -66,6 +69,7 @@ export default function SiteSearchIsland(props: SiteSearchIslandProps): JSX.Elem
         src={props.src}
         fetch={(src) => fetch(src)}
         commands={commands}
+        fallback={fallback}
         groupOrder={props.groupOrder}
         dataE2E="site-search"
         // A magnifier on a phone, the field with its hint from `sm`: the field's words go below it.

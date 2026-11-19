@@ -101,6 +101,14 @@ test.describe(`the search palette`, () => {
     })
   }
 
+  test(`offers the docs, then the demo, when nothing matches`, async ({ page }) => {
+    await ready(page)
+    await page.keyboard.press(`ControlOrMeta+k`)
+    const palette = page.locator(PALETTE)
+    await palette.getByRole(`combobox`).fill(`zzqqxx`)
+    await expect(palette.getByRole(`option`)).toHaveText([`Read the docs`, `Try the demo`])
+  })
+
   for (const colorScheme of [`light`, `dark`] as const) {
     test(`has no accessibility violations while open in the ${colorScheme} theme`, async ({ page }) => {
       await page.emulateMedia({ colorScheme })
