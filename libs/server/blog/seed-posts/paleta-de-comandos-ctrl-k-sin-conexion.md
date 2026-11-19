@@ -20,36 +20,38 @@ publishAt: 2026-11-19T08:00:00Z
 newsletter: true
 ---
 
-¿Cómo se crea una paleta de comandos Ctrl+K que la gente siga usando? Haciendo que cumpla tres
-cosas. Maneja la app: cada página, cada «New…» y cada ajuste es un comando. Perdona cómo escribe la
-gente de verdad: una errata, media palabra, la distribución de teclado equivocada. Y nunca te deja
-en un callejón sin salida: si nada coincide, ofrece crear lo que has escrito, y sin red busca en la
-copia que hay en tu dispositivo. En Seed todo eso sale de una sola lista de comandos en un solo
-archivo.
+Para crear una paleta de comandos Ctrl+K que funcione sin conexión y que la gente siga usando, haz
+que cumpla tres cosas. Maneja la app: cada página, cada «New…» y cada ajuste es un comando. Perdona
+cómo escribe la gente de verdad: una errata, media palabra, la distribución de teclado equivocada. Y
+nunca te deja en un callejón sin salida: si nada coincide, ofrece crear lo que has escrito, y sin
+red busca en la copia que hay en tu dispositivo. En Seed todo eso sale de una sola lista de comandos
+en un solo archivo.
 
 Este artículo es para quien está añadiendo Ctrl+K a su propia app web. Primero enseño lo que hace la
-paleta y después el archivo del que sale, con el código real.
+paleta y después el archivo del que sale, con el código real. Los ejemplos usan la app en inglés.
 
-![La paleta de comandos de Seed con «ntvf» escrito en el campo de búsqueda. La primera fila, resaltada, es Theme, bajo Settings, con su valor actual «System» al lado.](/shots/palette-dark-800.webp)
+![La paleta de comandos de Seed con «ntvf» escrito en el campo de búsqueda. La primera fila, resaltada bajo el encabezado Commands, es Theme, con su sección, Settings, en una segunda línea y su valor actual «System» al lado.](/shots/palette-dark-800.webp)
 
 ## ¿Qué debe hacer Ctrl+K además de buscar?
 
 Abre la paleta y no escribas nada. Ya es útil: tus cinco últimas elecciones bajo Recent (recientes),
-los comandos de la página en la que estás, tus últimas notas y Create. Casi todas las visitas a una
-paleta son «llévame otra vez a aquello» o «haz lo obvio aquí», y ninguna de las dos debería exigir
-escribir.
+los comandos de la página en la que estás, tus últimas notas y Create. Casi todas mis propias
+visitas a una paleta son «llévame otra vez a aquello» o «haz lo obvio aquí», y ninguna de las dos
+debería exigir escribir.
 
-Luego lista todo lo que puede hacer la app, bajo cinco encabezados: This page (esta página), Go to
-(ir a), Create, Settings y Account. Algunas decisiones que salieron bien:
+Escribe solo `>` y lista todo lo que puede hacer la app, bajo cinco encabezados: This page (esta
+página), Go to (ir a), Create, Settings y Account. Escribe cualquier otra cosa y los comandos que
+coinciden comparten un solo encabezado, Commands (comandos), cada fila con el nombre de su sección,
+y Create debajo de ellos. Algunas decisiones que salieron bien:
 
 - **Los ajustes actúan al momento.** Escribe `light`, pulsa Enter: la página se vuelve clara y la
   paleta sigue abierta. Escribe `dark`, Enter, y vuelves a estar como antes. No hace falta ir a una
   página de ajustes para ver si te gusta.
 - **Las teclas están junto a los comandos.** New note muestra su tecla, N, en su fila. Un atajo de
   dos teclas, como G y luego N para la página de notas, aparece en el diálogo Keyboard shortcuts,
-  que lee la misma lista de comandos. Nadie necesita una chuleta.
-- **`>` significa solo comandos.** Empieza la consulta con `>` y las notas y los grupos dejan de
-  estorbar.
+  que lee la misma lista de comandos. La chuleta ya viene incluida.
+- **`>` significa solo comandos.** Empieza la consulta con `>` y sigue escribiendo: las notas y los
+  grupos dejan de estorbar.
 - **Enter espera la respuesta.** La paleta da una sola respuesta por consulta, notas incluidas. Si
   pulsas Enter antes de que el servidor conteste, espera, así que nunca abres la fila que por
   casualidad iba primera hace medio segundo.
@@ -59,7 +61,7 @@ no quita las manos del teclado.
 
 ## ¿Cómo encuentra cosas a pesar de las erratas y de la distribución de teclado equivocada?
 
-Los ejemplos usan la app en inglés. Escribe `notse` y la primera fila es la página Notes. Escribe
+Escribe `notse` y la primera fila es la página Notes. Escribe
 `ntvf` y sale Theme, como en la imagen de arriba. Lo segundo parece obra de un gato paseándose por
 el teclado. Es «тема», la palabra rusa para «tema», escrita con la distribución inglesa todavía
 activa. Mi teclado tiene dos distribuciones, y me equivoco de una con la frecuencia suficiente para
@@ -74,7 +76,9 @@ El buscador sigue unas pocas reglas sencillas:
 3. Una palabra de cuatro letras o más puede llevar una errata: una letra de más, de menos o
    equivocada, o dos letras intercambiadas.
 4. La consulta también se lee como si estuviera activa la otra distribución de teclado, y entre
-   alfabetos, así que las letras latinas pueden encontrar una palabra rusa y al revés.
+   alfabetos, así que las letras latinas pueden encontrar una palabra rusa y al revés. Hoy eso
+   significa las distribuciones inglesa y rusa. Cualquier otro par necesita su propio mapa de
+   teclas.
 
 Cuando coinciden varias filas, gana la coincidencia más limpia: primero un nombre exacto, luego un
 nombre que empieza por la consulta, luego palabras que coinciden, luego un alias, luego la otra
@@ -92,10 +96,10 @@ coincidir con filas que no tienen nada que ver con lo que querías, y aun así n
 humanos cortos.
 
 Una errata por palabra es el límite. Dos erratas en una palabra no encuentran nada: es un buscador,
-no un adivino. El buscador vive en una librería compartida,
-[`@spy4x/platform`](https://jsr.io/@spy4x/platform), y prepara los nombres de cada comando una sola
-vez, así que unos cuantos cientos de filas se vuelven a ordenar en cada pulsación sin que nadie lo
-note.
+no un adivino. El buscador vive en una librería compartida con licencia MIT,
+[`@spy4x/platform`](https://jsr.io/@spy4x/platform), que puedes importar sin el resto de Seed.
+Prepara los nombres de cada comando una sola vez, así que en cada pulsación solo se paga la
+ordenación.
 
 ## ¿Qué muestra cuando nada coincide?
 
@@ -164,9 +168,10 @@ Tres detalles importan:
 - El dispositivo puede guardar todavía notas de un grupo que has dejado. La búsqueda solo mira en
   los grupos a los que perteneces ahora.
 
-La búsqueda local perdona lo mismo. Desconecta la red en la demo, escribe `pallette` con dos eles y
-la nota «Palette demo» aparece. También con `зфдуееу`, la misma palabra escrita con la distribución
-rusa.
+La búsqueda local es un pequeño índice en el dispositivo, un motor distinto del buscador de
+comandos, y perdona los mismos despistes. Desconecta la red en la demo, escribe `pallette` con dos
+eles y aparece la nota «Palette demo» que creaste más arriba con Ctrl+Enter. También con
+`зфдуееу`, la misma palabra escrita con la distribución rusa.
 
 **Los comandos que necesitan el servidor siguen en la lista.** Sin conexión, «New group» o «Delete
 my account» podrían desaparecer sin avisar. Entonces te preguntarías si la función existe siquiera.

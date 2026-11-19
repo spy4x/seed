@@ -20,36 +20,39 @@ publishAt: 2026-11-19T08:00:00Z
 newsletter: true
 ---
 
-Como criar uma paleta de comandos Ctrl+K (a famosa command palette) que as pessoas continuem
-usando? Faça ela cumprir três coisas. Ela roda o app: cada página, cada "New…" e cada configuração
-é um comando. Ela perdoa o jeito como as pessoas digitam de verdade: um erro de digitação, meia
-palavra, o layout de teclado errado. E ela nunca te deixa num beco sem saída: quando nada bate, ela
-oferece criar o que você digitou, e sem rede ela busca na cópia que está no seu dispositivo. No
-Seed, tudo isso sai de uma lista de comandos em um único arquivo.
+Para criar uma paleta de comandos Ctrl+K (a famosa command palette) que funcione offline e que as
+pessoas continuem usando, faça ela cumprir três coisas. Ela roda o app: cada página, cada "New…"
+e cada configuração é um comando. Ela perdoa o jeito como as pessoas digitam de verdade: um erro
+de digitação, meia palavra, o layout de teclado errado. E ela nunca te deixa num beco sem saída:
+quando nada bate, ela oferece criar o que você digitou, e sem rede ela busca na cópia que está no
+seu dispositivo. No Seed, tudo isso sai de uma lista de comandos em um único arquivo.
 
 Este texto é para quem está colocando Ctrl+K no próprio app web. Primeiro mostro o que a paleta
 faz, depois o arquivo de onde ela sai, com o código real.
 
-![A paleta de comandos do Seed com "ntvf" digitado no campo de busca. A primeira linha, destacada, é Theme, em Settings, com o valor atual "System" ao lado.](/shots/palette-dark-800.webp)
+![A paleta de comandos do Seed com "ntvf" digitado no campo de busca. A primeira linha, destacada sob o título Commands, é Theme, com a seção dela, Settings, numa segunda linha e o valor atual "System" ao lado.](/shots/palette-dark-800.webp)
 
 ## O que o Ctrl+K deve fazer além de buscar?
 
 Abra a paleta e não digite nada. Ela já serve para alguma coisa: suas cinco últimas escolhas em
 Recent (recentes), os comandos da página em que você está, suas notas mais novas e Create (criar).
-A maioria das idas à paleta é "me leva de volta àquela coisa" ou "faz o óbvio aqui", e nenhuma das
-duas deveria exigir digitação.
+A maioria das minhas próprias idas à paleta é "me leva de volta àquela coisa" ou "faz o óbvio
+aqui", e nenhuma das duas deveria exigir digitação.
 
-Depois ela lista tudo o que o app sabe fazer, em cinco seções: This page (esta página), Go to (ir
-para), Create, Settings (configurações) e Account (conta). Os exemplos usam o app em inglês, por
-isso os nomes aparecem como na tela. Algumas escolhas que valeram a pena:
+Digite só `>` e ela lista tudo o que o app sabe fazer, em cinco seções: This page (esta página),
+Go to (ir para), Create, Settings (configurações) e Account (conta). Digite qualquer outra coisa e
+os comandos que batem dividem uma única seção, Commands (comandos), cada linha com o nome da sua
+seção, e Create logo abaixo deles. Os exemplos usam o app em inglês, por isso os nomes aparecem
+como na tela. Algumas escolhas que valeram a pena:
 
 - **Configurações agem na hora.** Digite `light` e aperte Enter: a página fica clara e a paleta
   continua aberta. Digite `dark`, Enter, e você está de volta. Nada de ir até uma página de
   configurações para ver se gostou.
 - **As teclas ficam ao lado dos comandos.** New note mostra sua tecla, N, na própria linha. Um
   atalho de duas teclas, como G depois N para a página Notes, aparece no diálogo Keyboard shortcuts
-  (atalhos de teclado), que lê a mesma lista de comandos. Ninguém precisa de cola.
-- **`>` significa só comandos.** Comece a busca com `>` e notas e grupos saem da frente.
+  (atalhos de teclado), que lê a mesma lista de comandos. A cola já vem embutida.
+- **`>` significa só comandos.** Comece a busca com `>` e continue digitando: notas e grupos saem
+  da frente.
 - **Enter espera a resposta.** A paleta dá uma resposta por busca, notas incluídas. Aperte Enter
   antes de o servidor responder e ela espera, então você nunca abre a linha que por acaso estava em
   primeiro meio segundo antes.
@@ -72,7 +75,8 @@ O matcher segue algumas regras simples:
 3. Uma palavra de quatro letras ou mais pode ter um erro de digitação: uma letra a mais, faltando
    ou errada, ou duas letras trocadas de lugar.
 4. A busca também é lida como se o outro layout de teclado estivesse ligado, e entre alfabetos,
-   então letras latinas acham uma palavra em russo e vice-versa.
+   então letras latinas acham uma palavra em russo e vice-versa. Hoje isso vale para os layouts
+   inglês e russo. Qualquer outro par precisa do próprio mapa de teclas.
 
 Quando várias linhas batem, vence a correspondência mais limpa: primeiro um nome exato, depois um
 nome que começa com a busca, depois palavras que batem, depois um alias, depois o outro layout, e o
@@ -90,9 +94,9 @@ palavra. Início de palavra mais um erro de digitação é mais rígido, e isso 
 feitos para gente.
 
 Um erro por palavra é o limite. Dois erros na mesma palavra não acham nada: é um matcher, não um
-leitor de mentes. O matcher fica numa biblioteca compartilhada,
-[`@spy4x/platform`](https://jsr.io/@spy4x/platform), e prepara os nomes de cada comando uma vez
-só, então algumas centenas de linhas são reordenadas a cada tecla sem ninguém perceber.
+leitor de mentes. O matcher fica numa biblioteca compartilhada sob licença MIT,
+[`@spy4x/platform`](https://jsr.io/@spy4x/platform), que você pode importar sem o resto do Seed.
+Ele prepara os nomes de cada comando uma vez só, então cada tecla paga só pela ordenação.
 
 ## O que ela mostra quando nada bate?
 
@@ -161,8 +165,10 @@ Três detalhes nele importam:
 - O dispositivo ainda pode guardar notas de um grupo do qual você saiu. A busca olha só os grupos
   dos quais você faz parte agora.
 
-A busca local perdoa as mesmas coisas. Desligue a rede na demo, digite `pallette` com dois l, e a
-nota "Palette demo" aparece. Com `зфдуееу` também, que é a mesma palavra digitada no layout russo.
+A busca local é um pequeno índice no dispositivo, um mecanismo diferente do matcher dos comandos,
+e perdoa os mesmos deslizes. Desligue a rede na demo, digite `pallette` com dois l, e a nota
+"Palette demo" que você criou acima com Ctrl+Enter aparece. Com `зфдуееу` também, que é a mesma
+palavra digitada no layout russo.
 
 **Comandos que precisam do servidor continuam na lista.** Offline, "New group" ou "Delete my
 account" poderiam sumir da lista sem aviso. Aí você ficaria se perguntando se o recurso existe.

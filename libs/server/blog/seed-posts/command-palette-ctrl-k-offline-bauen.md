@@ -20,8 +20,8 @@ publishAt: 2026-11-19T08:00:00Z
 newsletter: true
 ---
 
-Wie baut man eine Command Palette mit Ctrl+K, die Menschen auch wirklich benutzen? Sie muss drei
-Dinge können. Sie bedient die App: Jede Seite, jedes „New…“ und jede Einstellung ist ein Befehl.
+Eine Command Palette (Befehlspalette) mit Ctrl+K (Strg+K), die offline funktioniert und die
+Menschen immer wieder benutzen, muss drei Dinge können. Sie bedient die App: Jede Seite, jedes „New…“ und jede Einstellung ist ein Befehl.
 Sie verzeiht, wie Menschen wirklich tippen: einen Tippfehler, ein halbes Wort, das falsche
 Tastaturlayout. Und sie führt nie in eine Sackgasse: Passt nichts, bietet sie an, das Getippte
 anzulegen, und ohne Netz durchsucht sie die Kopie auf Ihrem Gerät. In Seed kommt all das aus einer
@@ -30,7 +30,7 @@ einzigen Liste von Befehlen in einer Datei.
 Dieser Beitrag ist für Entwickler, die Ctrl+K in ihre eigene Web-App einbauen. Ich zeige zuerst,
 was die Palette kann, und dann die Datei, aus der sie gebaut ist, mit dem echten Code.
 
-![Die Command Palette von Seed mit „ntvf“ im Suchfeld. Die erste, hervorgehobene Zeile ist Theme unter Settings, daneben ihr aktueller Wert „System“.](/shots/palette-dark-800.webp)
+![Die Command Palette von Seed mit „ntvf“ im Suchfeld. Die erste Zeile, hervorgehoben unter der Überschrift Commands, ist Theme, mit ihrem Abschnitt Settings in einer zweiten Zeile und ihrem aktuellen Wert „System“ daneben.](/shots/palette-dark-800.webp)
 
 ## Was sollte Ctrl+K außer Suchen können?
 
@@ -39,19 +39,23 @@ Bildschirm erscheinen.
 
 Öffnen Sie die Palette und tippen Sie nichts. Sie ist schon nützlich: Ihre letzten fünf Auswahlen
 unter Recent (zuletzt benutzt), die Befehle der Seite, auf der Sie gerade sind, Ihre neuesten
-Notizen und Create (Anlegen). Die meisten Besuche in einer Palette heißen „bring mich zurück zu dem
-Ding“ oder „mach hier das Naheliegende“, und für beides sollte man nichts tippen müssen.
+Notizen und Create (Anlegen). Die meisten meiner eigenen Besuche in einer Palette heißen „bring mich
+zurück zu dem Ding“ oder „mach hier das Naheliegende“, und für beides sollte man nichts tippen
+müssen.
 
-Dann listet sie alles auf, was die App kann, unter fünf Überschriften: This page, Go to, Create,
-Settings und Account. Ein paar Entscheidungen, die sich ausgezahlt haben:
+Tippen Sie nur `>`, und sie listet alles auf, was die App kann, unter fünf Überschriften: This page,
+Go to, Create, Settings und Account. Tippen Sie etwas anderes, stehen die passenden Befehle
+gemeinsam unter einer Überschrift Commands (Befehle), jede Zeile mit ihrem Abschnitt, und Create
+folgt darunter. Ein paar Entscheidungen, die sich ausgezahlt haben:
 
 - **Einstellungen wirken sofort.** Tippen Sie `light`, drücken Sie Enter: Die Seite wird hell, und
   die Palette bleibt offen. `dark`, Enter, und alles ist wie vorher. Kein Umweg über eine
   Einstellungsseite, nur um zu sehen, ob es Ihnen gefällt.
 - **Tasten stehen neben den Befehlen.** New note zeigt seine Taste, N, direkt in der Zeile. Ein
   Kürzel aus zwei Tasten, etwa G, dann N für die Seite Notes, steht im Dialog Keyboard shortcuts,
-  der dieselbe Liste von Befehlen liest. Einen Spickzettel braucht niemand.
-- **`>` heißt: nur Befehle.** Beginnt die Suche mit `>`, bleiben Notizen und Gruppen aus dem Weg.
+  der dieselbe Liste von Befehlen liest. Der Spickzettel ist eingebaut.
+- **`>` heißt: nur Befehle.** Beginnen Sie die Suche mit `>` und tippen Sie weiter: Notizen und
+  Gruppen bleiben aus dem Weg.
 - **Enter wartet auf die Antwort.** Die Palette gibt pro Suchanfrage eine Antwort, Notizen
   eingeschlossen. Drücken Sie Enter, bevor der Server geantwortet hat, wartet sie, sodass Sie nie
   die Zeile öffnen, die vor einer halben Sekunde zufällig ganz oben stand.
@@ -75,11 +79,13 @@ Der Matcher folgt ein paar einfachen Regeln:
 3. Ein Wort ab vier Buchstaben darf einen Tippfehler enthalten: einen Buchstaben zu viel, zu wenig
    oder einen falschen, oder zwei vertauschte Buchstaben.
 4. Die Suche wird auch so gelesen, als wäre das andere Tastaturlayout aktiv, und über Alphabete
-   hinweg, sodass lateinische Buchstaben ein russisches Wort finden können und umgekehrt.
+   hinweg, sodass lateinische Buchstaben ein russisches Wort finden können und umgekehrt. Derzeit
+   heißt das: das englische und das russische Layout. Jedes andere Paar braucht eine eigene
+   Tastenzuordnung.
 
 Passen mehrere Zeilen, gewinnt der sauberere Treffer: zuerst ein exakter Name, dann ein Name, der
 mit der Suche beginnt, dann passende Wörter, dann ein Alias, dann das andere Layout und zuletzt ein
-Tippfehler. Ein verziehener Tippfehler drängt also nie eine richtige Antwort nach unten.
+Tippfehler. Die Nachsicht bei Tippfehlern schiebt also nie eine richtige Antwort nach unten.
 
 Jeder Befehl trägt außerdem die Wörter, die Menschen ausprobieren, auf Englisch und Russisch. Notes
 reagiert auf „all notes“ und „заметки“, Activity auf „history“, „log“ und „audit“. Niemand erinnert
@@ -93,10 +99,10 @@ Wort ist, weiß er trotzdem nicht. Wortanfänge plus ein Tippfehler sind strenge
 kurzen Namen, die Menschen vergeben haben.
 
 Ein Tippfehler pro Wort ist die Grenze. Zwei Tippfehler in einem Wort finden nichts: Es ist ein
-Matcher, kein Gedankenleser. Der Matcher steckt in einer gemeinsamen Bibliothek,
-[`@spy4x/platform`](https://jsr.io/@spy4x/platform), und bereitet die Namen jedes Befehls einmal
-vor, sodass ein paar hundert Zeilen bei jedem Tastendruck neu sortiert werden, ohne dass es jemand
-merkt.
+Matcher, kein Gedankenleser. Der Matcher steckt in einer gemeinsamen Bibliothek unter MIT-Lizenz,
+[`@spy4x/platform`](https://jsr.io/@spy4x/platform), die Sie auch ohne den Rest von Seed
+importieren können. Er bereitet die Namen jedes Befehls einmal vor, sodass ein Tastendruck nur noch
+die Sortierung kostet.
 
 ## Was zeigt sie, wenn nichts passt?
 
@@ -126,7 +132,7 @@ export function quickCreateRows(context: PaletteContext, query: string): Palette
 }
 ```
 
-Ein viewer, der nicht schreiben darf, bekommt keine Zeile „New note“. Die Palette bietet nur an,
+Wer hier nur lesen darf, bekommt keine Zeile „New note“. Die Palette bietet nur an,
 was auch die Buttons auf der Seite anbieten würden.
 
 ## Wie bleibt sie offline benutzbar?
@@ -166,8 +172,10 @@ Drei Details darin zählen:
 - Auf dem Gerät können noch Notizen einer Gruppe liegen, die Sie verlassen haben. Die Suche schaut
   nur in die Gruppen, zu denen Sie jetzt gehören.
 
-Die lokale Suche verzeiht dasselbe. Schalten Sie in der Demo das Netz ab, tippen Sie `pallette`
-mit zwei l, und die Notiz „Palette demo“ wird gefunden. Ebenso `зфдуееу`, dasselbe Wort auf dem
+Die lokale Suche ist ein kleiner Index auf dem Gerät, eine andere Engine als der Matcher der
+Befehle, und sie verzeiht dieselben Ausrutscher. Schalten Sie in der Demo das Netz ab, tippen Sie
+`pallette` mit zwei l, und die Notiz „Palette demo“, die Sie oben mit Ctrl+Enter angelegt haben,
+wird gefunden. Ebenso `зфдуееу`, dasselbe Wort auf dem
 russischen Layout getippt.
 
 **Befehle, die den Server brauchen, bleiben in der Liste.** Offline könnten „New group“ oder

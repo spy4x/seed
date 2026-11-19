@@ -20,8 +20,8 @@ publishAt: 2026-11-19T08:00:00Z
 newsletter: true
 ---
 
-Comment créer une palette de commandes Ctrl+K que les gens continuent d’utiliser ? Il faut qu’elle
-fasse trois choses. Elle pilote l’app : chaque page, chaque « New… » et chaque réglage est une
+Pour créer une palette de commandes Ctrl+K qui marche hors ligne et que les gens continuent
+d’utiliser, faites-lui faire trois choses. Elle pilote l’app : chaque page, chaque « New… » et chaque réglage est une
 commande. Elle pardonne la façon dont on tape vraiment : une faute, un demi-mot, la mauvaise
 disposition de clavier. Et elle ne vous laisse jamais dans une impasse : quand rien ne correspond,
 elle propose de créer ce que vous avez tapé, et sans réseau, elle cherche dans la copie stockée sur
@@ -30,28 +30,30 @@ votre appareil. Dans Seed, tout cela vient d’une seule liste de commandes, dan
 Cet article s’adresse aux développeurs qui ajoutent Ctrl+K à leur propre application web. Je
 montre d’abord ce que fait la palette, puis le fichier dont elle est faite, avec le vrai code.
 
-![La palette de commandes de Seed avec « ntvf » tapé dans le champ de recherche. La première ligne, en surbrillance, est Theme, sous Settings, avec sa valeur actuelle « System » à côté.](/shots/palette-dark-800.webp)
+![La palette de commandes de Seed avec « ntvf » tapé dans le champ de recherche. La première ligne, en surbrillance sous le titre Commands, est Theme, avec sa section, Settings, sur une deuxième ligne et sa valeur actuelle « System » à côté.](/shots/palette-dark-800.webp)
 
 ## Que doit faire Ctrl+K, à part chercher ?
 
 Ouvrez la palette sans rien taper. Elle sert déjà : vos cinq derniers choix sous Recent (récents),
-les commandes de la page où vous êtes, vos dernières notes, et Create (créer). La plupart des
-passages par une palette, c’est « ramène-moi à ce truc » ou « fais l’évidence ici », et ni l’un ni
-l’autre ne devrait demander de taper.
+les commandes de la page où vous êtes, vos dernières notes, et Create (créer). La plupart de
+mes propres passages par une palette, c’est « ramène-moi à ce truc » ou « fais ce qui s’impose
+ici », et ni l’un ni l’autre ne devrait demander de taper.
 
-Ensuite, elle liste tout ce que l’app sait faire, sous cinq titres : This page (cette page), Go to
-(aller à), Create, Settings (réglages) et Account (compte). Les exemples utilisent l’app en
-anglais, d’où ces noms. Quelques choix qui ont payé :
+Tapez `>` tout seul, et elle liste tout ce que l’app sait faire, sous cinq titres : This page
+(cette page), Go to (aller à), Create, Settings (réglages) et Account (compte). Les exemples
+utilisent l’app en anglais, d’où ces noms. Tapez autre chose, et les commandes qui correspondent
+partagent un seul titre, Commands (commandes), chaque ligne indiquant sa section, avec Create en
+dessous. Quelques choix qui ont payé :
 
 - **Les réglages agissent tout de suite.** Tapez `light`, appuyez sur Enter : la page passe en
   clair et la palette reste ouverte. Tapez `dark`, Enter, et vous revoilà. Pas besoin d’aller sur
   une page de réglages pour voir si ça vous plaît.
 - **Les touches sont à côté des commandes.** New note affiche sa touche, N, sur sa ligne. Un
   raccourci de deux touches, comme G puis N pour la page Notes, figure dans la fenêtre Keyboard
-  shortcuts (raccourcis clavier), qui lit la même liste de commandes. Personne n’a
-  besoin d’antisèche.
-- **`>` veut dire commandes seulement.** Commencez la requête par `>`, et les notes et les groupes
-  ne gênent plus.
+  shortcuts (raccourcis clavier), qui lit la même liste de commandes. L’antisèche est
+  intégrée.
+- **`>` veut dire commandes seulement.** Commencez la requête par `>` et continuez à taper : les
+  notes et les groupes ne gênent plus.
 - **Enter attend la réponse.** La palette donne une réponse par requête, notes comprises. Appuyez
   sur Enter avant que le serveur ait répondu, et elle attend : vous n’ouvrez jamais la ligne qui
   se trouvait par hasard en tête une demi-seconde plus tôt.
@@ -75,7 +77,8 @@ Le moteur de correspondance suit quelques règles simples :
 3. Un mot de quatre lettres ou plus peut porter une faute : une lettre en trop, en moins ou
    fausse, ou deux lettres inversées.
 4. La requête est aussi lue comme si l’autre disposition de clavier était active, et d’un alphabet
-   à l’autre, si bien que des lettres latines peuvent trouver un mot russe, et inversement.
+   à l’autre, si bien que des lettres latines peuvent trouver un mot russe, et inversement. Aujourd’hui, cela veut dire les dispositions anglaise et
+   russe. Toute autre paire demande sa propre table de touches.
 
 Quand plusieurs lignes correspondent, la correspondance la plus nette gagne : d’abord un nom exact,
 puis un nom qui commence par la requête, puis des mots qui correspondent, puis un alias, puis
@@ -94,10 +97,10 @@ que vous vouliez, et elle ignore toujours que `ntvf` est un mot. Débuts de mots
 c’est plus strict, et ça convient à des noms courts écrits pour des humains.
 
 Une faute par mot, c’est la limite. Deux fautes dans un même mot ne trouvent rien : c’est un moteur
-de correspondance, pas un médium. Il vit dans une bibliothèque partagée,
-[`@spy4x/platform`](https://jsr.io/@spy4x/platform), et prépare une seule fois les noms de chaque
-commande, si bien que quelques centaines de lignes sont reclassées à chaque frappe sans que
-personne ne le remarque.
+de correspondance, pas un médium. Il vit dans une bibliothèque partagée
+sous licence MIT, [`@spy4x/platform`](https://jsr.io/@spy4x/platform), que vous pouvez importer
+sans le reste de Seed. Il prépare une seule fois les noms de chaque commande, si bien qu’une frappe
+ne coûte que le classement.
 
 ## Qu’affiche-t-elle quand rien ne correspond ?
 
@@ -167,8 +170,9 @@ Trois détails comptent :
 - L’appareil peut encore contenir des notes d’un groupe que vous avez quitté. La recherche ne
   regarde que dans les groupes dont vous êtes membre aujourd’hui.
 
-La recherche locale pardonne les mêmes choses. Coupez le réseau dans la démo, tapez `pallette`
-avec deux l, et la note « Palette demo » est trouvée. Tout comme `зфдуееу`, le même mot tapé avec
+La recherche locale est un petit index sur l’appareil, un moteur différent de celui des
+commandes, et elle pardonne les mêmes erreurs. Coupez le réseau dans la démo, tapez `pallette` avec
+deux l, et la note « Palette demo », créée plus haut avec Ctrl+Enter, est trouvée. Tout comme `зфдуееу`, le même mot tapé avec
 la disposition russe.
 
 **Les commandes qui exigent le serveur restent listées.** Hors ligne, « New group » ou « Delete my

@@ -3,7 +3,7 @@ slug: ctrl-k-command-palette-offline
 language: en
 title: "How to build a Ctrl+K command palette that works offline"
 seoTitle: "How to build a Ctrl+K command palette that works offline"
-description: "A command palette should run the whole app, forgive typos and the wrong keyboard layout, and keep working offline. Here is how Seed builds one from a single list of commands."
+description: "A Ctrl+K command palette should run the whole app, forgive typos and the wrong keyboard layout, and keep working offline. Here is how Seed builds one from a single list of commands."
 tldr:
   - A command palette should run the app, not only search it. Pages, create actions and settings are all commands, and a setting changes the moment you press Enter.
   - Match word starts, allow one typo per word and read the query in the other keyboard layout. Then "notse" finds Notes and "ntvf" finds Theme.
@@ -21,32 +21,34 @@ newsletter: true
 devto: false
 ---
 
-How do you build a Ctrl+K command palette that people keep using? Make it do three things. It
-runs the app: every page, every "New…" and every setting is a command. It forgives how people
-really type: a typo, half a word, the wrong keyboard layout. And it never leaves you at a dead
-end: when nothing matches it offers to create what you typed, and with no network it searches the
-copy on your device. In Seed all of that comes from one list of commands in one file.
+To build a Ctrl+K command palette that works offline and that people keep using, make it do three
+things. It runs the app: every page, every "New…" and every setting is a command. It forgives how
+people really type: a typo, half a word, the wrong keyboard layout. And it never leaves you at a
+dead end: when nothing matches it offers to create what you typed, and with no network it searches
+the copy on your device. In Seed all of that comes from one list of commands in one file.
 
 This post is for developers who are adding Ctrl+K to their own web app. I'll show what the
 palette does first, then the file it is built from, with the real code.
 
-![Seed's command palette with "ntvf" typed in the search field. The first row, highlighted, is Theme, under Settings, with its current value "System" beside it.](/shots/palette-dark-800.webp)
+![Seed's command palette with "ntvf" typed in the search field. The first row, highlighted under the Commands heading, is Theme, with its section, Settings, on a second line and its current value "System" beside it.](/shots/palette-dark-800.webp)
 
 ## What should Ctrl+K do besides search?
 
 Open the palette and type nothing. It is already useful: your last five picks under Recent, the
-commands of the page you are on, your latest notes, and Create. Most trips to a palette are "take
-me back to that thing" or "do the obvious thing here", and neither should need typing.
+commands of the page you are on, your latest notes, and Create. Most of my own trips to a palette
+are "take me back to that thing" or "do the obvious thing here", and neither should need typing.
 
-Then it lists everything the app can do, under five headings: This page, Go to, Create, Settings
-and Account. A few choices that paid off:
+Type `>` on its own and it lists everything the app can do, under five headings: This page, Go
+to, Create, Settings and Account. Type anything else and the matching commands share one Commands
+heading, each row naming its section, with Create below them. A few choices that paid off:
 
 - **Settings act at once.** Type `light`, press Enter: the page turns light and the palette stays
   open. Type `dark`, Enter, and you are back. No trip to a settings page to see if you like it.
 - **Keys sit next to commands.** New note shows its key, N, on its row. A shortcut made of two
   keys, such as G then N for the Notes page, is listed in the Keyboard shortcuts dialog, which
-  reads the same list of commands. Nobody needs a cheat sheet.
-- **`>` means commands only.** Start the query with `>` and notes and groups stay out of the way.
+  reads the same list of commands. The cheat sheet is built in.
+- **`>` means commands only.** Start the query with `>` and keep typing: notes and groups stay
+  out of the way.
 - **Enter waits for the answer.** The palette gives one answer per query, notes included. Press
   Enter before the server has replied and it waits, so you never open whatever row happened to be
   first half a second ago.
@@ -69,7 +71,8 @@ The matcher follows a few plain rules:
 3. A word of four letters or more may carry one typo: a letter added, missing or wrong, or two
    letters swapped.
 4. The query is also read as if the other keyboard layout were on, and across alphabets, so Latin
-   letters can find a Russian word and the other way round.
+   letters can find a Russian word and the other way round. Today that means the English and
+   Russian layouts. Any other pair needs its own key map.
 
 When several rows match, the cleaner match wins: an exact name first, then a name that starts
 with the query, then matching words, then an alias, then the other layout, and a typo last. So
@@ -86,9 +89,9 @@ have nothing to do with what you meant, and it still has no idea that `ntvf` is 
 starts plus one typo is stricter, which suits short human names.
 
 One typo per word is the limit. Two typos in one word find nothing: it is a matcher, not a mind
-reader. The matcher lives in a shared library,
-[`@spy4x/platform`](https://jsr.io/@spy4x/platform), and prepares each command's names once, so a
-few hundred rows are ranked again on every keystroke without anyone noticing.
+reader. The matcher lives in a shared MIT library,
+[`@spy4x/platform`](https://jsr.io/@spy4x/platform), which you can import without the rest of
+Seed. It prepares each command's names once, so a keystroke only pays for the ranking.
 
 ## What does it show when nothing matches?
 
@@ -156,9 +159,10 @@ Three details in it matter:
 - The device may still hold notes of a group you have left. The search looks only in the groups
   you belong to now.
 
-The local search forgives the same things. Switch the network off in the demo, type `pallette`
-with two l's, and the "Palette demo" note is found. So is `зфдуееу`, the same word typed on the
-Russian layout.
+The local search is a small index on the device, a different engine from the commands' matcher, and
+it forgives the same slips. Switch the network off in the demo, type `pallette` with two l's, and
+the "Palette demo" note you created above with Ctrl+Enter is found. So is `зфдуееу`, the same word
+typed on the Russian layout.
 
 **Commands that need the server stay listed.** Offline, "New group" or "Delete my account" could
 quietly vanish from the list. Then you would wonder whether the feature exists at all. Instead
@@ -193,8 +197,8 @@ goes out when the connection is back.
 
 The whole registry is
 [`libs/ui/palette-commands.ts`](https://github.com/spy4x/seed/blob/main/libs/ui/palette-commands.ts).
-It is a pure function: the app's state goes in (who you are, which group, online or not), a list
-of options comes out. No store, no `fetch`, no router. A command is one entry:
+It is a pure function: the app's state goes in (who you are, which group, online or not), a list of
+options comes out. No store, no `fetch`, no router. A command is one entry:
 
 ```ts
 {
@@ -225,9 +229,9 @@ Each option carries a choice, a small object such as `{ kind: "quick-create", en
 The app runs it through the same function its buttons call. The palette never grows a second
 implementation of "create a note" that drifts from the real one.
 
-Because it is pure, it is cheap to test: no browser, just state in and rows out. The tests read
-like the feature list, for example "put Go to Notes first for notse and заметки" and "keep each
-command the server must run listed offline, dimmed with why, and dim none online". They are in
+Because it is pure, it is cheap to test: no browser, just state in and rows out. The tests read like
+the feature list, for example "put Go to Notes first for notse and заметки" and "keep each command
+the server must run listed offline, dimmed with why, and dim none online". They are in
 [`palette-commands.test.ts`](https://github.com/spy4x/seed/blob/main/libs/ui/palette-commands.test.ts).
 
 The admin panel has the same palette. Its commands are a second list of 268 lines, and
