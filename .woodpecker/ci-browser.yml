@@ -270,13 +270,15 @@ steps:
       E2E_SERVICES: environment
       E2E_BUILT: nginx
       # The deadline of one Playwright pass, in seconds. The first pass runs the whole suite on one
-      # Playwright worker in about 35 minutes, and a failed test's retries add to that. One local
-      # trial with two workers, on a loaded machine, took 36.5 minutes and failed 13 tests that pass
-      # on one worker here; two workers are untested in CI. This step starts 18 to 23 minutes in,
-      # and its setup and the offline pass after this one take up to 8, so a run to this deadline
-      # ends by about minute 71. The repository's Woodpecker timeout, set on the CI server rather
-      # than in this file, is 75 minutes (#751).
-      E2E_LOCAL_TIMEOUT: "2400"
+      # Playwright worker in about 35 minutes, and each test that keeps failing adds about 3 for its
+      # retries. The 15 minutes to spare leave room for about five such tests, so a bad night still
+      # ends in Playwright's report rather than a killed run. One local trial with two workers, on a
+      # loaded machine, took 36.5 minutes and failed 13 tests that pass on one worker here; two
+      # workers are untested in CI. This step starts 18 to 23 minutes in, and its setup and the
+      # offline pass after this one take up to 8, so a run to this deadline ends by about minute 81.
+      # The repository's Woodpecker timeout, set on the CI server rather than in this file, is 90
+      # minutes (#751). A product built on Seed that takes this value needs the same timeout.
+      E2E_LOCAL_TIMEOUT: "3000"
     commands:
       - deno --version
       - echo "127.0.0.1 app.localhost" >> /etc/hosts
