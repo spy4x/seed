@@ -1,7 +1,7 @@
 import { type } from "arktype"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 import { UserRole } from "@domain/identity"
-import type { GroupColor, GroupRole } from "./+lib.ts"
+import type { GroupColor, GroupExportFormat, GroupRole } from "./+lib.ts"
 
 // ---------------------------------------------------------------------------------------------
 // The operator area's groups module: `/api/admin/groups/...`. Counts and account facts
@@ -112,6 +112,18 @@ export interface AdminGroupActivityEvent {
   details: Record<string, number>
   /** An operator did this from the admin app. */
   byOperator: boolean
+}
+
+/** How many of a group's exports its page lists. */
+export const ADMIN_GROUP_EXPORTS_LIMIT = 10
+
+/** One time a group's file was downloaded. */
+export interface AdminGroupExport {
+  id: string
+  at: string
+  actor: AdminActivityPerson
+  /** The file's format; `null` when the log holds no format this version knows. */
+  format: GroupExportFormat | null
 }
 
 /** The group's subscription as stored, or `null` when it never had one. */
@@ -235,6 +247,10 @@ export interface AdminGroupDetail {
   invitations: AdminGroupInvitation[]
   /** The newest {@link ADMIN_GROUP_ACTIVITY_LIMIT} entries of the activity log, newest first. */
   activity: AdminGroupActivityEvent[]
+  /** The newest {@link ADMIN_GROUP_EXPORTS_LIMIT} downloads of the group's file, newest first. */
+  exports: AdminGroupExport[]
+  /** The group has older exports than {@link exports} lists. */
+  exportsMore: boolean
   /**
    * When the group was made from an export file, and by whom (`null` once that account is gone);
    * `null` for a group created empty.

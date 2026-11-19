@@ -180,14 +180,22 @@ test.describe("the palette's commands", () => {
       await expect(page.locator("[data-e2e=group-general-role]")).toHaveText("Owner")
       const { palette, option } = await search(page, "this group")
       await expect(option("Transfer ownership of this group")).toBeVisible()
-      await expect(option("Export this group")).toBeVisible()
       await expect(option("Delete this group")).toBeVisible()
       await expect(option("Leave this group")).toHaveCount(0)
-      // Export runs at once, as the menu's does.
-      const downloading = page.waitForEvent("download")
-      await option("Export this group").click()
-      expect((await downloading).suggestedFilename()).toMatch(/^team-\d{4}-\d{2}-\d{2}\.json$/)
+      await page.keyboard.press("Escape")
       await expect(palette).toBeHidden()
+      // Both exports run at once, as the menu's do.
+      const exports = await search(page, "export group")
+      await expect(exports.option("Export group as spreadsheets")).toBeVisible()
+      const downloading = page.waitForEvent("download")
+      await exports.option("Export group as JSON").click()
+      expect((await downloading).suggestedFilename()).toMatch(/^team-\d{4}-\d{2}-\d{2}\.json$/)
+      await expect(exports.palette).toBeHidden()
+      const sheets = await search(page, "accountant")
+      const zipping = page.waitForEvent("download")
+      await sheets.option("Export group as spreadsheets").click()
+      expect((await zipping).suggestedFilename()).toMatch(/^team-\d{4}-\d{2}-\d{2}\.zip$/)
+      await expect(sheets.palette).toBeHidden()
 
       await opensOnly(page, "remove group", "Delete this group", "group-delete-dialog")
       await opensOnly(
@@ -208,10 +216,15 @@ test.describe("the palette's commands", () => {
         memberPage.locator("[data-e2e=group-general-name]"),
       )
       await expect(memberPage.locator("[data-e2e=group-general-role]")).toHaveText("Editor")
-      const asMember = await search(memberPage, "this group")
+      const asMember = await search(memberPage, "group")
       await expect(asMember.option("Leave this group")).toBeVisible()
       for (
-        const name of ["Transfer ownership of this group", "Export this group", "Delete this group"]
+        const name of [
+          "Transfer ownership of this group",
+          "Export group as JSON",
+          "Export group as spreadsheets",
+          "Delete this group",
+        ]
       ) {
         await expect(asMember.option(name)).toHaveCount(0)
       }

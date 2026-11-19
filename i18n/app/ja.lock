@@ -77,7 +77,8 @@ AppShell.deleteGroup	7a859f79d972eadf
 AppShell.deleteNote	26bb0172956f0597
 AppShell.deleteTag	f8c659b8b925b3eb
 AppShell.duplicateNote	6711dc91b58f162d
-AppShell.exportGroup	3cb0166cfa5626a9
+AppShell.exportGroup	242995a12faf3f97
+AppShell.exportGroupSpreadsheets	f0d8bbd75f5bab26
 AppShell.leaveGroup	d114934b315b673a
 AppShell.moveNote	bed1a194780fa3ac
 AppShell.transferGroup	02354795cce05dfd
@@ -444,9 +445,12 @@ GroupEditor.discardTitle	3b13192b9d88d1c6
 GroupEditor.emoji	61ad8976e650e153
 GroupEditor.emojiHint	755e3a9428bb3f95
 GroupEditor.emojiInvalid	54168f8f0efb6630
-GroupEditor.export	d7fc24cc5ee9fdb5
+GroupEditor.export	b72e86288cdf889e
 GroupEditor.exportFailed	a0256962b70f5aaf
+GroupEditor.exportHint	5c423cdb45bfe4c8
 GroupEditor.exportRetry	d8b8392e2c542950
+GroupEditor.exportSpreadsheets	c37c0a7278793538
+GroupEditor.exportSpreadsheetsHint	9ccfa875909169d3
 GroupEditor.exporting	5d1fa38bcf0d88ca
 GroupEditor.invite	1fd9ae1607aa3d80
 GroupEditor.leave	3475393dbebd81d9

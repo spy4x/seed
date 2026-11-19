@@ -28,6 +28,7 @@ import {
   GROUP_DESCRIPTION_MAX,
   GROUP_RESTORE_DAYS,
   type GroupColor,
+  type GroupExportFormat,
   GroupRole,
   groupTimeZone,
 } from "@domain/groups"
@@ -225,14 +226,14 @@ export interface GroupEditorScreenProps {
   /** The move dialog closed: the app forgets the finished move and any error. */
   onMoveAllClose?: () => void
   /**
-   * Downloads the group's export file. The menu offers "Export group…" to the owner only, and
-   * disables it while the device is offline.
+   * Downloads the group's file in the format. The menu offers both formats to the owner only, and
+   * disables them while the device is offline.
    */
-  onExport?: () => void
-  /** The export's file is being prepared: the menu item says so. */
-  exporting?: boolean
-  /** The last export failed: the page says so above the form, with "Try again". */
-  exportFailed?: boolean
+  onExport?: (format: GroupExportFormat) => void
+  /** The format whose file is being prepared: its menu item says so, and both are disabled. */
+  exporting?: GroupExportFormat | null
+  /** The format of the export that failed: the page says so above the form, with "Try again". */
+  exportFailed?: GroupExportFormat | null
   /**
    * A dialog of the menu to open, such as the command palette's Delete: it opens, with focus first
    * on the "More actions" button so closing the dialog returns there, only while the menu offers
@@ -244,20 +245,20 @@ export interface GroupEditorScreenProps {
 }
 
 /** A "More actions" item the command palette reaches too. */
-export type GroupAction = "transfer" | "export" | "leave" | "delete"
+export type GroupAction = "transfer" | "export" | "exportSpreadsheets" | "leave" | "delete"
 
 /** A dialog of the menu that the app may open: see `requestDialog`. */
-export type GroupDialog = Exclude<GroupAction, "export">
+export type GroupDialog = Exclude<GroupAction, "export" | "exportSpreadsheets">
 
 /** Why a menu item shows but cannot be picked; the menu says so under it, except while exporting. */
 export type GroupActionBlock = "subscription" | "lastGroup" | "offline" | "exporting"
 
 /**
- * The menu's Transfer, Export, Leave and Delete for the person's role and the group's state. An
- * action the menu shows maps to `null` when it can be picked, or to why it is disabled; one it
- * hides is left out. Transfer is the owner's while someone can take the group, Export the owner's,
- * Leave everyone's but the owner's, and Delete the owner's. The last group cannot be left or
- * deleted, and a live subscription blocks Transfer and Delete. The page's menu and the app's
+ * The menu's Transfer, both Exports, Leave and Delete for the person's role and the group's state.
+ * An action the menu shows maps to `null` when it can be picked, or to why it is disabled; one it
+ * hides is left out. Transfer is the owner's while someone can take the group, both Exports the
+ * owner's, Leave everyone's but the owner's, and Delete the owner's. The last group cannot be left
+ * or deleted, and a live subscription blocks Transfer and Delete. The page's menu and the app's
  * palette both read this, so they never disagree.
  *
  * @param page.hasTransfer The app passes the transfer dialog's body (`transfer`).
@@ -282,6 +283,7 @@ export function groupMenuActions(page: {
   }
   if (page.hasExport && canExportGroup(page.role)) {
     actions.export = page.offline ? "offline" : page.exporting ? "exporting" : null
+    actions.exportSpreadsheets = actions.export
   }
   if (canLeave(page.role)) actions.leave = lastGroup
   if (canDelete(page.role)) actions.delete = lastGroup ?? subscription
@@ -401,8 +403,8 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     onMoveAllClose,
     onMoveAllTargetChange,
     onExport,
-    exporting = false,
-    exportFailed = false,
+    exporting = null,
+    exportFailed = null,
     offline = false,
   } = props
   const t = useAppText()
@@ -433,7 +435,7 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     isLastGroup,
     hasSubscription,
     offline,
-    exporting,
+    exporting: exporting !== null,
   })
   const canHandOver = actions.transfer !== undefined
   const hints: Record<GroupActionBlock, string | null> = {
@@ -499,12 +501,30 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         key="export"
         disabled={actions.export !== null}
         dataE2E="group-export"
-        onClick={onExport}
+        onClick={() => onExport?.(`json`)}
       >
         <MenuText
-          text={exporting ? t.t(`GroupEditor.exporting`) : t.t(`GroupEditor.export`)}
-          hint={hint(`export`)}
-          hintDataE2E="group-export-why"
+          text={exporting === `json` ? t.t(`GroupEditor.exporting`) : t.t(`GroupEditor.export`)}
+          hint={hint(`export`) ?? t.t(`GroupEditor.exportHint`)}
+          hintDataE2E={actions.export === `offline` ? `group-export-why` : undefined}
+        />
+      </DropdownItem>
+    ),
+    actions.exportSpreadsheets !== undefined && (
+      <DropdownItem
+        key="export-spreadsheets"
+        disabled={actions.exportSpreadsheets !== null}
+        dataE2E="group-export-spreadsheets"
+        onClick={() => onExport?.(`csv`)}
+      >
+        <MenuText
+          text={exporting === `csv`
+            ? t.t(`GroupEditor.exporting`)
+            : t.t(`GroupEditor.exportSpreadsheets`)}
+          hint={hint(`exportSpreadsheets`) ?? t.t(`GroupEditor.exportSpreadsheetsHint`)}
+          hintDataE2E={actions.exportSpreadsheets === `offline`
+            ? `group-export-spreadsheets-why`
+            : undefined}
         />
       </DropdownItem>
     ),
@@ -673,7 +693,13 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
             tone="danger"
             urgent
             action={onExport && (
-              <Button size="sm" variant="secondary" disabled={offline} onClick={onExport}>
+              <Button
+                size="sm"
+                variant="secondary"
+                class="min-h-11 sm:min-h-9"
+                disabled={offline}
+                onClick={() => onExport(exportFailed)}
+              >
                 {t.t(`GroupEditor.exportRetry`)}
               </Button>
             )}
@@ -1051,14 +1077,21 @@ function GroupDetailsText({ group, now }: { group: GroupRow; now?: Date }): JSX.
   )
 }
 
-/** A menu item's label, with a short line under it that says why the item is disabled. */
+/**
+ * A menu item's label, with a short line under it: what the item gives, or why it is disabled. The
+ * menu is as wide as its longest line, so the line wraps to keep a long translation on a phone.
+ */
 function MenuText(
-  { text, hint, hintDataE2E }: { text: string; hint: string | null; hintDataE2E: string },
+  { text, hint, hintDataE2E }: { text: string; hint: string | null; hintDataE2E?: string },
 ): JSX.Element {
   return (
     <span class="flex flex-col items-start gap-1 text-start">
       <span>{text}</span>
-      {hint && <span class="text-xs text-muted" data-e2e={hintDataE2E}>{hint}</span>}
+      {hint && (
+        <span class="max-w-64 whitespace-normal text-xs text-muted" data-e2e={hintDataE2E}>
+          {hint}
+        </span>
+      )}
     </span>
   )
 }

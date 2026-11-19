@@ -29,6 +29,7 @@ import {
   ADMIN_GROUP_TRANSFER_ROLE,
   type AdminGroupActivityEvent,
   type AdminGroupDetail,
+  type AdminGroupExport,
   type AdminGroupFile,
   type AdminGroupFileFilter,
   adminGroupFilePath,
@@ -54,7 +55,7 @@ import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useFormat, When } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
-import { useAdminText } from "./i18n.ts"
+import { useAdminText, useAppText } from "./i18n.ts"
 import { SCROLLING_TABS } from "./tab-row.ts"
 import { isolate, Isolated } from "@spy4x/preact-ui/bdi"
 import { zoneLabel } from "@spy4x/time/tz"
@@ -284,7 +285,12 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
     {
       id: `activity`,
       label: t.t(`AdminGroup.activity`),
-      content: <Activity events={detail.activity} />,
+      content: (
+        <Stack>
+          <Exports exports={detail.exports} more={detail.exportsMore} />
+          <Activity events={detail.activity} />
+        </Stack>
+      ),
     },
   ]
   const active = tabs.some((tab) => tab.id === props.tab) ? props.tab : `members`
@@ -924,24 +930,75 @@ function Files(
   )
 }
 
+/** The words for an export's format; a format the log does not name says so. */
+function exportFormatLabel(t: Translator<string>, format: AdminGroupExport["format"]): string {
+  if (format === `json`) return t.t(`AdminGroup.exportFormatJson`)
+  if (format === `csv`) return t.t(`AdminGroup.exportFormatCsv`)
+  return t.t(`AdminGroup.exportFormatUnknown`)
+}
+
+/** Who downloaded the group's file, in which format and when, newest first. */
+function Exports(
+  { exports, more }: { exports: readonly AdminGroupExport[]; more: boolean },
+): JSX.Element {
+  const t = useAdminText()
+  const app = useAppText()
+  return (
+    <section class="flex flex-col gap-3" aria-labelledby="admin-group-exports-title">
+      <h2 id="admin-group-exports-title" class="text-base font-semibold">
+        {t.t(`AdminGroup.exports`)}
+      </h2>
+      <Rows empty={t.t(`AdminGroup.noExports`)} dataE2E="admin-group-exports">
+        {exports.map((entry) => (
+          <li key={entry.id} class={ROW} data-e2e="admin-group-export-row">
+            <div class="flex min-w-0 flex-col">
+              <span class={entry.format ? `font-medium` : `text-muted`}>
+                {exportFormatLabel(t, entry.format)}
+              </span>
+              <span class="text-sm text-muted wrap-anywhere">
+                {entry.actor.userId === null ? app.t(`GroupActivity.deletedUser`) : (
+                  <Isolated
+                    message={(name) => name}
+                    value={entry.actor.name || app.t(`GroupActivity.someone`)}
+                  />
+                )} · <When at={entry.at} />
+              </span>
+            </div>
+          </li>
+        ))}
+      </Rows>
+      {more && (
+        <p class="text-sm text-muted" data-e2e="admin-group-exports-more">
+          {t.t(`AdminGroup.exportsNewest`, { count: exports.length })}
+        </p>
+      )}
+    </section>
+  )
+}
+
 /** The newest entries of the group's activity log, newest first, on a timeline. */
 function Activity({ events }: { events: readonly AdminGroupActivityEvent[] }): JSX.Element {
   const t = useAdminText()
   return (
-    <Timeline
-      label={t.t(`AdminGroup.activity`)}
-      empty={t.t(`AdminGroup.nothingRecorded`)}
-      dataE2E="admin-group-activity"
-      items={events.map((event) => ({
-        id: event.id,
-        title: <ActivitySentence event={event} />,
-        at: event.at,
-        when: <When at={event.at} />,
-        description: event.byOperator ? t.t(`AdminGroup.byOperator`) : undefined,
-        tone: activityTone(event.kind),
-        dataE2E: `admin-group-event-${event.kind}`,
-      }))}
-    />
+    <section class="flex flex-col gap-3" aria-labelledby="admin-group-activity-title">
+      <h2 id="admin-group-activity-title" class="text-base font-semibold">
+        {t.t(`AdminGroup.recentActivity`)}
+      </h2>
+      <Timeline
+        label={t.t(`AdminGroup.activity`)}
+        empty={t.t(`AdminGroup.nothingRecorded`)}
+        dataE2E="admin-group-activity"
+        items={events.map((event) => ({
+          id: event.id,
+          title: <ActivitySentence event={event} />,
+          at: event.at,
+          when: <When at={event.at} />,
+          description: event.byOperator ? t.t(`AdminGroup.byOperator`) : undefined,
+          tone: activityTone(event.kind),
+          dataE2E: `admin-group-event-${event.kind}`,
+        }))}
+      />
+    </section>
   )
 }
 

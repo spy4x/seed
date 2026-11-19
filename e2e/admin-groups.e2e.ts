@@ -106,6 +106,11 @@ test.describe(`the admin app's groups`, () => {
         },
       })
       expect(invited.status(), await invited.text()).toBe(201)
+      const exported = await request.get(
+        `${appBase}/api/groups/${groupId}/export?format=csv&language=en`,
+        { headers },
+      )
+      expect(exported.status(), await exported.text()).toBe(200)
       await signOut(request)
       await signUp(request, memberEmail)
       await signOut(request)
@@ -202,6 +207,10 @@ test.describe(`the admin app's groups`, () => {
 
       // The activity names both, as done from the admin area.
       await ops.getByRole(`tab`, { name: `Activity` }).click()
+      const exportRow = ops.locator(`[data-e2e=admin-group-export-row]`)
+      await expect(exportRow).toHaveCount(1)
+      await expect(exportRow).toContainText(`Spreadsheets`)
+      await expect(exportRow).toContainText(ownerEmail)
       const activity = ops.locator(`[data-e2e=admin-group-activity]`)
       await expect(activity.locator(`[data-e2e=admin-group-event-group\\.member_removed]`))
         .toContainText(`By an operator`)
