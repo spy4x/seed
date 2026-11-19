@@ -37,9 +37,9 @@ export interface SiteSearchIslandProps {
 const theme = createThemeStore()
 
 /**
- * The header's search: a magnifier on a phone, a field with its Ctrl/⌘+K hint from `sm`, and the
- * palette it opens on a click, Ctrl/⌘+K or `/`, over the site's index and its commands. Without
- * JavaScript the trigger is a link to `/search`.
+ * The header's search: a magnifier on a phone, a field with its Ctrl/⌘+K hint from `sm` (the hint
+ * hidden from `lg` to `xl`), and the palette it opens on a click, Ctrl/⌘+K or `/`, over the site's
+ * index and its commands. Without JavaScript the trigger is a link to `/search`.
  */
 export default function SiteSearchIsland(props: SiteSearchIslandProps): JSX.Element {
   useEffect(() => theme.attach(), [])
@@ -73,7 +73,8 @@ export default function SiteSearchIsland(props: SiteSearchIslandProps): JSX.Elem
         groupOrder={props.groupOrder}
         dataE2E="site-search"
         // A magnifier on a phone, the field with its hint from `sm`: the field's words go below it.
-        class="max-sm:w-11 max-sm:justify-center max-sm:border-transparent max-sm:bg-transparent max-sm:px-0 max-sm:[&>span]:hidden sm:w-56 lg:w-44 xl:w-64"
+        // From `lg` to `xl` the full nav leaves room only for the field's word, so the hint goes.
+        class="max-sm:w-11 max-sm:justify-center max-sm:border-transparent max-sm:bg-transparent max-sm:px-0 max-sm:[&>span]:hidden sm:w-56 lg:w-36 lg:max-xl:[&>span+span]:hidden xl:w-64"
       />
     </I18nContext.Provider>
   )

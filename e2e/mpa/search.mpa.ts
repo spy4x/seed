@@ -41,14 +41,23 @@ test.describe(`the header's search trigger`, () => {
     await expect(page.locator(`${TRIGGER} kbd`).first()).toBeVisible()
   })
 
-  test(`leaves the page without horizontal scrolling at 1024 px`, async ({ page }) => {
-    await page.setViewportSize({ width: 1024, height: 768 })
-    await ready(page)
-    const overflow = await page.evaluate(() =>
-      document.documentElement.scrollWidth - document.documentElement.clientWidth
-    )
-    expect(overflow).toBe(0)
-  })
+  for (const language of [`en`, `ru`, `es`, `de`, `pt-BR`, `ar`, `fr`, `ja`, `zh-CN`]) {
+    test(`shows its whole placeholder and fits the header at 1024 px in ${language}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1024, height: 768 })
+      await ready(page, language === `en` ? `/` : `/${language}`)
+      const sizes = await page.evaluate((trigger) => {
+        const label = document.querySelector(`${trigger} span`)!
+        const header = document.querySelector(`header`)!
+        const page = document.documentElement
+        return {
+          label: label.scrollWidth - label.clientWidth,
+          header: header.scrollWidth - header.clientWidth,
+          page: page.scrollWidth - page.clientWidth,
+        }
+      }, TRIGGER)
+      expect(sizes).toEqual({ label: 0, header: 0, page: 0 })
+    })
+  }
 })
 
 test.describe(`the search palette`, () => {
