@@ -100,8 +100,12 @@ feature cards, `/features`, `/pricing` and `/compare`, and the components they r
 names it in the same PR, so the site never lists a feature the product lacks and never leaves out
 one it has.
 
-A new public page or section goes into the website's search index (`apps/mpa/search.ts`): its
-title, description, aliases and section text. The coverage test fails when a page is missing.
+The website's search index (`apps/mpa/search.ts`) is built from the pages in `SITE_PAGES`
+(`apps/mpa/pages.ts`), the sections of the pages in `SECTION_PAGES`, and the extra words in
+`SEARCH_ALIASES`. A new public page goes into `SITE_PAGES`; a page whose sections should be found
+goes into `SECTION_PAGES`. `apps/mpa/search.test.ts` fails when a page of `SITE_PAGES` has no
+entry, when a heading with an id on a page of `SECTION_PAGES` has none, or when an alias names an
+entry that does not exist.
 
 `deno task lighthouse` (CI step `lighthouse`) measures the website against the Lighthouse budget
 in the global `design` skill. The pages it measures are listed in
