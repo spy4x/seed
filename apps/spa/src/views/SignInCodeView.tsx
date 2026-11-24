@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { useLocation, useSearch } from "wouter-preact"
 import {
   MAILED_CODE_COOLDOWN_SECONDS,
@@ -125,12 +125,16 @@ export function SignInCodeView() {
     setCodeError(null)
   }
 
-  const submit = async () => {
+  // The address form's honeypot value: a request made again for a dead code sends it too.
+  const honeypot = useRef("")
+
+  const submit = async (trap: string) => {
+    honeypot.current = trap
     setFieldError(null)
     setError(null)
     setPending(true)
     const address = fixedEmail ?? email.trim()
-    const answer = await requestSignInCode(address, next)
+    const answer = await requestSignInCode(address, next, honeypot.current)
     // The step names the address as the server keeps it, trimmed and in lower case.
     const kept = answer.ok ? await readWaitingSignInCode() : null
     setPending(false)
@@ -143,7 +147,9 @@ export function SignInCodeView() {
     if (!sent) return
     setResending(true)
     // A dead code's request may be gone: a new request for the same address starts again.
-    const answer = dead ? await requestSignInCode(sent.email, next) : await resendSignInCode()
+    const answer = dead
+      ? await requestSignInCode(sent.email, next, honeypot.current)
+      : await resendSignInCode()
     setResending(false)
     if (answer.ok) return markSent(sent.email)
     if ("dead" in answer && answer.dead) return setDead(true)
@@ -182,7 +188,7 @@ export function SignInCodeView() {
       fieldError={fieldError}
       error={error}
       pending={pending}
-      onSubmit={() => void submit()}
+      onSubmit={(trap) => void submit(trap)}
       guest={guest}
       codeError={codeError}
       checking={checking}

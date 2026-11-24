@@ -327,7 +327,7 @@ describe("SubscribeForm in the browser", () => {
     expect(send.calls).toHaveLength(1)
   })
 
-  it("posts the address, the list and the page's language natively when the app takes nothing over", async () => {
+  it("posts the address, the list, the page's language and the empty honeypot natively when the app takes nothing over", async () => {
     await mount(<SubscribeForm {...subscribeDefaults} email="ada@example.com" language="de" />)
 
     const form = find<HTMLFormElement>(`form[action="${FORM_ACTIONS.subscribe}"]`)
@@ -335,6 +335,7 @@ describe("SubscribeForm in the browser", () => {
       list: "news",
       email: "ada@example.com",
       language: "de",
+      "hp-field": "",
     })
     expect(await submit(`form[action="${FORM_ACTIONS.subscribe}"]`)).toBe(false)
   })

@@ -1,5 +1,6 @@
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
 import { readApiError } from "@domain/errors"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { apiErrorText, languages } from "../i18n.ts"
 
 /** The `fetch` these calls use; tests pass a fake. */
@@ -43,12 +44,14 @@ const UNSUBSCRIBE_STATES = ["confirm", "done", "not-recognised"] as const
 export function createSubscribersApi(fetcher: SubscribersFetch = (url, init) => fetch(url, init)) {
   return {
     /**
-     * Asks for a confirm link. The API answers the same for every address, so `ok` says only that
-     * the request was accepted; `error` is the API's message for a refused one.
+     * Asks for a confirm link, sending the form's honeypot value. The API answers the same for
+     * every address, so `ok` says only that the request was accepted; `error` is the API's message
+     * for a refused one.
      */
     async subscribe(
       email: string,
       list: string,
+      honeypot: string,
     ): Promise<{ ok: true } | { ok: false; error: string }> {
       try {
         const response = await fetcher("/api/subscribers", {
@@ -56,7 +59,12 @@ export function createSubscribersApi(fetcher: SubscribersFetch = (url, init) => 
           credentials: "include",
           headers: { "content-type": "application/json" },
           // The mails are written in the language the page shows now.
-          body: JSON.stringify({ email, list, language: languages.translator.peek().language }),
+          body: JSON.stringify({
+            email,
+            list,
+            language: languages.translator.peek().language,
+            [HONEYPOT_FIELD_NAME]: honeypot,
+          }),
         })
         if (response.ok) return { ok: true }
         const refusal = readApiError(await response.json().catch(() => null))

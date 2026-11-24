@@ -626,14 +626,14 @@ describe("the mailed code steps (#752)", () => {
 
   it("passes on no message of a server failure, and the API's words for a refusal", async () => {
     globalThis.fetch = () => Promise.resolve(new Response("Bad Gateway", { status: 502 }))
-    expect(await requestSignInCode("ann@example.com", null)).toEqual({
+    expect(await requestSignInCode("ann@example.com", null, "")).toEqual({
       ok: false,
       error: undefined,
       field: false,
     })
 
     globalThis.fetch = () => Promise.resolve(Response.json({ error: "Too many" }, { status: 429 }))
-    expect(await requestSignInCode("ann@example.com", null)).toEqual({
+    expect(await requestSignInCode("ann@example.com", null, "")).toEqual({
       ok: false,
       error: "Too many",
       field: false,

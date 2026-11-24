@@ -163,10 +163,10 @@ export function KeepView() {
         setBusy("passkey")
         void store.addPasskey()
       }}
-      onEmail={async (email, password) => {
+      onEmail={async (email, password, honeypot) => {
         setError(null)
         setBusy("email")
-        const answer = await signUp(email, password)
+        const answer = await signUp(email, password, honeypot)
         setBusy(null)
         if (answer.ok) {
           rememberSentCode({ email, sentAt: Date.now() }, "sign-up")

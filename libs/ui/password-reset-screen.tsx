@@ -10,6 +10,7 @@ import { Rich } from "@spy4x/preact-ui/i18n"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { PASSWORD_RESET_CODE_MINUTES } from "@domain/identity"
 import { AuthCard } from "./auth-screen.tsx"
+import { HoneypotField, honeypotOf } from "./honeypot.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 
@@ -48,7 +49,8 @@ export interface ForgotPasswordScreenProps {
   onEmailChange: (email: string) => void
   error: string | null
   pending: boolean
-  onSubmit?: () => void
+  /** Called with the honeypot field's value, which the request carries (`./honeypot.tsx`). */
+  onSubmit?: (honeypot: string) => void
   navigate?: Navigate
 }
 
@@ -71,8 +73,9 @@ export function ForgotPasswordScreen(
       e2e="forgot-password"
       after={<RememberedIt navigate={navigate} />}
     >
-      <ScreenForm pending={pending} onSubmit={onSubmit}>
+      <ScreenForm pending={pending} onSubmit={onSubmit && ((data) => onSubmit(honeypotOf(data)))}>
         <Stack>
+          <HoneypotField />
           <Field
             id="forgot-password-email"
             label={t.t(`AuthScreen.email`)}

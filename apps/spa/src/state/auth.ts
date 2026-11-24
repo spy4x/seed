@@ -23,6 +23,7 @@ import {
   signalUnknownPasskey,
 } from "@spy4x/platform/browser/passkey"
 import type { KeyValueStore } from "@spy4x/platform/universal/key-value-store"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { languages } from "../i18n.ts"
 import { apiFetch } from "./api.ts"
 import { PendingSecondFactor, sessionState, SessionUser, signOutChosen } from "./session.ts"
@@ -245,12 +246,21 @@ const UNREACHED: SignUpStepAnswer = { ok: false, offline: true }
  * Starts a sign-up with an address and a password. The API answers the same for every address and
  * mails a code to it; nobody is signed in yet. The code step (`verifySignUp`) comes next.
  */
-export async function signUp(email: string, password: string): Promise<SignUpStepAnswer> {
+export async function signUp(
+  email: string,
+  password: string,
+  honeypot: string,
+): Promise<SignUpStepAnswer> {
   try {
     const result = await apiFetch<ApiSuccessResponse>("/api/auth/password/sign-up", {
       method: "POST",
       // The code mail is written in the language the page shows now.
-      body: JSON.stringify({ email, password, language: languages.translator.peek().language }),
+      body: JSON.stringify({
+        email,
+        password,
+        language: languages.translator.peek().language,
+        [HONEYPOT_FIELD_NAME]: honeypot,
+      }),
     })
     return result.ok ? { ok: true } : { ok: false, error: result.error.message }
   } catch (_unreachable) {
@@ -400,12 +410,17 @@ async function cancelCode(path: string): Promise<void> {
  * Mails a sign-in code to `email`, opening `next` once used. The answer is the same whether or not
  * an account uses the address; the code signs in, or signs up when none does.
  */
-export function requestSignInCode(email: string, next: string | null): Promise<CodeRequestAnswer> {
+export function requestSignInCode(
+  email: string,
+  next: string | null,
+  honeypot: string,
+): Promise<CodeRequestAnswer> {
   // The code's mail is written in the language the page shows now.
   return requestCode(`/api/auth/code`, {
     email,
     ...(next === null ? {} : { next }),
     language: languages.translator.peek().language,
+    [HONEYPOT_FIELD_NAME]: honeypot,
   })
 }
 
@@ -456,8 +471,8 @@ export function cancelSignInCode(): Promise<void> {
  * Mails a password-reset code to `email`. The answer is the same whether or not an account uses
  * it; for an address with no account every code is wrong.
  */
-export function requestPasswordReset(email: string): Promise<CodeRequestAnswer> {
-  return requestCode(`/api/auth/password/forgot`, { email })
+export function requestPasswordReset(email: string, honeypot: string): Promise<CodeRequestAnswer> {
+  return requestCode(`/api/auth/password/forgot`, { email, [HONEYPOT_FIELD_NAME]: honeypot })
 }
 
 /** The address this browser's reset code went to, so the code step survives a reload. */

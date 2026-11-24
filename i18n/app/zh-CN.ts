@@ -1796,6 +1796,7 @@ export default {
   "AuthScreen.waitingDevice": "正在等待你的设备…",
   "AuthScreen.passkey": "使用通行密钥登录",
   "AuthScreen.continueWith": "使用 {provider} 继续",
+  "Honeypot.label": "请将此栏留空",
   "ConfirmSignUpScreen.failed": "没能创建你的账号",
   "ConfirmSignUpScreen.title": "创建新账号？",
   "ConfirmSignUpScreen.goneTitle": "没有需要确认的内容",

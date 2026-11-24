@@ -388,7 +388,7 @@ function otherWaysIn(): (string | null)[] {
 
 describe("AuthScreen's sign-in code button", () => {
   it("sends what the login field holds through the app's callback, after the passkey", async () => {
-    const link = spy<[string]>()
+    const link = spy<[string, string]>()
     await mount(
       <AuthScreen
         {...authDefaults}
@@ -401,13 +401,13 @@ describe("AuthScreen's sign-in code button", () => {
     await type("input[name=login]", " ada@example.com ")
     await press("[data-e2e=link-sign-in]")
 
-    expect(link.calls).toEqual([["ada@example.com"]])
+    expect(link.calls).toEqual([["ada@example.com", ""]])
     expect(find("[data-e2e=link-sign-in]").textContent).toBe("Email me a sign-in code")
     expect(otherWaysIn()).toEqual(["passkey-sign-in", "link-sign-in", "provider-google"])
   })
 
   it("sends an address handed back to the form without it being typed again", async () => {
-    const link = spy<[string]>()
+    const link = spy<[string, string]>()
     await mount(
       <AuthScreen {...authDefaults} defaultLogin="ada@example.com" onEmailLink={link.fn} />,
     )
@@ -415,11 +415,23 @@ describe("AuthScreen's sign-in code button", () => {
     expect(find<HTMLInputElement>("input[name=login]").value).toBe("ada@example.com")
     await press("[data-e2e=link-sign-in]")
 
-    expect(link.calls).toEqual([["ada@example.com"]])
+    expect(link.calls).toEqual([["ada@example.com", ""]])
+  })
+
+  it("hands what a bot typed into the honeypot field to the app, so the API can refuse it", async () => {
+    const link = spy<[string, string]>()
+    await mount(
+      <AuthScreen {...authDefaults} defaultLogin="ada@example.com" onEmailLink={link.fn} />,
+    )
+
+    await type("input[name=hp-field]", "http://spam.example")
+    await press("[data-e2e=link-sign-in]")
+
+    expect(link.calls).toEqual([["ada@example.com", "http://spam.example"]])
   })
 
   it("comes first on sign-up, before the providers", async () => {
-    const link = spy<[string]>()
+    const link = spy<[string, string]>()
     await mount(
       <AuthScreen
         {...authDefaults}
@@ -431,7 +443,7 @@ describe("AuthScreen's sign-in code button", () => {
 
     await press("[data-e2e=link-sign-up]")
 
-    expect(link.calls).toEqual([[""]])
+    expect(link.calls).toEqual([["", ""]])
     expect(find("[data-e2e=link-sign-up]").textContent).toBe("Email me a sign-up code")
     expect(otherWaysIn()).toEqual(["link-sign-up", "provider-google"])
   })
