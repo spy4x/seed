@@ -83,8 +83,9 @@ export interface SubscribersRouteDependencies {
  *
  * - `GET /` says whether subscriptions are on, as `{ enabled }`: the public website asks before it
  *   offers its form. It is the one route that answers when they are off.
- * - `POST /` takes `{ email, list, language? }` and answers 202 for any valid address, listed, new or over its
- *   own limit, with the same writes, so the answer tells nothing about the list.
+ * - `POST /` takes `{ email, list, language?, "hp-field" }` and answers 202 for any valid address,
+ *   listed, new, over its own limit or over the site's, with the same writes, so the answer tells
+ *   nothing about the list. A body without the empty honeypot field gets the validation answer.
  * - `GET /confirm` previews a confirm link; `POST /confirm` adds the address, and keeps the
  *   language of the page it was confirmed on (`{ list, token, language? }`) for its mails.
  * - `GET /unsubscribe` is the link in every mail: it redirects a person to the unsubscribe page,
@@ -169,10 +170,12 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
       if (email === null) {
         return errorResponse(c, `bad_request`, { message: SUBSCRIBE_INVALID_ADDRESS })
       }
-      // Spent for every address, listed or not. Over it, the answer is the same and nothing is
-      // written, so an inbox gets at most a few confirm mails an hour, whoever asks.
-      const decision = await deps.rateLimits.mailByRecipient(email)
-      if (decision.allowed) await deps.requestConfirmMail(list, email, language)
+      // Spent for every address, listed or not. Over either budget, the answer is the same and
+      // nothing is written, so an inbox gets at most a few confirm mails an hour, whoever asks, and
+      // the whole site mails only so many strangers an hour, however many IPs ask.
+      const allowed = (await deps.rateLimits.mailByRecipient(email)).allowed &&
+        (await deps.rateLimits.mailSiteWide()).allowed
+      if (allowed) await deps.requestConfirmMail(list, email, language)
       return c.json({}, 202)
     })
     .get(`/confirm`, deps.rateLimits.tokenByIp, async (c) => {

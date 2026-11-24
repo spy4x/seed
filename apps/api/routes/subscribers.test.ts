@@ -2,6 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { encodeBase64Url } from "@std/encoding"
 import { createKvStore, type RateLimitStore } from "@spy4x/platform/rate-limit"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import type { SubscriberStore } from "@spy4x/server/subscribers"
 import { createMemorySubscriberStore } from "@spy4x/server/subscribers/memory"
 import type { SubscriberList } from "@domain/subscribers"
@@ -21,6 +22,7 @@ import {
 import {
   createSubscriberRateLimits,
   SUBSCRIBE_MAILS_PER_RECIPIENT,
+  SUBSCRIBE_MAILS_SITE_WIDE,
 } from "../middlewares/subscriber-rate-limits.ts"
 import {
   createSubscribersRoute,
@@ -98,11 +100,14 @@ function buildApp(
   }
 }
 
+/** Posts `body` as a form does: an object gets the empty honeypot field unless it names its own. */
 function subscribe(app: Built["app"], body: unknown, headers = sameOriginWithoutCookieHeaders) {
   return app.request(`${API_URL}/subscribers`, {
     method: `POST`,
     headers: { ...headers },
-    body: typeof body === `string` ? body : JSON.stringify(body),
+    body: typeof body === `string`
+      ? body
+      : JSON.stringify({ ...EMPTY_HONEYPOT, ...body as object }),
   })
 }
 
@@ -119,6 +124,8 @@ async function listed(store: SubscriberStore, email: string): Promise<string> {
   })
   return await crypto.unsubscribeToken(email, key)
 }
+
+const EMPTY_HONEYPOT = { [HONEYPOT_FIELD_NAME]: `` }
 
 const linkQuery = (token: string) => `list=news&token=${encodeURIComponent(token)}`
 
@@ -205,6 +212,37 @@ describe(`POST /api/subscribers`, () => {
     for (const answer of answers) expect(answer).toEqual(answers[0])
     expect(answers[0].status).toBe(202)
     expect(confirmMails.length).toBe(SUBSCRIBE_MAILS_PER_RECIPIENT)
+  })
+
+  it(`refuses a post without the honeypot field or with it filled, queueing nothing`, async () => {
+    const { app, confirmMails } = buildApp()
+
+    const missing = await subscribe(app, JSON.stringify({ email: `ada@example.com`, list: `news` }))
+    const filled = await subscribe(app, {
+      email: `ada@example.com`,
+      list: `news`,
+      [HONEYPOT_FIELD_NAME]: `http://spam.example`,
+    })
+
+    expect([missing.status, filled.status]).toEqual([400, 400])
+    expect(confirmMails).toEqual([])
+  })
+
+  it(`stops sending confirm mails once the site has sent its hourly share, answering the same 202`, async () => {
+    const { app, confirmMails } = buildApp()
+    const statuses = []
+    for (let attempt = 0; attempt <= SUBSCRIBE_MAILS_SITE_WIDE; attempt++) {
+      // A fresh address from a fresh IP each time, as the bots post: no other budget runs out.
+      const headers = { ...sameOriginWithoutCookieHeaders, "x-real-ip": `192.0.2.${attempt + 1}` }
+      const body = { email: `stranger${attempt}@example.com`, list: `news` }
+      statuses.push((await subscribe(app, body, headers)).status)
+    }
+
+    expect(statuses.every((status) => status === 202)).toBe(true)
+    expect(confirmMails.length).toBe(SUBSCRIBE_MAILS_SITE_WIDE)
+    expect(confirmMails.map(([, email]) => email)).not.toContain(
+      `stranger${SUBSCRIBE_MAILS_SITE_WIDE}@example.com`,
+    )
   })
 
   it(`refuses a body over 4 KiB and a cross-site post`, async () => {

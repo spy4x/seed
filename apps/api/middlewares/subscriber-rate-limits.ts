@@ -15,8 +15,14 @@ import type { APIContext } from "../_types.ts"
 /** Confirm mails one address may be sent per {@link SUBSCRIBE_RECIPIENT_WINDOW_MS}, from any IP. */
 export const SUBSCRIBE_MAILS_PER_RECIPIENT = 3
 
-/** The window of {@link SUBSCRIBE_MAILS_PER_RECIPIENT}: one hour. */
+/** The window of {@link SUBSCRIBE_MAILS_PER_RECIPIENT} and {@link SUBSCRIBE_MAILS_SITE_WIDE}: one hour. */
 export const SUBSCRIBE_RECIPIENT_WINDOW_MS = 60 * 60_000
+
+/**
+ * Confirm mails the whole site may send per {@link SUBSCRIBE_RECIPIENT_WINDOW_MS}, to any
+ * addresses: what a bot that passes the honeypot can still make the site mail strangers.
+ */
+export const SUBSCRIBE_MAILS_SITE_WIDE = 30
 
 /** The limits of the subscriber routes, none of which knows a user. */
 export interface SubscriberRateLimits {
@@ -30,6 +36,11 @@ export interface SubscriberRateLimits {
    * Valkey never holds an address.
    */
   mailByRecipient(email: string): Promise<RateLimitDecision>
+  /**
+   * Spends one of the site's {@link SUBSCRIBE_MAILS_SITE_WIDE} confirm mails, whatever the address
+   * and the IP, so a flood of fresh addresses from fresh IPs still mails only so many strangers.
+   */
+  mailSiteWide(): Promise<RateLimitDecision>
 }
 
 export interface SubscriberRateLimitSettings {
@@ -62,6 +73,11 @@ export function createSubscriberRateLimits(
     limit: SUBSCRIBE_MAILS_PER_RECIPIENT,
     clock,
   })
+  const site = createStoreLimiter(store(`ratelimit-subscribe-site`), {
+    windowMs: SUBSCRIBE_RECIPIENT_WINDOW_MS,
+    limit: SUBSCRIBE_MAILS_SITE_WIDE,
+    clock,
+  })
   const byIp = userThenIp<APIContext>(() => undefined, { trustedProxy: `x-real-ip` })
   return {
     subscribeByIp: createRateLimitMiddleware(subscribe, {
@@ -76,5 +92,6 @@ export function createSubscriberRateLimits(
     }),
     mailByRecipient: async (email) =>
       await recipient.check(`subscribe-recipient:${await settings.recipientKey(email)}`),
+    mailSiteWide: () => site.check(`subscribe-site`),
   }
 }
