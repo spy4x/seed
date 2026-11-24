@@ -10,6 +10,7 @@ import type { EmailMessage } from "@spy4x/email/message"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import {
   AuthAuditEventType,
   GUEST_REFUSAL_CODE,
@@ -279,6 +280,7 @@ async function keepByEmail(fixture: Fixture, browser: Browser, email: string): P
   const requested = await browser.call("POST", "/auth/password/sign-up", {
     email,
     password: PASSWORD,
+    [HONEYPOT_FIELD_NAME]: "",
   })
   expect(requested.status).toBe(200)
   return await browser.call("POST", "/auth/password/sign-up/verify", {

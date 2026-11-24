@@ -76,7 +76,8 @@ export function signUpUsers(count, prefix) {
     const requested = http.batch(batch.map(({ email, jar }) => ({
       method: `POST`,
       url: `${BASE_URL}/api/auth/password/sign-up`,
-      body: JSON.stringify({ email, password }),
+      // The form's honeypot field (`HONEYPOT_FIELD_NAME`), empty as a browser sends it.
+      body: JSON.stringify({ email, password, "hp-field": `` }),
       params: { jar, headers: pageHeaders() },
     })))
     requested.forEach((response, i) => {

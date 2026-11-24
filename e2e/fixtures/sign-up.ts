@@ -5,6 +5,7 @@ import {
   type Locator,
   type Page,
 } from "@playwright/test"
+import { HONEYPOT_FIELD_NAME } from "@jsr/spy4x__platform/universal/honeypot"
 import { gotoApp, signedInHome } from "./app.ts"
 import { BILLING_WEBHOOK_PATH, stripeSignature, subscriptionEvent } from "./billing.ts"
 
@@ -107,7 +108,9 @@ export async function signUpWithCode(
   const origin = signUpUrl.replace(`/api/auth/password/sign-up`, ``)
   const lastMailUrl = `${origin}/api/test/last-mail`
   const before = await lastMail(api, lastMailUrl, email)
-  const requested = await api.post(signUpUrl, options)
+  // The form's honeypot field goes along empty, as a person's browser sends it.
+  const data = { [HONEYPOT_FIELD_NAME]: ``, ...(options.data as object) }
+  const requested = await api.post(signUpUrl, { ...options, data })
   if (!requested.ok()) return requested
   const code = await nextCode(api, lastMailUrl, email, before)
   const verified = await api.post(`${signUpUrl}/verify`, {

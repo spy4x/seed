@@ -9,6 +9,8 @@ import type { AdminUserPreferences } from "./preferences.ts"
 import type { GuestStats } from "./guests.ts"
 import type { PictureState } from "./profile-picture.ts"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
+import { honeypotField } from "@spy4x/platform/validation/predicates"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
 // general-purpose package.
@@ -156,11 +158,20 @@ export const SIGN_UP_CLOSED_MESSAGE = "Sign-up is by invitation on this server."
 export const signUpInvitationSchema = type({ "invitation?": "string <= 64" })
 export type SignUpInvitation = typeof signUpInvitationSchema.infer
 
+/**
+ * The honeypot field every public form that mails an address nobody has confirmed yet sends:
+ * present and empty. A bot that posts only the fields it knows, without loading the page, leaves
+ * it out; one that fills every field fills it. Either is refused before any mail is queued.
+ */
+export const honeypotSchema = type({ [HONEYPOT_FIELD_NAME]: honeypotField })
+export type Honeypot = typeof honeypotSchema.infer
+
 /** The body of sign-up. */
 export const authSignUpSchema = authEmailSchema
   .and(authPasswordSchema)
   .and(mailLanguageSchema)
   .and(signUpInvitationSchema)
+  .and(honeypotSchema)
 export type AuthSignUp = typeof authSignUpSchema.infer
 
 /** The body of sign-in. */
@@ -168,7 +179,7 @@ export const authSignInSchema = authLoginSchema.and(authPasswordSchema)
 export type AuthSignIn = typeof authSignInSchema.infer
 
 /** The body of "forgot password": the address the reset code goes to. */
-export const authPasswordForgotSchema = authEmailSchema
+export const authPasswordForgotSchema = authEmailSchema.and(honeypotSchema)
 export type AuthPasswordForgot = typeof authPasswordForgotSchema.infer
 
 /**
@@ -737,7 +748,7 @@ export const PICTURE_AUDIT = { changed: "picture", removed: "picture-removed" } 
  */
 export const authSignInCodeSchema = authEmailSchema.and({
   "next?": "string <= 2048",
-}).and(mailLanguageSchema)
+}).and(mailLanguageSchema).and(honeypotSchema)
 export type AuthSignInCode = typeof authSignInCodeSchema.infer
 
 /** What `POST /api/auth/code/verify` answers when the code signed someone in. */

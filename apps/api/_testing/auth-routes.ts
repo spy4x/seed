@@ -14,6 +14,7 @@ import { SignUpOutcome } from "../services/sign-up.ts"
 import type { EmailStatus, SignedInDevice } from "@domain/identity"
 import type { UserSignedOutEvent } from "../cqrs/events.ts"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { buildAuthData } from "./fake-auth.ts"
 import {
   API_URL,
@@ -313,7 +314,13 @@ export function send(
 }
 
 export const credentials = { login: "alice@example.com", password: "correct-horse" }
-export const signUpBody = { email: "alice@example.com", password: "correct-horse" }
+/** The honeypot field as a person's form sends it: present and empty. */
+export const EMPTY_HONEYPOT = { [HONEYPOT_FIELD_NAME]: "" }
+export const signUpBody = {
+  email: "alice@example.com",
+  password: "correct-horse",
+  ...EMPTY_HONEYPOT,
+}
 export const resetBody = {
   token: "a-reset-token",
   newPassword: "battery-staple",
@@ -350,7 +357,7 @@ export const anonymousRoutes: (MutationCase & { operation: string })[] = [
   {
     method: "POST",
     path: "/auth/password/forgot",
-    body: { email: "alice@example.com" },
+    body: { email: "alice@example.com", ...EMPTY_HONEYPOT },
     operation: "requestPasswordReset",
   },
   {
@@ -380,7 +387,7 @@ export const anonymousRoutes: (MutationCase & { operation: string })[] = [
   {
     method: "POST",
     path: "/auth/code",
-    body: { email: "alice@example.com" },
+    body: { email: "alice@example.com", ...EMPTY_HONEYPOT },
     operation: "requestSignInCode",
   },
   {

@@ -10,6 +10,7 @@ import type { EmailMessage } from "@spy4x/email/message"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import {
   AuthAuditEventType,
   DEFAULT_PREFERENCES,
@@ -276,13 +277,21 @@ async function withFixture(
       browser,
       mailedCode,
       async codeFor(browser, email, next, language) {
-        const asked = await browser.call("POST", "/auth/code", { email, next, language })
+        const asked = await browser.call("POST", "/auth/code", {
+          email,
+          next,
+          language,
+          [HONEYPOT_FIELD_NAME]: "",
+        })
         expect(asked.status).toBe(200)
         return await mailedCode(email)
       },
       async resetCodeFor(browser, email) {
         const before = sender.sent.length
-        const asked = await browser.call("POST", "/auth/password/forgot", { email })
+        const asked = await browser.call("POST", "/auth/password/forgot", {
+          email,
+          [HONEYPOT_FIELD_NAME]: "",
+        })
         expect(asked.status).toBe(200)
         await processor.drainOnce()
         if (sender.sent.length === before) return null
@@ -356,11 +365,17 @@ Deno.test("the code cookies are HttpOnly, SameSite=Lax and sent only to their ow
       return line.split(";").slice(1).map((part) => part.trim().toLowerCase()).sort()
     }
 
-    await browser.call("POST", "/auth/code", { email: "ann@example.com" })
+    await browser.call("POST", "/auth/code", {
+      email: "ann@example.com",
+      [HONEYPOT_FIELD_NAME]: "",
+    })
     expect(cookieOf("sign_in_code")).toEqual(
       ["httponly", "max-age=600", "path=/api/auth/code", "samesite=lax"],
     )
-    await browser.call("POST", "/auth/password/forgot", { email: "ann@example.com" })
+    await browser.call("POST", "/auth/password/forgot", {
+      email: "ann@example.com",
+      [HONEYPOT_FIELD_NAME]: "",
+    })
     expect(cookieOf("password_reset")).toEqual(
       ["httponly", "max-age=600", "path=/api/auth/password/reset", "samesite=lax"],
     )
@@ -882,7 +897,12 @@ async function invitationFor(fixture: Fixture, email: string | null): Promise<st
 
 /** Asks for a password sign-up of `email` from `browser`, carrying `invitation` when given. */
 function askSignUp(browser: Browser, email: string, invitation?: string) {
-  return browser.call("POST", "/auth/password/sign-up", { email, password: PASSWORD, invitation })
+  return browser.call("POST", "/auth/password/sign-up", {
+    email,
+    password: PASSWORD,
+    invitation,
+    [HONEYPOT_FIELD_NAME]: "",
+  })
 }
 
 /** How often the one invitation was used, and how many people its group has, its owner included. */

@@ -13,6 +13,7 @@
  */
 import type { Browser, BrowserContext, Page } from "playwright"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 
 /** A signed-in browser state, as `context.storageState()` gives it. */
 export type State = Awaited<ReturnType<BrowserContext["storageState"]>>
@@ -51,7 +52,7 @@ async function resetPassword(app: string, email: string): Promise<string> {
     return response.ok ? await response.json() as { subject: string; text: string } : null
   }
   const before = (await lastMail())?.text
-  const forgot = await post(app, "/auth/password/forgot", { email: email })
+  const forgot = await post(app, "/auth/password/forgot", { email: email, [HONEYPOT_FIELD_NAME]: "" })
   if (!forgot.ok) throw new Error(`the reset request answered ${forgot.status}`)
   await forgot.body?.cancel()
   // The reset belongs to the browser that asked, through this cookie.

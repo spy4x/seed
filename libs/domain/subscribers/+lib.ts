@@ -4,6 +4,7 @@ import {
   type AdminDailyCount,
   type AdminStatChange,
   EMAIL_INPUT_MAX_LENGTH,
+  honeypotSchema,
   isLanguage,
   type Language,
   LANGUAGES,
@@ -33,12 +34,15 @@ export const SUBSCRIBER_TOKEN_MAX_LENGTH = 2048
  */
 const pageLanguage = { "language?": type.enumerated(...LANGUAGES) } as const
 
-/** The body of a subscribe request: the address to confirm, the list to join, the page's language. */
+/**
+ * The body of a subscribe request: the address to confirm, the list to join, the page's language,
+ * and the empty honeypot field every form renders.
+ */
 export const subscribeSchema = type({
   email: `string <= ${EMAIL_INPUT_MAX_LENGTH}`,
   list: `string <= 64`,
   ...pageLanguage,
-})
+}).and(honeypotSchema)
 export type Subscribe = typeof subscribeSchema.infer
 
 /** The fields of the unsubscribe form: the list and the token from the unsubscribe link. */
