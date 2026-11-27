@@ -16,6 +16,7 @@ import type { Translator } from "@spy4x/platform/universal/i18n"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { type GuestSwitchState, OAUTH_PROVIDER_NAMES, type OAuthProviderId } from "@domain/identity"
 import { AuthCard } from "./auth-screen.tsx"
+import { HoneypotField, honeypotOf } from "./honeypot.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
@@ -311,7 +312,8 @@ export interface KeepScreenProps {
   kept: KeepMethod | null
   onProvider: (provider: OAuthProviderId) => void
   onPasskey: () => void
-  onEmail: (email: string, password: string) => void
+  /** Called with the honeypot field's value too, which the sign-up carries (`./honeypot.tsx`). */
+  onEmail: (email: string, password: string, honeypot: string) => void
   /** "Done": back to the page the person came from. */
   onDone: () => void
   navigate?: Navigate
@@ -434,9 +436,14 @@ function EmailForm(
     <ScreenForm
       pending={busy !== null}
       onSubmit={(data) =>
-        onEmail(String(data.get("email") ?? ""), String(data.get("password") ?? ""))}
+        onEmail(
+          String(data.get("email") ?? ""),
+          String(data.get("password") ?? ""),
+          honeypotOf(data),
+        )}
     >
       <Stack gap="md">
+        <HoneypotField />
         <Field id="keep-email" label={t.t(`GuestScreens.email`)} error={fieldErrors.email} required>
           <Input
             name="email"

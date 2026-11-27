@@ -39,6 +39,7 @@ export default {
   "NewsletterForm.email": "Почта",
   "NewsletterForm.placeholder": "you@example.com",
   "NewsletterForm.submit": "Подписаться",
+  "NewsletterForm.honeypot": "Оставьте это поле пустым",
   "LegalPage.englishOnly": "Эта страница есть только на английском.",
   "LegalPage.updated": "Обновлено {date}",
   "LegalPage.noticeTitle": "Это отправная точка, а не юридическая консультация",

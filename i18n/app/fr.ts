@@ -2263,6 +2263,7 @@ export default {
   "AuthScreen.waitingDevice": "En attente de votre appareil…",
   "AuthScreen.passkey": "Se connecter avec une clé d’accès",
   "AuthScreen.continueWith": "Continuer avec {provider}",
+  "Honeypot.label": "Laissez ce champ vide",
   "ConfirmSignUpScreen.failed": "Impossible de créer votre compte",
   "ConfirmSignUpScreen.title": "Créer un nouveau compte ?",
   "ConfirmSignUpScreen.goneTitle": "Rien à confirmer",

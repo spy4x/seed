@@ -1,5 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { PasswordResetOutcome } from "../services/password-reset.ts"
 import { sameOriginWithoutCookieHeaders } from "../_testing/mutation-requests.ts"
 import { createAuthRateLimits, RESET_MAILS_PER_ADDRESS } from "../middlewares/auth-rate-limits.ts"
@@ -14,6 +15,7 @@ import {
   anonymousRoutes,
   brokenStore,
   buildApp,
+  EMPTY_HONEYPOT,
   generousLimits,
   memoryStore,
   resetBody,
@@ -25,7 +27,7 @@ describe("auth routes reset a password by e-mailed code (#752)", () => {
   const verify = anonymousRoutes.find((route) => route.path === "/auth/password/reset/verify")!
   const resend = anonymousRoutes.find((route) => route.path === "/auth/password/reset/resend")!
   const reset = anonymousRoutes.find((route) => route.path === "/auth/password/reset")!
-  const json = (body: unknown) => ({ ...forgot, body })
+  const json = (body: object) => ({ ...forgot, body: { ...EMPTY_HONEYPOT, ...body } })
 
   it("asks for the code for the address as normalizeEmail leaves it", async () => {
     const { app, queued } = buildApp(null)
@@ -58,6 +60,24 @@ describe("auth routes reset a password by e-mailed code (#752)", () => {
     const response = await send(app, json({ email: "alice" }), sameOriginWithoutCookieHeaders)
 
     expect(response.status).toBe(400)
+    expect(calls).toEqual([])
+  })
+
+  it("refuses a request without the honeypot field or with it filled with 400, mailing no code", async () => {
+    const { app, calls } = buildApp(null)
+
+    const missing = await send(
+      app,
+      { ...forgot, body: { email: "alice@example.com" } },
+      sameOriginWithoutCookieHeaders,
+    )
+    const filled = await send(
+      app,
+      json({ email: "alice@example.com", [HONEYPOT_FIELD_NAME]: "alice" }),
+      sameOriginWithoutCookieHeaders,
+    )
+
+    expect([missing.status, filled.status]).toEqual([400, 400])
     expect(calls).toEqual([])
   })
 

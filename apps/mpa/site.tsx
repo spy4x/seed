@@ -9,6 +9,8 @@ import { Button } from "@spy4x/preact-ui/button"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { LanguagePicker } from "@spy4x/preact-ui/language-picker"
+import { honeypotField } from "@spy4x/preact-ui/honeypot"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { Input } from "@spy4x/preact-ui/input"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { SEOHead } from "@spy4x/preact-system/seo-head"
@@ -661,6 +663,7 @@ export function NewsletterForm({ id }: { id: string }): JSX.Element {
       class="flex gap-2"
       data-analytics-submit="newsletter-subscribe"
     >
+      {honeypotField(HONEYPOT_FIELD_NAME, t.t(`NewsletterForm.honeypot`))}
       <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
       <input type="hidden" name="language" value={language} />
       <label for={`${id}-email`} class="sr-only">{t.t(`NewsletterForm.email`)}</label>

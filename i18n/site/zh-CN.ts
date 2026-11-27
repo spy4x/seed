@@ -38,6 +38,7 @@ export default {
   "NewsletterForm.email": "邮箱",
   "NewsletterForm.placeholder": "you@example.com",
   "NewsletterForm.submit": "订阅",
+  "NewsletterForm.honeypot": "请将此栏留空",
   "LegalPage.englishOnly": "此页面仅提供英文版。",
   "LegalPage.updated": "最后更新于{date}",
   "LegalPage.noticeTitle": "仅供参考，不构成法律意见",

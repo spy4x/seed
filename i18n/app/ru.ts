@@ -2293,6 +2293,7 @@ export default {
   "AuthScreen.waitingDevice": "Ждём ответа от устройства…",
   "AuthScreen.passkey": "Войти по ключу доступа",
   "AuthScreen.continueWith": "Продолжить через {provider}",
+  "Honeypot.label": "Оставьте это поле пустым",
   "ConfirmSignUpScreen.failed": "Не удалось создать аккаунт",
   "ConfirmSignUpScreen.title": "Создать новый аккаунт?",
   "ConfirmSignUpScreen.goneTitle": "Нечего подтверждать",

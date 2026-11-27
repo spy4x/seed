@@ -87,8 +87,14 @@ and the worker drops subscriber jobs.
 - **One-click unsubscribe.** `POST /api/subscribers/unsubscribe` is the RFC 8058 target. A mail
   client's post passes, and a cross-site browser post gets 403. It accepts only the version 2
   tokens Seed signs.
-- **Rate limits.** Per address on subscribing and on every token check, and three confirm mails an
-  hour per e-mail address. Valkey keys the budget by an HMAC, so it holds no address.
+- **Rate limits.** Per address on subscribing and on every token check, three confirm mails an
+  hour per e-mail address, and 30 an hour for the whole site. Over a mail limit the answer is the
+  same 202, and nothing is sent. Valkey keys the budget by an HMAC, so it holds no address.
+- **Bots.** Every public form that mails an address nobody has confirmed yet (the newsletter,
+  password sign-up, the sign-in code and forgot password) carries a honeypot field. A post with
+  the field missing or filled gets the usual 400 and no mail. **A new form of that kind needs it
+  too**: `honeypotSchema` (`@domain/identity`) in its route's schema, and `honeypotField()`
+  (`@spy4x/preact-ui/honeypot`) in its form, read with `libs/ui/honeypot.tsx` in the SPA.
 - **Cleanup.** The nightly cleanup removes requests older than a day.
 
 **Issues.** `subscribers:send` runs in the worker container and reads `{ id, subject, preheader?,

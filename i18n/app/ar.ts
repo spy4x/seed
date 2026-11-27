@@ -2376,6 +2376,7 @@ export default {
   "AuthScreen.waitingDevice": "بانتظار جهازك…",
   "AuthScreen.passkey": "تسجيل الدخول بمفتاح مرور",
   "AuthScreen.continueWith": "المتابعة عبر {provider}",
+  "Honeypot.label": "اترك هذا الحقل فارغًا",
   "ConfirmSignUpScreen.failed": "تعذّر إنشاء حسابك",
   "ConfirmSignUpScreen.title": "إنشاء حساب جديد؟",
   "ConfirmSignUpScreen.goneTitle": "لا يوجد ما يُؤكَّد",

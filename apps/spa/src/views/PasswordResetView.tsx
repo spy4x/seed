@@ -42,6 +42,8 @@ export function ForgotPasswordView() {
   const [resending, setResending] = useState(false)
   const [newPassword, setNewPassword] = useState("")
   const token = useRef<string | null>(null)
+  // The address form's honeypot value: a request made again for a dead code sends it too.
+  const honeypot = useRef("")
 
   useEffect(() => {
     void readWaitingReset().then((waiting) => {
@@ -65,10 +67,11 @@ export function ForgotPasswordView() {
     setStep("address")
   }
 
-  const submit = async () => {
+  const submit = async (trap: string) => {
+    honeypot.current = trap
     setError(null)
     setPending(true)
-    const answer = await requestPasswordReset(email.trim())
+    const answer = await requestPasswordReset(email.trim(), honeypot.current)
     // The step names the address as the server keeps it, trimmed and in lower case.
     const kept = answer.ok ? await readWaitingReset() : null
     setPending(false)
@@ -83,7 +86,7 @@ export function ForgotPasswordView() {
     setResending(true)
     // A dead code's request may be gone: a new request for the same address starts again.
     const answer = step === "dead"
-      ? await requestPasswordReset(email.trim())
+      ? await requestPasswordReset(email.trim(), honeypot.current)
       : await resendResetCode()
     setResending(false)
     if (answer.ok) return markSent()
@@ -179,7 +182,7 @@ export function ForgotPasswordView() {
       onEmailChange={setEmail}
       error={error}
       pending={pending}
-      onSubmit={() => void submit()}
+      onSubmit={(trap) => void submit(trap)}
       navigate={navigate}
     />
   )

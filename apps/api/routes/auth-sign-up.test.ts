@@ -1,5 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { SignUpOutcome } from "../services/sign-up.ts"
 import {
   API_URL,
@@ -51,6 +52,25 @@ describe("auth routes sign up with an e-mail address", () => {
     )
 
     expect(response.status).toBe(400)
+    expect(calls).toEqual([])
+  })
+
+  it("refuses a sign-up without the honeypot field or with it filled with 400, mailing no code", async () => {
+    const { app, calls } = buildApp(null)
+    const { [HONEYPOT_FIELD_NAME]: _, ...withoutHoneypot } = signUpBody
+
+    const missing = await send(
+      app,
+      { ...signUp, body: withoutHoneypot },
+      sameOriginWithoutCookieHeaders,
+    )
+    const filled = await send(
+      app,
+      { ...signUp, body: { ...signUpBody, [HONEYPOT_FIELD_NAME]: "Ada" } },
+      sameOriginWithoutCookieHeaders,
+    )
+
+    expect([missing.status, filled.status]).toEqual([400, 400])
     expect(calls).toEqual([])
   })
 

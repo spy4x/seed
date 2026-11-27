@@ -20,6 +20,7 @@ import { apiError } from "../_testing/api-error.ts"
 import {
   brokenStore,
   buildApp,
+  EMPTY_HONEYPOT,
   generousLimits,
   memoryStore,
   PROVEN,
@@ -143,7 +144,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     const code = await send(owner.app, sendCode, sameOriginHeaders)
     const reset = await send(
       anonymous.app,
-      { method: "POST", path: "/auth/password/forgot", body: { email: owned } },
+      { method: "POST", path: "/auth/password/forgot", body: { email: owned, ...EMPTY_HONEYPOT } },
       sameOriginWithoutCookieHeaders,
     )
 
@@ -174,7 +175,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     const code = await send(owner.app, sendCode, sameOriginHeaders)
     const reset = await send(
       anonymous.app,
-      { method: "POST", path: "/auth/password/forgot", body: { email: owned } },
+      { method: "POST", path: "/auth/password/forgot", body: { email: owned, ...EMPTY_HONEYPOT } },
       sameOriginWithoutCookieHeaders,
     )
 

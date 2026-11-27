@@ -165,10 +165,10 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
   }
 
   /** Starts a sign-up; the code mailed to the address comes next, on a page of its own. */
-  const requestSignUp = async (email: string, password: string) => {
+  const requestSignUp = async (email: string, password: string, honeypot: string) => {
     setError(null)
     setBusy(true)
-    const answer = await signUp(email, password)
+    const answer = await signUp(email, password, honeypot)
     setBusy(false)
     if (answer.ok) {
       rememberSentCode({ email, sentAt: Date.now() }, "sign-up")
@@ -187,14 +187,14 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
    * opens the code step; with a username or nothing, it opens the code page with the field to fill.
    */
   const [linkBusy, setLinkBusy] = useState(false)
-  const emailLink = async (login: string) => {
+  const emailLink = async (login: string, honeypot: string) => {
     if (!login.includes("@")) {
       navigate(withNext(SCREEN_PATHS.signInCode, next))
       return
     }
     setError(null)
     setLinkBusy(true)
-    const answer = await requestSignInCode(login, next)
+    const answer = await requestSignInCode(login, next, honeypot)
     setLinkBusy(false)
     if (!answer.ok) {
       setError(codeFailure(t, answer))
@@ -227,11 +227,12 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
       onPasskey={passkeys ? () => void passkeySignIn() : undefined}
       passkeyBusy={passkeyBusy}
       passkeyAutofill={autofill}
-      onEmailLink={(login) => void emailLink(login)}
+      onEmailLink={(login, honeypot) => void emailLink(login, honeypot)}
       linkBusy={linkBusy}
       defaultLogin={handed ?? undefined}
       onSignIn={({ login, password }: AuthCredentials) => attempt(() => signIn(login, password))}
-      onSignUp={({ login, password }: AuthCredentials) => void requestSignUp(login, password)}
+      onSignUp={({ login, password }: AuthCredentials, honeypot) =>
+        void requestSignUp(login, password, honeypot)}
       onOneTimeCode={(code) => attempt(() => checkTotp(code))}
     />
   )

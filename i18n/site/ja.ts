@@ -39,6 +39,7 @@ export default {
   "NewsletterForm.email": "メールアドレス",
   "NewsletterForm.placeholder": "you@example.com",
   "NewsletterForm.submit": "購読する",
+  "NewsletterForm.honeypot": "この欄は空欄のままにしてください",
   "LegalPage.englishOnly": "このページは英語のみでご覧いただけます。",
   "LegalPage.updated": "最終更新日：{date}",
   "LegalPage.noticeTitle": "法的助言ではなく、たたき台です",

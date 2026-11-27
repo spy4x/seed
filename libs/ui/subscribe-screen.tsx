@@ -6,7 +6,10 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { useFocusOnChange } from "@spy4x/preact-ui/use-focus-on-change"
 import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
+import { honeypotField } from "@spy4x/preact-ui/honeypot"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { AuthCard } from "./auth-screen.tsx"
+import { honeypotOf } from "./honeypot.tsx"
 import { FORM_ACTIONS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { useSiteText } from "./site-text.ts"
 
@@ -100,16 +103,17 @@ export interface SubscribeFormProps {
   sent: boolean
   error: string | null
   pending: boolean
-  onSubmit?: () => void
+  /** Called with the honeypot field's value, which the request carries (`./honeypot.tsx`). */
+  onSubmit?: (honeypot: string) => void
   localize?: LocalizePath
   /** The page's language, posted as a hidden field: the mails are written in it. */
   language?: string
 }
 
 /**
- * Asks for the address to send news to. Without `onSubmit` the form posts
- * `{ email, list, language }` to its route; with it the app takes the submit over. The answer is the same for an address already on
- * the list, so the form never says which.
+ * Asks for the address to send news to. Without `onSubmit` the form posts `{ email, list,
+ * language }` and the honeypot field to its route; with it the app takes the submit over. The
+ * answer is the same for an address already on the list, so the form never says which.
  */
 export function SubscribeForm(
   { email, onEmailChange, list, sent, error, pending, onSubmit, localize = samePath, language }:
@@ -135,8 +139,13 @@ export function SubscribeForm(
       description={t("SubscribeForm.intro")}
       class={SUBSCRIBE_WIDTH}
     >
-      <ScreenForm action={localize(FORM_ACTIONS.subscribe)} pending={pending} onSubmit={onSubmit}>
+      <ScreenForm
+        action={localize(FORM_ACTIONS.subscribe)}
+        pending={pending}
+        onSubmit={onSubmit && ((data) => onSubmit(honeypotOf(data)))}
+      >
         <Stack>
+          {honeypotField(HONEYPOT_FIELD_NAME, t("NewsletterForm.honeypot"))}
           <input type="hidden" name="list" value={list} />
           <input type="hidden" name="language" value={language ?? ""} />
           <Field id="subscribe-email" label={t("SubscribeForm.email")} error={error} required>

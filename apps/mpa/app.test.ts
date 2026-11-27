@@ -328,12 +328,16 @@ describe("the subscription pages", () => {
     const app = appWith(fetch)
 
     const response = await app(
-      formPost("/subscribe", { email: "ada@example.com", list: "news" }),
+      formPost("/subscribe", { email: "ada@example.com", list: "news", "hp-field": "" }),
       info,
     )
 
     expect(apiCalls()).toEqual([
-      { method: "POST", url: "/api/subscribers", body: { email: "ada@example.com", list: "news" } },
+      {
+        method: "POST",
+        url: "/api/subscribers",
+        body: { email: "ada@example.com", list: "news", "hp-field": "" },
+      },
     ])
     // A reload of the page the browser lands on is a GET: it asks the API for nothing.
     expect(response.status).toBe(303)

@@ -39,6 +39,7 @@ export default {
   "NewsletterForm.email": "Email",
   "NewsletterForm.placeholder": "you@example.com",
   "NewsletterForm.submit": "Subscribe",
+  "NewsletterForm.honeypot": "Leave this field blank",
   "LegalPage.englishOnly": "This page is available in English only.",
   "LegalPage.updated": "Last updated {date}",
   "LegalPage.noticeTitle": "A starting point, not legal advice",

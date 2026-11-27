@@ -53,6 +53,7 @@
 import { type CDPSession, chromium, devices, type Locator, type Page } from "playwright"
 import { h } from "preact"
 import { renderToString } from "preact-render-to-string"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { IconSprout } from "@spy4x/preact-icons"
 import { clickLike, moveLike, typeLike } from "./human-mouse.ts"
@@ -287,7 +288,7 @@ async function signInPerson(): Promise<void> {
   }
   // A mail from an earlier run carries a spent code: wait for one that differs from it.
   const before = (await lastMail())?.text
-  const forgot = await post("/auth/password/forgot", { email: PERSON.email })
+  const forgot = await post("/auth/password/forgot", { email: PERSON.email, [HONEYPOT_FIELD_NAME]: "" })
   if (forgot.status === 429) {
     throw new Error(`${PERSON.email} had three reset mails this hour already; record again later`)
   }

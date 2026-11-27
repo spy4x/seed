@@ -1,5 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { SignInCodeOutcome } from "../services/sign-in-codes.ts"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { buildAuthData } from "../_testing/fake-auth.ts"
@@ -15,7 +16,7 @@ import {
   SIGN_IN_CODE_UNCONFIRMED,
 } from "./auth-sign-in-codes.ts"
 import { apiError } from "../_testing/api-error.ts"
-import { anonymousRoutes, buildApp, send } from "../_testing/auth-routes.ts"
+import { anonymousRoutes, buildApp, EMPTY_HONEYPOT, send } from "../_testing/auth-routes.ts"
 
 describe("auth routes sign in and sign up by e-mailed code (#391, #752)", () => {
   const request = anonymousRoutes.find((route) => route.path === "/auth/code")!
@@ -23,7 +24,10 @@ describe("auth routes sign in and sign up by e-mailed code (#391, #752)", () => 
   const resend = anonymousRoutes.find((route) => route.path === "/auth/code/resend")!
   /** The headers of an anonymous request from `ip`. */
   const from = (ip: string) => ({ ...sameOriginWithoutCookieHeaders, "x-real-ip": ip })
-  const askFor = (body: unknown, ip = "192.0.2.1") => ({ route: { ...request, body }, ip })
+  const askFor = (body: object, ip = "192.0.2.1") => ({
+    route: { ...request, body: { ...EMPTY_HONEYPOT, ...body } },
+    ip,
+  })
 
   it("answers the same for every address and asks for the code with the address normalised", async () => {
     const { app, codes } = buildApp(null)
@@ -49,6 +53,24 @@ describe("auth routes sign in and sign up by e-mailed code (#391, #752)", () => 
     }
 
     expect(codes.map((code) => code.next)).toEqual(["/notes?tag=work", null, null])
+  })
+
+  it("refuses a request without the honeypot field or with it filled with 400, mailing no code", async () => {
+    const { app, codes } = buildApp(null)
+
+    const missing = await send(
+      app,
+      { ...request, body: { email: "alice@example.com" } },
+      from("192.0.2.1"),
+    )
+    const filled = await send(
+      app,
+      askFor({ email: "alice@example.com", [HONEYPOT_FIELD_NAME]: "alice" }).route,
+      from("192.0.2.2"),
+    )
+
+    expect([missing.status, filled.status]).toEqual([400, 400])
+    expect(codes).toEqual([])
   })
 
   it("refuses an address it cannot normalise, and queues nothing", async () => {

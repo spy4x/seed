@@ -23,10 +23,10 @@ export function SubscribeView() {
   const [pending, setPending] = useState(false)
   const [sent, setSent] = useState(false)
 
-  const submit = async () => {
+  const submit = async (honeypot: string) => {
     setError(null)
     setPending(true)
-    const result = await subscribersApi.subscribe(email, DEFAULT_SUBSCRIBER_LIST)
+    const result = await subscribersApi.subscribe(email, DEFAULT_SUBSCRIBER_LIST, honeypot)
     setPending(false)
     if (!result.ok) {
       setError(result.error || t(SUBSCRIBE_FAILURES.subscribe))

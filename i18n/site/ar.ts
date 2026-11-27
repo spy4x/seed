@@ -38,6 +38,7 @@ export default {
   "NewsletterForm.email": "البريد الإلكتروني",
   "NewsletterForm.placeholder": "you@example.com",
   "NewsletterForm.submit": "اشترك",
+  "NewsletterForm.honeypot": "اترك هذا الحقل فارغًا",
   "LegalPage.englishOnly": "هذه الصفحة متاحة بالإنجليزية فقط.",
   "LegalPage.updated": "آخر تحديث: {date}",
   "LegalPage.noticeTitle": "نقطة انطلاق، لا استشارة قانونية",

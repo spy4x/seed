@@ -12,6 +12,7 @@ import { MailedCodeStep } from "@spy4x/preact-system/mailed-code-step"
 import { MAILED_CODE_PATTERN, SIGN_IN_CODE_MINUTES } from "@domain/identity"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { AuthCard } from "./auth-screen.tsx"
+import { HoneypotField, honeypotOf } from "./honeypot.tsx"
 import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive.tsx"
 
@@ -190,7 +191,8 @@ export interface SignInCodeScreenProps {
   /** Why sending failed for another reason: too many codes, offline, or the server. */
   error: string | null
   pending: boolean
-  onSubmit: () => void
+  /** Called with the honeypot field's value, which the request carries (`./honeypot.tsx`). */
+  onSubmit: (honeypot: string) => void
   /** A guest account is open in this browser: the form says what signing in does to it. */
   guest?: boolean
   /** Why the code, or a new one, was refused. */
@@ -320,8 +322,9 @@ export function SignInCodeScreen(props: SignInCodeScreenProps): JSX.Element {
         e2e="sign-in-code-confirm"
         after={back("sign-in-code-back")}
       >
-        <ScreenForm pending={pending} onSubmit={onSubmit}>
+        <ScreenForm pending={pending} onSubmit={(data) => onSubmit(honeypotOf(data))}>
           <div ref={confirm} class="flex flex-col gap-4">
+            <HoneypotField />
             <Button
               type="submit"
               data-e2e="sign-in-code-submit"
@@ -349,8 +352,9 @@ export function SignInCodeScreen(props: SignInCodeScreenProps): JSX.Element {
         />
       }
     >
-      <ScreenForm pending={pending} onSubmit={onSubmit}>
+      <ScreenForm pending={pending} onSubmit={(data) => onSubmit(honeypotOf(data))}>
         <Stack>
+          <HoneypotField />
           <Field
             id="sign-in-code-email"
             label={t.t(`AuthScreen.email`)}

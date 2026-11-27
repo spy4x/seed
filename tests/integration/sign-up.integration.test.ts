@@ -8,6 +8,7 @@ import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { createPasswordHasher, type PasswordHasher } from "@spy4x/server/sign-in"
 import type { EmailSender } from "@spy4x/email/sender"
 import type { EmailMessage } from "@spy4x/email/message"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { AuthAuditEventType } from "@domain/identity"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn, type SignIn } from "../../apps/api/services/sign-in.ts"
@@ -541,6 +542,7 @@ async function spendAddressTotal(app: Hono<APIContext>, email: string) {
       const answer = await stranger.call("POST", "/auth/password/sign-up", {
         email,
         password: "Stranger-pass1",
+        [HONEYPOT_FIELD_NAME]: "",
       })
       if (answer.status === 429) {
         if (mail === 0) return { strangers, refused: stranger, refusal: answer }
@@ -561,6 +563,7 @@ Deno.test("a sign-up code issued before the address's total is spent still verif
       (await owner.call("POST", "/auth/password/sign-up", {
         email: "ann@example.com",
         password: PASSWORD,
+        [HONEYPOT_FIELD_NAME]: "",
       })).status,
     ).toBe(200)
     const code = await fixture.codeFor("ann@example.com")
@@ -592,6 +595,7 @@ Deno.test("four clients spending the address's total and guessing leave the owne
     await owner.call("POST", "/auth/password/sign-up", {
       email: "ann@example.com",
       password: PASSWORD,
+      [HONEYPOT_FIELD_NAME]: "",
     })
     const code = await fixture.codeFor("ann@example.com")
 

@@ -9,6 +9,7 @@ import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@
 import { isInvitationPath, type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { useAppText } from "./i18n.ts"
+import { useHoneypot } from "./honeypot.tsx"
 import { NoAccountYet, TryItNow, type TryLegalLinks, WordDivider } from "./guest-screens.tsx"
 
 /** The public demo's one line on sign-in and sign-up (docs/demo.md), by its key in `app`. */
@@ -97,7 +98,8 @@ export interface AuthScreenProps {
   busy: boolean
   error: string | null
   onSignIn?: (credentials: AuthCredentials) => void
-  onSignUp?: (credentials: AuthCredentials) => void
+  /** Called with the honeypot field's value too, which the sign-up carries (`./honeypot.tsx`). */
+  onSignUp?: (credentials: AuthCredentials, honeypot: string) => void
   onOneTimeCode?: (code: string) => void
   navigate?: Navigate
   /**
@@ -146,11 +148,11 @@ export interface AuthScreenProps {
   passkeyAutofill?: boolean
   /**
    * Sends a sign-in code: "Email me a sign-in code" on sign-in, "Email me a sign-up
-   * code" on sign-up, in the other ways in. Called with what the login field holds, as typed: the
-   * app sends the code when it is an address and opens the code page otherwise. Left out: no such
-   * button.
+   * code" on sign-up, in the other ways in. Called with what the login field holds, as typed, and
+   * the honeypot field's value: the app sends the code when it is an address and opens the code
+   * page otherwise. Left out: no such button.
    */
-  onEmailLink?: (login: string) => void
+  onEmailLink?: (login: string, honeypot: string) => void
   /** The code is being sent: its button says so. */
   linkBusy?: boolean
   /** The login field's starting value, such as an address another page handed back. */
@@ -326,6 +328,7 @@ export function AuthScreen(
   const copy = invited ? { ...COPY[screen], ...INVITED_COPY[screen as AuthMode] } : COPY[screen]
   // What the login field holds, as typed: the link button sends it.
   const login = useRef(defaultLogin ?? "")
+  const honeypot = useHoneypot()
   // An invitation is answered with an account, so no guest entry competes with the form.
   const tryFirst = guest && screen === "sign-up" && !invited
 
@@ -378,7 +381,7 @@ export function AuthScreen(
         busy={linkBusy}
         busyLabel={t.t(`AuthScreen.sending`)}
         disabled={busy}
-        onClick={() => onEmailLink(login.current.trim())}
+        onClick={() => onEmailLink(login.current.trim(), honeypot.value())}
         data-e2e={screen === "sign-in" ? "link-sign-in" : "link-sign-up"}
       >
         {t.t(screen === "sign-in" ? `AuthScreen.emailSignInCode` : `AuthScreen.emailSignUpCode`)}
@@ -418,7 +421,7 @@ export function AuthScreen(
         defaultLogin={defaultLogin}
         onLoginInput={(value) => (login.current = value)}
         onSignIn={onSignIn}
-        onSignUp={onSignUp}
+        onSignUp={onSignUp && ((credentials) => onSignUp(credentials, honeypot.value()))}
         onOneTimeCode={onOneTimeCode}
         footer={screen === "sign-in"
           ? (
@@ -430,6 +433,11 @@ export function AuthScreen(
           )
           : undefined}
       />
+      {
+        // Beside the form, not in its footer: the footer's box would add a gap under the submit.
+        // Sign-up and "Email me a code" send its value; a sign-in by password ignores it.
+        screen !== "one-time-code" && honeypot.field
+      }
       {screen !== "one-time-code" && (providers.length > 0 || passkeyButton || linkButton) && (
         <ul
           class="flex flex-col gap-3 border-t border-subtle pt-6"

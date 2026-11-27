@@ -1,5 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { App } from "@spy4x/preact-server"
 import { h } from "preact"
 import { renderToString } from "preact-render-to-string"
@@ -1267,6 +1268,14 @@ describe("the public website", () => {
     const form = html.match(/<form method="post" action="\/subscribe"[\s\S]*?<\/form>/)?.[0]
     expect(form).toContain(`name="list" value="news"`)
     expect(form).toContain(`name="email"`)
+  })
+
+  it("puts the honeypot field in the home page's and the footer's newsletter forms", async () => {
+    for (const path of ["/", "/pricing"]) {
+      const { html } = await page(path)
+      const form = html.match(/<form method="post" action="\/subscribe"[\s\S]*?<\/form>/)?.[0]
+      expect(form).toContain(`name="${HONEYPOT_FIELD_NAME}"`)
+    }
   })
 
   it("offers the newsletter form once on the home page, in its content, and not again in the footer", async () => {

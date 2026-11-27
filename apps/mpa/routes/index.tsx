@@ -19,6 +19,8 @@ import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
 import { FeatureCard } from "@spy4x/preact-ui/feature-card"
+import { honeypotField } from "@spy4x/preact-ui/honeypot"
+import { HONEYPOT_FIELD_NAME } from "@spy4x/platform/universal/honeypot"
 import { Input } from "@spy4x/preact-ui/input"
 import { StatusMark } from "@spy4x/preact-ui/status-mark"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
@@ -683,6 +685,7 @@ function Newsletter(): JSX.Element {
           data-e2e="home-subscribe"
           data-analytics-submit="newsletter-subscribe"
         >
+          {honeypotField(HONEYPOT_FIELD_NAME, t.t(`NewsletterForm.honeypot`))}
           <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
           <label for="home-email" class="text-sm font-medium">{t.t(`NewsletterForm.email`)}</label>
           <div class="flex flex-col gap-2 sm:flex-row">

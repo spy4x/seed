@@ -70,7 +70,7 @@ describe("subscribers api", () => {
       )
     )
 
-    expect(await api.subscribe("nope", "news"))
+    expect(await api.subscribe("nope", "news", ""))
       .toEqual({ ok: false, error: "Enter a valid e-mail address" })
   })
 })
