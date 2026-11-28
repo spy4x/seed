@@ -89,8 +89,10 @@ has a counterpart in the admin panel, the operator area: the admin app (`apps/ad
 host (`ADMIN_DOMAIN`). A change that adds or modifies a feature in one of those apps adds or
 modifies its admin counterpart in the same PR, so the two never drift apart.
 
-**Open:** the Android app ([#202](https://github.com/spy4x/seed/issues/202)) and the desktop
-app ([#203](https://github.com/spy4x/seed/issues/203)) are not built yet.
+The Android app (`apps/android`, [docs/android.md](docs/android.md)) opens the hosted SPA, so a
+feature of the SPA is a feature of the Android app with the same admin counterpart.
+
+**Open:** the desktop app ([#203](https://github.com/spy4x/seed/issues/203)) is not built yet.
 
 ## The public website stays in sync
 

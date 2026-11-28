@@ -50,6 +50,7 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `mpa:start`, `mpa:check`     | Serves the built website, or checks it                                                          |
 | `changelog`                  | Reads the git history into `apps/mpa/changelog.json` for `/changelog`                           |
 | `lighthouse`                 | Measures the built website against its Lighthouse budget                                        |
+| `android:build`              | Builds the Android app's debug APK ([guide](android.md))                                       |
 | **Operate**                  |                                                                                                 |
 | `deploy`                     | Copies the production files to the server and starts them ([deploy](deploy.md))                 |
 | `user:role`                  | Gives a person a role by their address ([apps](apps.md#the-admin-app))                          |

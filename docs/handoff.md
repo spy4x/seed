@@ -50,6 +50,8 @@ apps/admin    Preact + Vite. The operator area on its own host (ADMIN_DOMAIN), o
 apps/worker   Drains outbox_events and announces group changes (pg_notify); sweeps
               expired idempotency keys; runs delayed and repeating jobs (below). Runs in compose
               as `worker`, from the API's image.
+apps/android  Capacitor 8 wrapper that opens the hosted SPA (docs/android.md). Its own
+              package.json and lockfile, outside the Deno workspace; not in compose.
 
 libs/platform  what the SPA and the admin app share: i18n.ts (the interface language and its
                catalogs) and shortcuts.ts (keyboard shortcuts). Every other primitive comes

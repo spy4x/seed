@@ -175,6 +175,7 @@ draws them on the website: replace both with the product's own clips, or delete 
 | `apps/spa/index.html`     | `<title>` and `apple-mobile-web-app-title`                             |
 | `apps/admin/index.html`   | `<title>`                                                              |
 | `libs/ui/frame.tsx`       | The `Icon` of the `BrandMark`                                          |
+| `apps/android/`           | The Android app's name and app id ([The Android app](android.md#make-it-the-products-app)) |
 
 The browser specs read `PRODUCT_NAME`, so they pass unchanged after a rename. These unit tests
 check the name: `libs/ui/admin-frame.test.tsx` and `libs/ui/account.test.tsx`.
@@ -187,6 +188,7 @@ The pictures carry no mark. Replace each with the product's own, at the same siz
 | The home screen icons         | `apps/spa/public/apple-touch-icon.png`, `img/android/`, `img/pwa/` |
 | The admin app's favicon       | `apps/admin/public/favicon.svg`                                |
 | The website's favicon         | `apps/mpa/static/favicon.svg`                                  |
+| The Android app's icon        | `apps/android/android/app/src/main/res/mipmap-*/` ([how](android.md#make-it-the-products-app)) |
 
 **The brand colour.** Seed's purple, hue 305°, is `--color-primary` and `--color-accent` in
 `libs/ui/brand.css`, which the app, the admin app and the website all load. Set the product's own
@@ -199,6 +201,7 @@ there.
 | Set    | The crawler policy                       | `ROBOTS_POLICY` in `apps/mpa/config.ts`                 |
 | Set    | Analytics ids ([Analytics](analytics.md)) | `MPA_UMAMI_ORIGIN`, `MPA_UMAMI_WEBSITE_ID` in the env file |
 | Set    | Domains and the demo ([demo](demo.md))   | `MPA_DOMAIN`, `DOMAIN`, `DEMO_MODE` in the env file     |
+| Set    | The address the Android app opens        | `server.url` in `apps/android/capacitor.config.json`: `https://` and `DOMAIN` |
 | Set    | A website with no customers              | `SPA=false` ([Without the SPA](apps.md#without-the-spa)) |
 | Set    | A product without the notes example      | `NOTES=false` and `SPA_NOTES=false` (below)             |
 | Set    | Where release images go                  | `IMAGE_PREFIX` in `.woodpecker/release.yml`             |

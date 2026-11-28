@@ -13,7 +13,7 @@ requires both.
 
 `ci.yml` runs on every pull request, every push to `main`, every release tag `v<digit>*` and the
 nightly run on `main` (below); `ci-browser.yml` on all of them but a push to `main`. A tag
-`ci-image-<n>` runs only `ci-image.yml` ([The CI image](#the-ci-image)). A push to `main` runs only `check`, `secrets` and the four image steps: its pull
+`ci-image-<n>` runs only `ci-image.yml` ([The CI image](#the-ci-image)). A push to `main` runs only `check`, `secrets`, the four image steps and `android`: its pull
 request already ran the rest. A push to any other branch runs nothing: open a pull request to run
 the pipeline. This is the one list of CI's steps; other pages link here.
 
@@ -42,6 +42,7 @@ check ──┬── integration                     browser (build,          e
         └── runtimes                        lighthouse (website changes, nightly, tag)
 image-node, image-bun,                                 │
 image-mpa-node, image-mpa-bun               e2e-full (nightly)
+android (Android app changes, main)
 ```
 
 `browser` and `e2e-smoke` start together, and `lighthouse` starts when both have ended. A pull
@@ -115,6 +116,10 @@ the host with it.
   `ci.yml`). A source change that breaks a bundle is caught by the push to `main` after the merge
   ([ringmaster#296](https://github.com/spy4x/ringmaster/issues/296)), to save CPU on the shared CI
   host.
+- `android` builds the Android app's debug APK with `deno task android:build`
+  ([The Android app](android.md)), in the Android SDK image, signing nothing. A push to `main`
+  always builds it, the nightly run and a tag never, and a pull request only when it changes
+  `apps/android`, `deno.jsonc` or `ci.yml`.
 - `e2e-smoke` runs the product's smoke set on every pull request (except one that changes only
   Markdown, above) and tag:
   `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
