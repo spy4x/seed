@@ -220,6 +220,7 @@ function Operator(
         personTabs: adminPersonTabs(allModules.filter((module) => !module.optional)),
         moduleIds: moduleList,
         format: () => own.format.value,
+        opened: paletteRecent.open,
       },
     [user?.id, allModules],
   )
@@ -297,6 +298,8 @@ function Operator(
     page,
     onSelect: pick,
     recent: paletteRecent,
+    // A signal: a page that loads after this render redraws the palette with its record.
+    opened: paletteRecent.opened.value,
   }
   return (
     <FormatContext.Provider value={own.format.value}>

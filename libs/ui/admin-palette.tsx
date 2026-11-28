@@ -7,6 +7,8 @@ import type { ThemePreference } from "@domain/identity"
 import {
   adminFindCommands,
   type AdminGoTo,
+  type AdminOpenedRecord,
+  adminOpenedRows,
   adminPaletteCommands,
   type AdminPaletteContext,
   type AdminPaletteOption,
@@ -16,7 +18,12 @@ import { matchCommands, themeRows, withRun } from "./palette-commands.ts"
 import { type PageCommand, paletteLabels, recentExtras, storedRecent } from "./search-palette.tsx"
 import { useAdminText } from "./i18n.ts"
 
-export type { AdminGoTo, AdminPageCommand, AdminSearchChoice } from "./admin-palette-commands.ts"
+export type {
+  AdminGoTo,
+  AdminOpenedRecord,
+  AdminPageCommand,
+  AdminSearchChoice,
+} from "./admin-palette-commands.ts"
 
 /** Props of {@link AdminSearchPalette}. */
 export interface AdminSearchPaletteProps {
@@ -40,6 +47,12 @@ export interface AdminSearchPaletteProps {
    * typed. Left out, nothing is remembered. The app clears it on sign-out.
    */
   recent?: CommandPaletteRecent
+  /**
+   * The users and groups the operator opened on this device, newest first. One whose row id is
+   * among `recent`'s picks is listed under "Recent" before anything is typed; a query never lists
+   * them.
+   */
+  opened?: readonly AdminOpenedRecord[]
 }
 
 /**
@@ -84,7 +97,8 @@ const ADMIN_SEARCH_HOTKEYS: readonly string[] = [`mod+k`]
  *
  * Every row is a command (it has `run`), so `CommandPalette` pins above the rest, for a query, the
  * first one whose name or alias starts with it under "Best match", and before anything is typed
- * the operator's last picks under "Recent", kept in `recent`.
+ * the operator's last picks under "Recent", kept in `recent`: commands, theme rows and the users
+ * and groups they opened (`opened`), whose rows open their pages.
  */
 export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element {
   const root = useRef<HTMLDivElement>(null)
@@ -109,7 +123,7 @@ export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element 
   )
   const shown = new Set(props.goTo.map((entry) => entry.id))
   // The theme rows are for a typed query: the empty one lists the Theme command and its submenu,
-  // and only the theme rows picked before, so "Recent" can show them.
+  // and only the theme rows and opened records picked before, so "Recent" can show them.
   const filter = (rows: readonly AdminPaletteOption[], query: string) => {
     if (query.trim() !== ``) {
       return [
@@ -118,7 +132,11 @@ export function AdminSearchPalette(props: AdminSearchPaletteProps): JSX.Element 
       ]
     }
     const listed = rows.filter((row) => !themes.includes(row))
-    return [...listed, ...recentExtras(storedRecent(latest.current.recent), listed, themes)]
+    const opened = adminOpenedRows(t, latest.current.opened ?? []).map(runnable)
+    return [
+      ...listed,
+      ...recentExtras(storedRecent(latest.current.recent), listed, [...themes, ...opened]),
+    ]
   }
 
   return (

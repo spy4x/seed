@@ -137,7 +137,8 @@ export async function attempt<T>(
  * or the operator was blocked), and the app goes back to the sign-in.
  *
  * @param api The session calls and every module's own.
- * @param recent The palette's recent picks on this device, forgotten on sign-out.
+ * @param recent The palette's recent picks and opened records on this device, forgotten on
+ *   sign-out.
  */
 export function createAdminStore(
   api: AdminApi,
@@ -209,7 +210,8 @@ export function createAdminStore(
 
     /**
      * Ends the session. The page signs out even when the server cannot be reached, and the
-     * palette forgets its recent picks, so the next operator on the device sees none.
+     * palette forgets its recent picks and the users and groups opened, so the next operator on
+     * the device sees none.
      */
     async signOut(): Promise<void> {
       recent.forget()

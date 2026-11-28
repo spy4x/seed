@@ -136,6 +136,10 @@ function GroupView(
   const viewerTimeZone = useFormat().timeZone
   const shownGroup = current ? group.detail?.group : undefined
   const timeZone = shownGroup ? groupTimeZone(shownGroup, viewerTimeZone) : viewerTimeZone
+  // Once the group's name is known, the palette lists it under Recent.
+  useEffect(() => {
+    if (shownGroup) context.opened?.({ kind: `group`, id: shownGroup.id, name: shownGroup.name })
+  }, [shownGroup?.id])
   const now = useMemo(() => new Date(), [groupId])
   const [range, setRange] = useState<DateRangeChoice>(() => ({
     preset: OVERVIEW_DEFAULT_PRESET,

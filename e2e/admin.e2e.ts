@@ -227,4 +227,64 @@ test.describe("the admin app", () => {
       await cleanup(request, operatorEmail)
     }
   })
+
+  test("an operator reopens a person they opened from the palette's Recent, which sign-out forgets", async ({ browser, request }) => {
+    const operatorEmail = address("ops")
+    const targetEmail = address("max")
+    let admin: BrowserContext | null = null
+    try {
+      await signUp(request, operatorEmail)
+      await signUp(request, targetEmail)
+      const promoted = await request.post(`${appBase}/api/test/set-role`, {
+        data: { login: operatorEmail, role: OPERATOR },
+      })
+      expect(promoted.ok(), await promoted.text()).toBe(true)
+
+      admin = await browser.newContext({ baseURL: adminBase })
+      const ops = await admin.newPage()
+      const signInAsOperator = async () => {
+        await ops.goto(`${adminBase}/sign-in`)
+        await ops.locator("[data-e2e=auth-form-login]").fill(operatorEmail)
+        await ops.locator("[data-e2e=auth-form-password]").fill(password)
+        await ops.locator("[data-e2e=auth-form-submit]").click()
+        await expect(ops.locator("[data-e2e=admin-dashboard-title]")).toBeVisible()
+      }
+      await signInAsOperator()
+
+      // Open the person's page from the list, then leave it with a full reload.
+      await ops.goto(`${adminBase}/users?q=${encodeURIComponent(targetEmail)}`)
+      await ops.locator("[data-e2e=admin-users-list] a", { hasText: targetEmail }).click()
+      await expect(ops.locator("[data-e2e=admin-user-title]")).toBeVisible()
+      const personUrl = ops.url()
+      expect(personUrl).toMatch(/\/users\/\d+$/)
+      await ops.goto(`${adminBase}/`)
+      await expect(ops.locator("[data-e2e=admin-dashboard-title]")).toBeVisible()
+
+      // With nothing typed, the person is first under Recent; Enter opens their page.
+      const palette = ops.locator("dialog[data-e2e=search]")
+      await ops.keyboard.press("ControlOrMeta+k")
+      await expect(palette).toBeVisible()
+      await expect(palette.getByText("Recent", { exact: true })).toBeVisible()
+      await expect(palette.getByRole("option").first()).toContainText(targetEmail)
+      await ops.keyboard.press("Enter")
+      await expect(palette).toBeHidden()
+      await expect(ops).toHaveURL(personUrl)
+      await expect(ops.locator("[data-e2e=admin-user-title]")).toBeVisible()
+
+      // Signing out forgets them: the next operator on this device does not see the person.
+      await ops.keyboard.press("ControlOrMeta+k")
+      await palette.getByRole("combobox").fill("sign out")
+      await palette.getByRole("option", { name: "Sign out", exact: true }).click()
+      await expect(ops.locator("[data-e2e=auth-form-login]")).toBeVisible()
+      await signInAsOperator()
+      await ops.keyboard.press("ControlOrMeta+k")
+      await expect(palette).toBeVisible()
+      await expect(palette.getByRole("option").first()).toBeVisible()
+      await expect(palette.getByRole("option", { name: new RegExp(targetEmail) })).toHaveCount(0)
+    } finally {
+      await admin?.close()
+      await cleanup(request, targetEmail)
+      await cleanup(request, operatorEmail)
+    }
+  })
 })
