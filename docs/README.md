@@ -52,6 +52,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
   commands.
 - [Offline in the SPA](offline.md): turn the offline layer or the WebSocket module off, or remove
   them.
+- [The Android app](android.md): build it, make it the product's own and publish it on Google
+  Play.
 - [Adding a feature](aggregates.md): every file of the notes aggregate, in order.
 - [Make an aggregate work offline](aggregate-offline.md): read, and write, an aggregate with no
   network.

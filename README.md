@@ -35,9 +35,9 @@ GitHub sign-in, email sign-in codes, guest accounts, a second factor, groups wit
 Stripe billing per member, notes (the reference feature), the file store, notifications in the app,
 by web push and in Telegram, nine languages, an offline SPA, the admin panel, and a public website
 with a blog and a newsletter. All of it is tested in CI, and most of it runs in the
-[live demo](https://app.seedsaas.com) with made-up people. Not built yet: the [Android](https://github.com/spy4x/seed/issues/202) and
-[desktop](https://github.com/spy4x/seed/issues/203) apps, and the rest of the
-[open issues](https://github.com/spy4x/seed/issues).
+[live demo](https://app.seedsaas.com) with made-up people. The [Android app](docs/android.md)
+wraps the hosted SPA. Not built yet: the [desktop](https://github.com/spy4x/seed/issues/203) app,
+and the rest of the [open issues](https://github.com/spy4x/seed/issues).
 
 ## Why Seed
 

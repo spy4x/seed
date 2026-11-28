@@ -1,0 +1,9 @@
+{
+  "appId": "com.seedsaas.app",
+  "appName": "Seed",
+  "webDir": "www",
+  "server": {
+    "url": "https://app.seedsaas.com",
+    "errorPath": "index.html"
+  }
+}

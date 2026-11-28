@@ -19,6 +19,7 @@ You need:
 | `apps/mpa`    | The public website. It renders on the server and works without JavaScript          |
 | `apps/api`    | Hono: REST, the call route, the WebSocket, auth and CQRS dispatch                  |
 | `apps/worker` | Runs the outbox jobs: mail, Telegram notices, data exports and the nightly cleanup |
+| `apps/android` | The Android app: opens the hosted SPA ([The Android app](android.md))             |
 
 The MPA has no session. It reads the API for the blog, contact links, the catalog and the
 newsletter. [Seed's apps](apps.md) says which a product keeps.

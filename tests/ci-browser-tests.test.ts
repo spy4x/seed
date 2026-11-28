@@ -9,7 +9,8 @@
  * outside the product (`markdown_only` and `internal_markdown` in the workflow): it skips the
  * steps that start the stack, and runs `browser` only when it changes a published guide; ci-browser
  * still runs its `ready` step, so its required status arrives. A push to `main` runs only
- * `check`, `secrets` and the images, and creates no ci-browser workflow. The whole suite runs in the nightly cron
+ * `check`, `secrets`, the images and the Android build, and creates no ci-browser workflow. A pull
+ * request builds the Android app only when it changes `apps/android`, `deno.jsonc` or ci.yml. The whole suite runs in the nightly cron
  * run on `main`, where a red run is seen but blocks nobody and no push cancels it.
  * `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs of the set. Lighthouse
  * measures in a stage of its own, with no other step of its workflow beside it. A pull request
@@ -423,13 +424,38 @@ Deno.test("only the nightly run runs the whole suite, and it skips the smoke set
   expect(blockingSteps(ci, SMOKE, "tag", "main")).toEqual(["e2e-smoke"])
 })
 
-Deno.test("a push to main runs only check, secrets and the four images, whatever it changes", async () => {
+Deno.test("a push to main runs only check, secrets, the four images and the Android build, whatever it changes", async () => {
   // Its pull request already ran the rest; the slow steps would be cancelled by the next merge.
   expect(runsFor(await workflow(), `push`, `main`)).toBe(true)
   for (const changed of [[], [`apps/api/x.ts`], [`apps/mpa/routes/index.tsx`, `deno.lock`]]) {
     const ran = (await ranInCi(`push`, changed)).sort()
-    expect({ changed, ran }).toEqual({ changed, ran: [`check`, `secrets`, ...IMAGES].sort() })
+    expect({ changed, ran }).toEqual({
+      changed,
+      ran: [`check`, `secrets`, ...IMAGES, `android`].sort(),
+    })
   }
+})
+
+Deno.test("a pull request and its title edit build the Android app only when they change the app, the task or the workflow", async () => {
+  const android = (await workflow()).steps?.android
+  expect(android).toBeDefined()
+  for (const event of [`pull_request`, `pull_request_metadata`]) {
+    for (const file of [`apps/android/capacitor.config.json`, `deno.jsonc`, CI]) {
+      expect({ event, file, runs: runsFor(android!, event, `main`, [file]) }).toEqual({
+        event,
+        file,
+        runs: true,
+      })
+    }
+    for (const file of [`apps/spa/src/main.tsx`, `deno.lock`, `docs/android.md`]) {
+      expect({ event, file, runs: runsFor(android!, event, `main`, [file]) }).toEqual({
+        event,
+        file,
+        runs: false,
+      })
+    }
+  }
+  expect(runsFor(android!, `cron`, `main`, [])).toBe(false)
 })
 
 Deno.test("ci-browser runs on a pull request, its title edit, a tag and the nightly run, and never on a push", async () => {

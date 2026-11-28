@@ -184,6 +184,12 @@
     },
     // #endregion apps/mpa
 
+    // apps/android: needs JDK 21 and the Android SDK, or the CI image (docs/android.md)
+    "android:build": {
+      "command": "cd apps/android && deno install --frozen && deno run -A npm:@capacitor/cli@8.6.3 sync android && cd android && ./gradlew assembleDebug --no-daemon && echo 'APK: apps/android/android/app/build/outputs/apk/debug/app-debug.apk'",
+      "description": "Builds the Android app's debug APK, which loads the hosted SPA (docs/android.md)"
+    },
+
     // #region Scripts
     "db:migrate": {
       "command": "deno run -N=$DB_HOST:$DB_PORT -E -R=./libs/server/db/migrations ./infra/scripts/db-migrate.ts",
@@ -534,6 +540,9 @@
     "docs",
     "infra",
     "media/demo",
+    // Capacitor generates the native project; `deno task android:build` installs its packages here.
+    "apps/android/android",
+    "apps/android/node_modules",
     "*.lock"
   ],
   // Everything under infra stays out of fmt, lint and type checks; only infra/scripts' tests run.
