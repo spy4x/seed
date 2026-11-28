@@ -138,4 +138,28 @@ export default {
   "SubscriberIssue.reason":
     "Du bekommst diese E-Mail, weil du den Newsletter von {host} abonniert hast.",
   "SubscriberIssue.readPost": "Beitrag lesen",
+  "WeeklyDigestMail.subject": "Deine Woche in deinen Gruppen",
+  "WeeklyDigestMail.intro":
+    "Das haben andere seit deiner letzten Zusammenfassung in deinen Gruppen bei {host} gemacht.",
+  "WeeklyDigestMail.group": "<strong>{group}</strong>: {changes}.",
+  "WeeklyDigestMail.created": {
+    "one": "{count} neue Notiz",
+    "other": "{count} neue Notizen",
+  },
+  "WeeklyDigestMail.edited": {
+    "one": "{count} Notiz bearbeitet",
+    "other": "{count} Notizen bearbeitet",
+  },
+  "WeeklyDigestMail.joined": {
+    "one": "{count} Person beigetreten",
+    "other": "{count} Personen beigetreten",
+  },
+  "WeeklyDigestMail.more": {
+    "one": "Und in {count} weiteren Gruppe hat sich etwas getan.",
+    "other": "Und in {count} weiteren Gruppen hat sich etwas getan.",
+  },
+  "WeeklyDigestMail.allGroups": "Alle deine Gruppen ansehen",
+  "WeeklyDigestMail.why":
+    "Du bekommst diese E-Mail, weil du die wöchentliche Zusammenfassung eingeschaltet hast. Mit einem Klick schaltest du sie wieder aus:",
+  "WeeklyDigestMail.unsubscribe": "Wöchentliche Zusammenfassung ausschalten",
 } satisfies Catalog

@@ -26,6 +26,7 @@ import {
   signInCodeMail,
   signInMethodChangedMail,
   SMTP_KEYS,
+  weeklyDigestMail,
 } from "./mail.ts"
 
 /** An English reader in UTC with a 24-hour clock: the dates these tests pin. */
@@ -914,5 +915,69 @@ describe("mail and the catalog's own markup (#277)", () => {
     const t = createTranslator({ language: "en", catalogs: [{ source: {} }] })
     const mail = compose(brand, t, "a@example.com", "First\r\nBcc: b@example.com\u2028end", [])
     expect(mail.subject).toBe("First Bcc: b@example.com end")
+  })
+})
+
+describe("weeklyDigestMail", () => {
+  const brand = { webAppUrl: "https://app.example.com" }
+  const link = "https://app.example.com/api/weekly-digest/unsubscribe?token=7.sig"
+  const group = (id: string, name: string, created: number, edited: number, joined: number) => ({
+    id,
+    name,
+    created,
+    edited,
+    joined,
+  })
+  const digest = (overrides: Partial<Parameters<typeof weeklyDigestMail>[1]> = {}) =>
+    weeklyDigestMail(brand, {
+      to: "ann@example.com",
+      groups: [group("g-1", "Team", 1, 2, 0)],
+      moreGroups: 0,
+      unsubscribeLink: link,
+      reader: EN,
+      ...overrides,
+    })
+
+  it("counts each group's changes with plurals, leaves out a zero count and links the group", () => {
+    const mail = digest({ groups: [group("g-1", "Team", 1, 2, 0), group("g-2", "Home", 0, 0, 3)] })
+    expect(mail.subject).toBe("Your week in your groups")
+    expect(mail.text).toContain(`${iso("Team")}: 1 new note and 2 notes edited.`)
+    expect(mail.text).toContain(`${iso("Home")}: 3 people joined.`)
+    expect(mail.text).not.toContain("0 ")
+    expect(mail.html).toContain('href="https://app.example.com/groups/g-1"')
+    expect(mail.html).toContain('href="https://app.example.com/groups/g-2"')
+  })
+
+  it("picks each count's plural form with the reader's language rules", () => {
+    const ru: MailReader = { ...EN, language: "ru", locale: "ru-RU" }
+    const mail = digest({ groups: [group("g-1", "Team", 1, 3, 5)], reader: ru })
+    expect(mail.text).toContain("1 новая заметка, 3 заметки изменены и 5 человек присоединились.")
+  })
+
+  it("escapes a group name in the HTML part", () => {
+    const mail = digest({ groups: [group("g-1", "<img src=x>", 1, 0, 0)] })
+    expect(mail.html).not.toContain("<img src=x>")
+    expect(mail.html).toContain("&lt;img src=x&gt;")
+  })
+
+  it("counts the groups past the cap and links the list of groups", () => {
+    const mail = digest({ moreGroups: 4 })
+    expect(mail.text).toContain("And 4 more groups changed.")
+    expect(mail.html).toContain('href="https://app.example.com/groups"')
+    expect(digest().text).not.toContain("more group")
+  })
+
+  it("carries the one-click unsubscribe in the body and as List-Unsubscribe", () => {
+    const mail = digest()
+    expect(mail.html).toContain(`href="${link.replaceAll("&", "&amp;")}"`)
+    expect(mail.text).toContain(link)
+    expect(mail.listUnsubscribe).toEqual({ url: link, oneClick: true })
+  })
+
+  it("keeps a plain-HTTP development link in the body only, since the header takes https", () => {
+    const http = "http://app.localhost/api/weekly-digest/unsubscribe?token=7.sig"
+    const mail = digest({ unsubscribeLink: http })
+    expect(mail.text).toContain(http)
+    expect(mail.listUnsubscribe).toBeUndefined()
   })
 })

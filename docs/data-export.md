@@ -51,6 +51,7 @@ It holds only what is about the person or made by them, never another person's d
 
 - their profile, with the id of their picture but never its bytes;
 - their preferences, sign-in methods (without secrets) and sessions;
+- their weekly digest setting, while it is on ([weekly-digest.md](weekly-digest.md));
 - their account activity, without the address and browser of an action an operator or the command
   line took on them;
 - their push devices, without the push address and its keys;

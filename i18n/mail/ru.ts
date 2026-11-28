@@ -141,4 +141,35 @@ export default {
   "SubscriberWelcomeMail.unsubscribe": "Отписаться",
   "SubscriberIssue.reason": "Вы получили это письмо, потому что подписались на {host}.",
   "SubscriberIssue.readPost": "Читать пост",
+  "WeeklyDigestMail.subject": "Ваша неделя в группах",
+  "WeeklyDigestMail.intro": "Вот что сделали другие в ваших группах на {host} с прошлой сводки.",
+  "WeeklyDigestMail.group": "<strong>{group}</strong>: {changes}.",
+  "WeeklyDigestMail.created": {
+    "one": "{count} новая заметка",
+    "few": "{count} новые заметки",
+    "many": "{count} новых заметок",
+    "other": "{count} новой заметки",
+  },
+  "WeeklyDigestMail.edited": {
+    "one": "{count} заметка изменена",
+    "few": "{count} заметки изменены",
+    "many": "{count} заметок изменено",
+    "other": "{count} заметки изменено",
+  },
+  "WeeklyDigestMail.joined": {
+    "one": "{count} человек присоединился",
+    "few": "{count} человека присоединились",
+    "many": "{count} человек присоединились",
+    "other": "{count} человека присоединились",
+  },
+  "WeeklyDigestMail.more": {
+    "one": "И изменения ещё в {count} группе.",
+    "few": "И изменения ещё в {count} группах.",
+    "many": "И изменения ещё в {count} группах.",
+    "other": "И изменения ещё в {count} группы.",
+  },
+  "WeeklyDigestMail.allGroups": "Все ваши группы",
+  "WeeklyDigestMail.why":
+    "Вы получаете это письмо, потому что включили еженедельную сводку. Выключить её можно в один клик:",
+  "WeeklyDigestMail.unsubscribe": "Выключить еженедельную сводку",
 } satisfies Catalog

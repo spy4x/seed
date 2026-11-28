@@ -77,6 +77,14 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       FROM user_preferences WHERE user_id = ${userId}`,
   },
   {
+    // Present only while the digest is on: turning it off deletes the row.
+    name: `weekly_digest`,
+    columns: [`weekday`, `hour`, `timeZone`, `nextAt`, `lastSentAt`, `createdAt`, `updatedAt`],
+    rows: (sql, userId) =>
+      sql`SELECT weekday, hour, time_zone, next_at, last_sent_at, created_at, updated_at
+      FROM weekly_digests WHERE user_id = ${userId}`,
+  },
+  {
     // A linked Telegram account is an `auth_keys` row too, but no way in: it has its own section.
     name: `sign_in_methods`,
     columns: [`id`, `method`, `email`, `provenAt`, `passkeyName`, `lastUsedAt`, `createdAt`],

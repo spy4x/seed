@@ -137,4 +137,32 @@ export default {
   "SubscriberWelcomeMail.unsubscribe": "Darme de baja",
   "SubscriberIssue.reason": "Recibes este correo porque te suscribiste en {host}.",
   "SubscriberIssue.readPost": "Leer la entrada",
+  "WeeklyDigestMail.subject": "Tu semana en tus grupos",
+  "WeeklyDigestMail.intro":
+    "Esto es lo que han hecho otros en tus grupos de {host} desde tu último resumen.",
+  "WeeklyDigestMail.group": "<strong>{group}</strong>: {changes}.",
+  "WeeklyDigestMail.created": {
+    "one": "{count} nota nueva",
+    "many": "{count} notas nuevas",
+    "other": "{count} notas nuevas",
+  },
+  "WeeklyDigestMail.edited": {
+    "one": "{count} nota editada",
+    "many": "{count} notas editadas",
+    "other": "{count} notas editadas",
+  },
+  "WeeklyDigestMail.joined": {
+    "one": "{count} persona se ha unido",
+    "many": "{count} personas se han unido",
+    "other": "{count} personas se han unido",
+  },
+  "WeeklyDigestMail.more": {
+    "one": "Y hubo cambios en {count} grupo más.",
+    "many": "Y hubo cambios en {count} grupos más.",
+    "other": "Y hubo cambios en {count} grupos más.",
+  },
+  "WeeklyDigestMail.allGroups": "Ver todos tus grupos",
+  "WeeklyDigestMail.why":
+    "Recibes este correo porque activaste el resumen semanal. Puedes desactivarlo con un clic:",
+  "WeeklyDigestMail.unsubscribe": "Desactivar el resumen semanal",
 } satisfies Catalog
