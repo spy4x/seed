@@ -25,7 +25,7 @@
  */
 import { type Browser, type BrowserContext, chromium, type Locator, type Page } from "playwright"
 import { encodeDemo, CARD_SECONDS } from "./encode.ts"
-import { clickLike, parkLike, type Point } from "./human-mouse.ts"
+import { clickLike, parkLike, type Point, scrollLike } from "./human-mouse.ts"
 import { type Screen, sleep, Take } from "./take.ts"
 import { openTerminal, type Terminal } from "./terminal.ts"
 import { stage } from "./stage.ts"
@@ -290,6 +290,13 @@ async function browserPart(
     await pause(300)
     await clickLike(app, pa, app.getByRole("button", { name: TAG, exact: true }))
     await pause(400)
+    // The form's footer ends the page, so "Add note" would sit under the caption band. Room under
+    // the footer, below the fold where nobody sees it appear, lets a scroll lift it clear.
+    await app.locator("[data-e2e=note-save]").evaluate((save) =>
+      (save.parentElement as HTMLElement).style.paddingBottom = `160px`
+    )
+    await scrollLike(app, 160)
+    await pause(300)
     await take.caption("Create it, and the whole team can read it")
     await clickLike(app, pa, app.getByRole("button", { name: "Add note" }))
     // The note's page shows "Loading the note…" first, then the note under its title, whose
