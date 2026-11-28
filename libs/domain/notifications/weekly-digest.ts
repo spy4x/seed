@@ -14,8 +14,11 @@ export const WEEKLY_DIGEST_ZONE_MAX_LENGTH = 64
 /** The most groups one digest lists; the rest are counted as "and N more". */
 export const WEEKLY_DIGEST_MAX_GROUPS = 20
 
-/** The longest unsubscribe token the API reads: a user id, a dot and a 43-character signature. */
-export const WEEKLY_DIGEST_TOKEN_MAX_LENGTH = 64
+/**
+ * The longest unsubscribe token the API reads. A signed-payload token holding the largest user id
+ * is about 160 characters; the rest is headroom.
+ */
+export const WEEKLY_DIGEST_TOKEN_MAX_LENGTH = 256
 
 /**
  * A digest setting as `weekly-digest.save` takes it: `{ on: false }`, or `{ on: true, weekday,

@@ -454,14 +454,14 @@ Deno.test(`weekly digest`, async (t) => {
         const app = mountRoute(
           `/weekly-digest`,
           createWeeklyDigestRoute({
-            tokens: await createWeeklyDigestTokens(SUBSCRIBERS),
+            tokens: createWeeklyDigestTokens(SUBSCRIBERS),
             webAppUrl: WEB_APP_URL,
             tokenByIp: async (_c, next) => await next(),
             turnOff: async (userId) => void await saveWeeklyDigest(sql, userId, { on: false }),
           }),
           null,
         )
-        const token = await (await createWeeklyDigestTokens(SUBSCRIBERS)).sign(ann)
+        const token = await createWeeklyDigestTokens(SUBSCRIBERS).sign(ann)
         const post = (value: string) =>
           app.request(
             `${API_URL}/weekly-digest/unsubscribe?${new URLSearchParams({ token: value })}`,

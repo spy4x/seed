@@ -48,9 +48,9 @@ The mail goes to the person's first proven address, in their saved language
 ## Unsubscribe
 
 Every digest carries a signed link in its body and in the `List-Unsubscribe` and
-`List-Unsubscribe-Post` headers (the headers only for an `https:` address). The token is the user
-id and an HMAC-SHA-256 of it, under a key derived from `SUBSCRIBERS_SECRET` with the label
-`weekly-digest:unsubscribe`; the previous secrets still verify after a rotation. It never expires
+`List-Unsubscribe-Post` headers (the headers only for an `https:` address). The token is a signed
+payload (`@spy4x/platform/signed-payload`) of purpose `weekly-digest.unsubscribe` that holds the
+user id, signed with `SUBSCRIBERS_SECRET`; the previous secrets still verify after a rotation. It never expires
 and can only turn the digest off.
 
 `/api/weekly-digest/unsubscribe` needs no session:

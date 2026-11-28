@@ -568,7 +568,7 @@ app.route(
 app.route(
   "/weekly-digest",
   createWeeklyDigestRoute({
-    tokens: subscribersSetup ? await createWeeklyDigestTokens(subscribersSetup) : null,
+    tokens: subscribersSetup ? createWeeklyDigestTokens(subscribersSetup) : null,
     webAppUrl: config.webAppUrl,
     tokenByIp: subscriberRateLimits.tokenByIp,
     turnOff: async (userId) => void await db.weeklyDigest.save(userId, { on: false }),

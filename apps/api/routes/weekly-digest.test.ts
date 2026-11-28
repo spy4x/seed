@@ -39,7 +39,7 @@ async function build(
 ) {
   const digests = new Set(on)
   const route = createWeeklyDigestRoute({
-    tokens: tokens === undefined ? await createWeeklyDigestTokens(SETUP) : tokens,
+    tokens: tokens === undefined ? createWeeklyDigestTokens(SETUP) : tokens,
     webAppUrl: WEB_APP_URL,
     tokenByIp: createSubscriberRateLimits({
       windowMs: 60_000,
@@ -52,7 +52,7 @@ async function build(
   return { app: mountRoute(`/weekly-digest`, route, null), digests }
 }
 
-const sign = async (userId: number) => await (await createWeeklyDigestTokens(SETUP)).sign(userId)
+const sign = (userId: number) => createWeeklyDigestTokens(SETUP).sign(userId)
 const url = (token: string) =>
   `${API_URL}/weekly-digest/unsubscribe?${new URLSearchParams({ token })}`
 /** A mail client's one-click POST (RFC 8058): no session, no browser header. */
@@ -104,9 +104,8 @@ describe(`weekly digest unsubscribe route`, () => {
   it(`refuses a forged, truncated or oversize token and changes nothing`, async () => {
     const { app, digests } = await build()
     const token = await sign(7)
-    for (
-      const bad of [`8.${token.split(`.`)[1]}`, token.slice(0, -1), `${token}${`A`.repeat(500)}`]
-    ) {
+    const forged = `${(await sign(8)).split(`.`)[0]}.${token.split(`.`)[1]}`
+    for (const bad of [forged, token.slice(0, -1), `${token}${`A`.repeat(500)}`]) {
       const response = await app.request(url(bad), oneClick)
       expect(response.status).toBe(404)
       expect(await apiError(response)).toMatchObject({

@@ -169,7 +169,7 @@ export function weeklyDigestMailJob(deps: WeeklyDigestMailDeps): JobHandler {
     }
     const groups = await weeklyDigestGroups(sql, digest.userId, digest.windowFrom, to)
     if (groups.length === 0) return void await advance(false)
-    const tokens = await createWeeklyDigestTokens(deps.subscribers)
+    const tokens = createWeeklyDigestTokens(deps.subscribers)
     const result = await deps.sender.send(weeklyDigestMail(deps.brand, {
       to: digest.email,
       groups: groups.slice(0, WEEKLY_DIGEST_MAX_GROUPS),
