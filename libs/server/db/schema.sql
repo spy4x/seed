@@ -1557,3 +1557,34 @@ CREATE TABLE import_records (
     record_id UUID NOT NULL,
     PRIMARY KEY (import_id, record_id)
 );
+
+-- #210: the opt-in weekly digest e-mail. See migration 2026_12_17_0001_weekly_digests.sql.
+CREATE TABLE weekly_digests (
+    user_id INT4 PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    id UUID NOT NULL UNIQUE,
+    weekday INT2 NOT NULL,
+    hour INT2 NOT NULL,
+    time_zone VARCHAR(64) NOT NULL,
+    next_at TIMESTAMPTZ(3) NOT NULL,
+    window_from TIMESTAMPTZ(3) NOT NULL,
+    last_sent_at TIMESTAMPTZ(3),
+    created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT weekly_digests_weekday_check CHECK (weekday BETWEEN 1 AND 7),
+    CONSTRAINT weekly_digests_hour_check CHECK (hour BETWEEN 0 AND 23)
+);
+
+CREATE INDEX idx_weekly_digests_next_at ON weekly_digests (next_at);
+
+CREATE FUNCTION weekly_digest_next_at(after TIMESTAMPTZ, weekday INT2, hour INT2, zone TEXT)
+RETURNS TIMESTAMPTZ
+LANGUAGE sql STABLE AS $$
+    SELECT CASE WHEN slot AT TIME ZONE zone > after THEN slot AT TIME ZONE zone
+        ELSE (slot + INTERVAL '7 days') AT TIME ZONE zone END
+    FROM (
+        SELECT date_trunc('day', after AT TIME ZONE zone) + make_interval(
+            days => (weekday - extract(isodow FROM after AT TIME ZONE zone)::int + 7) % 7,
+            hours => hour
+        ) AS slot
+    ) AS local
+$$;

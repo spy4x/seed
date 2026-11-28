@@ -32,6 +32,7 @@ import { SIGN_IN_CODE_MAIL_JOB } from "./sign-in-code-mail.ts"
 import { STARTER_DATA_JOB } from "./starter-data.ts"
 import { IMAGE_PROCESS_JOB, IMAGE_WIDTHS_JOB } from "../files/images.ts"
 import { TELEGRAM_NOTIFICATION_JOB } from "./telegram-notification.ts"
+import { WEEKLY_DIGEST_MAIL_JOB, WEEKLY_DIGEST_SCHEDULE_JOB } from "./weekly-digest-mail.ts"
 import { IMPORT_COMMIT_JOB, IMPORT_READ_JOB } from "../imports/postgres-import-repository.ts"
 import {
   SUBSCRIBER_CONFIRM_MAIL_JOB,
@@ -62,6 +63,8 @@ const QUEUED_KINDS = [
   DATA_EXPORT_MAIL_JOB,
   DATA_EXPORT_EXPIRE_JOB,
   TELEGRAM_NOTIFICATION_JOB,
+  WEEKLY_DIGEST_SCHEDULE_JOB,
+  WEEKLY_DIGEST_MAIL_JOB,
   ...Object.values(BILLING_NOTICE_JOBS),
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_WELCOME_MAIL_JOB,
@@ -95,10 +98,14 @@ describe(`job registry`, () => {
     }
   })
 
-  it(`repeats the nightly cleanup at 03:00 UTC and the sharing results read hourly`, () => {
+  it(`repeats the nightly cleanup at 03:00 UTC, and the sharing results read and the weekly digest queue hourly`, () => {
     expect(repeatSchedules(JOBS)).toEqual({
       repeatEveryMs: {},
-      repeatCron: { [OUTBOX_CLEANUP_JOB]: `0 3 * * *`, [BLOG_SHARE_RESULTS_JOB]: `17 * * * *` },
+      repeatCron: {
+        [OUTBOX_CLEANUP_JOB]: `0 3 * * *`,
+        [BLOG_SHARE_RESULTS_JOB]: `17 * * * *`,
+        [WEEKLY_DIGEST_SCHEDULE_JOB]: `5 * * * *`,
+      },
     })
     expect(describeRepeat({ cron: `17 * * * *` })).toBe(`Every hour at minute 17`)
   })

@@ -79,3 +79,13 @@ SubscriberWelcomeMail.reason	ff188eec5d993f37
 SubscriberWelcomeMail.subject	e3c34078ad8f9021
 SubscriberWelcomeMail.subscribed	0ea471f74891a885
 SubscriberWelcomeMail.unsubscribe	3e92efb7664f0255
+WeeklyDigestMail.allGroups	25c8a93823c49cea
+WeeklyDigestMail.created	057187ac3a0d0a45
+WeeklyDigestMail.edited	d7aa33a2286bc5ee
+WeeklyDigestMail.group	19a12eadb326dd85
+WeeklyDigestMail.intro	ca6bdc5d8f9001db
+WeeklyDigestMail.joined	2efcc34258571ab7
+WeeklyDigestMail.more	122ebe745d6e5353
+WeeklyDigestMail.subject	abd2395a80c8954d
+WeeklyDigestMail.unsubscribe	6a6b866b06ef3ab2
+WeeklyDigestMail.why	e6aa8c7c439626c4

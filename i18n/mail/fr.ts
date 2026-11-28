@@ -143,4 +143,32 @@ export default {
   "SubscriberWelcomeMail.unsubscribe": "Se désabonner",
   "SubscriberIssue.reason": "Vous recevez cet e-mail parce que vous vous êtes abonné sur {host}.",
   "SubscriberIssue.readPost": "Lire l’article",
+  "WeeklyDigestMail.subject": "Votre semaine dans vos groupes",
+  "WeeklyDigestMail.intro":
+    "Voici ce que les autres ont fait dans vos groupes sur {host} depuis votre dernier récapitulatif.",
+  "WeeklyDigestMail.group": "<strong>{group}</strong> : {changes}.",
+  "WeeklyDigestMail.created": {
+    "one": "{count} nouvelle note",
+    "many": "{count} nouvelles notes",
+    "other": "{count} nouvelles notes",
+  },
+  "WeeklyDigestMail.edited": {
+    "one": "{count} note modifiée",
+    "many": "{count} notes modifiées",
+    "other": "{count} notes modifiées",
+  },
+  "WeeklyDigestMail.joined": {
+    "one": "{count} personne a rejoint le groupe",
+    "many": "{count} personnes ont rejoint le groupe",
+    "other": "{count} personnes ont rejoint le groupe",
+  },
+  "WeeklyDigestMail.more": {
+    "one": "Et {count} autre groupe a bougé.",
+    "many": "Et {count} autres groupes ont bougé.",
+    "other": "Et {count} autres groupes ont bougé.",
+  },
+  "WeeklyDigestMail.allGroups": "Voir tous vos groupes",
+  "WeeklyDigestMail.why":
+    "Vous recevez cet e-mail parce que vous avez activé le récapitulatif hebdomadaire. Vous pouvez le désactiver en un clic :",
+  "WeeklyDigestMail.unsubscribe": "Désactiver le récapitulatif hebdomadaire",
 } satisfies Catalog

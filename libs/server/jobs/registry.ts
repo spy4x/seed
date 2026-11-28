@@ -83,6 +83,12 @@ import {
   telegramNotificationJob,
 } from "./telegram-notification.ts"
 import {
+  WEEKLY_DIGEST_MAIL_JOB,
+  WEEKLY_DIGEST_SCHEDULE_JOB,
+  weeklyDigestMailJob,
+  weeklyDigestScheduleJob,
+} from "./weekly-digest-mail.ts"
+import {
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_SEND_ISSUE_JOB,
   SUBSCRIBER_WELCOME_MAIL_JOB,
@@ -367,6 +373,20 @@ export const JOBS: readonly JobDefinition[] = [
         webAppUrl: mail.brand.webAppUrl,
         log: mail.log,
       }),
+  }),
+  // Claims each due digest and moves it a week on in one transaction: a rerun queues nothing.
+  defineJob({
+    kind: WEEKLY_DIGEST_SCHEDULE_JOB,
+    label: `Queue due weekly digests`,
+    repeat: { cron: `5 * * * *` },
+    handler: ({ sql }) => weeklyDigestScheduleJob({ sql }),
+  }),
+  defineJob({
+    kind: WEEKLY_DIGEST_MAIL_JOB,
+    label: `Weekly digest email`,
+    sendsMail: true,
+    about: { userIn: `weekly_digests` },
+    handler: ({ sql, mail, subscribers }) => weeklyDigestMailJob({ sql, ...mail, subscribers }),
   }),
   ...[BillingNoticeKind.TrialEnding, BillingNoticeKind.PaymentFailed, BillingNoticeKind.PlanEnding]
     .map((notice) =>

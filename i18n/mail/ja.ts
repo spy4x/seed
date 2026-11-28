@@ -131,4 +131,24 @@ export default {
   "SubscriberWelcomeMail.unsubscribe": "購読解除",
   "SubscriberIssue.reason": "このメールは、{host}で購読を申し込まれた方にお送りしています。",
   "SubscriberIssue.readPost": "記事を読む",
+  "WeeklyDigestMail.subject": "今週のグループの動き",
+  "WeeklyDigestMail.intro":
+    "前回のまとめ以降に、{host}のあなたのグループでほかのメンバーが行ったことです。",
+  "WeeklyDigestMail.group": "<strong>{group}</strong>：{changes}",
+  "WeeklyDigestMail.created": {
+    "other": "新しいメモ{count}件",
+  },
+  "WeeklyDigestMail.edited": {
+    "other": "編集されたメモ{count}件",
+  },
+  "WeeklyDigestMail.joined": {
+    "other": "新しいメンバー{count}人",
+  },
+  "WeeklyDigestMail.more": {
+    "other": "ほかに{count}件のグループにも動きがありました。",
+  },
+  "WeeklyDigestMail.allGroups": "すべてのグループを見る",
+  "WeeklyDigestMail.why":
+    "このメールは、週次まとめをオンにした方にお送りしています。ワンクリックでオフにできます：",
+  "WeeklyDigestMail.unsubscribe": "週次まとめをオフにする",
 } satisfies Catalog

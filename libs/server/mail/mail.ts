@@ -702,3 +702,76 @@ export function billingNoticeMail(
     { link, label: w.t.t(`Mail.openGroup`) },
   ])
 }
+
+/** One group of a weekly digest: what others changed in it during the digest's window. */
+export interface WeeklyDigestGroup {
+  id: string
+  name: string
+  /** Notes others created. */
+  created: number
+  /** Notes made before the window that others edited in it. */
+  edited: number
+  /** People who joined. */
+  joined: number
+}
+
+/** What a weekly digest mail names. */
+export interface WeeklyDigestMailInput {
+  to: string
+  /** The groups it lists, each with at least one change. */
+  groups: readonly WeeklyDigestGroup[]
+  /** Groups with changes left out past the cap, counted at the end. */
+  moreGroups: number
+  /** The signed one-click link that turns the digest off, also sent as `List-Unsubscribe`. */
+  unsubscribeLink: string
+  reader: MailReader
+}
+
+/**
+ * The weekly digest: per group, how many notes others created and edited and how many people
+ * joined, each count a plural of its own joined as a list in the reader's language, with a link to
+ * the group. It ends with the one-click unsubscribe, in the body and as `List-Unsubscribe`; a
+ * plain-HTTP development address keeps it in the body only, since the header takes `https:`.
+ */
+export function weeklyDigestMail(
+  brand: MailBrand,
+  { to, groups, moreGroups, unsubscribeLink, reader }: WeeklyDigestMailInput,
+): EmailMessage {
+  const w = writerFor(reader)
+  const list = new Intl.ListFormat(reader.language, { type: `conjunction` })
+  const blocks: Block[] = [{ key: `WeeklyDigestMail.intro`, values: { host: hostOf(brand) } }]
+  for (const group of groups) {
+    const counts = [
+      [`WeeklyDigestMail.created`, group.created],
+      [`WeeklyDigestMail.edited`, group.edited],
+      [`WeeklyDigestMail.joined`, group.joined],
+    ] as const
+    const changes = list.format(
+      counts.filter(([, count]) => count > 0).map(([key, count]) => w.t.t(key, { count })),
+    )
+    blocks.push(
+      { key: `WeeklyDigestMail.group`, values: { group: isolate(group.name), changes } },
+      {
+        link: new URL(`/groups/${encodeURIComponent(group.id)}`, brand.webAppUrl).href,
+        label: w.t.t(`Mail.openGroup`),
+      },
+    )
+  }
+  if (moreGroups > 0) {
+    blocks.push(
+      { key: `WeeklyDigestMail.more`, values: { count: moreGroups } },
+      {
+        link: new URL(`/groups`, brand.webAppUrl).href,
+        label: w.t.t(`WeeklyDigestMail.allGroups`),
+      },
+    )
+  }
+  blocks.push(
+    { key: `WeeklyDigestMail.why` },
+    { link: unsubscribeLink, label: w.t.t(`WeeklyDigestMail.unsubscribe`) },
+  )
+  const mail = compose(brand, w.t, to, w.t.t(`WeeklyDigestMail.subject`), blocks)
+  return unsubscribeLink.startsWith(`https:`)
+    ? { ...mail, listUnsubscribe: { url: unsubscribeLink, oneClick: true } }
+    : mail
+}

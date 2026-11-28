@@ -108,4 +108,22 @@ export default {
   "SubscriberWelcomeMail.unsubscribe": "退订",
   "SubscriberIssue.reason": "你收到这封邮件，是因为你在 {host} 订阅了邮件简报。",
   "SubscriberIssue.readPost": "阅读全文",
+  "WeeklyDigestMail.subject": "你的群组本周动态",
+  "WeeklyDigestMail.intro": "自上次摘要以来，其他成员在你 {host} 上的群组里做了这些事。",
+  "WeeklyDigestMail.group": "<strong>{group}</strong>：{changes}。",
+  "WeeklyDigestMail.created": {
+    "other": "{count} 条新笔记",
+  },
+  "WeeklyDigestMail.edited": {
+    "other": "{count} 条笔记被编辑",
+  },
+  "WeeklyDigestMail.joined": {
+    "other": "{count} 人加入",
+  },
+  "WeeklyDigestMail.more": {
+    "other": "另外还有 {count} 个群组有动态。",
+  },
+  "WeeklyDigestMail.allGroups": "查看你的所有群组",
+  "WeeklyDigestMail.why": "你收到这封邮件，是因为你开启了每周摘要。一键即可关闭：",
+  "WeeklyDigestMail.unsubscribe": "关闭每周摘要",
 } satisfies Catalog

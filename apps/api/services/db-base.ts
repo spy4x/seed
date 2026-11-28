@@ -104,6 +104,8 @@ import {
 } from "@server/auth/passkeys.ts"
 import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
 import { preferencesStore, recordFirstDevice } from "@server/auth/preferences.ts"
+import { readWeeklyDigest, saveWeeklyDigest } from "@server/notifications/weekly-digest.ts"
+import type { WeeklyDigestSetting, WeeklyDigestState } from "@domain/notifications"
 import { type ApiTokenRows, apiTokenRows } from "@server/api-tokens/api-tokens.ts"
 import {
   enqueuePasswordResetCodeMail,
@@ -606,6 +608,16 @@ export class AppDbBase extends DbServiceBase {
       /** Keeps the first device's zone and region format: the ones the person signed up with. */
       recordFirstDevice: (userId: number, device: PreferencesDevice): Promise<void> =>
         recordFirstDevice(sql, userId, device),
+    }
+  }
+
+  /** A person's weekly digest setting (`@server/notifications/weekly-digest.ts`). Built per access. */
+  get weeklyDigest() {
+    const sql = this.sql
+    return {
+      read: (userId: number): Promise<WeeklyDigestState> => readWeeklyDigest(sql, userId),
+      save: (userId: number, setting: WeeklyDigestSetting): Promise<WeeklyDigestState> =>
+        saveWeeklyDigest(sql, userId, setting),
     }
   }
 

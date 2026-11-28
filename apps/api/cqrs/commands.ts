@@ -9,6 +9,7 @@ import {
   User,
   type UserPushTokenPublic,
 } from "@domain/identity"
+import type { WeeklyDigestSetting, WeeklyDigestState } from "@domain/notifications"
 import type { PushSubscribeRequest } from "@spy4x/platform/model"
 import type { SettingsSaveResult } from "@spy4x/platform/universal/settings"
 export interface UserProfileUpdatePayload {
@@ -73,6 +74,21 @@ export interface PreferencesDevicePayload {
 export class PreferencesDeviceCommand implements Command<PreferencesDevicePayload, void> {
   __resultType?: void
   constructor(public data: PreferencesDevicePayload) {}
+}
+
+export interface WeeklyDigestSavePayload {
+  actor: Actor
+  /** Checked against `weeklyDigestSettingSchema` before the command is made. */
+  setting: WeeklyDigestSetting
+  /** Makes a retry of this command safe; see the idempotency middleware on the command bus. */
+  idempotencyKey?: string
+}
+
+/** The actor turns their weekly digest off, or on at a weekday, hour and zone. */
+export class WeeklyDigestSaveCommand
+  implements Command<WeeklyDigestSavePayload, WeeklyDigestState> {
+  __resultType?: WeeklyDigestState
+  constructor(public data: WeeklyDigestSavePayload) {}
 }
 
 export interface PushRegisterPayload {

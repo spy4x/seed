@@ -255,3 +255,5 @@ export interface AdminNotificationsResponse {
   total: number
   unread: number
 }
+
+export * from "./weekly-digest.ts"

@@ -124,4 +124,28 @@ export default {
   "SubscriberWelcomeMail.unsubscribe": "Unsubscribe",
   "SubscriberIssue.reason": "You're getting this email because you subscribed at {host}.",
   "SubscriberIssue.readPost": "Read the post",
+  "WeeklyDigestMail.subject": "Your week in your groups",
+  "WeeklyDigestMail.intro":
+    "Here's what others did in your groups at {host} since your last digest.",
+  "WeeklyDigestMail.group": "<strong>{group}</strong>: {changes}.",
+  "WeeklyDigestMail.created": {
+    "one": "{count} new note",
+    "other": "{count} new notes",
+  },
+  "WeeklyDigestMail.edited": {
+    "one": "{count} note edited",
+    "other": "{count} notes edited",
+  },
+  "WeeklyDigestMail.joined": {
+    "one": "{count} person joined",
+    "other": "{count} people joined",
+  },
+  "WeeklyDigestMail.more": {
+    "one": "And {count} more group changed.",
+    "other": "And {count} more groups changed.",
+  },
+  "WeeklyDigestMail.allGroups": "See all your groups",
+  "WeeklyDigestMail.why":
+    "You're getting this email because you turned on the weekly digest. You can turn it off with one click:",
+  "WeeklyDigestMail.unsubscribe": "Turn off the weekly digest",
 } satisfies Catalog

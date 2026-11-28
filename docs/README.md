@@ -50,6 +50,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Background jobs](jobs.md): add a job, queue a run, repeat it, and what happens when it fails.
 - [Telegram bot](telegram.md): BotFather, the webhook, linking a chat, and adding a product's
   commands.
+- [The weekly digest](weekly-digest.md): the opt-in weekly e-mail of what others changed in a
+  person's groups, its schedule and its one-click unsubscribe.
 - [Offline in the SPA](offline.md): turn the offline layer or the WebSocket module off, or remove
   them.
 - [The Android app](android.md): build it, make it the product's own and publish it on Google

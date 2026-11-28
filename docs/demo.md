@@ -190,6 +190,9 @@ updates the demo in the same PR:
 - **Profile pictures** (#228) need no change either: the seed gives nobody a picture, so every
   avatar shows initials, and the wipe queues every picture a visitor uploaded for the clean-up,
   with the original and every processed width in `images` and `image_variants` (#464).
+- **The weekly digest** (#210, [weekly-digest.md](weekly-digest.md)) needs no change: the wipe
+  empties `weekly_digests` with every account, and the seed turns nobody's digest on, so the demo
+  mails no fake address.
 - **The tests**: `tests/integration/demo-seed.integration.test.ts` checks that the wipe leaves
   every table but the kept ones empty, that the seed's counts match the fake data, what a new
   account's sample groups hold, what the admin's dashboard, billing and newsletter read from

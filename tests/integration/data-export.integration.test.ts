@@ -283,6 +283,32 @@ Deno.test("data export: lists the person's linked Telegram account and when it w
   })
 })
 
+Deno.test("data export: holds the person's weekly digest setting, and no one else's", async () => {
+  await withSchema(async (sql) => {
+    const { editor, owner } = await team(sql)
+    await sql`
+      INSERT INTO weekly_digests (user_id, id, weekday, hour, time_zone, next_at, window_from,
+        created_at, updated_at)
+      VALUES
+        (${editor}, ${uuidV7()}, 1, 9, 'Europe/Berlin', '2027-03-22T08:00:00Z',
+          '2027-03-17T10:00:00Z', '2027-03-17T10:00:00Z', '2027-03-17T10:00:00Z'),
+        (${owner}, ${uuidV7()}, 5, 18, 'Asia/Tokyo', '2027-03-19T09:00:00Z', now(), now(), now())
+    `
+
+    const data = JSON.parse(unzip(await buildDataExport(sql, editor, new Date()))[`data.json`])
+
+    expect(data.sections.weekly_digest).toEqual([{
+      weekday: 1,
+      hour: 9,
+      timeZone: `Europe/Berlin`,
+      nextAt: `2027-03-22T08:00:00.000Z`,
+      lastSentAt: null,
+      createdAt: `2027-03-17T10:00:00.000Z`,
+      updatedAt: `2027-03-17T10:00:00.000Z`,
+    }])
+  })
+})
+
 Deno.test("data export: keeps an operator's action on the person but not the operator's address or browser", async () => {
   await withSchema(async (sql) => {
     const { editor } = await team(sql)
