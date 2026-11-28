@@ -164,7 +164,7 @@ export default {
   "Reason.NAME_TAKEN": "Diesen Namen hat schon ein anderer Kanal.",
   "Reason.NEWSLETTER_OFF":
     "Der Newsletter ist ausgeschaltet, deshalb geht das nicht per E-Mail raus.",
-  "Reason.RECORD_FULL": "An diese Notiz passen keine weiteren Dateien. Entferne zuerst eine.",
+  "Reason.RECORD_FULL": "An dieses Element passen keine weiteren Dateien. Entferne zuerst eine.",
   "Reason.NOTE_NOT_FOUND": "Diese Notiz gibt es nicht mehr.",
   "Reason.NOTHING_TO_MOVE": "Es gibt nichts zu verschieben.",
   "Reason.NOTIFICATION_NOT_FOUND": "Diese Benachrichtigung gibt es nicht mehr.",

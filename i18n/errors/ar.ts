@@ -180,7 +180,7 @@ export default {
   "Reason.NAME_MISMATCH": "هذا ليس اسم المجموعة. اكتبه تمامًا كما يظهر.",
   "Reason.NAME_TAKEN": "هذا الاسم مستخدم لقناة أخرى.",
   "Reason.NEWSLETTER_OFF": "النشرة البريدية متوقفة، لذا لا يمكن إرسال هذا بالبريد.",
-  "Reason.RECORD_FULL": "وصلت هذه الملاحظة إلى الحد الأقصى من الملفات. أزل ملفًا أولًا.",
+  "Reason.RECORD_FULL": "وصل هذا العنصر إلى الحد الأقصى من الملفات. أزل ملفًا أولًا.",
   "Reason.NOTE_NOT_FOUND": "هذه الملاحظة لم تعد موجودة.",
   "Reason.NOTHING_TO_MOVE": "لا يوجد ما يمكن نقله.",
   "Reason.NOTIFICATION_NOT_FOUND": "هذا الإشعار لم يعد موجودًا.",

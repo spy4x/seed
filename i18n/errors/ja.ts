@@ -149,7 +149,7 @@ export default {
   "Reason.NAME_MISMATCH": "グループ名が一致しません。表示されているとおりに入力してください。",
   "Reason.NAME_TAKEN": "この名前はほかのチャンネルで使われています。",
   "Reason.NEWSLETTER_OFF": "ニュースレターがオフのため、メールで送信できません。",
-  "Reason.RECORD_FULL": "このメモに添付できるファイルは上限に達しています。先に1つ外してください。",
+  "Reason.RECORD_FULL": "この項目に添付できるファイルは上限に達しています。先に1つ外してください。",
   "Reason.NOTE_NOT_FOUND": "このメモはもう存在しません。",
   "Reason.NOTHING_TO_MOVE": "移動するものはありません。",
   "Reason.NOTIFICATION_NOT_FOUND": "この通知はもう存在しません。",

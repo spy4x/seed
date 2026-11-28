@@ -167,7 +167,7 @@ export default {
   "Reason.NAME_TAKEN": "Un autre canal utilise déjà ce nom.",
   "Reason.NEWSLETTER_OFF": "La newsletter est désactivée : impossible d’envoyer ceci par e-mail.",
   "Reason.RECORD_FULL":
-    "Cette note a atteint le nombre maximal de fichiers. Retirez-en un d’abord.",
+    "Cet élément a atteint le nombre maximal de fichiers. Retirez-en un d’abord.",
   "Reason.NOTE_NOT_FOUND": "Cette note n’existe plus.",
   "Reason.NOTHING_TO_MOVE": "Il n’y a rien à déplacer.",
   "Reason.NOTIFICATION_NOT_FOUND": "Cette notification n’existe plus.",
