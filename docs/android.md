@@ -110,7 +110,7 @@ reaches CI or the repository.
 - **No push notifications.** The app shows the SPA's live updates while it is open.
 - **Play may refuse a wrapper.** Google Play rejects apps that only show a website. If it refuses
   this one, the next step is to ship the SPA's files inside the app, which needs sign-in without
-  cookies first ([#202](https://github.com/spy4x/seed/issues/202)).
+  cookies first ([#1163](https://github.com/spy4x/seed/issues/1163)).
 
 ## Next
 
