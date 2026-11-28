@@ -230,6 +230,36 @@ export function adminPaletteCommands(
   return [...page, ...goTo, ...settings, ...account]
 }
 
+/** A user or group the operator opened, as the admin app keeps it on the device. */
+export interface AdminOpenedRecord {
+  kind: "user" | "group"
+  id: string
+  name: string
+}
+
+/**
+ * One row per opened record, opening its page: its name, and User or Group beside it. Its id is
+ * `<kind>:<id>`, the one the admin app adds to the palette's recent picks when the page opens.
+ */
+export function adminOpenedRows(
+  t: Translator<string>,
+  records: readonly AdminOpenedRecord[],
+): AdminPaletteOption[] {
+  return records.map((record) => {
+    const kind = t.t(record.kind === `user` ? `AdminUser.title` : `AdminGroup.title`)
+    const href = record.kind === `user`
+      ? `${ADMIN_PATHS.users}/${encodeURIComponent(record.id)}`
+      : ADMIN_GROUP_PATHS.group(record.id)
+    return {
+      id: `${record.kind}:${record.id}`,
+      label: record.name,
+      detail: kind,
+      group: kind,
+      choice: { kind: "page", href },
+    }
+  })
+}
+
 /**
  * The Quick find rows for `query`: "Find user …" opens the users list filtered by it, and
  * "Find group …" the groups list, each only while its module is shown. None for an empty query.

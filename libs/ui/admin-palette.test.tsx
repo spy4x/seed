@@ -23,6 +23,10 @@ import {
   type AdminSearchPaletteProps,
 } from "./admin-palette.tsx"
 import { AdminShell } from "./admin-frame.tsx"
+import { memoryStorage } from "@spy4x/platform/browser/storage"
+import { createPaletteRecent } from "@platform/palette-recent.ts"
+
+const GROUP = `0199c3a0-0000-7000-8000-000000000001`
 
 /** The operator area's catalogs in Russian, as the admin app reads them for a Russian operator. */
 const RU = createTranslator({
@@ -134,6 +138,16 @@ async function type(value: string): Promise<void> {
   field.value = value
   await act(() => {
     field.dispatchEvent(new window.Event("input", { bubbles: true }) as unknown as Event)
+  })
+  await settle()
+}
+
+/** Presses Enter in the field, picking the highlighted row. */
+async function pressEnter(): Promise<void> {
+  await act(() => {
+    find("[data-e2e=search] input").dispatchEvent(
+      new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }) as unknown as Event,
+    )
   })
   await settle()
 }
@@ -384,6 +398,41 @@ describe("AdminSearchPalette", () => {
 
     expect(listed().slice(0, 2)).toEqual(["# Recent", "Theme → Dark"])
     expect(listed().filter((row) => row.startsWith("Theme →"))).toHaveLength(1)
+  })
+
+  it("lists a user opened outside the palette under Recent, and Enter opens their page", async () => {
+    const recent = createPaletteRecent(memoryStorage())
+    recent.open({ kind: `user`, id: `42`, name: `Ada Lovelace` })
+    const picked = await mountPalette({ recent, opened: recent.opened.value })
+    await pressCtrlK()
+
+    expect(listed().slice(0, 3)).toEqual(["# Recent", "Ada Lovelace | User", "# Go to"])
+    await pressEnter()
+    expect(picked).toEqual([{ kind: "page", href: "/users/42" }])
+  })
+
+  it("lists a group opened outside the palette under Recent, and Enter opens its page", async () => {
+    const recent = createPaletteRecent(memoryStorage())
+    recent.open({ kind: `group`, id: GROUP, name: `Family` })
+    const picked = await mountPalette({ recent, opened: recent.opened.value })
+    await pressCtrlK()
+
+    expect(listed().slice(0, 3)).toEqual(["# Recent", "Family | Group", "# Go to"])
+    await pressEnter()
+    expect(picked).toEqual([{ kind: "page", href: `/groups/${GROUP}` }])
+  })
+
+  it("lists no opened user or group for a typed query", async () => {
+    const recent = createPaletteRecent(memoryStorage())
+    recent.open({ kind: `user`, id: `42`, name: `Ada Lovelace` })
+    recent.open({ kind: `group`, id: GROUP, name: `Family` })
+    await mountPalette({ recent, opened: recent.opened.value })
+    await pressCtrlK()
+    await type("Ada")
+
+    expect(listed().some((row) => row.startsWith("Ada Lovelace"))).toBe(false)
+    await type("Family")
+    expect(listed().some((row) => row.startsWith("Family"))).toBe(false)
   })
 
   it("lists no theme row before anything is typed, only the Theme command", async () => {

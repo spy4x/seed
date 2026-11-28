@@ -9,7 +9,7 @@ import {
   parseAdminUserFilter,
 } from "@domain/identity"
 import { ADMIN_PATHS } from "@ui/admin-frame.tsx"
-import { AdminUsersScreen } from "@ui/admin-users-screen.tsx"
+import { adminUserName, AdminUsersScreen } from "@ui/admin-users-screen.tsx"
 import { type AdminAction, adminUserPageCommands, AdminUserScreen } from "@ui/admin-user-screen.tsx"
 import { AdminPersonDataExportsPanel } from "@ui/admin-person-data-exports.tsx"
 import { operatorOf } from "../../state.ts"
@@ -82,6 +82,16 @@ function UserView(
     content: extra.render({ context, userId }),
   }))
   const detail = current ? person.detail : null
+  // Once the person's name is known, the palette lists them under Recent.
+  useEffect(() => {
+    if (detail) {
+      context.opened?.({
+        kind: `user`,
+        id: `${detail.user.id}`,
+        name: adminUserName(detail.user, t),
+      })
+    }
+  }, [detail?.user.id])
   const operator = operatorOf(context.operator)
   const onTab = (next: string) =>
     context.navigate(next === `overview` ? path : `${path}?tab=${encodeURIComponent(next)}`, {

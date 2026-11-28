@@ -1,5 +1,11 @@
 import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
+import { memoryStorage } from "@spy4x/platform/browser/storage"
+import {
+  createPaletteRecent,
+  PALETTE_OPENED_KEY,
+  PALETTE_RECENT_KEY,
+} from "@platform/palette-recent.ts"
 import { languages } from "./i18n.ts"
 import { type User, UserMFAStatus, UserRole } from "@domain/identity"
 import {
@@ -123,13 +129,18 @@ it("signing out ends the session even when the server cannot be reached", async 
   expect(store.session.value.user).toBe(null)
 })
 
-it("signing out forgets the palette's recent picks, so the next operator sees none", async () => {
+it("signing out forgets the palette's recent picks and opened records, so the next operator sees none", async () => {
   const { api } = fakeApi()
-  let forgotten = 0
-  const store = createAdminStore(api, { forget: () => forgotten++ })
+  const storage = memoryStorage()
+  const recent = createPaletteRecent(storage)
+  recent.open({ kind: `user`, id: `42`, name: `Ada Lovelace` })
+  recent.open({ kind: `group`, id: `0199c3a0-0000-7000-8000-000000000001`, name: `Family` })
+  const store = createAdminStore(api, recent)
   await store.start()
   await store.signOut()
-  expect(forgotten).toBe(1)
+  expect(recent.opened.value).toEqual([])
+  expect(storage.getItem(PALETTE_RECENT_KEY)).toBe(null)
+  expect(storage.getItem(PALETTE_OPENED_KEY)).toBe(null)
 })
 
 it("names an operator with no name by their address, and Operator only without one", () => {

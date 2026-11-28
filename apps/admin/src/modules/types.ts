@@ -5,6 +5,7 @@ import type { ToastStore } from "@spy4x/preact-signals/toast"
 import type { User } from "@domain/identity"
 import type { Formatters } from "@spy4x/time/format"
 import type { LeaveGuard } from "@spy4x/preact-ui/unsaved-guard"
+import type { OpenedRecord } from "@platform/palette-recent.ts"
 import type { AdminFetch } from "../state.ts"
 
 /**
@@ -35,6 +36,11 @@ export interface AdminContext {
   moduleIds: ReadonlySignal<ReadonlySet<string> | null>
   /** The operator's own formatter: their region format, time zone and clock. */
   format(): Formatters
+  /**
+   * Keeps a user or group whose page loaded, so the palette lists it under "Recent"
+   * (`paletteRecent.open`). Left out, nothing is kept.
+   */
+  opened?: (record: OpenedRecord) => void
 }
 
 /** One page of a module: a wouter path pattern and the view that fills the frame there. */

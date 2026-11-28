@@ -100,12 +100,15 @@ const settle = () =>
  * API's module list (`null`: not read yet). Every path the page asks for lands in `paths`; only the
  * group answers, so a widget or the files show their failure, which these tests do not look at.
  */
-async function openGroup(moduleIds: ReadonlySet<string> | null) {
+async function openGroup(
+  moduleIds: ReadonlySet<string> | null,
+  { opened, groupFails = false }: { opened?: AdminContext["opened"]; groupFails?: boolean } = {},
+) {
   const paths: string[] = []
   const request = ((path: string) => {
     paths.push(path)
     return Promise.resolve(
-      path === `/api/admin/groups/${GROUP_ID}`
+      path === `/api/admin/groups/${GROUP_ID}` && !groupFails
         ? { ok: true, status: 200, data: detail }
         : { ok: false, status: 500, error: { message: `not in this test` } },
     ) as Promise<AdminApiResult<unknown>>
@@ -122,6 +125,7 @@ async function openGroup(moduleIds: ReadonlySet<string> | null) {
     personTabs: [],
     moduleIds: modules,
     format: () => ({}) as Formatters,
+    opened,
   }
   const View = groupsModule.routes.find((route) => route.path === `/groups/:id`)!.View
   root = document.createElement(`div`)
@@ -219,5 +223,22 @@ describe(`one group's page in the admin app`, () => {
     expect(paths).toEqual([`/api/admin/groups/${GROUP_ID}`])
     expect(noWidgetsCard()).not.toBe(null)
     expect(hasFilesTab()).toBe(false)
+  })
+
+  it(`keeps the loaded group, by its id and name, for the palette's Recent`, async () => {
+    const opened: unknown[] = []
+    await openGroup(new Set([`groups`]), { opened: (record) => void opened.push(record) })
+
+    expect(opened).toEqual([{ kind: `group`, id: GROUP_ID, name: `Family` }])
+  })
+
+  it(`keeps nothing for the palette when the group fails to load`, async () => {
+    const opened: unknown[] = []
+    await openGroup(new Set([`groups`]), {
+      opened: (record) => void opened.push(record),
+      groupFails: true,
+    })
+
+    expect(opened).toEqual([])
   })
 })
