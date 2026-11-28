@@ -289,6 +289,15 @@ async function level(
 /** Runs every step; see the top of this file. */
 export async function videoCut(o: CutOptions, ports: Ports): Promise<CutResult> {
   await ports.files.mkdirp(o.outDir)
+  // The folder's files belong to one recording; another one must not reuse or overwrite them.
+  const sourcePath = join(o.outDir, `source.txt`)
+  const source = (await ports.files.readText(sourcePath))?.trim()
+  if (source && source !== o.recording) {
+    throw new Error(
+      `${o.outDir} holds the cut of ${source}, not ${o.recording}. Pass --out <dir> for it.`,
+    )
+  }
+  if (!source) await ports.files.writeText(sourcePath, `${o.recording}\n`)
   const media = await probe(ports, o.recording)
 
   const { words, segments } = parseWhisperJson(await transcribe(o, ports))

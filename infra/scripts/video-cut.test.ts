@@ -155,6 +155,19 @@ Deno.test("a rerun reuses the transcript and the edit list and renders again", a
   expect(again.logs).toContain(`transcript: reusing ${OUT}/transcript.json`)
 })
 
+Deno.test("a second recording in the same work folder fails and leaves the first one's cut alone", async () => {
+  const first = fake()
+  await videoCut(options(), first.ports)
+  expect(first.files.get(`${OUT}/source.txt`)).toBe(`/rec/raw.mkv\n`)
+  const before = new Map(first.files)
+  first.calls.length = 0
+  await expect(videoCut(options({ recording: `/rec/other.mkv` }), first.ports)).rejects.toThrow(
+    `${OUT} holds the cut of /rec/raw.mkv, not /rec/other.mkv. Pass --out <dir>`,
+  )
+  expect(first.calls).toEqual([])
+  expect(first.files).toEqual(before)
+})
+
 Deno.test("--no-claude stops after the brief and says where the edit list goes", async () => {
   const f = fake()
   const result = await videoCut(options({ claude: false }), f.ports)

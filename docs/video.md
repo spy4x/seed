@@ -11,7 +11,9 @@ deno task video:cut <recording> <slug> [--out <dir>] [--no-claude] [--denoise] [
 
 - `<slug>` names the Kdenlive project; one plain name, no `/` or `..`.
 - `--out` is the work and output folder. By default it is `cut/` next to the recording, so
-  `~/recordings/<slug>/raw.mkv` gives `~/recordings/<slug>/cut/`.
+  `~/recordings/<slug>/raw.mkv` gives `~/recordings/<slug>/cut/`. The folder's `source.txt` names
+  its recording, and a run on another recording in that folder stops before it touches a file:
+  give each recording its own folder or its own `--out`.
 - `--no-claude` stops after the brief (see "Without Claude").
 - `--denoise` adds ffmpeg's `afftdn` noise filter before the audio is levelled. Off by default.
 - `--min-silence` is the shortest pause, in seconds, that is cut (at least 0.3).
