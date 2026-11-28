@@ -1,0 +1,7 @@
+{
+  "exports": "./+lib.ts",
+  "tasks": {
+    "check": "deno check +lib.ts",
+    "test": "deno test +lib.test.ts"
+  }
+}

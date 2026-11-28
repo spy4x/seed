@@ -50,7 +50,7 @@ export const TEST_FREE_PLAN: Plan = {
       storageBytes: 200 * 1024 * 1024,
     }),
   },
-  attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
+  attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerRecord: 10 },
   trialDays: 0,
   perSeat: false,
 }
@@ -74,7 +74,7 @@ export const TEST_PRO_PLAN: Plan = {
     features: { memberRoles: true },
     limits: testLimits(null, { maxMembers: 50, storageBytes: 10 * 1024 * 1024 * 1024 }),
   },
-  attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
+  attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerRecord: 10 },
   trialDays: 14,
   perSeat: true,
 }

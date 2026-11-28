@@ -9,7 +9,7 @@ import {
   PictureSignCommand,
   type User,
 } from "@domain/identity"
-import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
+import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/attachments"
 import { FileRefusal, FILES_OFF_STORE, FilesOffError, type FileStore } from "@server/files/files.ts"
 import type { LedgerUpload, UploadRefusal } from "@server/files/upload-ledger.ts"
 import type { UserProfileUpdatedEvent } from "../../cqrs/events.ts"
@@ -154,12 +154,17 @@ async function refusal(promise: Promise<unknown>): Promise<string> {
   return (error as PictureError).code
 }
 
-Deno.test("a picture is signed to a staging key and kept in the ledger with no note", async () => {
+Deno.test("a picture is signed to a staging key and kept in the ledger with no record", async () => {
   const { sign, uploads } = setUp()
   const signed = await sign()
   expect(signed.url).toBe(`https://app.example.test/uploads/tmp/1`)
   expect(signed.headers).toEqual({ "content-type": `image/png` })
-  expect(uploads.get(signed.id)).toMatchObject({ noteId: null, userId: 7, size: 1000 })
+  expect(uploads.get(signed.id)).toMatchObject({
+    recordKind: null,
+    recordId: null,
+    userId: 7,
+    size: 1000,
+  })
 })
 
 Deno.test("a phone's HEIC photo of 10 MiB is signed like any picture", async () => {

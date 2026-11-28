@@ -120,11 +120,13 @@ sign-in code.
 The worker needs `vips-tools`, `vips-heif` and `libheif-aom`, which `Dockerfile.base` installs.
 Compose gives it `--allow-run=vips,vipsheader`, and read and write access to `/tmp/images` only.
 
-The catalog's photos are processed this way too ([catalog.md](catalog.md)). Note attachments are
-not: they are kept and downloaded as uploaded.
+The catalog's photos are processed this way too ([catalog.md](catalog.md)). Attachments are not:
+they are kept and downloaded as uploaded.
 
 ## Next
 
-- [Note attachments and profile pictures](attachments-and-pictures.md): two features built this
-  way.
+- [Attachments and profile pictures](attachments-and-pictures.md): two features built this way.
+  To keep files on a record of your own, register an attachment kind
+  ([Add attachments to a record kind](attachments-and-pictures.md#add-attachments-to-a-record-kind))
+  instead of writing the flow again.
 - [Background jobs](jobs.md): how the photo jobs run and retry.

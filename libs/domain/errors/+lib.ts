@@ -27,7 +27,8 @@ import type {
   SIGN_UP_CLOSED,
 } from "@domain/identity"
 import type { ImportErrorCode } from "@domain/imports"
-import type { AttachmentErrorCode, NoteErrorCode } from "@domain/notes"
+import type { NoteErrorCode } from "@domain/notes"
+import type { AttachmentErrorCode } from "@domain/attachments"
 import type { NotificationErrorCode } from "@domain/notifications"
 import type { SubscriberTokenRefusal } from "@domain/subscribers"
 import type { TagErrorCode } from "@domain/tags"

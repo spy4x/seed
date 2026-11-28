@@ -4,36 +4,43 @@ import type postgres from "postgres"
 import { PlanError } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import {
-  ATTACHMENT_EVENTS,
   ATTACHMENT_UPLOAD_BUDGET,
   AttachmentCancelCommand,
   type AttachmentCaps,
   AttachmentError,
+  attachmentEvents,
   AttachmentSignCommand,
   type AttachmentUploadBudget,
-  NoteError,
   type PendingAttachmentUpload,
-} from "@domain/notes"
+} from "@domain/attachments"
+import { NoteError } from "@domain/notes"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { PostgresAttachmentRepository } from "@server/notes/postgres-attachment-repository.ts"
+import { PostgresAttachmentRepository } from "@server/attachments/postgres-attachment-repository.ts"
+import { cleanUpAttachments } from "@server/attachments/cleanup.ts"
+import { countPendingUploads, uploadsInLastHour } from "@server/files/upload-ledger.ts"
+import { noteAttachmentKind } from "@server/notes/attachment-kind.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
-import { cleanUpAttachments } from "@server/notes/attachment-cleanup.ts"
 import type { FileStore } from "@server/files/files.ts"
 import {
   createAttachmentCancelHandler,
   createAttachmentSignHandler,
-} from "../../apps/api/features/notes/attachments.ts"
+} from "../../apps/api/features/attachments/attachments.ts"
 import { purgeDeletedNotes } from "@server/notes/purge-deleted-notes.ts"
 import { team, withSchema } from "./group-team.ts"
 
-const NO_CAPS: AttachmentCaps = { maxFiles: null, maxBytes: null, maxPerNote: 10 }
+const NO_CAPS: AttachmentCaps = { maxFiles: null, maxBytes: null, maxPerRecord: 10 }
 const HOUR = 60 * 60 * 1000
+const ADDED = attachmentEvents(`note`).added
+
+/** The notes' attachments, as the API builds them with the notes on. */
+const noteAttachments = (sql: postgres.Sql) =>
+  new PostgresAttachmentRepository(sql, noteAttachmentKind, [noteAttachmentKind])
 
 /** A team with a live note, and a function that makes uploads of it. */
 async function setUp(sql: postgres.Sql) {
   const members = await team(sql)
   const notes = new PostgresNoteRepository(sql)
-  const attachments = new PostgresAttachmentRepository(sql)
+  const attachments = noteAttachments(sql)
   const note = (await notes.create(
     { groupId: members.groupId, id: uuidV7(), title: "Trip", body: "" },
     members.owner,
@@ -43,7 +50,7 @@ async function setUp(sql: postgres.Sql) {
     const id = uuidV7()
     return {
       id,
-      noteId,
+      recordId: noteId,
       userId,
       stagingKey: `uploads/tmp/${id}`,
       name: `scan.pdf`,
@@ -65,7 +72,7 @@ function signing(
   context: { groupId: string; note: { id: string } },
   budget: AttachmentUploadBudget = ATTACHMENT_UPLOAD_BUDGET,
 ) {
-  const attachments = new PostgresAttachmentRepository(sql)
+  const attachments = noteAttachments(sql)
   let staged = 0
   const files = {
     signUpload: (_rule: unknown, file: { contentType: string }) =>
@@ -79,14 +86,15 @@ function signing(
       }),
   } as unknown as FileStore
   const dependencies = {
-    attachments,
+    kinds: [noteAttachmentKind],
+    attachments: () => attachments,
     files,
     groups: { roleOf: () => Promise.resolve(GroupRole.EDITOR) },
     plans: {
       of: () =>
         Promise.resolve({
           limits: { maxAttachments: null, storageBytes: null } as never,
-          rules: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
+          rules: { maxFileBytes: 2 * 1024 * 1024, maxPerRecord: 10 },
         }),
     },
     budget,
@@ -98,16 +106,24 @@ function signing(
     sign: (userId: number, size = 100) =>
       sign(
         new AttachmentSignCommand({
+          kind: `note`,
           actor: actor(userId),
           groupId: context.groupId,
-          noteId: context.note.id,
+          recordId: context.note.id,
           name: `scan.pdf`,
           contentType: `application/pdf`,
           size,
         }),
       ),
     cancel: (userId: number, id: string) =>
-      cancel(new AttachmentCancelCommand({ actor: actor(userId), groupId: context.groupId, id })),
+      cancel(
+        new AttachmentCancelCommand({
+          kind: `note`,
+          actor: actor(userId),
+          groupId: context.groupId,
+          id,
+        }),
+      ),
     /** Moves every upload of `userId` `minutes` into the past. */
     age: (userId: number, minutes: number) =>
       sql`
@@ -136,7 +152,7 @@ Deno.test("note attachments against Postgres", async (t) => {
         attachments.claimUpload(pending.id, editor),
       ])
       expect(claims.filter((claim) => claim !== null)).toEqual([pending])
-      expect(await attachments.countPending(editor)).toBe(0)
+      expect(await countPendingUploads(sql, editor)).toBe(0)
     })
 
     await t.step(
@@ -154,7 +170,7 @@ Deno.test("note attachments against Postgres", async (t) => {
         expect(BigInt(after) - BigInt(before)).toBe(1n)
         const audit = await sql`
           SELECT 1 FROM audit_events
-          WHERE event_kind = ${ATTACHMENT_EVENTS.added} AND group_id = ${groupId}
+          WHERE event_kind = ${ADDED} AND group_id = ${groupId}
         `
         expect(audit).toHaveLength(1)
         expect(await attachments.list(groupId, note.id)).toEqual([added])
@@ -188,7 +204,7 @@ Deno.test("note attachments against Postgres", async (t) => {
       const { add, upload, editor, attachments, groupId } = await setUp(sql)
       await add(upload(editor, 100))
 
-      const noteFull = add(upload(editor), { ...NO_CAPS, maxPerNote: 1 })
+      const noteFull = add(upload(editor), { ...NO_CAPS, maxPerRecord: 1 })
       await expect(noteFull).rejects.toBeInstanceOf(AttachmentError)
       await expect(add(upload(editor), { ...NO_CAPS, maxFiles: 1 })).rejects.toMatchObject({
         entitlement: "maxAttachments",
@@ -275,7 +291,6 @@ Deno.test("note attachments against Postgres", async (t) => {
       "200 signs sent at once by one person pass neither the waiting cap nor the hourly budget",
       async () => {
         const context = await setUp(sql)
-        const { attachments } = context
         const MiB = 1024 * 1024
         /** Sends 200 signs at once; how many were signed, and the codes of the refused ones. */
         const burst = async (userId: number, size: number, budget?: AttachmentUploadBudget) => {
@@ -294,13 +309,13 @@ Deno.test("note attachments against Postgres", async (t) => {
           signed: 20,
           refused: [`UPLOADS_PENDING`],
         })
-        expect(await attachments.countPending(context.editor)).toBe(20)
+        expect(await countPendingUploads(sql, context.editor)).toBe(20)
         // Ten files an hour, fewer than the waiting cap.
         expect(await burst(context.admin, 100, { files: 10, bytes: 50 * MiB })).toEqual({
           signed: 10,
           refused: [`UPLOAD_BUDGET`],
         })
-        expect(await attachments.signedInLastHour(context.admin)).toEqual({
+        expect(await uploadsInLastHour(sql, context.admin)).toEqual({
           files: 10,
           bytes: 1000,
         })
@@ -309,7 +324,7 @@ Deno.test("note attachments against Postgres", async (t) => {
           signed: 7,
           refused: [`UPLOAD_BUDGET`],
         })
-        expect(await attachments.signedInLastHour(context.onlyHere)).toEqual({
+        expect(await uploadsInLastHour(sql, context.onlyHere)).toEqual({
           files: 7,
           bytes: 14 * MiB,
         })

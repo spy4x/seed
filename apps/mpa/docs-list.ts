@@ -325,7 +325,8 @@ export const PUBLISHED_DOCS: readonly PublishedDocGroup[] = [
         file: `docs/attachments-and-pictures.md`,
         slug: `attachments-and-pictures`,
         text: attachmentsAndPictures,
-        summary: `Files kept on a note, and a person's picture in place of their initials.`,
+        summary:
+          `Files kept on a note or any record, and a person's picture in place of their initials.`,
       },
       {
         file: `docs/large-group.md`,

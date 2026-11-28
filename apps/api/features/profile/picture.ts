@@ -20,7 +20,7 @@ import {
   type SignedPictureUpload,
   type User,
 } from "@domain/identity"
-import type { AttachmentUploadBudget } from "@domain/notes"
+import type { AttachmentUploadBudget } from "@domain/attachments"
 import type { StoredPicture } from "@server/auth/profile-pictures.ts"
 import { FileRefusal, fileRule, type FileStore } from "@server/files/files.ts"
 import type { LedgerUpload, UploadRefusal } from "@server/files/upload-ledger.ts"
@@ -108,7 +108,7 @@ async function deleteReplaced(
  * `picture.sign`: the person asks to upload a picture of their own. The type and size are checked
  * before anything is signed, and again on the stored bytes at the confirm. The upload is kept in
  * the ledger every feature shares, under the person's lock, so their waiting uploads and hourly
- * budget count note attachments and pictures together.
+ * budget count attachments of every kind and pictures together.
  */
 export function createPictureSignHandler(
   { pictures, files, budget }: PictureHandlerDependencies,
@@ -119,7 +119,8 @@ export function createPictureSignHandler(
     const id = uuidV7()
     const refusal = await pictures.reserve({
       id,
-      noteId: null,
+      recordKind: null,
+      recordId: null,
       userId: data.actor.userId,
       stagingKey: upload.output.stagingKey,
       name: PICTURE_AUDIT_IDENTIFIER,

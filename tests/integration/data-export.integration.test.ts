@@ -187,11 +187,12 @@ Deno.test("data export: lists the files the person attached, never another perso
     `
 
     const files = unzip(await buildDataExport(sql, editor, new Date()))
-    const rows = JSON.parse(files[`data.json`]).sections.note_attachments
+    const rows = JSON.parse(files[`data.json`]).sections.attachments
 
     expect(rows).toEqual([expect.objectContaining({
       id: mine,
-      noteId: shared,
+      kind: `note`,
+      recordId: shared,
       groupId,
       name: `scan.pdf`,
       contentType: `application/pdf`,
@@ -200,8 +201,9 @@ Deno.test("data export: lists the files the person attached, never another perso
     const text = Object.values(files).join(`\n`)
     expect(text).not.toContain(`owner.png`)
     expect(text).not.toContain(`attachments/${mine}`)
-    expect(files[`note_attachments.csv`].split(`\r\n`)[0]).toBe(
-      `\uFEFFid,noteId,groupId,name,contentType,sizeBytes,createdAt`,
+    expect(text).not.toContain(`Owner's note`)
+    expect(files[`attachments.csv`].split(`\r\n`)[0]).toBe(
+      `\uFEFFid,kind,recordId,groupId,name,contentType,sizeBytes,createdAt`,
     )
   })
 })
@@ -439,7 +441,7 @@ Deno.test("data export: with the notes off, the build job writes no note, tag or
 
     const files = await exportThroughRegistry(sql, editor, NOTES_OFF)
 
-    const left = [`notes`, `note_attachments`, `tags`]
+    const left = [`notes`, `attachments`, `tags`]
     const kept = DATA_EXPORT_SECTIONS.filter((section) => !left.includes(section.name))
     expect(Object.keys(files).sort()).toEqual(
       [`README.txt`, `data.json`, ...kept.map((section) => `${section.name}.csv`)].sort(),

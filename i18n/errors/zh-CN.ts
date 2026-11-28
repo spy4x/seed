@@ -137,7 +137,7 @@ export default {
   "Reason.NAME_MISMATCH": "这不是群组的名称，请按显示的内容准确输入。",
   "Reason.NAME_TAKEN": "已有其他渠道使用这个名称。",
   "Reason.NEWSLETTER_OFF": "邮件简报已关闭，因此无法通过邮件发送。",
-  "Reason.NOTE_FULL": "这条笔记的文件数量已达上限，请先移除一个。",
+  "Reason.RECORD_FULL": "此项的文件数量已达上限，请先移除一个。",
   "Reason.NOTE_NOT_FOUND": "这条笔记已不存在。",
   "Reason.NOTHING_TO_MOVE": "没有可移动的内容。",
   "Reason.NOTIFICATION_NOT_FOUND": "这条通知已不存在。",

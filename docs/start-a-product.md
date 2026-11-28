@@ -209,7 +209,7 @@ there.
 | Set    | The Stats guide link                     | `ADMIN_STATS_SETUP_URL` in `libs/ui/admin-stats-screen.tsx` |
 
 `NOTES=false` turns the notes example off while its files stay as Seed has them, so later syncs
-merge cleanly. The API then answers 404 to every note, tag and attachment route and to the
+merge cleanly. The API then answers 404 to every note, tag and note attachment route and to the
 personal-token API (`/api/v1`), which serves notes only, and refuses their operations over the
 socket and `/api/call` as unknown ones. The changes pull and the Telegram bot's `/notes` leave
 them out too, and the admin app's group page shows no note widgets, no Files tab and no note, tag

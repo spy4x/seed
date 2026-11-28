@@ -12,8 +12,9 @@ import { PostgresInvitationRepository } from "@server/groups/postgres-invitation
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { AppDbBase } from "../../api/services/db-base.ts"
 import type { ServerFiles } from "@server/files/files.ts"
-import { attachmentObjectKey } from "@domain/notes"
+import { attachmentObjectKey } from "@domain/attachments"
 import { NOTES_ON, type NotesSetup } from "@server/notes/setup.ts"
+import { noteAttachmentKind } from "@server/notes/attachment-kind.ts"
 import { ImportStatus } from "@domain/imports"
 import { sampleFile } from "./sample-files.ts"
 import { createSignIn } from "../../api/services/sign-in.ts"
@@ -410,11 +411,12 @@ async function seedGroups(
         const key = attachmentObjectKey(fileId)
         const sample = sampleFile(file.kind, note.title)
         await files!.put(key, sample.bytes)
-        await db.attachment.add(
+        // No caps, so the other kinds' files need not be counted.
+        await db.attachments([noteAttachmentKind], noteAttachmentKind.name).add(
           groupId,
           {
             id: fileId,
-            noteId: id,
+            recordId: id,
             userId: author,
             stagingKey: key,
             name: file.name,
@@ -422,7 +424,7 @@ async function seedGroups(
             size: sample.bytes.length,
           },
           key,
-          { maxFiles: null, maxBytes: null, maxPerNote: Infinity },
+          { maxFiles: null, maxBytes: null, maxPerRecord: Infinity },
           author,
         )
         await sql`UPDATE note_attachments SET created_at = ${when} WHERE id = ${fileId}`

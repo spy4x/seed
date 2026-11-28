@@ -35,8 +35,8 @@ export type FeatureKey =
  * - `maxMembers`: members of the group, the owner included. Creating an invitation and accepting
  *   one count against it; a pending invitation takes no seat.
  * - `maxNotes`: notes in the group that are not deleted.
- * - `maxAttachments`: files attached to the group's notes, deleted notes' files included until the
- *   notes are purged.
+ * - `maxAttachments`: files attached to the group's records of every attachment kind (its notes
+ *   and any kind a product adds), deleted records' files included until the records are purged.
  * - `storageBytes`: bytes of those files.
  */
 export type LimitKey = "maxMembers" | "maxNotes" | "maxAttachments" | "storageBytes"
@@ -54,13 +54,13 @@ export const UNLIMITED: Entitlements = {
 }
 
 /**
- * The rules for one file and one note: the largest file, and how many files one note holds. They
- * hold with billing off too: they protect the store and the note page, they are not what a plan
- * sells. A plan may raise them.
+ * The rules for one file and one record of any attachment kind: the largest file, and how many
+ * files one record (a note) holds. They hold with billing off too: they protect the store and the
+ * record's page, they are not what a plan sells. A plan may raise them.
  */
 export interface AttachmentRules {
   maxFileBytes: number
-  maxPerNote: number
+  maxPerRecord: number
 }
 
 /** What a command needs from the group's plan: a feature it includes, or room under a cap. */
@@ -130,7 +130,7 @@ export const PLANS: readonly Plan[] = [
         storageBytes: 200 * 1024 * 1024,
       },
     },
-    attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
+    attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerRecord: 10 },
     trialDays: 0,
     perSeat: false,
   },
@@ -157,7 +157,7 @@ export const PLANS: readonly Plan[] = [
         storageBytes: 10 * 1024 * 1024 * 1024,
       },
     },
-    attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
+    attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerRecord: 10 },
     trialDays: 14,
     perSeat: true,
   },

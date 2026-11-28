@@ -10,7 +10,7 @@ import { files } from "../services/files.ts"
 
 /**
  * What the profile picture handlers run on: the `users` row and the upload ledger, the file store
- * and the hourly budget note attachments spend too. A change of picture and the person's audit
+ * and the hourly budget attachments spend too. A change of picture and the person's audit
  * row are written in one transaction.
  */
 export const pictureDependencies: PictureHandlerDependencies = {
@@ -21,7 +21,7 @@ export const pictureDependencies: PictureHandlerDependencies = {
     reserve: (upload, budget) => db.pictures.reserve(upload, budget),
     claim: (id, userId) => db.pictures.claim(id, userId),
     release: (id, userId) => db.pictures.release(id, userId),
-    forgetDeletion: (objectKey) => db.attachment.forgetDeletion(objectKey),
+    forgetDeletion: (objectKey) => db.pictures.forgetDeletion(objectKey),
     set: (userId, picture, request) =>
       db.begin(async (tx) => {
         const result = await tx.pictures.set(userId, picture)

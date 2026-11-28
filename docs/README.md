@@ -86,8 +86,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [The website's server](website-server.md): the small server layer the public website runs on,
   `@spy4x/preact-server`, which replaced Fresh.
 - [The app shell](offline-app-shell.md): how the service worker starts the app with no network.
-- [Note attachments and profile pictures](attachments-and-pictures.md): files kept on a note, and a
-  person's picture in place of their initials.
+- [Attachments and profile pictures](attachments-and-pictures.md): files kept on a note or any
+  record, and a person's picture in place of their initials.
 - [One large group](large-group.md): how one group behaves from a thousand notes to a million.
 
 ## Reference

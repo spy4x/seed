@@ -132,12 +132,13 @@ describe(`the notes switch`, () => {
     expect(dispatched).toEqual([])
   })
 
-  it(`refuses every note, tag, attachment and widget operation as an unknown one with the notes off`, async () => {
+  it(`refuses every note, tag and widget operation as an unknown one with the notes off`, async () => {
     const names = Object.keys(createNotesOperations(NOTES_ON, fakeBuses().dependencies))
     for (const name of [`note.create`, `note.search`, `note.widget.total`, `tag.list`]) {
       expect(names).toContain(name)
     }
-    expect(names).toContain(`attachment.download`)
+    // Attachments are their kinds' own table (`createAttachmentOperations`), not the notes'.
+    expect(names.filter((name) => name.startsWith(`attachment.`))).toEqual([])
 
     const { dependencies, dispatched } = fakeBuses()
     const off = createNotesOperations(NOTES_OFF, dependencies)

@@ -10,13 +10,12 @@ a small S3 server, beside the apps, so a self-hosted product needs no outside se
 another S3 store is a change of settings.
 
 Browsers upload and download with signed URLs. The API signs, the store checks the signature, and
-no file passes through the API. Note attachments, profile pictures and data exports use it.
+no file passes through the API. Attachments, profile pictures and data exports use it.
 
 The other parts of this guide:
 
 - [Add file uploads to a feature](file-uploads.md): the signed upload, keys and processed images.
-- [Note attachments and profile pictures](attachments-and-pictures.md): the two features built on
-  it.
+- [Attachments and profile pictures](attachments-and-pictures.md): the two features built on it.
 
 ## Use the bundled Garage
 
@@ -98,8 +97,8 @@ signature covers the host. Both use path-style addresses: `<endpoint>/<bucket>/<
 
 ## Upload budget
 
-Whatever the plan, one person signs at most 50 uploads and 50 MiB an hour. Note attachments and
-profile pictures count together, confirmed or not. More is refused with `UPLOAD_BUDGET`, a 429 over
+Whatever the plan, one person signs at most 50 uploads and 50 MiB an hour. Attachments of every
+kind and profile pictures count together, confirmed or not. More is refused with `UPLOAD_BUDGET`, a 429 over
 HTTP. This stops one account, a guest of the public demo included, from filling the server's disk.
 
 | Variable                           | What it does                     | Default           |
@@ -151,5 +150,5 @@ sent as a PNG. CI does not run it, since CI's steps have no container tool.
 ## Next
 
 - [Add file uploads to a feature](file-uploads.md)
-- [Note attachments and profile pictures](attachments-and-pictures.md)
+- [Attachments and profile pictures](attachments-and-pictures.md)
 - [Backups](backups.md)

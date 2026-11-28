@@ -3,7 +3,8 @@ import { describe, it } from "@std/testing/bdd"
 import { drainMicrotasks, FakeClock, FakeSocket } from "@spy4x/realtime/testing"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { GroupError } from "@domain/groups"
-import { AttachmentError, NoteError, NoteVersionConflictError } from "@domain/notes"
+import { AttachmentError } from "@domain/attachments"
+import { NoteError, NoteVersionConflictError } from "@domain/notes"
 import {
   AccessError,
   type Actor,

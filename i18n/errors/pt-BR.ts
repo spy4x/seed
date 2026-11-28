@@ -159,7 +159,7 @@ export default {
   "Reason.NAME_MISMATCH": "Esse não é o nome do grupo. Digite exatamente como aparece.",
   "Reason.NAME_TAKEN": "Outro canal já usa este nome.",
   "Reason.NEWSLETTER_OFF": "A newsletter está desligada, então não dá para enviar isto por e-mail.",
-  "Reason.NOTE_FULL": "Esta nota já tem o máximo de arquivos. Remova um antes.",
+  "Reason.RECORD_FULL": "Este item já tem o máximo de arquivos. Remova um antes.",
   "Reason.NOTE_NOT_FOUND": "Esta nota não existe mais.",
   "Reason.NOTHING_TO_MOVE": "Não há nada para mover.",
   "Reason.NOTIFICATION_NOT_FOUND": "Esta notificação não existe mais.",

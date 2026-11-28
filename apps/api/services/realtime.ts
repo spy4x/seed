@@ -12,7 +12,8 @@ import {
 import { createOperationDispatcher, type Operations } from "@spy4x/realtime/operations"
 import { GROUP_AGGREGATE, GroupError } from "@domain/groups"
 import { AccessError, type Actor, PictureError, userChangeGroupId } from "@domain/identity"
-import { AttachmentError, NoteError, NoteVersionConflictError } from "@domain/notes"
+import { AttachmentError } from "@domain/attachments"
+import { NoteError, NoteVersionConflictError } from "@domain/notes"
 import { TagError, TagVersionConflictError } from "@domain/tags"
 import { PlanError, toPlanRefusal } from "@domain/billing"
 import { IdempotencyError } from "@spy4x/server/idempotency"
@@ -182,7 +183,7 @@ const ATTACHMENT_ERROR_CODES: Record<
   FILE_TOO_LARGE: "bad_request",
   FILE_TYPE: "bad_request",
   INVALID_REQUEST: "bad_request",
-  NOTE_FULL: "conflict",
+  RECORD_FULL: "conflict",
   UPLOADS_PENDING: "conflict",
   UPLOAD_BUDGET: "rate_limited",
   UPLOAD_NOT_FOUND: "not_found",

@@ -14,7 +14,12 @@
 
 import type postgres from "postgres"
 import { TELEGRAM_METHOD } from "@domain/identity"
-import type { NotesSetup } from "../notes/setup.ts"
+import { NOTES_ON, type NotesSetup } from "../notes/setup.ts"
+import { attachmentFiles, type AttachmentKind } from "../attachments/kind.ts"
+import { attachmentKinds } from "../attachments/registry.ts"
+
+/** The section of every kind's attachments: `attachments.csv` and its JSON key. */
+const ATTACHMENTS_SECTION = `attachments`
 
 /** One kind of row in the export. */
 export interface DataExportSection {
@@ -162,20 +167,7 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
         AND notes.group_id IN (${memberOf(sql, userId)})
       ORDER BY notes.created_at, notes.id`,
   },
-  {
-    // The files the person attached, in groups they still belong to: what each is, never its
-    // bytes, which stay in the app's file store and open from the note.
-    name: `note_attachments`,
-    columns: [`id`, `noteId`, `groupId`, `name`, `contentType`, `sizeBytes`, `createdAt`],
-    rows: (sql, userId) =>
-      sql`SELECT note_attachments.id, note_attachments.note_id, notes.group_id,
-        note_attachments.name, note_attachments.content_type, note_attachments.size_bytes,
-        note_attachments.created_at
-      FROM note_attachments JOIN notes ON notes.id = note_attachments.note_id
-      WHERE note_attachments.created_by_user_id = ${userId}
-        AND notes.group_id IN (${memberOf(sql, userId)})
-      ORDER BY note_attachments.created_at, note_attachments.id`,
-  },
+  attachmentsSection(attachmentKinds(NOTES_ON)),
   {
     name: `tags`,
     columns: [`id`, `groupId`, `name`, `color`, `createdAt`, `updatedAt`],
@@ -312,12 +304,46 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
   },
 ]
 
-/** The sections the notes example adds: none of them is in the file with the notes off. */
-const NOTES_SECTIONS = [`notes`, `note_attachments`, `tags`]
+/**
+ * The files the person attached to records of every kind in `kinds`, in groups they still belong
+ * to: what each is and which record it sits on, never its bytes, which stay in the app's file
+ * store, and never the record's title, which another member may have written.
+ */
+export function attachmentsSection(kinds: readonly AttachmentKind[]): DataExportSection {
+  return {
+    name: ATTACHMENTS_SECTION,
+    columns: [
+      `id`,
+      `kind`,
+      `recordId`,
+      `groupId`,
+      `name`,
+      `contentType`,
+      `sizeBytes`,
+      `createdAt`,
+    ],
+    rows: (sql, userId) =>
+      sql`SELECT a.id, a.kind, a.record_id, a.group_id, a.name, a.content_type, a.size_bytes,
+        a.created_at
+      FROM (${attachmentFiles(sql, kinds)}) a
+      WHERE a.created_by_user_id = ${userId} AND a.group_id IN (${memberOf(sql, userId)})
+      ORDER BY a.created_at, a.id`,
+  }
+}
 
-/** The sections the export holds: with the notes off (`NOTES=false`), no note, attachment or tag. */
+/** The sections the notes example adds: none of them is in the file with the notes off. */
+const NOTES_SECTIONS = [`notes`, `tags`]
+
+/**
+ * The sections the export holds. With the notes off (`NOTES=false`), no note or tag, and the
+ * attachments of the kinds still served; no attachments section when no kind is.
+ */
 export function dataExportSectionsOf(notes: NotesSetup): readonly DataExportSection[] {
-  return notes.on
-    ? DATA_EXPORT_SECTIONS
-    : DATA_EXPORT_SECTIONS.filter((section) => !NOTES_SECTIONS.includes(section.name))
+  if (notes.on) return DATA_EXPORT_SECTIONS
+  const kinds = attachmentKinds(notes)
+  return DATA_EXPORT_SECTIONS.flatMap((section) => {
+    if (NOTES_SECTIONS.includes(section.name)) return []
+    if (section.name !== ATTACHMENTS_SECTION) return [section]
+    return kinds.length === 0 ? [] : [attachmentsSection(kinds)]
+  })
 }
