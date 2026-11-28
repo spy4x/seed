@@ -101,10 +101,11 @@ Deno.test("silenceCuts cuts only gaps longer than the threshold and keeps 0.2 s 
 Deno.test("silenceCuts keeps a gap of the threshold or shorter", () => {
   const close: Word[] = [
     { start: 0, end: 0.5, text: `a` },
-    { start: 1.1, end: 1.5, text: `b` }, // 0.6 s gap
-    { start: 2.3, end: 2.7, text: `c` }, // 0.8 s gap, exactly the threshold
+    { start: 1.1, end: 1.4, text: `b` }, // 0.6 s gap
+    { start: 2.2, end: 2.7, text: `c` }, // 0.8 s gap, the threshold (0.8000…3 in floating point)
+    { start: 3.5, end: 3.9, text: `d` }, // 0.8 s gap, the threshold (0.7999…8 in floating point)
   ]
-  expect(silenceCuts(close, 2.7)).toEqual([])
+  expect(silenceCuts(close, 3.9)).toEqual([])
 })
 
 Deno.test("silenceCuts cuts a long lead-in and a long tail", () => {

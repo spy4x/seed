@@ -251,15 +251,15 @@ export function silenceCuts(
   const add = (start: number, end: number) => {
     if (end - start > EPSILON) cuts.push({ start: ms(start), end: ms(end), reason: `silence` })
   }
-  if (words[0].start > minSilence) add(0, words[0].start - SILENCE_PAD_SECONDS)
+  // Gaps are rounded to the millisecond, so 2.3 − 1.5 (0.7999… in floating point) counts as 0.8.
+  if (ms(words[0].start) > minSilence) add(0, words[0].start - SILENCE_PAD_SECONDS)
   for (let i = 1; i < words.length; i++) {
-    const gap = words[i].start - words[i - 1].end
-    if (gap > minSilence) {
+    if (ms(words[i].start - words[i - 1].end) > minSilence) {
       add(words[i - 1].end + SILENCE_PAD_SECONDS, words[i].start - SILENCE_PAD_SECONDS)
     }
   }
   const last = words[words.length - 1]
-  if (mediaSeconds - last.end > minSilence) add(last.end + SILENCE_PAD_SECONDS, mediaSeconds)
+  if (ms(mediaSeconds - last.end) > minSilence) add(last.end + SILENCE_PAD_SECONDS, mediaSeconds)
   return cuts
 }
 
