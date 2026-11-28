@@ -153,9 +153,10 @@ export const ADMIN_GROUP_FILES_PAGE_SIZE = 25
 export const ADMIN_GROUP_FILE_SEARCH_MAX_LENGTH = 100
 
 /**
- * One file on a note of the group, as the operator sees it: its name, type, size, uploader, date
- * and its note's title. The name and the title are the exception to "counts only": an operator
- * needs them to find an abusive file among many.
+ * One file on a record of the group (a note, or a record of any other attachment kind), as the
+ * operator sees it: its name, type, size, uploader, date and its record's title. The name and the
+ * title are the exception to "counts only": an operator needs them to find an abusive file among
+ * many.
  */
 export interface AdminGroupFile {
   id: string
@@ -165,10 +166,12 @@ export interface AdminGroupFile {
   /** `null` once the account is gone. */
   uploader: AdminGroupPerson | null
   createdAt: string
-  /** The title of the note the file sits in, at most 100 characters; empty for an untitled note. */
-  noteTitle: string
-  /** The file's note is in the trash; the file goes when the note is purged. */
-  noteDeleted: boolean
+  /** The attachment kind of the record the file sits on: `note`. */
+  kind: string
+  /** The title of the record the file sits on, at most 100 characters; empty for an untitled one. */
+  recordTitle: string
+  /** The file's record is in the trash; the file goes when the record is purged. */
+  recordDeleted: boolean
 }
 
 /** The search and page of the Files tab, as the page's address and the API's query carry them. */

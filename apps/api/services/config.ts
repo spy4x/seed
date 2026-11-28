@@ -1,4 +1,4 @@
-import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
+import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/attachments"
 import { OPERATION_BUDGET, type OperationBudget } from "../middlewares/operation-rate-limits.ts"
 import { processEnv } from "@spy4x/platform/server/process"
 import { isSpaOn, readApiEnv, vapidKeysPath } from "./config-env.ts"
@@ -47,7 +47,7 @@ export class Config {
   spa = isSpaOn(env)
   /** The notes example: on unless `NOTES=false` (`readNotesSetup`); off, nothing serves notes. */
   notes = readNotesSetup(processEnv)
-  /** What one person may upload to note attachments per hour (docs/files.md, "Upload budget"). */
+  /** What one person may upload to attachments and pictures per hour (docs/files.md, "Upload budget"). */
   attachmentUploadBudget = {
     files: wholeNumber(
       "ATTACHMENT_UPLOAD_FILES_PER_HOUR",

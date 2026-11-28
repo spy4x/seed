@@ -9,7 +9,7 @@ import {
   type AttachmentListResult,
   type AttachmentUsage,
   type SignedAttachmentUpload,
-} from "@domain/notes"
+} from "@domain/attachments"
 import type { KeyedMessage, Message } from "@ui/message.ts"
 import { callCommand, callQuery, canCall } from "../modules.ts"
 import { preferencesState } from "./preferences.ts"
@@ -103,10 +103,10 @@ function refusalOf(error: unknown, name: string, size: number, locale: string): 
       return typeError(name)
     case `FILE_TOO_LARGE`:
       return sizeError(name, size, limit ?? DEFAULT_RULES.maxFileBytes, locale)
-    case `NOTE_FULL`:
+    case `RECORD_FULL`:
       return {
         key: `AttachmentMessages.noteFull`,
-        values: { count: limit ?? DEFAULT_RULES.maxPerNote, name },
+        values: { count: limit ?? DEFAULT_RULES.maxPerRecord, name },
       }
     case `UPLOADS_PENDING`:
       return { key: `AttachmentMessages.pending`, values: { name } }
@@ -271,7 +271,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
     const rules = usage.value ?? DEFAULT_RULES
     const problems: Message[] = []
     const overflow: string[] = []
-    let places = rules.maxPerNote - rows.value.filter(takesPlace).length
+    let places = rules.maxPerRecord - rows.value.filter(takesPlace).length
     plan.value = null
     for (const file of chosen) {
       if (!TYPES.includes(file.type)) problems.push(typeError(file.name))
@@ -294,7 +294,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
     if (overflow.length > 0) {
       problems.push({
         key: `AttachmentMessages.overflow`,
-        values: { count: overflow.length, max: rules.maxPerNote, names: overflow.join(`, `) },
+        values: { count: overflow.length, max: rules.maxPerRecord, names: overflow.join(`, `) },
       })
     }
     refusals.value = problems

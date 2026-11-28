@@ -48,10 +48,22 @@ export async function wipeDatabase(sql: postgres.Sql): Promise<string[]> {
     const names = rows.map((row) => row.name)
     // TRUNCATE fires no row trigger, so the attachments' objects, the profile pictures and their
     // processed widths are queued here, in the same transaction, for the clean-up to delete.
-    await tx`
-      INSERT INTO file_deletions (object_key) SELECT object_key FROM note_attachments
-      ON CONFLICT DO NOTHING
+    // Every attachment table, of every kind, is found by its deletion trigger.
+    const attachmentTables = await tx<{ name: string }[]>`
+      SELECT DISTINCT c.relname AS name FROM pg_trigger t
+      JOIN pg_class c ON c.oid = t.tgrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      JOIN pg_proc p ON p.oid = t.tgfoid
+      WHERE n.nspname = current_schema() AND p.proname = 'queue_attachment_deletion'
+        AND NOT t.tgisinternal
+      ORDER BY c.relname
     `
+    for (const { name } of attachmentTables) {
+      await tx`
+        INSERT INTO file_deletions (object_key) SELECT object_key FROM ${tx(name)}
+        ON CONFLICT DO NOTHING
+      `
+    }
     await tx`
       INSERT INTO file_deletions (object_key)
       SELECT 'pictures/' || picture_id FROM users WHERE picture_id IS NOT NULL

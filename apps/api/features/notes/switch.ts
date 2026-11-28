@@ -18,7 +18,6 @@ import { createNotesRoute } from "../../routes/notes.ts"
 import { createTagsRoute } from "../../routes/tags.ts"
 import { createTokenApiRoute, type TokenApiContext } from "../../routes/token-api.ts"
 import { createTagOperations } from "../tags/operations.ts"
-import { createAttachmentOperations } from "./attachments.ts"
 import type { NoteListDependencies } from "./list.ts"
 import { createNoteOperations } from "./operations.ts"
 import { createNoteWidgetOperations } from "./widgets.ts"
@@ -74,14 +73,6 @@ export function createNotesOperations(
       total: (query) => queryBus.execute(query),
       added: (query) => queryBus.execute(query),
       series: (query) => queryBus.execute(query),
-    }),
-    ...createAttachmentOperations({
-      sign: (command) => commandBus.execute(command),
-      confirm: (command) => commandBus.execute(command),
-      cancel: (command) => commandBus.execute(command),
-      remove: (command) => commandBus.execute(command),
-      list: (query) => queryBus.execute(query),
-      download: (query) => queryBus.execute(query),
     }),
     ...createTagOperations({
       create: (command) => commandBus.execute(command),

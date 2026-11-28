@@ -716,10 +716,10 @@ export function fileDetail(t: Translator<string>, file: AdminGroupFile, date: st
   const uploader = file.uploader
     ? adminGroupPersonName(t, file.uploader)
     : t.t(`AdminGroup.deletedAccount`)
-  const title = clipped(file.noteTitle.trim())
+  const title = clipped(file.recordTitle.trim())
   const key = title
-    ? file.noteDeleted ? `AdminGroup.fileInNoteTrash` : `AdminGroup.fileInNote`
-    : file.noteDeleted
+    ? file.recordDeleted ? `AdminGroup.fileInNoteTrash` : `AdminGroup.fileInNote`
+    : file.recordDeleted
     ? `AdminGroup.fileInUntitledTrash`
     : `AdminGroup.fileInUntitled`
   return t.t(key, { uploader, date, title })

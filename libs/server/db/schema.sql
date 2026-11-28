@@ -1136,13 +1136,14 @@ CREATE TABLE note_attachments (
 CREATE INDEX idx_note_attachments_note ON note_attachments (note_id, created_at, id);
 CREATE INDEX idx_note_attachments_created_by ON note_attachments (created_by_user_id);
 
--- An upload that was signed, by any feature: a note attachment's names its note, a profile
--- picture's has none. The browser PUTs to `staging_key`; the confirm settles this row
--- first (`settled_at`), so one upload is confirmed at most once, and only by `user_id`. The id is
--- the file's id once confirmed. The worker deletes rows older than a day.
+-- An upload that was signed, by any feature: an attachment's names its record by kind and id
+-- (`note`), a profile picture's has neither. No foreign key, since the kinds' records live in
+-- tables of their own: the confirm checks the record is still live under the group's lock. The
+-- browser PUTs to `staging_key`; the confirm settles this row first (`settled_at`), so one upload
+-- is confirmed at most once, only by `user_id` and only through its own kind. The id is the
+-- file's id once confirmed. The worker deletes rows older than a day.
 CREATE TABLE file_uploads (
     id UUID PRIMARY KEY,
-    note_id UUID REFERENCES notes(id) ON DELETE CASCADE,
     user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     staging_key VARCHAR(200) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -1152,11 +1153,14 @@ CREATE TABLE file_uploads (
     -- When the upload was confirmed or cancelled; NULL while it waits. A settled row stays until
     -- the clean-up, so the hourly upload budget still counts it.
     settled_at TIMESTAMPTZ(3),
+    record_kind VARCHAR(40),
+    record_id UUID,
     CONSTRAINT file_uploads_staging_key_unique UNIQUE (staging_key),
-    CONSTRAINT file_uploads_size_check CHECK (size_bytes >= 1)
+    CONSTRAINT file_uploads_size_check CHECK (size_bytes >= 1),
+    CONSTRAINT file_uploads_record_check CHECK ((record_kind IS NULL) = (record_id IS NULL))
 );
 
-CREATE INDEX idx_file_uploads_note ON file_uploads (note_id);
+CREATE INDEX idx_file_uploads_record ON file_uploads (record_kind, record_id);
 CREATE INDEX idx_file_uploads_user ON file_uploads (user_id);
 CREATE INDEX idx_file_uploads_created ON file_uploads (created_at);
 
@@ -1167,7 +1171,8 @@ CREATE TABLE file_deletions (
     queued_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
-CREATE FUNCTION queue_note_attachment_deletion() RETURNS trigger
+-- Every kind's attachment table queues its deleted rows' objects through this one function.
+CREATE FUNCTION queue_attachment_deletion() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO file_deletions (object_key) VALUES (OLD.object_key) ON CONFLICT DO NOTHING;
@@ -1177,7 +1182,7 @@ $$;
 
 CREATE TRIGGER note_attachments_queue_deletion
     AFTER DELETE ON note_attachments
-    FOR EACH ROW EXECUTE FUNCTION queue_note_attachment_deletion();
+    FOR EACH ROW EXECUTE FUNCTION queue_attachment_deletion();
 
 -- #464: an uploaded photo, keyed by its original's object, and the AVIF and WebP widths the
 -- worker made of it. `refused` is the processor's reason when it made none. A deleted row queues

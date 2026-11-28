@@ -7,7 +7,7 @@ import { FileInput } from "@spy4x/preact-ui/file-input"
 import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import type { PlanRefusal } from "@domain/billing"
-import { ATTACHMENT_TYPES, type AttachmentUsage } from "@domain/notes"
+import { ATTACHMENT_TYPES, type AttachmentUsage } from "@domain/attachments"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import type { Navigate } from "./progressive.tsx"
@@ -147,7 +147,7 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
   )
 
   if (readOnly && items.length === 0) return null
-  const perNote = usage?.maxPerNote ?? DEFAULT_PER_NOTE
+  const perNote = usage?.maxPerRecord ?? DEFAULT_PER_NOTE
   const placed = items.filter((item) => item.status !== "failed").length
   const quota = usage && !readOnly ? quotaLine(props.groupName, usage, t.language) : null
   const attachButton = () => section.current?.querySelector<HTMLElement>(`#${ATTACH_BUTTON_ID}`)

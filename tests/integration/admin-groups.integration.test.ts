@@ -421,11 +421,14 @@ Deno.test(`an operator sees a group's files with their names and notes, searches
 
     const files = await rows.files(groupId, every, 25)
     expect(JSON.stringify(files)).not.toContain(SECRET)
-    expect(files?.files.map((file) => [file.id, file.name, file.noteTitle, file.noteDeleted]))
-      .toEqual([
-        [second, `IMG_0001.png`, `Taxes`, true],
-        [first, `Receipt-March.pdf`, `Trip receipts`, false],
-      ])
+    expect(
+      files?.files.map((
+        file,
+      ) => [file.id, file.name, file.kind, file.recordTitle, file.recordDeleted]),
+    ).toEqual([
+      [second, `IMG_0001.png`, `note`, `Taxes`, true],
+      [first, `Receipt-March.pdf`, `note`, `Trip receipts`, false],
+    ])
     expect(files?.files.map((file) => file.uploader?.id)).toEqual([owner, editor])
     expect([files?.total, files?.all, files?.bytes]).toEqual([2, 2, 1000])
     expect((await rows.find(groupId))?.counts).toMatchObject({ files: 2, fileBytes: 1000 })
@@ -488,7 +491,8 @@ Deno.test(`a file is found only through its own group, and an operator's open or
       name: `IMG_0001.png`,
       contentType: `image/png`,
       objectKey: `attachments/${fileId}`,
-      noteId,
+      kind: `note`,
+      recordId: noteId,
     })
 
     const before = (await rows.find(groupId))!

@@ -5,8 +5,6 @@ import { type AttachmentRules, type Entitlements, PlanError } from "@domain/bill
 import { canManageBilling, type GroupRole } from "@domain/groups"
 import type { Actor } from "@domain/identity"
 import {
-  assertCanReadNotes,
-  assertCanWriteNotes,
   type Attachment,
   ATTACHMENT_TYPES,
   AttachmentCancelCommand,
@@ -16,6 +14,7 @@ import {
   attachmentDownloadPayloadSchema,
   AttachmentDownloadQuery,
   AttachmentError,
+  type AttachmentKindRules,
   attachmentListPayloadSchema,
   AttachmentListQuery,
   type AttachmentListResult,
@@ -27,10 +26,9 @@ import {
   attachmentSignPayloadSchema,
   type AttachmentUploadBudget,
   type GroupRoleLookup,
-  NoteError,
   parseAttachmentRequest,
   type SignedAttachmentUpload,
-} from "@domain/notes"
+} from "@domain/attachments"
 import { FileRefusal, fileRule, type FileStore } from "@server/files/files.ts"
 
 /** The group's plan, as the attachment handlers need it. */
@@ -40,12 +38,28 @@ export interface AttachmentPlans {
 }
 
 export interface AttachmentHandlerDependencies {
-  attachments: AttachmentRepository
+  /** Every kind the product serves; a command names one of them. */
+  kinds: readonly AttachmentKindRules[]
+  /** Where the kind `kind` keeps its files. */
+  attachments(kind: string): AttachmentRepository
   groups: GroupRoleLookup
   files: FileStore
   plans: AttachmentPlans
   /** What one person may sign per hour, whatever the plan. */
   budget: AttachmentUploadBudget
+}
+
+/**
+ * The kind a command names, and its repository. The operations set the name from their own
+ * registration, so an unknown one is a server bug; it is refused all the same.
+ */
+function kindOf(
+  { kinds, attachments }: Pick<AttachmentHandlerDependencies, "kinds" | "attachments">,
+  name: string,
+): { kind: AttachmentKindRules; repository: AttachmentRepository } {
+  const kind = kinds.find((candidate) => candidate.name === name)
+  if (!kind) throw new AttachmentError("INVALID_REQUEST", `No attachment kind ${name}`)
+  return { kind, repository: attachments(kind.name) }
 }
 
 /** The file store's refusal, as the attachment's error. */
@@ -69,31 +83,33 @@ function refusalError(refusal: FileRefusal, rules: AttachmentRules): AttachmentE
   }
 }
 
+/** The refusal of a record that holds as many files as its plan allows. */
+function recordFull(max: number): AttachmentError {
+  return new AttachmentError("RECORD_FULL", `A record holds up to ${max} files`, max)
+}
+
 /**
- * `attachment.sign`: an editor asks to upload one file to a live note. The type, the size, the
- * note's count and the group's caps are checked before anything is signed; the confirm checks them
- * all again, on the stored bytes and under the group's lock. The person's waiting uploads and
- * hourly budget are checked as the upload is kept, under the person's lock.
+ * `<prefix>.sign`: an editor asks to upload one file to a live record. The type, the size, the
+ * record's count and the group's caps (every kind's files together) are checked before anything
+ * is signed; the confirm checks them all again, on the stored bytes and under the group's lock.
+ * The person's waiting uploads and hourly budget are checked as the upload is kept, under the
+ * person's lock.
  */
 export function createAttachmentSignHandler(
-  { attachments, groups, files, plans, budget }: AttachmentHandlerDependencies,
+  dependencies: AttachmentHandlerDependencies,
 ): CommandHandler<AttachmentSignCommand> {
+  const { groups, files, plans, budget } = dependencies
   return async ({ data }): Promise<SignedAttachmentUpload> => {
+    const { kind, repository } = kindOf(dependencies, data.kind)
     const role = await groups.roleOf(data.groupId, data.actor.userId)
-    assertCanWriteNotes(role)
-    if (!await attachments.hasLiveNote(data.groupId, data.noteId)) {
-      throw new NoteError("NOTE_NOT_FOUND", "Note not found")
-    }
+    kind.assertCanWrite(role)
+    if (!await repository.hasLiveRecord(data.groupId, data.recordId)) throw kind.recordNotFound()
     const { limits, rules } = await plans.of(data.groupId)
     const rule = fileRule(ATTACHMENT_TYPES, rules.maxFileBytes)
-    if (await attachments.countForNote(data.noteId) >= rules.maxPerNote) {
-      throw new AttachmentError(
-        "NOTE_FULL",
-        `A note holds up to ${rules.maxPerNote} files`,
-        rules.maxPerNote,
-      )
+    if (await repository.countForRecord(data.recordId) >= rules.maxPerRecord) {
+      throw recordFull(rules.maxPerRecord)
     }
-    const usage = await attachments.usage(data.groupId)
+    const usage = await repository.usage(data.groupId)
     const room = { maxFiles: limits.maxAttachments, maxBytes: limits.storageBytes }
     // Refused here with the same answer the confirm would give, so no upload is spent on it.
     if (room.maxFiles !== null && usage.files >= room.maxFiles) {
@@ -108,9 +124,9 @@ export function createAttachmentSignHandler(
     // Refused past the person's waiting uploads or hourly budget. The plan caps what a group keeps;
     // the budget caps how fast one person writes to the store, with billing on or off, so nobody
     // fills the server's disk with uploads (the public demo included).
-    await attachments.createUpload({
+    await repository.createUpload({
       id,
-      noteId: data.noteId,
+      recordId: data.recordId,
       userId: data.actor.userId,
       stagingKey: upload.output.stagingKey,
       name: data.name,
@@ -133,18 +149,21 @@ function planRefusal(role: GroupRole, limit: "maxAttachments" | "storageBytes", 
 }
 
 /**
- * `attachment.confirm`: the uploader says the PUT is done. The waiting upload is taken first, so
- * it confirms once however many confirms arrive, and only for the person who signed it. The store
- * then moves the bytes to a key no browser can write and checks them (`FileStore.confirmUpload`),
- * and the row is added under the group's lock, which counts the caps again. A file refused at any
- * step is deleted.
+ * `<prefix>.confirm`: the uploader says the PUT is done. The waiting upload is taken first, so it
+ * confirms once however many confirms arrive, only for the person who signed it, and only through
+ * the kind it was signed for. The store then moves the bytes to a key no browser can write and
+ * checks them (`FileStore.confirmUpload`), and the row is added under the group's lock, which
+ * checks the record is still live and counts the caps again. A file refused at any step is
+ * deleted.
  */
 export function createAttachmentConfirmHandler(
-  { attachments, groups, files, plans }: AttachmentHandlerDependencies,
+  dependencies: AttachmentHandlerDependencies,
 ): CommandHandler<AttachmentConfirmCommand> {
+  const { groups, files, plans } = dependencies
   return async ({ data }): Promise<{ attachment: Attachment }> => {
-    assertCanWriteNotes(await groups.roleOf(data.groupId, data.actor.userId))
-    const upload = await attachments.claimUpload(data.id, data.actor.userId)
+    const { kind, repository } = kindOf(dependencies, data.kind)
+    kind.assertCanWrite(await groups.roleOf(data.groupId, data.actor.userId))
+    const upload = await repository.claimUpload(data.id, data.actor.userId)
     if (!upload) throw new AttachmentError("UPLOAD_NOT_FOUND", "Upload not found")
     const { limits, rules } = await plans.of(data.groupId)
     const key = attachmentObjectKey(upload.id)
@@ -154,10 +173,10 @@ export function createAttachmentConfirmHandler(
     })
     if (!confirmed.success) throw refusalError(confirmed.error, rules)
     try {
-      const attachment = await attachments.add(data.groupId, upload, key, {
+      const attachment = await repository.add(data.groupId, upload, key, {
         maxFiles: limits.maxAttachments,
         maxBytes: limits.storageBytes,
-        maxPerNote: rules.maxPerNote,
+        maxPerRecord: rules.maxPerRecord,
       }, data.actor.userId)
       return { attachment }
     } catch (error) {
@@ -168,14 +187,16 @@ export function createAttachmentConfirmHandler(
   }
 }
 
-/** `attachment.remove`: an editor removes a file. Its object is deleted now, or by the worker. */
+/** `<prefix>.remove`: an editor removes a file. Its object is deleted now, or by the worker. */
 export function createAttachmentRemoveHandler(
-  { attachments, groups, files }: AttachmentHandlerDependencies,
+  dependencies: AttachmentHandlerDependencies,
 ): CommandHandler<AttachmentRemoveCommand> {
+  const { groups, files } = dependencies
   return async ({ data }) => {
-    assertCanWriteNotes(await groups.roleOf(data.groupId, data.actor.userId))
-    const key = await attachments.remove(data.groupId, data.id, data.actor.userId, data.requestId)
-    await deleteStored(attachments, files, key)
+    const { kind, repository } = kindOf(dependencies, data.kind)
+    kind.assertCanWrite(await groups.roleOf(data.groupId, data.actor.userId))
+    const key = await repository.remove(data.groupId, data.id, data.actor.userId, data.requestId)
+    await deleteStored(repository, files, key)
     return { id: data.id }
   }
 }
@@ -197,18 +218,18 @@ export async function deleteStored(
   }
 }
 
-/** `attachment.list`: a live note's files and the group's room, for every member. */
+/** `<prefix>.list`: a live record's files and the group's room, for every member. */
 export function createAttachmentListHandler(
-  { attachments, groups, plans }: AttachmentHandlerDependencies,
+  dependencies: AttachmentHandlerDependencies,
 ): QueryHandler<AttachmentListQuery> {
+  const { groups, plans } = dependencies
   return async ({ data }): Promise<AttachmentListResult> => {
-    assertCanReadNotes(await groups.roleOf(data.groupId, data.actor.userId))
-    if (!await attachments.hasLiveNote(data.groupId, data.noteId)) {
-      throw new NoteError("NOTE_NOT_FOUND", "Note not found")
-    }
+    const { kind, repository } = kindOf(dependencies, data.kind)
+    kind.assertCanRead(await groups.roleOf(data.groupId, data.actor.userId))
+    if (!await repository.hasLiveRecord(data.groupId, data.recordId)) throw kind.recordNotFound()
     const [list, usage, plan] = await Promise.all([
-      attachments.list(data.groupId, data.noteId),
-      attachments.usage(data.groupId),
+      repository.list(data.groupId, data.recordId),
+      repository.usage(data.groupId),
       plans.of(data.groupId),
     ])
     return {
@@ -218,22 +239,24 @@ export function createAttachmentListHandler(
         maxFiles: plan.limits.maxAttachments,
         maxBytes: plan.limits.storageBytes,
         maxFileBytes: plan.rules.maxFileBytes,
-        maxPerNote: plan.rules.maxPerNote,
+        maxPerRecord: plan.rules.maxPerRecord,
       },
     }
   }
 }
 
 /**
- * `attachment.download`: a five-minute link to one file of a live note, for every member. The
+ * `<prefix>.download`: a five-minute link to one file of a live record, for every member. The
  * store answers with the confirmed type, an image in place and a PDF as an attachment.
  */
 export function createAttachmentDownloadHandler(
-  { attachments, groups, files }: AttachmentHandlerDependencies,
+  dependencies: AttachmentHandlerDependencies,
 ): QueryHandler<AttachmentDownloadQuery> {
+  const { groups, files } = dependencies
   return async ({ data }) => {
-    assertCanReadNotes(await groups.roleOf(data.groupId, data.actor.userId))
-    const attachment = await attachments.get(data.groupId, data.id)
+    const { kind, repository } = kindOf(dependencies, data.kind)
+    kind.assertCanRead(await groups.roleOf(data.groupId, data.actor.userId))
+    const attachment = await repository.get(data.groupId, data.id)
     if (!attachment) throw new AttachmentError("ATTACHMENT_NOT_FOUND", "File not found")
     const url = await files.signDownload(attachment.objectKey, {
       contentType: attachment.contentType,
@@ -244,14 +267,15 @@ export function createAttachmentDownloadHandler(
 }
 
 /**
- * `attachment.cancel`: the person drops an upload they signed, so it stops counting as waiting.
- * Only their own, and only while it waits; anything else is left as it is.
+ * `<prefix>.cancel`: the person drops an upload they signed, so it stops counting as waiting.
+ * Only their own, of this kind, and only while it waits; anything else is left as it is.
  */
 export function createAttachmentCancelHandler(
-  { attachments }: Pick<AttachmentHandlerDependencies, "attachments">,
+  dependencies: Pick<AttachmentHandlerDependencies, "kinds" | "attachments">,
 ): CommandHandler<AttachmentCancelCommand> {
   return async ({ data }): Promise<{ id: string }> => {
-    await attachments.releaseUpload(data.id, data.actor.userId)
+    const { repository } = kindOf(dependencies, data.kind)
+    await repository.releaseUpload(data.id, data.actor.userId)
     return { id: data.id }
   }
 }
@@ -266,57 +290,81 @@ export interface AttachmentOperationDependencies {
   download(query: AttachmentDownloadQuery): Promise<{ url: string }>
 }
 
-/** The attachment operations, listed once for the socket and `POST /api/call/<name>`. */
+/** What the operations read of a kind: its name, its prefix and its payload's record field. */
+export interface AttachmentOperationKind {
+  name: string
+  prefix: string
+  recordField: string
+}
+
+/**
+ * Every kind's attachment operations, listed once for the socket and `POST /api/call/<name>`:
+ * `<prefix>.sign`, `.confirm`, `.cancel`, `.remove`, `.list` and `.download` per kind. The
+ * commands name the kind from this registration, never from the payload.
+ */
 export function createAttachmentOperations(
+  kinds: readonly AttachmentOperationKind[],
   dependencies: AttachmentOperationDependencies,
 ): Operations<Actor> {
+  return Object.assign({}, ...kinds.map((kind) => kindOperations(kind, dependencies)))
+}
+
+/** One kind's six operations. */
+function kindOperations(
+  { name: kind, prefix, recordField }: AttachmentOperationKind,
+  dependencies: AttachmentOperationDependencies,
+): Operations<Actor> {
+  const parse = <S extends Parameters<typeof parseAttachmentRequest>[0]>(
+    schema: S,
+    payload: unknown,
+  ) => parseAttachmentRequest(schema, payload, recordField)
   return {
-    "attachment.sign": {
+    [`${prefix}.sign`]: {
       kind: "command",
       handle: async ({ actor, payload, idempotencyKey }) => {
-        const input = parseAttachmentRequest(attachmentSignPayloadSchema, payload)
+        const input = parse(attachmentSignPayloadSchema, payload)
         return await dependencies.sign(
-          new AttachmentSignCommand({ actor, ...input, idempotencyKey }),
+          new AttachmentSignCommand({ actor, ...input, kind, idempotencyKey }),
         )
       },
     },
-    "attachment.confirm": {
+    [`${prefix}.confirm`]: {
       kind: "command",
       handle: async ({ actor, requestId, payload, idempotencyKey }) => {
-        const input = parseAttachmentRequest(attachmentConfirmPayloadSchema, payload)
+        const input = parse(attachmentConfirmPayloadSchema, payload)
         return await dependencies.confirm(
-          new AttachmentConfirmCommand({ actor, ...input, requestId, idempotencyKey }),
+          new AttachmentConfirmCommand({ actor, ...input, kind, requestId, idempotencyKey }),
         )
       },
     },
-    "attachment.cancel": {
+    [`${prefix}.cancel`]: {
       kind: "command",
       handle: async ({ actor, payload }) => {
-        const input = parseAttachmentRequest(attachmentCancelPayloadSchema, payload)
-        return await dependencies.cancel(new AttachmentCancelCommand({ actor, ...input }))
+        const input = parse(attachmentCancelPayloadSchema, payload)
+        return await dependencies.cancel(new AttachmentCancelCommand({ actor, ...input, kind }))
       },
     },
-    "attachment.remove": {
+    [`${prefix}.remove`]: {
       kind: "command",
       handle: async ({ actor, requestId, payload, idempotencyKey }) => {
-        const input = parseAttachmentRequest(attachmentRemovePayloadSchema, payload)
+        const input = parse(attachmentRemovePayloadSchema, payload)
         return await dependencies.remove(
-          new AttachmentRemoveCommand({ actor, ...input, requestId, idempotencyKey }),
+          new AttachmentRemoveCommand({ actor, ...input, kind, requestId, idempotencyKey }),
         )
       },
     },
-    "attachment.list": {
+    [`${prefix}.list`]: {
       kind: "query",
       handle: async ({ actor, payload }) => {
-        const input = parseAttachmentRequest(attachmentListPayloadSchema, payload)
-        return await dependencies.list(new AttachmentListQuery({ actor, ...input }))
+        const input = parse(attachmentListPayloadSchema, payload)
+        return await dependencies.list(new AttachmentListQuery({ actor, ...input, kind }))
       },
     },
-    "attachment.download": {
+    [`${prefix}.download`]: {
       kind: "query",
       handle: async ({ actor, payload }) => {
-        const input = parseAttachmentRequest(attachmentDownloadPayloadSchema, payload)
-        return await dependencies.download(new AttachmentDownloadQuery({ actor, ...input }))
+        const input = parse(attachmentDownloadPayloadSchema, payload)
+        return await dependencies.download(new AttachmentDownloadQuery({ actor, ...input, kind }))
       },
     },
   }

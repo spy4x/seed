@@ -153,7 +153,7 @@ export default {
   "Reason.NAME_MISMATCH": "That's not the group's name. Type it exactly as shown.",
   "Reason.NAME_TAKEN": "Another channel already uses this name.",
   "Reason.NEWSLETTER_OFF": "The newsletter is off, so this can't be emailed.",
-  "Reason.NOTE_FULL": "This note has as many files as it can hold. Remove one first.",
+  "Reason.RECORD_FULL": "This note has as many files as it can hold. Remove one first.",
   "Reason.NOTE_NOT_FOUND": "This note no longer exists.",
   "Reason.NOTHING_TO_MOVE": "There's nothing to move.",
   "Reason.NOTIFICATION_NOT_FOUND": "This notification no longer exists.",

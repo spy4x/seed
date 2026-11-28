@@ -19,7 +19,7 @@ import {
   AttachmentListQuery,
   AttachmentRemoveCommand,
   AttachmentSignCommand,
-} from "@domain/notes"
+} from "@domain/attachments"
 import {
   createAttachmentCancelHandler,
   createAttachmentConfirmHandler,
@@ -27,7 +27,7 @@ import {
   createAttachmentListHandler,
   createAttachmentRemoveHandler,
   createAttachmentSignHandler,
-} from "../features/notes/attachments.ts"
+} from "../features/attachments/attachments.ts"
 import { attachmentDependencies } from "./attachment-dependencies.ts"
 import { queryBus } from "@api/services/queryBus.ts"
 import { subscribe } from "@api/services/eventBus.ts"
@@ -331,6 +331,22 @@ if (config.notes.on) {
   commandBus.register(NoteRestoreCommand, noteRestoreHandler)
   commandBus.register(NoteMoveCommand, noteMoveHandler)
   commandBus.register(TagCreateCommand, tagCreateHandler)
+  commandBus.register(TagUpdateCommand, tagUpdateHandler)
+  commandBus.register(TagDeleteCommand, tagDeleteHandler)
+  queryBus.register(NoteListQuery, noteListHandler)
+  queryBus.register(NoteGetQuery, noteGetHandler)
+  queryBus.register(NoteLocateQuery, noteLocateHandler)
+  queryBus.register(NoteSearchQuery, noteSearchHandler)
+  queryBus.register(NoteTotalWidgetQuery, noteTotalWidgetHandler)
+  queryBus.register(NoteAddedWidgetQuery, noteAddedWidgetHandler)
+  queryBus.register(NoteSeriesWidgetQuery, noteSeriesWidgetHandler)
+  queryBus.register(TagListQuery, tagListHandler)
+  queryBus.register(TagGetQuery, tagGetHandler)
+}
+
+// Attachments, on every kind the product serves (`attachmentKinds`): the notes' kind only while
+// the notes are on. With no kind, the buses refuse every attachment command and query.
+if (attachmentDependencies.kinds.length > 0) {
   commandBus.register(AttachmentSignCommand, createAttachmentSignHandler(attachmentDependencies))
   commandBus.register(
     AttachmentConfirmCommand,
@@ -344,22 +360,11 @@ if (config.notes.on) {
     AttachmentCancelCommand,
     createAttachmentCancelHandler(attachmentDependencies),
   )
-  commandBus.register(TagUpdateCommand, tagUpdateHandler)
-  commandBus.register(TagDeleteCommand, tagDeleteHandler)
-  queryBus.register(NoteListQuery, noteListHandler)
-  queryBus.register(NoteGetQuery, noteGetHandler)
-  queryBus.register(NoteLocateQuery, noteLocateHandler)
-  queryBus.register(NoteSearchQuery, noteSearchHandler)
-  queryBus.register(NoteTotalWidgetQuery, noteTotalWidgetHandler)
-  queryBus.register(NoteAddedWidgetQuery, noteAddedWidgetHandler)
-  queryBus.register(NoteSeriesWidgetQuery, noteSeriesWidgetHandler)
-  queryBus.register(TagListQuery, tagListHandler)
   queryBus.register(AttachmentListQuery, createAttachmentListHandler(attachmentDependencies))
   queryBus.register(
     AttachmentDownloadQuery,
     createAttachmentDownloadHandler(attachmentDependencies),
   )
-  queryBus.register(TagGetQuery, tagGetHandler)
 }
 
 console.log("✅ CQRS handlers initialized")

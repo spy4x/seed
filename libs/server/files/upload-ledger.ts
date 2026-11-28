@@ -3,16 +3,17 @@ import {
   ATTACHMENT_PENDING_MAX,
   ATTACHMENT_PENDING_MINUTES,
   type AttachmentUploadBudget,
-} from "@domain/notes"
+} from "@domain/attachments"
 
 /**
  * One signed upload in `file_uploads`, the ledger every feature's uploads share (docs/files.md), so
- * one person's waiting uploads and hourly budget count them all. `noteId` names a note
- * attachment's note; a profile picture's is `null`.
+ * one person's waiting uploads and hourly budget count them all. An attachment's names its record
+ * by kind and id (`note` and the note's id); a profile picture's has `null` for both.
  */
 export interface LedgerUpload {
   id: string
-  noteId: string | null
+  recordKind: string | null
+  recordId: string | null
   userId: number
   stagingKey: string
   name: string
@@ -23,8 +24,8 @@ export interface LedgerUpload {
 /** Why {@link reserveUpload} kept nothing: too many uploads wait, or the hour's budget is spent. */
 export type UploadRefusal = `UPLOADS_PENDING` | `UPLOAD_BUDGET`
 
-/** Which feature's uploads a settle may take: a note attachment's or a profile picture's. */
-export type UploadPurpose = `attachment` | `picture`
+/** Which feature's uploads a settle may take: an attachment's of one kind, or a profile picture's. */
+export type UploadPurpose = { recordKind: string } | `picture`
 
 /**
  * How many uploads the person signed in the last {@link ATTACHMENT_PENDING_MINUTES} minutes and
@@ -73,9 +74,9 @@ export async function reserveUpload(
     }
     await tx`
       INSERT INTO file_uploads (
-        id, note_id, user_id, staging_key, name, content_type, size_bytes
+        id, record_kind, record_id, user_id, staging_key, name, content_type, size_bytes
       ) VALUES (
-        ${upload.id}, ${upload.noteId}, ${upload.userId}, ${upload.stagingKey}, ${upload.name},
+        ${upload.id}, ${upload.recordKind}, ${upload.recordId}, ${upload.userId}, ${upload.stagingKey}, ${upload.name},
         ${upload.contentType}, ${upload.size}
       )
     `
@@ -86,7 +87,8 @@ export async function reserveUpload(
 /**
  * Settles the person's waiting upload of `purpose` and answers it, so a second confirm or cancel
  * finds nothing. The row stays for the hourly budget. `null` when it is not there, is settled
- * already, is another person's or is another feature's.
+ * already, is another person's or is another feature's: another kind's, or a picture's for an
+ * attachment and the other way round.
  */
 export async function settleUpload(
   sql: postgres.Sql,
@@ -94,11 +96,13 @@ export async function settleUpload(
   userId: number,
   purpose: UploadPurpose,
 ): Promise<LedgerUpload | null> {
-  const ofPurpose = purpose === `picture` ? sql`note_id IS NULL` : sql`note_id IS NOT NULL`
+  const ofPurpose = purpose === `picture`
+    ? sql`record_kind IS NULL`
+    : sql`record_kind = ${purpose.recordKind}`
   const [row] = await sql<LedgerUpload[]>`
     UPDATE file_uploads SET settled_at = now()
     WHERE id = ${id} AND user_id = ${userId} AND settled_at IS NULL AND ${ofPurpose}
-    RETURNING id, note_id, user_id, staging_key, name, content_type, size_bytes AS size
+    RETURNING id, record_kind, record_id, user_id, staging_key, name, content_type, size_bytes AS size
   `
   return row ?? null
 }

@@ -1,11 +1,17 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
 import type postgres from "postgres"
-import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
+import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/attachments"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { anyPicture, readablePicture, setUserPicture } from "@server/auth/profile-pictures.ts"
-import { type LedgerUpload, reserveUpload, settleUpload } from "@server/files/upload-ledger.ts"
-import { PostgresAttachmentRepository } from "@server/notes/postgres-attachment-repository.ts"
+import {
+  type LedgerUpload,
+  reserveUpload,
+  settleUpload,
+  uploadsInLastHour,
+} from "@server/files/upload-ledger.ts"
+import { PostgresAttachmentRepository } from "@server/attachments/postgres-attachment-repository.ts"
+import { noteAttachmentKind } from "@server/notes/attachment-kind.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
 
@@ -38,7 +44,8 @@ function pictureUpload(userId: number, size = 1000): LedgerUpload {
   const id = uuidV7()
   return {
     id,
-    noteId: null,
+    recordKind: null,
+    recordId: null,
     userId,
     stagingKey: `uploads/tmp/${id}`,
     name: `picture`,
@@ -127,12 +134,14 @@ Deno.test("profile pictures against Postgres", async (t) => {
         owner,
         null,
       )).note
-      const attachments = new PostgresAttachmentRepository(sql)
+      const attachments = new PostgresAttachmentRepository(sql, noteAttachmentKind, [
+        noteAttachmentKind,
+      ])
       const budget = { files: 2, bytes: ATTACHMENT_UPLOAD_BUDGET.bytes }
       const id = uuidV7()
       await attachments.createUpload({
         id,
-        noteId: note.id,
+        recordId: note.id,
         userId: owner,
         stagingKey: `uploads/tmp/${id}`,
         name: `scan.pdf`,
@@ -143,11 +152,11 @@ Deno.test("profile pictures against Postgres", async (t) => {
       const first = pictureUpload(owner)
       expect(await reserveUpload(sql, first, budget)).toBe(null)
       expect(await reserveUpload(sql, pictureUpload(owner), budget)).toBe(`UPLOAD_BUDGET`)
-      expect(await attachments.signedInLastHour(owner)).toEqual({ files: 2, bytes: 1100 })
+      expect(await uploadsInLastHour(sql, owner)).toEqual({ files: 2, bytes: 1100 })
     })
 
     await t.step(
-      "settles a picture upload only as a picture, and an attachment only as one",
+      "settles a picture upload only as a picture, and an attachment only as its own kind",
       async () => {
         const { editor, groupId, owner } = await team(sql)
         const note = (await new PostgresNoteRepository(sql).create(
@@ -157,17 +166,17 @@ Deno.test("profile pictures against Postgres", async (t) => {
         )).note
         const picture = pictureUpload(editor)
         await reserveUpload(sql, picture, ATTACHMENT_UPLOAD_BUDGET)
-        const attachment = { ...pictureUpload(editor), noteId: note.id }
+        const attachment = { ...pictureUpload(editor), recordKind: `note`, recordId: note.id }
         await reserveUpload(sql, attachment, ATTACHMENT_UPLOAD_BUDGET)
+        const asNote = { recordKind: `note` }
 
-        expect(await settleUpload(sql, picture.id, editor, `attachment`)).toBe(null)
+        expect(await settleUpload(sql, picture.id, editor, asNote)).toBe(null)
         expect(await settleUpload(sql, attachment.id, editor, `picture`)).toBe(null)
+        expect(await settleUpload(sql, attachment.id, editor, { recordKind: `task` })).toBe(null)
         expect(await settleUpload(sql, picture.id, owner, `picture`)).toBe(null)
         expect((await settleUpload(sql, picture.id, editor, `picture`))?.id).toBe(picture.id)
         expect(await settleUpload(sql, picture.id, editor, `picture`)).toBe(null)
-        expect((await settleUpload(sql, attachment.id, editor, `attachment`))?.id).toBe(
-          attachment.id,
-        )
+        expect((await settleUpload(sql, attachment.id, editor, asNote))?.id).toBe(attachment.id)
       },
     )
   })

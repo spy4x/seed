@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { RealtimeRequestError } from "@spy4x/realtime"
-import type { Attachment, AttachmentListResult } from "@domain/notes"
+import type { Attachment, AttachmentListResult } from "@domain/attachments"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import app from "@i18n/app/en.ts"
 import { messageText } from "@ui/message.ts"
@@ -21,13 +21,13 @@ const usage = {
   maxFiles: 100,
   maxBytes: 200 * MB,
   maxFileBytes: 2 * MB,
-  maxPerNote: 10,
+  maxPerRecord: 10,
 }
 
 function attachment(id: string, name: string, type = `application/pdf`, size = 1000): Attachment {
   return {
     id,
-    noteId: NOTE,
+    recordId: NOTE,
     name,
     contentType: type,
     size,

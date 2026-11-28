@@ -134,7 +134,7 @@ const base: NoteAttachmentsProps = {
     maxFiles: 100,
     maxBytes: 200 * MB,
     maxFileBytes: 2 * MB,
-    maxPerNote: 10,
+    maxPerRecord: 10,
   },
   refusals: [],
   plan: null,

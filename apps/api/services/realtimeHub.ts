@@ -11,6 +11,8 @@ import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
 import { createPictureOperations } from "../features/profile/picture.ts"
 import { createNotesOperations } from "../features/notes/switch.ts"
+import { createAttachmentOperations } from "../features/attachments/attachments.ts"
+import { attachmentKinds } from "@server/attachments/registry.ts"
 import { signIn } from "./auth.ts"
 import { kv } from "./cache.ts"
 import { commandBus } from "./commandBus.ts"
@@ -86,6 +88,15 @@ export const operations: Operations<Actor> = operationRateLimits.limit({
     cursor: noteListCursor,
     // A guest's first note gets the reminder to keep it; sent once, and only to guests.
     noteCreated: (userId) => signIn.guests.remind(userId, GuestReminderKind.FirstNote),
+  }),
+  // Every attachment kind's operations: `attachment.*` for the notes' kind, off with NOTES=false.
+  ...createAttachmentOperations(attachmentKinds(config.notes), {
+    sign: (command) => commandBus.execute(command),
+    confirm: (command) => commandBus.execute(command),
+    cancel: (command) => commandBus.execute(command),
+    remove: (command) => commandBus.execute(command),
+    list: (query) => queryBus.execute(query),
+    download: (query) => queryBus.execute(query),
   }),
   ...createPictureOperations({
     sign: (command) => commandBus.execute(command),

@@ -1,5 +1,5 @@
 import type postgres from "postgres"
-import type { AttachmentUploadBudget } from "@domain/notes"
+import type { AttachmentUploadBudget } from "@domain/attachments"
 import type { GroupChangesReader } from "@domain/groups"
 import {
   anyPicture,
@@ -44,7 +44,9 @@ import { tagPortable } from "@server/tags/tag-portable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
 import { tagMovable } from "@server/tags/tag-movable.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
-import { PostgresAttachmentRepository } from "@server/notes/postgres-attachment-repository.ts"
+import { PostgresAttachmentRepository } from "@server/attachments/postgres-attachment-repository.ts"
+import type { AttachmentKind } from "@server/attachments/kind.ts"
+import { attachmentKinds } from "@server/attachments/registry.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresNoteOverview } from "@server/notes/note-overview.ts"
 import { PostgresBillingRepository } from "@server/billing/postgres-billing-repository.ts"
@@ -358,8 +360,14 @@ export class AppDbBase extends DbServiceBase {
     return new PostgresTagRepository(this.sql)
   }
 
-  get attachment(): PostgresAttachmentRepository {
-    return new PostgresAttachmentRepository(this.sql)
+  /**
+   * The attachments of the kind named `name`, one of `kinds` (`attachmentKinds`), whose files the
+   * group's caps count together. Built per access, like `note`. Throws for a kind not in `kinds`.
+   */
+  attachments(kinds: readonly AttachmentKind[], name: string): PostgresAttachmentRepository {
+    const kind = kinds.find((candidate) => candidate.name === name)
+    if (!kind) throw new Error(`No attachment kind ${name}`)
+    return new PostgresAttachmentRepository(this.sql, kind, kinds)
   }
 
   /** Each group's subscription and customer. Built per access, like `group`. */
@@ -622,6 +630,10 @@ export class AppDbBase extends DbServiceBase {
       reserve: (upload: LedgerUpload, budget: AttachmentUploadBudget) =>
         reserveUpload(sql, upload, budget),
       claim: (id: string, userId: number) => settleUpload(sql, id, userId, `picture`),
+      /** Forgets a queued deletion once its object is gone. */
+      forgetDeletion: async (objectKey: string): Promise<void> => {
+        await sql`DELETE FROM file_deletions WHERE object_key = ${objectKey}`
+      },
       release: async (id: string, userId: number): Promise<void> => {
         await settleUpload(sql, id, userId, `picture`)
       },
@@ -687,7 +699,7 @@ export class AppDbBase extends DbServiceBase {
 
   /** The operator area's group reads and actions (`@server/groups/admin-groups.ts`). */
   get adminGroups(): ReturnType<typeof adminGroupRows> {
-    return adminGroupRows(this.sql)
+    return adminGroupRows(this.sql, attachmentKinds(this.notes))
   }
 
   /**

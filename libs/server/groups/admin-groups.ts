@@ -40,6 +40,7 @@ import {
   type AdminGroupSortKey,
   type AdminInvitationState,
   type AuditDetails,
+  type AuditEntityType,
   GROUP_FILE_EVENTS,
   type GroupColor,
   GroupError,
@@ -54,7 +55,10 @@ import {
 } from "@domain/identity"
 import { handOverBilling } from "@server/billing/handover.ts"
 import { apiTokenRows } from "@server/api-tokens/api-tokens.ts"
-import { removeAttachmentRow } from "@server/notes/postgres-attachment-repository.ts"
+import { removeAttachmentRow } from "@server/attachments/postgres-attachment-repository.ts"
+import { attachmentFiles, type AttachmentKind } from "@server/attachments/kind.ts"
+import { attachmentKinds } from "@server/attachments/registry.ts"
+import { NOTES_ON } from "@server/notes/setup.ts"
 import { writeAuditEvent } from "./audit.ts"
 import { recordAccessChange } from "./group-change-log.ts"
 import { notifyOwnershipReceived, notifyRemoved } from "./group-notifications.ts"
@@ -373,6 +377,7 @@ function exportFormatOf(details: AuditDetails): AdminGroupExport["format"] {
 export async function readAdminGroup(
   sql: postgres.Sql,
   groupId: string,
+  kinds: readonly AttachmentKind[] = attachmentKinds(NOTES_ON),
 ): Promise<AdminGroupDetail | null> {
   const [group] = await sql<GroupRowRaw[]>`
     SELECT ${groupColumns(sql)}
@@ -391,12 +396,11 @@ export async function readAdminGroup(
   >`
     SELECT
       (
-        SELECT COUNT(*)::int FROM note_attachments a JOIN notes n ON n.id = a.note_id
-        WHERE n.group_id = ${groupId}
+        SELECT COUNT(*)::int FROM (${attachmentFiles(sql, kinds)}) a WHERE a.group_id = ${groupId}
       ) AS files,
       (
-        SELECT COALESCE(SUM(a.size_bytes), 0)::text FROM note_attachments a
-        JOIN notes n ON n.id = a.note_id WHERE n.group_id = ${groupId}
+        SELECT COALESCE(SUM(a.size_bytes), 0)::text FROM (${attachmentFiles(sql, kinds)}) a
+        WHERE a.group_id = ${groupId}
       ) AS file_bytes,
       (
         SELECT COUNT(*)::int FROM notes WHERE group_id = ${groupId} AND deleted_at IS NOT NULL
@@ -755,15 +759,17 @@ export async function transferOwnershipAsOperator(
 }
 
 /**
- * One page of the group's files whose name holds `filter.query` (any case), newest first, those of
- * notes in the trash included, with how many match and the group's totals. Each with its name and
- * its note's title. `null` when there is no such group.
+ * One page of the group's files of every kind in `kinds` whose name holds `filter.query` (any
+ * case), newest first, those of records in the trash included, with how many match and the
+ * group's totals. Each with its name, its kind and its record's title. `null` when there is no such
+ * group.
  */
 export async function readAdminGroupFiles(
   sql: postgres.Sql,
   groupId: string,
   filter: AdminGroupFileFilter,
   pageSize: number,
+  kinds: readonly AttachmentKind[] = attachmentKinds(NOTES_ON),
 ): Promise<
   Pick<AdminGroupFiles, "files" | "total"> & { all: number; bytes: number } | null
 > {
@@ -777,29 +783,29 @@ export async function readAdminGroupFiles(
       contentType: string
       size: number
       createdAt: Date
-      noteTitle: string
-      noteDeleted: boolean
+      kind: string
+      recordTitle: string
+      recordDeleted: boolean
       uploaderId: number | null
       uploaderName: string | null
       uploaderEmail: string | null
     }[]
   >`
     SELECT
-      a.id, a.name, a.content_type, a.size_bytes AS size, a.created_at,
-      left(n.title, 100) AS note_title, (n.deleted_at IS NOT NULL) AS note_deleted,
+      a.id, a.name, a.content_type, a.size_bytes AS size, a.created_at, a.kind,
+      left(a.record_title, 100) AS record_title, a.record_deleted,
       ${personColumns(sql, `u`, `uploader`)}
-    FROM note_attachments a
-    JOIN notes n ON n.id = a.note_id
+    FROM (${attachmentFiles(sql, kinds)}) a
     LEFT JOIN users u ON u.id = a.created_by_user_id
-    WHERE n.group_id = ${groupId} ${matches}
+    WHERE a.group_id = ${groupId} ${matches}
     ORDER BY a.created_at DESC, a.id DESC
     LIMIT ${pageSize} OFFSET ${(filter.page - 1) * pageSize}
   `
   const [totals] = await sql<{ files: number; bytes: string; matching: number }[]>`
     SELECT COUNT(*)::int AS files, COALESCE(SUM(a.size_bytes), 0)::text AS bytes,
       (COUNT(*) FILTER (WHERE TRUE ${matches}))::int AS matching
-    FROM note_attachments a JOIN notes n ON n.id = a.note_id
-    WHERE n.group_id = ${groupId}
+    FROM (${attachmentFiles(sql, kinds)}) a
+    WHERE a.group_id = ${groupId}
   `
   return {
     files: rows.map((row) => ({
@@ -811,8 +817,9 @@ export async function readAdminGroupFiles(
         ? null
         : toPerson(row.uploaderId, row.uploaderName, row.uploaderEmail),
       createdAt: row.createdAt.toISOString(),
-      noteTitle: row.noteTitle,
-      noteDeleted: row.noteDeleted,
+      kind: row.kind,
+      recordTitle: row.recordTitle,
+      recordDeleted: row.recordDeleted,
     })),
     total: totals.matching,
     all: totals.files,
@@ -826,22 +833,25 @@ export interface AdminGroupStoredFile {
   name: string
   contentType: string
   objectKey: string
-  noteId: string
+  /** The attachment kind of the file's record: `note`. */
+  kind: string
+  recordId: string
 }
 
 /**
- * The file `fileId` when it sits on a note of the group `groupId`, in the trash or not, else
- * `null`: a file of another group is never found through this one's path.
+ * The file `fileId` when it sits on a record of the group `groupId`, of any kind in `kinds`, in the
+ * trash or not, else `null`: a file of another group is never found through this one's path.
  */
 export async function findAdminGroupFile(
   sql: postgres.Sql,
   groupId: string,
   fileId: string,
+  kinds: readonly AttachmentKind[] = attachmentKinds(NOTES_ON),
 ): Promise<AdminGroupStoredFile | null> {
   const [row] = await sql<AdminGroupStoredFile[]>`
-    SELECT a.id, a.name, a.content_type, a.object_key, a.note_id
-    FROM note_attachments a JOIN notes n ON n.id = a.note_id
-    WHERE a.id = ${fileId} AND n.group_id = ${groupId}
+    SELECT a.id, a.name, a.content_type, a.object_key, a.kind, a.record_id
+    FROM (${attachmentFiles(sql, kinds)}) a
+    WHERE a.id = ${fileId} AND a.group_id = ${groupId}
   `
   return row ?? null
 }
@@ -857,7 +867,7 @@ export async function recordFileAccessAsOperator(
   sql: postgres.Sql,
   operator: AdminGroupOperator,
   groupId: string,
-  file: Pick<AdminGroupStoredFile, "name" | "noteId">,
+  file: Pick<AdminGroupStoredFile, "name" | "kind" | "recordId">,
   access: "open" | "download",
   requestId: string | null,
 ): Promise<void> {
@@ -866,37 +876,50 @@ export async function recordFileAccessAsOperator(
     actorId: operator.id,
     groupId,
     requestId: requestId ?? undefined,
-    entityType: `note`,
-    entityId: file.noteId,
+    entityType: file.kind as AuditEntityType,
+    entityId: file.recordId,
     details: { name: file.name.slice(0, 100), [OPERATOR_DETAIL]: 1 },
   }, { ignoreRepeat: true })
 }
 
 /**
- * Removes one file of the group, from a live note or one in the trash, and writes the group's
- * audit row marked as the operator's. Its object is queued for deletion, and the worker's nightly
- * clean-up deletes it. A group in the trash is left as it is.
+ * Removes one file of the group, of any kind in `kinds`, from a live record or one in the trash,
+ * and writes the group's audit row marked as the operator's. Its object is queued for deletion,
+ * and the worker's nightly clean-up deletes it. A group in the trash is left as it is.
  */
 export async function removeFileAsOperator(
   sql: postgres.Sql,
   operator: AdminGroupOperator,
   groupId: string,
   fileId: string,
+  kinds: readonly AttachmentKind[] = attachmentKinds(NOTES_ON),
 ): Promise<AdminGroupActOutcome> {
   return await sql.begin(async (tx) => {
     const group = await lockGroup(tx, groupId)
     if (!group) return AdminGroupActOutcome.NotFound
     if (group.deleted) return AdminGroupActOutcome.GroupDeleted
-    const key = await removeAttachmentRow(tx, groupId, fileId, operator.id, { operator: true })
-    return key === null ? AdminGroupActOutcome.NotFound : AdminGroupActOutcome.Done
+    // A file id is one kind's: the first kind whose table holds it in this group removes it.
+    for (const kind of kinds) {
+      const key = await removeAttachmentRow(tx, kind, groupId, fileId, operator.id, {
+        operator: true,
+      })
+      if (key !== null) return AdminGroupActOutcome.Done
+    }
+    return AdminGroupActOutcome.NotFound
   }) as AdminGroupActOutcome
 }
 
-/** Every read and action of this module over one `sql` client: the shape `db.adminGroups` gives. */
-export function adminGroupRows(sql: postgres.Sql) {
+/**
+ * Every read and action of this module over one `sql` client: the shape `db.adminGroups` gives.
+ * `kinds` are the attachment kinds the product serves; their files are the group's files.
+ */
+export function adminGroupRows(
+  sql: postgres.Sql,
+  kinds: readonly AttachmentKind[] = attachmentKinds(NOTES_ON),
+) {
   return {
     list: (filter: AdminGroupFilter, pageSize: number) => listAdminGroups(sql, filter, pageSize),
-    find: (groupId: string) => readAdminGroup(sql, groupId),
+    find: (groupId: string) => readAdminGroup(sql, groupId, kinds),
     revokeInvitation: (operator: AdminGroupOperator, groupId: string, invitationId: string) =>
       revokeInvitationAsOperator(sql, operator, groupId, invitationId),
     removeMember: (operator: AdminGroupOperator, groupId: string, userId: number) =>
@@ -904,16 +927,16 @@ export function adminGroupRows(sql: postgres.Sql) {
     transferOwnership: (operator: AdminGroupOperator, groupId: string, userId: number) =>
       transferOwnershipAsOperator(sql, operator, groupId, userId),
     files: (groupId: string, filter: AdminGroupFileFilter, pageSize: number) =>
-      readAdminGroupFiles(sql, groupId, filter, pageSize),
-    file: (groupId: string, fileId: string) => findAdminGroupFile(sql, groupId, fileId),
+      readAdminGroupFiles(sql, groupId, filter, pageSize, kinds),
+    file: (groupId: string, fileId: string) => findAdminGroupFile(sql, groupId, fileId, kinds),
     recordFileAccess: (
       operator: AdminGroupOperator,
       groupId: string,
-      file: Pick<AdminGroupStoredFile, "name" | "noteId">,
+      file: Pick<AdminGroupStoredFile, "name" | "kind" | "recordId">,
       access: "open" | "download",
       requestId: string | null,
     ) => recordFileAccessAsOperator(sql, operator, groupId, file, access, requestId),
     removeFile: (operator: AdminGroupOperator, groupId: string, fileId: string) =>
-      removeFileAsOperator(sql, operator, groupId, fileId),
+      removeFileAsOperator(sql, operator, groupId, fileId, kinds),
   }
 }
