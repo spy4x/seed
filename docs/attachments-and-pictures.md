@@ -107,7 +107,9 @@ request. A kind reads, confirms and removes only its own rows in its own group: 
 for one kind is not found by another kind's confirm.
 
 `NOTES=false` leaves only the note kind out, so `attachment.*` is refused as unknown and every
-other kind keeps working.
+other kind keeps working. The admin app's Files tab is the exception: it is still mounted with the
+notes only ([admin-modules.md](admin-modules.md)), so with the notes off an operator does not see
+another kind's files there yet.
 
 `tests/integration/attachment-kinds.integration.test.ts` registers a second kind beside the note
 and is the example to copy.

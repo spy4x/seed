@@ -331,7 +331,8 @@ export function createAdminGroupsRoutes(
       if (!detail) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(detail)
     })
-  // The overview's widgets count notes and every file sits on a note: off with the notes.
+  // The overview's widgets count notes, and the admin app shows files under the notes' module:
+  // off with the notes, whatever other attachment kind is served.
   if (notes.on) mountNoteReads(routes)
   return routes
     .post(`/groups/:id/invitations/:invitationId/revoke`, limit, async (c) => {
