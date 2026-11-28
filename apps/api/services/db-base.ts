@@ -202,10 +202,10 @@ function switched<T>(notes: NotesSetup, aggregates: readonly T[], notesOwn: read
 
 /**
  * The aggregates a group's export file holds and an import writes: with the notes off
- * (`NOTES=false`), not notes or tags. An import skips the parts of the ones left out.
+ * (`NOTES=false`), not notes; tags stay. An import skips the parts of the ones left out.
  */
 export function portableAggregatesOf(notes: NotesSetup): readonly PortableAggregate[] {
-  return switched(notes, PORTABLE_AGGREGATES, [tagPortable, notePortable])
+  return switched(notes, PORTABLE_AGGREGATES, [notePortable])
 }
 
 /**
@@ -214,14 +214,14 @@ export function portableAggregatesOf(notes: NotesSetup): readonly PortableAggreg
  */
 export const CHANGES_AGGREGATES: readonly ChangesAggregate[] = [tagChanges, noteChanges]
 
-/** The aggregates the changes pull reads: with the notes off (`NOTES=false`), not notes or tags. */
+/** The aggregates the changes pull reads: with the notes off (`NOTES=false`), tags but no notes. */
 export function changesAggregatesOf(notes: NotesSetup): readonly ChangesAggregate[] {
-  return switched(notes, CHANGES_AGGREGATES, [tagChanges, noteChanges])
+  return switched(notes, CHANGES_AGGREGATES, [noteChanges])
 }
 
-/** The aggregates a group's data move moves: with the notes off, not notes or tags. */
+/** The aggregates a group's data move moves: with the notes off, not notes; tags stay. */
 export function movableAggregatesOf(notes: NotesSetup): readonly MovableAggregate[] {
-  return switched(notes, MOVABLE_AGGREGATES, [tagMovable, noteMovable])
+  return switched(notes, MOVABLE_AGGREGATES, [noteMovable])
 }
 
 /** A cache that stores nothing: every read goes to the database. */

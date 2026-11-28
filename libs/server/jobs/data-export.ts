@@ -48,6 +48,11 @@ Notes and tags are the ones you created in the groups you belong to. Other peopl
 their names and addresses, are not here.
 `
 
+/** The README's part about tags, in a file that holds tags but no notes (`NOTES=false`). */
+const README_TAGS = `
+Tags are the ones you created in the groups you belong to.
+`
+
 /** A cell as the export writes it: an ISO 8601 date, a JSON text for an object, or the value. */
 function plain(value: unknown): string | number | boolean | null | object {
   if (value === null || value === undefined) return null
@@ -101,7 +106,9 @@ export async function buildDataExport(
 
   const readme = file(`README.txt`)
   readme.write(README)
-  if (sections.some((section) => section.name === `notes`)) readme.write(README_NOTES)
+  const holds = (name: string) => sections.some((section) => section.name === name)
+  if (holds(`notes`)) readme.write(README_NOTES)
+  else if (holds(`tags`)) readme.write(README_TAGS)
   readme.end()
 
   await sql.begin(`ISOLATION LEVEL REPEATABLE READ READ ONLY`, async (tx) => {

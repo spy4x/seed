@@ -313,22 +313,19 @@ Deno.test("moving all of a group's data", async (t) => {
     )
 
     await t.step(
-      "with the notes off, moving a group's data leaves its notes and tags where they were",
+      "with the notes off, moving a group's data moves its tags and leaves its notes where they were",
       async () => {
         const off = new AppDbBase({ sql, notes: NOTES_OFF }).groupData
         const { editor, from, to, ids, notes } = await seed(sql, ["a"])
         const tag = await insertTag(sql, from, "Work", editor)
-        await link(sql, ids[0], tag)
 
-        const refused = await refusal(
-          off.moveAll({ fromGroupId: from, toGroupId: to }, editor, NO_CAP),
-        )
+        const result = await off.moveAll({ fromGroupId: from, toGroupId: to }, editor, NO_CAP)
 
-        expect(refused).toMatchObject({ code: "NOTHING_TO_MOVE" })
+        expect(result.moved).toBe(1)
         expect((await notes.list(from, { limit: 10 })).notes.map((note) => note.id)).toEqual(ids)
         expect(await notes.count(to)).toBe(0)
-        expect((await tagsOf(sql, from)).map((row) => row.id)).toEqual([tag])
-        expect(await tagsOf(sql, to)).toEqual([])
+        expect(await tagsOf(sql, from)).toEqual([])
+        expect((await tagsOf(sql, to)).map((row) => row.id)).toEqual([tag])
       },
     )
 

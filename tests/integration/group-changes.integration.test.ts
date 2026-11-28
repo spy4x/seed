@@ -163,15 +163,20 @@ Deno.test("group changes against Postgres", async (t) => {
     })
 
     await t.step(
-      "with the notes off a page holds no note or tag, and no tombstone of one",
+      "with the notes off a page holds the tags and their tombstones, and no note or tombstone of one",
       async () => {
         const off = new AppDbBase({ sql, notes: NOTES_OFF }).groupChanges
-        for (const after of [0, cursor]) {
-          const answer = page(await off.read(groupId, after))
-          expect(answer.upserts).toEqual({})
-          expect(answer.tombstones).toEqual([])
-          expect(answer.through).toBe(await current(sql, groupId))
-        }
+        const fromZero = page(await off.read(groupId, 0))
+        expect(Object.keys(fromZero.upserts)).toEqual(["tags"])
+        expect(ids(fromZero.upserts.tags)).toEqual([blue.id])
+        expect(fromZero.tombstones).toEqual([])
+        expect(fromZero.through).toBe(await current(sql, groupId))
+
+        const afterCursor = page(await off.read(groupId, cursor))
+        expect(Object.keys(afterCursor.upserts)).toEqual(["tags"])
+        expect(ids(afterCursor.upserts.tags)).toEqual([blue.id])
+        expect(afterCursor.tombstones).toEqual([{ kind: "tags", id: red.id }])
+        expect(afterCursor.through).toBe(await current(sql, groupId))
       },
     )
 

@@ -432,14 +432,14 @@ async function notesOf(sql: postgres.Sql, groupId: string, userId: number) {
   `
 }
 
-Deno.test("data export: with the notes off, the build job writes no note, tag or attachment", async () => {
+Deno.test("data export: with the notes off, the build job writes the person's tags and no note or attachment", async () => {
   await withSchema(async (sql) => {
     const { groupId, editor } = await team(sql)
     await notesOf(sql, groupId, editor)
 
     const files = await exportThroughRegistry(sql, editor, NOTES_OFF)
 
-    const left = [`notes`, `note_attachments`, `tags`]
+    const left = [`notes`, `note_attachments`]
     const kept = DATA_EXPORT_SECTIONS.filter((section) => !left.includes(section.name))
     expect(Object.keys(files).sort()).toEqual(
       [`README.txt`, `data.json`, ...kept.map((section) => `${section.name}.csv`)].sort(),
@@ -447,8 +447,10 @@ Deno.test("data export: with the notes off, the build job writes no note, tag or
     expect(Object.keys(JSON.parse(files[`data.json`]).sections)).toEqual(
       kept.map((section) => section.name),
     )
+    expect(files[`tags.csv`]).toContain(`My own tag`)
+    expect(files[`README.txt`]).toContain(`Tags are the ones you created`)
     const text = Object.values(files).join(`\n`)
-    for (const word of [`My own note`, `My own tag`, `my-scan.pdf`, `Notes and tags`]) {
+    for (const word of [`My own note`, `my-scan.pdf`, `Notes and tags`]) {
       expect(text, word).not.toContain(word)
     }
   })

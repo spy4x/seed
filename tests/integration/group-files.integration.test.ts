@@ -533,16 +533,19 @@ Deno.test("the admin page lists a group's newest exports, each format as recorde
   })
 })
 
-Deno.test("with the notes off, a group's export file and spreadsheets hold no note or tag", async () => {
+Deno.test("with the notes off, a group's export file holds its tags and no note, and its spreadsheets no note", async () => {
   await withSchema(async (sql) => {
-    const { owner, groupId } = await seed(sql)
+    const { owner, groupId, tagIds } = await seed(sql)
     const porter = notesOffPorter(sql)
 
     let text = ""
     for await (const piece of (await porter.exportGroup(groupId, owner)).chunks) text += piece
     const file = JSON.parse(text)
     expect(file.group.name).toBe("Family")
-    expect(file.aggregates).toEqual({})
+    expect(Object.keys(file.aggregates)).toEqual(["tags"])
+    expect(file.aggregates.tags.map((tag: { id: string }) => tag.id).sort()).toEqual(
+      [...tagIds].sort(),
+    )
 
     const sheets = await porter.exportGroup(groupId, owner, undefined, { format: "csv" })
     const pieces: BlobPart[] = []
@@ -552,14 +555,16 @@ Deno.test("with the notes off, a group's export file and spreadsheets hold no no
   })
 })
 
-Deno.test("with the notes off, an import skips a file's notes and tags: it writes the group, no note or tag, and lists no part", async () => {
+Deno.test("with the notes off, an import skips a file's notes: it writes the group and its tags, no note, and lists the tags only", async () => {
   await withSchema(async (sql) => {
     const source = await seed(sql)
     const file = await exportAs(sql, source.groupId, source.owner)
     const before = await counts(sql)
     const porter = notesOffPorter(sql)
 
-    expect(porter.check(file, NO_CAP)).toEqual({ name: "Family", parts: [] })
+    const checked = porter.check(file, NO_CAP)
+    expect(checked.name).toBe("Family")
+    expect(checked.parts.map((part) => [part.kind, part.count])).toEqual([["tags", 2]])
     const importer = await insertUser(sql)
     const result = await porter.importGroup(
       { file, name: null, requestId: "req-import" },
@@ -567,9 +572,16 @@ Deno.test("with the notes off, an import skips a file's notes and tags: it write
       NO_CAP,
     )
 
-    expect(result.parts).toEqual([])
-    expect(await counts(sql)).toEqual({ ...before, groups: before.groups + 1 })
-    expect(await contents(sql, result.group.id)).toEqual({ notes: [], tags: [] })
+    expect(result.parts.map((part) => [part.kind, part.count])).toEqual([["tags", 2]])
+    expect(await counts(sql)).toEqual({
+      ...before,
+      groups: before.groups + 1,
+      tags: before.tags + 2,
+    })
+    expect(await contents(sql, result.group.id)).toEqual({
+      notes: [],
+      tags: [{ name: "Home", color: "#1d4ed8" }, { name: "Work", color: "#b91c1c" }],
+    })
   })
 })
 

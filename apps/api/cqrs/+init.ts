@@ -322,15 +322,21 @@ queryBus.register(NotificationUnreadCountQuery, notificationUnreadCountHandler)
 commandBus.register(NotificationMarkReadCommand, notificationMarkReadHandler)
 commandBus.register(NotificationMarkAllReadCommand, notificationMarkAllReadHandler)
 
-// The notes example: off with NOTES=false, and then the buses refuse every note, tag, attachment
-// and note-widget command and query as one with no handler.
+// Tags stay on with NOTES=false: a product tags its own records without the notes.
+commandBus.register(TagCreateCommand, tagCreateHandler)
+commandBus.register(TagUpdateCommand, tagUpdateHandler)
+commandBus.register(TagDeleteCommand, tagDeleteHandler)
+queryBus.register(TagListQuery, tagListHandler)
+queryBus.register(TagGetQuery, tagGetHandler)
+
+// The notes example: off with NOTES=false, and then the buses refuse every note, attachment and
+// note-widget command and query as one with no handler.
 if (config.notes.on) {
   commandBus.register(NoteCreateCommand, noteCreateHandler)
   commandBus.register(NoteUpdateCommand, noteUpdateHandler)
   commandBus.register(NoteDeleteCommand, noteDeleteHandler)
   commandBus.register(NoteRestoreCommand, noteRestoreHandler)
   commandBus.register(NoteMoveCommand, noteMoveHandler)
-  commandBus.register(TagCreateCommand, tagCreateHandler)
   commandBus.register(AttachmentSignCommand, createAttachmentSignHandler(attachmentDependencies))
   commandBus.register(
     AttachmentConfirmCommand,
@@ -344,8 +350,6 @@ if (config.notes.on) {
     AttachmentCancelCommand,
     createAttachmentCancelHandler(attachmentDependencies),
   )
-  commandBus.register(TagUpdateCommand, tagUpdateHandler)
-  commandBus.register(TagDeleteCommand, tagDeleteHandler)
   queryBus.register(NoteListQuery, noteListHandler)
   queryBus.register(NoteGetQuery, noteGetHandler)
   queryBus.register(NoteLocateQuery, noteLocateHandler)
@@ -353,13 +357,11 @@ if (config.notes.on) {
   queryBus.register(NoteTotalWidgetQuery, noteTotalWidgetHandler)
   queryBus.register(NoteAddedWidgetQuery, noteAddedWidgetHandler)
   queryBus.register(NoteSeriesWidgetQuery, noteSeriesWidgetHandler)
-  queryBus.register(TagListQuery, tagListHandler)
   queryBus.register(AttachmentListQuery, createAttachmentListHandler(attachmentDependencies))
   queryBus.register(
     AttachmentDownloadQuery,
     createAttachmentDownloadHandler(attachmentDependencies),
   )
-  queryBus.register(TagGetQuery, tagGetHandler)
 }
 
 console.log("✅ CQRS handlers initialized")

@@ -1,6 +1,6 @@
-/** Whether the notes example is on: its notes, tags and attachments. */
+/** Whether the notes example is on: its notes and attachments. Tags stay on either way. */
 export interface NotesSetup {
-  /** Off with `NOTES=false`: no note, tag or attachment route, operation or handler answers. */
+  /** Off with `NOTES=false`: no note or attachment route, operation or handler answers. */
   on: boolean
 }
 

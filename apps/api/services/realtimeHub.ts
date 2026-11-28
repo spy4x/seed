@@ -11,6 +11,7 @@ import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
 import { createPictureOperations } from "../features/profile/picture.ts"
 import { createNotesOperations } from "../features/notes/switch.ts"
+import { createTagOperations } from "../features/tags/operations.ts"
 import { signIn } from "./auth.ts"
 import { kv } from "./cache.ts"
 import { commandBus } from "./commandBus.ts"
@@ -78,6 +79,14 @@ export const operations: Operations<Actor> = operationRateLimits.limit({
     },
     remove: (command) => commandBus.execute(command),
     list: (query) => queryBus.execute(query),
+  }),
+  // Tags stay on with NOTES=false: a product tags its own records without the notes.
+  ...createTagOperations({
+    create: (command) => commandBus.execute(command),
+    update: (command) => commandBus.execute(command),
+    delete: (command) => commandBus.execute(command),
+    list: (query) => queryBus.execute(query),
+    get: (query) => queryBus.execute(query),
   }),
   // Off with NOTES=false: none, so their names are refused as unknown operations.
   ...createNotesOperations(config.notes, {

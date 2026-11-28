@@ -25,6 +25,7 @@ import { createGroupFileRateLimits } from "./features/groups/file-rate-limits.ts
 import { createImportsRoute } from "./routes/imports.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
 import { mountNotesRoutes } from "./features/notes/switch.ts"
+import { createTagsRoute } from "./routes/tags.ts"
 import { createDataExportRoute } from "./routes/data-export.ts"
 import { createPictureRoute } from "./routes/pictures.ts"
 import {
@@ -358,7 +359,9 @@ app.route(
   }),
 )
 // Before "/groups": its authentication middleware would otherwise answer for these paths too.
-// Off with NOTES=false: no note, tag or token-API route is mounted, so their paths answer 404.
+// Tags stay on with NOTES=false: a product tags its own records without the notes.
+app.route("/groups/:groupId/tags", createTagsRoute({ list: (query) => queryBus.execute(query) }))
+// Off with NOTES=false: no note or token-API route is mounted, so their paths answer 404.
 mountNotesRoutes(app, config.notes, {
   commandBus,
   queryBus,

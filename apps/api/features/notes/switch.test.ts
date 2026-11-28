@@ -62,7 +62,7 @@ function routesApp(setup: NotesSetup) {
   return { app, dispatched }
 }
 
-/** Every route the notes, the tags and the personal-token API answer. */
+/** Every route the notes and the personal-token API answer. Tags are outside the switch. */
 const NOTE_ROUTES: ReadonlyArray<[string, string]> = [
   [`GET`, `/groups/${GROUP}/notes`],
   [`POST`, `/groups/${GROUP}/notes`],
@@ -71,7 +71,6 @@ const NOTE_ROUTES: ReadonlyArray<[string, string]> = [
   [`PATCH`, `/groups/${GROUP}/notes/${NOTE}`],
   [`DELETE`, `/groups/${GROUP}/notes/${NOTE}`],
   [`POST`, `/groups/${GROUP}/notes/${NOTE}/restore`],
-  [`GET`, `/groups/${GROUP}/tags`],
   [`GET`, `/v1/groups/${GROUP}/notes`],
   [`POST`, `/v1/groups/${GROUP}/notes`],
   [`GET`, `/v1/groups/${GROUP}/notes/${NOTE}`],
@@ -111,7 +110,7 @@ async function call(operations: Operations<Actor>, name: string) {
 }
 
 describe(`the notes switch`, () => {
-  it(`mounts every note, tag and token-API route while the notes are on`, async () => {
+  it(`mounts every note and token-API route while the notes are on`, async () => {
     const { app } = routesApp(NOTES_ON)
     for (const [method, path] of NOTE_ROUTES) {
       expect({ method, path, status: (await send(app, method, path)).status }).not.toMatchObject({
@@ -120,7 +119,7 @@ describe(`the notes switch`, () => {
     }
   })
 
-  it(`answers 404 on every note, tag and token-API route with the notes off, and reads nothing`, async () => {
+  it(`answers 404 on every note and token-API route with the notes off, and reads nothing`, async () => {
     const { app, dispatched } = routesApp(NOTES_OFF)
     for (const [method, path] of NOTE_ROUTES) {
       expect({ method, path, status: (await send(app, method, path)).status }).toEqual({
@@ -132,11 +131,13 @@ describe(`the notes switch`, () => {
     expect(dispatched).toEqual([])
   })
 
-  it(`refuses every note, tag, attachment and widget operation as an unknown one with the notes off`, async () => {
+  it(`refuses every note, attachment and widget operation as an unknown one with the notes off`, async () => {
     const names = Object.keys(createNotesOperations(NOTES_ON, fakeBuses().dependencies))
-    for (const name of [`note.create`, `note.search`, `note.widget.total`, `tag.list`]) {
+    for (const name of [`note.create`, `note.search`, `note.widget.total`]) {
       expect(names).toContain(name)
     }
+    // Tags are served outside the switch (`services/realtimeHub.ts`).
+    expect(names.filter((name) => name.startsWith(`tag.`))).toEqual([])
     expect(names).toContain(`attachment.download`)
 
     const { dependencies, dispatched } = fakeBuses()

@@ -72,9 +72,9 @@ Notes in a group they left stay out, because they can no longer read them in the
 Attached files stay in the file store and open from the note.
 
 A product that turns the notes example off (`NOTES=false` in the worker's environment,
-[Start a product](start-a-product.md#settings)) gets a file without the `notes`,
-`note_attachments` and `tags` sections, and a `README.txt` that does not mention them. The group's
-own spreadsheets leave them out too.
+[Start a product](start-a-product.md#settings)) gets a file without the `notes` and
+`note_attachments` sections, and a `README.txt` that mentions only the tags. The `tags` section
+stays: tags stay on without the notes. The group's own spreadsheets leave the notes out too.
 
 ## Add a table to the export
 
