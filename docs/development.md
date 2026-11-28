@@ -63,6 +63,8 @@ To run the stack for the first time, follow [Run the local stack](local-stack.md
 | `i18n:stamp`                 | Records which English each translation was made from ([i18n](../i18n/TRANSLATING.md))           |
 | `video:admin`                | Records the website's admin panel video from a local stack                                      |
 | `demo-video`                 | Records the README's demo video into `media/demo`                                               |
+| `video:cut`                  | Cuts a talking-head recording into a long cut, one Short and drafts ([guide](video.md))         |
+| `video:test`                 | Runs `video:cut` end to end on a generated clip; needs ffmpeg ([guide](video.md))               |
 | `deps:check`, `deps:update`  | Lists outdated dependencies, or updates them one by one                                         |
 | `update:ubuntu`              | Upgrades the packages of an Ubuntu server, with `sudo`                                          |
 

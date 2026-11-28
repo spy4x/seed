@@ -154,6 +154,7 @@ export const GROUPS: TestGroup[] = [
       `--allow-run=git`,
     ],
     paths: [`infra/scripts`],
+    ignore: [`infra/scripts/video-cut-flow.test.ts`],
   },
   {
     flags: [`--allow-read`, `--allow-write`, `--allow-env`, `--allow-run=deno`],
@@ -247,8 +248,11 @@ export function groupOf(path: string): TestGroup | undefined {
   )
 }
 
-/** Test files that tasks of their own run: `test:integration` and `test:files`. */
-const ELSEWHERE = [`tests/integration`, `tests/files`]
+/**
+ * Test files that tasks of their own run: `test:integration`, `test:files`, and `video:test`, which
+ * needs ffmpeg (CI step `video`).
+ */
+const ELSEWHERE = [`tests/integration`, `tests/files`, `infra/scripts/video-cut-flow.test.ts`]
 
 /** The files among `files` that no group tests and no other task runs. */
 export function ungrouped(files: string[]): string[] {

@@ -10,7 +10,9 @@
  * steps that start the stack, and runs `browser` only when it changes a published guide; ci-browser
  * still runs its `ready` step, so its required status arrives. A push to `main` runs only
  * `check`, `secrets`, the images and the Android build, and creates no ci-browser workflow. A pull
- * request builds the Android app only when it changes `apps/android`, `deno.jsonc` or ci.yml. The whole suite runs in the nightly cron
+ * request builds the Android app only when it changes `apps/android`, `deno.jsonc` or ci.yml, and
+ * runs the video cut's ffmpeg flow (`video`) only when it changes `infra/scripts/video-cut*`,
+ * `deno.jsonc` or ci.yml. The whole suite runs in the nightly cron
  * run on `main`, where a red run is seen but blocks nobody and no push cancels it.
  * `docs/browser-tests.md` and `docs/woodpecker-ci-setup.md` name the specs of the set. Lighthouse
  * measures in a stage of its own, with no other step of its workflow beside it. A pull request
@@ -456,6 +458,36 @@ Deno.test("a pull request and its title edit build the Android app only when the
     }
   }
   expect(runsFor(android!, `cron`, `main`, [])).toBe(false)
+})
+
+Deno.test("a pull request and its title edit run the video cut's ffmpeg flow only when they change the tool, the task or the workflow", async () => {
+  const video = (await workflow()).steps?.video
+  expect(video).toBeDefined()
+  expect(runs(video!, `deno task video:test`)).toBe(true)
+  for (const event of [`pull_request`, `pull_request_metadata`]) {
+    for (
+      const file of [
+        `infra/scripts/video-cut.ts`,
+        `infra/scripts/video-cut-lib.test.ts`,
+        `deno.jsonc`,
+        CI,
+      ]
+    ) {
+      expect({ event, file, runs: runsFor(video!, event, `main`, [file]) }).toEqual({
+        event,
+        file,
+        runs: true,
+      })
+    }
+    for (const file of [`infra/scripts/deploy.ts`, `docs/video.md`, `deno.lock`]) {
+      expect({ event, file, runs: runsFor(video!, event, `main`, [file]) }).toEqual({
+        event,
+        file,
+        runs: false,
+      })
+    }
+  }
+  expect(runsFor(video!, `push`, `main`, [`infra/scripts/video-cut.ts`])).toBe(false)
 })
 
 Deno.test("ci-browser runs on a pull request, its title edit, a tag and the nightly run, and never on a push", async () => {

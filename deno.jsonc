@@ -259,6 +259,15 @@
       "command": "deno run -A docs/screenshots/admin-video.ts",
       "description": "Records the website's admin panel video from a local stack"
     },
+    // reads the recording and writes its cut folder, which can be anywhere, hence -R and -W
+    "video:cut": {
+      "command": "deno run --no-prompt -R -W --allow-run=ffmpeg,ffprobe,whisper-cli,claude --allow-env=WHISPER_MODEL,HOME infra/scripts/video-cut.ts",
+      "description": "Cuts a talking-head recording: transcript, silences, Claude's edit list, the long cut, one Short, levelled audio and drafts (docs/video.md)"
+    },
+    "video:test": {
+      "command": "deno test --no-prompt -R -W --allow-run=deno,ffmpeg,ffprobe --allow-env=PATH infra/scripts/video-cut-flow.test.ts",
+      "description": "Runs video:cut end to end on a generated clip with fake whisper-cli and claude; needs ffmpeg (CI step video)"
+    },
     "demo-video": {
       "command": "deno run -A media/demo/recipe/record.ts",
       "description": "Records the README's demo video into media/demo; --encode re-encodes the last take (media/demo/recipe/README.md)"
