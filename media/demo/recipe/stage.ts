@@ -53,7 +53,9 @@ async function resetPassword(app: string, email: string): Promise<string> {
   }
   const before = (await lastMail())?.text
   const forgot = await post(app, "/auth/password/forgot", { email: email, [HONEYPOT_FIELD_NAME]: "" })
-  if (!forgot.ok) throw new Error(`the reset request answered ${forgot.status}`)
+  if (!forgot.ok) {
+    throw new Error(`the reset request answered ${forgot.status}: ${(await forgot.text()).slice(0, 300)}`)
+  }
   await forgot.body?.cancel()
   // The reset belongs to the browser that asked, through this cookie.
   const cookie = forgot.headers.getSetCookie().map((line) => line.split(";")[0]).join("; ")

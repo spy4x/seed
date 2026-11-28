@@ -33,8 +33,9 @@ A recording writes `captions.vtt` anew, with each caption timed from the moment 
    name question) and `deno task dev`. A wait longer than 1.6 s plays in about 1.6 s, and its
    caption says how much faster.
 2. Between `init` and `dev`, off camera, the env file gets the hosts `my-product.localhost` and
-   `admin.my-product.localhost`, spare host ports and `COMPOSE_PROFILES=admin`, so the stack runs
-   beside any other Seed stack on the machine. Nothing else changes.
+   `admin.my-product.localhost`, spare host ports, `COMPOSE_PROFILES=admin` and `FILES=false`
+   (no file store), so the stack runs beside any other Seed stack on the machine. Nothing else
+   changes.
 3. After `dev`: `deno task db:seed`, then `stage.ts` gives the Product team's owner a random
    password through the reset flow and signs them and the seed's administrator in, in browser
    contexts that are not recorded. No password is ever on screen.
