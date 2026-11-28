@@ -1,0 +1,38 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.13.0'
+        classpath 'com.google.gms:google-services:4.4.4'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+apply from: "variables.gradle"
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Seed: every module, Capacitor's own included, builds with the build-tools the CI image ships
+// (docs/android.md). AGP 8.13 would otherwise download 35.0.0 into the SDK, which a container
+// running as an ordinary user cannot write.
+subprojects {
+    plugins.withType(com.android.build.gradle.BasePlugin).configureEach {
+        android.buildToolsVersion = "36.0.0"
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

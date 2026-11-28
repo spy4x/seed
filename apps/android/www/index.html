@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Offline</title>
+    <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1.5rem;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    button {
+      font: inherit;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid currentColor;
+      background: none;
+      color: inherit;
+    }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Cannot reach the app</h1>
+      <p>Check your connection and try again.</p>
+      <button type="button" onclick="history.back()">Try again</button>
+    </main>
+  </body>
+</html>
