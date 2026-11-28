@@ -312,10 +312,10 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
   },
 ]
 
-/** The sections the notes example adds: none of them is in the file with the notes off. */
-const NOTES_SECTIONS = [`notes`, `note_attachments`, `tags`]
+/** The notes example's sections: none is in the file with the notes off. `tags` always is. */
+const NOTES_SECTIONS = [`notes`, `note_attachments`]
 
-/** The sections the export holds: with the notes off (`NOTES=false`), no note, attachment or tag. */
+/** The sections the export holds: with the notes off (`NOTES=false`), no note or attachment. */
 export function dataExportSectionsOf(notes: NotesSetup): readonly DataExportSection[] {
   return notes.on
     ? DATA_EXPORT_SECTIONS

@@ -5,12 +5,12 @@ import { DATA_EXPORT_SECTIONS, dataExportSectionsOf } from "./data-export-sectio
 
 const names = (sections: readonly { name: string }[]) => sections.map(({ name }) => name)
 
-Deno.test("with the notes off, the export has no notes, attachments or tags, and every other section", () => {
-  expect(names(dataExportSectionsOf(NOTES_OFF))).toEqual(
-    names(DATA_EXPORT_SECTIONS).filter((name) =>
-      ![`notes`, `note_attachments`, `tags`].includes(name)
-    ),
+Deno.test("with the notes off, the export has no notes or attachments, and every other section, tags included", () => {
+  const off = names(dataExportSectionsOf(NOTES_OFF))
+  expect(off).toEqual(
+    names(DATA_EXPORT_SECTIONS).filter((name) => ![`notes`, `note_attachments`].includes(name)),
   )
+  expect(off).toContain(`tags`)
 })
 
 Deno.test("with the notes on, the export has every section", () => {

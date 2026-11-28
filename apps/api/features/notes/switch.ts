@@ -1,7 +1,8 @@
 /**
  * The notes example behind its switch (`NOTES`, `readNotesSetup`): its operations and its routes.
- * Off, none is built, so a note, tag or attachment operation is refused as an unknown one and their
- * paths answer 404. The buses refuse their commands and queries too (`cqrs/+init.ts`).
+ * Off, none is built, so a note, attachment or note-widget operation is refused as an unknown one
+ * and their paths answer 404. The buses refuse their commands and queries too (`cqrs/+init.ts`).
+ * Tags are no part of it: they stay on whatever `NOTES` says (`index.ts`, `realtimeHub.ts`).
  *
  * @module
  */
@@ -15,9 +16,7 @@ import type { LiveApiToken } from "@server/api-tokens/api-tokens.ts"
 import type { NotesSetup } from "@server/notes/setup.ts"
 import type { APIContext } from "../../_types.ts"
 import { createNotesRoute } from "../../routes/notes.ts"
-import { createTagsRoute } from "../../routes/tags.ts"
 import { createTokenApiRoute, type TokenApiContext } from "../../routes/token-api.ts"
-import { createTagOperations } from "../tags/operations.ts"
 import { createAttachmentOperations } from "./attachments.ts"
 import type { NoteListDependencies } from "./list.ts"
 import { createNoteOperations } from "./operations.ts"
@@ -45,7 +44,7 @@ export interface NotesRoutesDependencies extends NotesFeatureDependencies {
 }
 
 /**
- * Every note, tag, attachment and note-widget operation while the notes are on; none while off.
+ * Every note, attachment and note-widget operation while the notes are on; none while off.
  * The socket and `POST /api/call` serve the table this joins (`services/realtimeHub.ts`).
  */
 export function createNotesOperations(
@@ -83,18 +82,11 @@ export function createNotesOperations(
       list: (query) => queryBus.execute(query),
       download: (query) => queryBus.execute(query),
     }),
-    ...createTagOperations({
-      create: (command) => commandBus.execute(command),
-      update: (command) => commandBus.execute(command),
-      delete: (command) => commandBus.execute(command),
-      list: (query) => queryBus.execute(query),
-      get: (query) => queryBus.execute(query),
-    }),
   }
 }
 
 /**
- * Mounts the note and tag routes and the personal-token API (`/v1`) on `app` while the notes are
+ * Mounts the note routes and the personal-token API (`/v1`) on `app` while the notes are
  * on, and nothing while off. Call it before `/groups`, whose authentication would answer for
  * `/groups/:groupId/notes` otherwise.
  */
@@ -123,7 +115,6 @@ export function mountNotesRoutes(
       expectedOrigin,
     }),
   )
-  app.route("/groups/:groupId/tags", createTagsRoute({ list: (query) => queryBus.execute(query) }))
   // The only routes that accept a token, and they accept nothing else.
   app.route(
     "/v1",
