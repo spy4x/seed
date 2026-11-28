@@ -183,8 +183,15 @@ Deno.test("names the test files no group runs, but not those another task runs",
     `./libs/ui/notes.test.tsx`,
     `./tests/integration/notes.test.ts`,
     `./tests/files/store.test.ts`,
+    `./infra/scripts/video-cut-flow.test.ts`,
     `./docs/y.test.tsx`,
   ])).toEqual([`./tests/x.test.ts`, `./docs/y.test.tsx`])
+})
+
+Deno.test("leaves the video cut's ffmpeg flow out of the unit groups, and keeps its unit tests in", () => {
+  expect(groupOf(`infra/scripts/video-cut-flow.test.ts`)).toBeUndefined()
+  expect(groupOf(`infra/scripts/video-cut.test.ts`)!.paths).toEqual([`infra/scripts`])
+  expect(groupOf(`infra/scripts/video-cut-lib.test.ts`)!.paths).toEqual([`infra/scripts`])
 })
 
 Deno.test("runs every group in parallel but the serial one, with its ignored files left out", () => {
