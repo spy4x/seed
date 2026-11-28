@@ -44,12 +44,14 @@ import {
   PushRegisterCommand,
   PushRemoveCommand,
   UserProfileUpdateCommand,
+  WeeklyDigestSaveCommand,
 } from "@api/cqrs/commands.ts"
 import {
   OnboardingGetQuery,
   PreferencesGetQuery,
   PushListQuery,
   UserProfileGetQuery,
+  WeeklyDigestGetQuery,
 } from "@api/cqrs/queries.ts"
 import {
   GroupActivityQuery,
@@ -101,6 +103,8 @@ import { onboardingMarkHandler } from "@api/cqrs/command-handlers/onboarding-mar
 import { preferencesGetHandler } from "@api/cqrs/query-handlers/preferences-get.ts"
 import { preferencesSaveHandler } from "@api/cqrs/command-handlers/preferences-save.ts"
 import { preferencesDeviceHandler } from "@api/cqrs/command-handlers/preferences-device.ts"
+import { weeklyDigestGetHandler } from "@api/cqrs/query-handlers/weekly-digest-get.ts"
+import { weeklyDigestSaveHandler } from "@api/cqrs/command-handlers/weekly-digest-save.ts"
 import { groupCreateHandler } from "@api/cqrs/command-handlers/group-create.ts"
 import { groupExportHandler, groupImportHandler } from "@api/cqrs/command-handlers/group-files.ts"
 import { groupImportCheckHandler } from "@api/cqrs/query-handlers/group-import-check.ts"
@@ -259,6 +263,7 @@ commandBus.register(PushRemoveCommand, pushRemoveHandler)
 commandBus.register(OnboardingMarkCommand, onboardingMarkHandler)
 commandBus.register(PreferencesSaveCommand, preferencesSaveHandler)
 commandBus.register(PreferencesDeviceCommand, preferencesDeviceHandler)
+commandBus.register(WeeklyDigestSaveCommand, weeklyDigestSaveHandler)
 commandBus.register(GroupCreateCommand, groupCreateHandler)
 commandBus.register(GroupSelectCommand, groupSelectHandler)
 commandBus.register(GroupRenameCommand, groupRenameHandler)
@@ -304,6 +309,7 @@ queryBus.register(UserProfileGetQuery, userProfileGetHandler)
 queryBus.register(PushListQuery, pushListHandler)
 queryBus.register(OnboardingGetQuery, onboardingGetHandler)
 queryBus.register(PreferencesGetQuery, preferencesGetHandler)
+queryBus.register(WeeklyDigestGetQuery, weeklyDigestGetHandler)
 queryBus.register(GroupListQuery, groupListHandler)
 queryBus.register(GroupGetQuery, groupGetHandler)
 queryBus.register(GroupImportCheckQuery, groupImportCheckHandler)

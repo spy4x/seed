@@ -7,6 +7,7 @@ import type { Operations } from "@spy4x/realtime/operations"
 import { createGroupOperations } from "../features/groups/operations.ts"
 import { createOnboardingOperations } from "../features/onboarding/operations.ts"
 import { createPreferencesOperations } from "../features/preferences/operations.ts"
+import { createWeeklyDigestOperations } from "../features/weekly-digest/operations.ts"
 import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
 import { createPictureOperations } from "../features/profile/picture.ts"
@@ -66,6 +67,10 @@ export const operations: Operations<Actor> = operationRateLimits.limit({
     get: (query) => queryBus.execute(query),
     save: (command) => commandBus.execute(command),
     device: (command) => commandBus.execute(command),
+  }),
+  ...createWeeklyDigestOperations({
+    get: (query) => queryBus.execute(query),
+    save: (command) => commandBus.execute(command),
   }),
   ...createPushOperations({
     // A guest needs a sign-in method first, on the socket as over REST.

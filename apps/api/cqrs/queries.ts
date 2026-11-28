@@ -6,6 +6,7 @@ import {
   type UserPushTokenPublic,
   type VersionedPreferences,
 } from "@domain/identity"
+import type { WeeklyDigestState } from "@domain/notifications"
 export interface UserProfileGetPayload {
   actor: Actor
 }
@@ -37,6 +38,16 @@ export interface PreferencesGetPayload {
 export class PreferencesGetQuery implements Query<PreferencesGetPayload, VersionedPreferences> {
   __resultType?: VersionedPreferences
   constructor(public data: PreferencesGetPayload) {}
+}
+
+export interface WeeklyDigestGetPayload {
+  actor: Actor
+}
+
+/** The actor's weekly digest setting; off when they never turned it on. */
+export class WeeklyDigestGetQuery implements Query<WeeklyDigestGetPayload, WeeklyDigestState> {
+  __resultType?: WeeklyDigestState
+  constructor(public data: WeeklyDigestGetPayload) {}
 }
 
 export interface PushListPayload {
