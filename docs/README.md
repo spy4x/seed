@@ -118,6 +118,8 @@ Pick the guide that fits. New here? Start with [Get started](get-started.md). Th
 - [Financy extraction inventory](financy-extraction-inventory.md)
 - [Screenshots](screenshots/): `record.ts` re-records the README's pictures, and `admin-video.ts`
   (`deno task video:admin`) the website's admin panel video, under [its music](screenshots/MUSIC.md).
+- [Cutting a recording](video.md): `deno task video:cut` turns a talking-head recording into the
+  long cut, one Short, captions, a Kdenlive project and the packaging drafts.
 
 ## Archive
 
