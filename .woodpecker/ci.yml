@@ -337,6 +337,27 @@ steps:
       - deno task android:build
     depends_on: []
 
+  video:
+    # Runs `deno task video:cut` end to end on a generated clip (`deno task video:test`,
+    # infra/scripts/video-cut-flow.test.ts, docs/video.md), with fake whisper-cli and claude. It
+    # needs ffmpeg, which `check`'s image lacks, so it installs it here with the font the Short's
+    # captions use. A pull request runs it only when it changes the tool, the task (deno.jsonc) or
+    # this file; a push to `main` never does: its pull request already ran it.
+    image: denoland/deno:2.9.7@sha256:fa335acdf6b72106eda2cb6a8cb5f4187e7630e357467489db4b2e7352d5e432
+    when:
+      - event: pull_request
+        path: &video_paths
+          - infra/scripts/video-cut*
+          - deno.jsonc
+          - .woodpecker/ci.yml
+      - event: pull_request_metadata
+        path: *video_paths
+    commands:
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends ffmpeg fonts-dejavu-core
+      - deno install --frozen
+      - deno task video:test
+    depends_on: []
+
 services:
   postgres:
     image: postgres:18.6-alpine
