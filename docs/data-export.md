@@ -57,8 +57,8 @@ It holds only what is about the person or made by them, never another person's d
 - their linked Telegram account: its user id and when it was linked;
 - the groups they belong to, by name and role, never the other members;
 - the notes and tags they created in groups they still belong to, never the ones others wrote;
-- the files they attached to those notes: name, type, size and note, never the bytes or the
-  stored key;
+- the files they attached in those groups, of every attachment kind: name, type, size, the kind
+  and the record's id, never the bytes, the stored key or the record's title;
 - what they did in their groups, without the details that can name other people;
 - invitations they sent (without the invited address) and accepted;
 - their notifications, and their API tokens without the token or its hash;
@@ -69,11 +69,12 @@ It holds only what is about the person or made by them, never another person's d
 - their blog posts and their earlier exports.
 
 Notes in a group they left stay out, because they can no longer read them in the app either.
-Attached files stay in the file store and open from the note.
+Attached files stay in the file store and open from their record.
 
 A product that turns the notes example off (`NOTES=false` in the worker's environment,
-[Start a product](start-a-product.md#settings)) gets a file without the `notes`,
-`note_attachments` and `tags` sections, and a `README.txt` that does not mention them. The group's
+[Start a product](start-a-product.md#settings)) gets a file without the `notes` and `tags`
+sections, and a `README.txt` that does not mention them. Its `attachments` section lists only the
+kinds the product still serves, and is left out when none is. The group's
 own spreadsheets leave them out too.
 
 ## Add a table to the export

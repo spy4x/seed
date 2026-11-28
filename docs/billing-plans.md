@@ -105,11 +105,11 @@ says what it needs, and the plan answers.
 | `memberRoles`    | no      | yes    | A member is promoted (`GroupMemberRoleCommand`)              |
 | `maxNotes`       | 10      | no cap | A note is created, or notes move into the group              |
 | `maxMembers`     | 3       | 50     | An invitation is created or accepted                         |
-| `maxAttachments` | 100     | no cap | A note attachment is signed or confirmed: files of all notes |
+| `maxAttachments` | 100     | no cap | An attachment is signed or confirmed: files of every kind     |
 | `storageBytes`   | 200 MiB | 10 GiB | The same: the bytes of those files                           |
 
-A limit of `null` means no cap. Each plan also has `attachments` rules for one file and one note
-(`maxFileBytes` 2 MiB, `maxPerNote` 10 on both plans). They are not sold by a plan, so they hold
+A limit of `null` means no cap. Each plan also has `attachments` rules for one file and one record
+(`maxFileBytes` 2 MiB, `maxPerRecord` 10 on both plans). They are not sold by a plan, so they hold
 with billing off too ([Limits](attachments-and-pictures.md#limits)).
 
 **Only a promotion is a paid feature.** Any plan may give a member a lower role or remove them. A

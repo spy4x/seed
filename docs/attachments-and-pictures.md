@@ -1,37 +1,45 @@
-# Note attachments and profile pictures
+# Attachments and profile pictures
 
 > Also on the website: [seedsaas.com/docs/attachments-and-pictures](https://seedsaas.com/docs/attachments-and-pictures).
 
-This page explains the two features Seed builds on the file store: files kept on a note, and a
-person's picture in place of their initials.
+This page explains the two features Seed builds on the file store: files kept on a record, such as
+a note, and a person's picture in place of their initials.
 
 Both use the signed upload of [file-uploads.md](file-uploads.md). Both share one waiting count and
 one hourly [upload budget](files.md#upload-budget).
 
-## Note attachments
+## Attachments
 
-A note keeps images (JPEG, PNG, WebP, GIF) and PDFs. Every member of the group reads them. An
-editor or above adds and removes them, as for the note itself.
+A record keeps images (JPEG, PNG, WebP, GIF) and PDFs. Each kind of record that keeps files is an
+attachment kind. Seed ships one, the note; a product adds its own
+([Add attachments to a record kind](#add-attachments-to-a-record-kind)). For a note, every member
+of the group reads the files, and an editor or above adds and removes them, as for the note itself.
 
-| Part       | Where                                                                     |
-| ---------- | ------------------------------------------------------------------------- |
-| Domain     | `libs/domain/notes/attachments.ts`                                        |
-| Handlers   | `apps/api/features/notes/attachments.ts`                                  |
-| Table      | `note_attachments`                                                        |
-| Operations | `attachment.sign`, `.confirm`, `.cancel`, `.remove`, `.list`, `.download` |
+| Part       | Where                                                                           |
+| ---------- | ------------------------------------------------------------------------------- |
+| Domain     | `libs/domain/attachments`                                                       |
+| Kinds      | `libs/server/attachments` (`registry.ts` lists them)                            |
+| Handlers   | `apps/api/features/attachments/attachments.ts`                                  |
+| Note kind  | `libs/server/notes/attachment-kind.ts`, table `note_attachments`                |
+| Operations | `attachment.sign`, `.confirm`, `.cancel`, `.remove`, `.list`, `.download`       |
+
+A kind's operations start with its own prefix. The note's is `attachment`, and its payload names
+the record `noteId`.
 
 ### Adding a file
 
-1. **Sign.** The handler checks the role, the note and every limit. It signs the upload and keeps
-   a row in `file_uploads` with the staging key, for the person who asked.
+1. **Sign.** The handler checks the role, the record and every limit. It signs the upload and keeps
+   a row in `file_uploads` with the staging key, the kind and the record, for the person who
+   asked.
 2. **Upload.** The browser sends the file to the store.
-3. **Confirm.** The handler settles that row for the same person, so a second confirm finds
-   nothing. The store moves the bytes to `attachments/<id>` and checks them.
-4. **Keep.** The row is added under a lock on the group, after the role and the limits are checked
-   again. A file refused at this point is deleted from the store.
+3. **Confirm.** The handler settles that row for the same person and the same kind, so a second
+   confirm, or a confirm through another kind, finds nothing. The store moves the bytes to
+   `attachments/<id>` and checks them.
+4. **Keep.** The row is added under a lock on the group, after the role, the record and the limits
+   are checked again. A file refused at this point is deleted from the store.
 
 The page cancels a waiting upload when the person cancels it, before a retry, and when they open
-another note. It then stops counting as waiting at once.
+another record. It then stops counting as waiting at once.
 
 ### Limits
 
@@ -43,16 +51,18 @@ another note. It then stops counting as waiting at once.
   ([files.md](files.md#upload-budget)). Signs sent at once wait for each other, so each counts the
   ones before it.
 - **Plan limits.** The group's plan (`PLANS` in `libs/domain/billing`) sets `maxAttachments` and
-  `storageBytes` for the group. Its `attachments` rule sets `maxFileBytes` for one file and
-  `maxPerNote` for one note.
-- **Billing off.** The group's caps are lifted like every other cap. The file and note rules stay.
+  `storageBytes` for the group, counting the files of every kind. Its `attachments` rule sets
+  `maxFileBytes` for one file and `maxPerRecord` for one record; a full record refuses with
+  `RECORD_FULL`.
+- **Billing off.** The group's caps are lifted like every other cap. The file and record rules
+  stay.
 
-A deleted note's files count until it is purged.
+A deleted record's files count until it is purged.
 
 ### Deleting and clean-up
 
-- Deleting an attachment, its note, its group or its owner's account queues its file in
-  `file_deletions`.
+- Deleting an attachment, its record, its group or its owner's account queues its file in
+  `file_deletions`, through the trigger `queue_attachment_deletion()` on every kind's table.
 - Removing an attachment deletes its file at once when the store answers.
 - The worker's nightly clean-up deletes every queued file. It also forgets uploads signed more than
   a day ago and deletes staging files older than a day.
@@ -61,18 +71,46 @@ A deleted note's files count until it is purged.
 
 - A download is signed only for a member of the file's group.
 - A group's JSON export holds notes and tags only, not files.
-- A person's data export ([data-export.md](data-export.md)) lists the files they attached, without
-  their bytes.
+- A person's data export ([data-export.md](data-export.md)) lists the files they attached, of
+  every kind, without their bytes.
 
 ### In the admin panel
 
-The admin app lists a group's files by name, with the note's title, the uploader and the date. It
+The admin app lists a group's files of every kind by name, with the record's title, the uploader
+and the date. It
 searches and pages them. An operator can open, download or remove a file, and each open or download
 is audited ([admin-modules.md](admin-modules.md)).
 
 The bytes go through the admin API with `nosniff`. Only a JPEG, PNG, WebP or GIF is shown in place;
 any other file is saved. The route's sandbox policy is replaced by the app's own until
 [spy4x/ts-libs#772](https://github.com/spy4x/ts-libs/issues/772) is released.
+
+### Add attachments to a record kind
+
+A product's own record, a task say, keeps files the way a note does. The handlers, the plan's
+caps, the clean-up, the admin's files list and the data export take every kind from one list.
+
+1. **A migration.** Add the attachment table with the columns of `note_attachments`, its record
+   column (`task_id`) a foreign key to the record with `ON DELETE CASCADE`. Add the trigger
+   `AFTER DELETE ... EXECUTE FUNCTION queue_attachment_deletion()`, which queues the file in
+   `file_deletions`. The record table needs `id`, `group_id`, `deleted_at` and a title column.
+2. **The kind.** Write it with `attachmentKind` (`libs/server/attachments/kind.ts`), as
+   `libs/server/notes/attachment-kind.ts` does: its name (kept in `file_uploads.record_kind` and
+   the audit rows, at most 32 characters), its operations' prefix (`taskFile`), its payload's
+   record field (`taskId`), its tables, who may read and write, and its own not-found error.
+3. **The list.** Add it to `attachmentKinds` in `libs/server/attachments/registry.ts`.
+4. **The page.** Call `<prefix>.sign`, `.confirm`, `.cancel`, `.remove`, `.list` and `.download`
+   with the record field.
+
+Every table and column name comes from this code and is checked at start-up, never from a
+request. A kind reads, confirms and removes only its own rows in its own group: an upload signed
+for one kind is not found by another kind's confirm.
+
+`NOTES=false` leaves only the note kind out, so `attachment.*` is refused as unknown and every
+other kind keeps working.
+
+`tests/integration/attachment-kinds.integration.test.ts` registers a second kind beside the note
+and is the example to copy.
 
 ## Profile pictures
 
