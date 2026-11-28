@@ -335,7 +335,23 @@ steps:
           echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
           (cd /usr/local/bin && jar xf /tmp/deno.zip && chmod +x deno)
       - deno task android:build
-    depends_on: []
+    # After every step that reads the shared checkout: the build writes Gradle output and
+    # Capacitor's packages into it, and a file that appears or vanishes mid-read failed `check`'s
+    # comment test and the images' `COPY . .`. Each dependency is optional because a pull request
+    # may skip it, and Woodpecker drops an optional dependency on a skipped step.
+    depends_on:
+      - name: check
+        optional: true
+      - name: secrets
+        optional: true
+      - name: image-node
+        optional: true
+      - name: image-bun
+        optional: true
+      - name: image-mpa-node
+        optional: true
+      - name: image-mpa-bun
+        optional: true
 
 services:
   postgres:
