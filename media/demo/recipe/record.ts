@@ -25,7 +25,7 @@
  */
 import { type Browser, type BrowserContext, chromium, type Locator, type Page } from "playwright"
 import { encodeDemo, CARD_SECONDS } from "./encode.ts"
-import { clickLike, moveLike, parkLike, type Point, scrollLike } from "./human-mouse.ts"
+import { clickLike, parkLike, type Point, scrollLike } from "./human-mouse.ts"
 import { type Screen, sleep, Take } from "./take.ts"
 import { openTerminal, type Terminal } from "./terminal.ts"
 import { stage } from "./stage.ts"
@@ -156,6 +156,9 @@ async function terminalPart(take: Take, term: Terminal, screen: Screen, app: str
       ["DOMAIN", new URL(HOSTS.app).host],
       ["ADMIN_DOMAIN", new URL(HOSTS.admin).host],
       ["COMPOSE_PROFILES", "admin"],
+      // Files off: without the files profile there is no Garage, and the API needs a store
+      // unless FILES=false (infra/envs/.env.example, "The file store").
+      ["FILES", "false"],
       ["DB_HOST_PORT", `127.0.0.1:${freePort()}`],
       ["KV_HOST_PORT", `127.0.0.1:${freePort()}`],
       ["GRAFANA_HOST_PORT", `127.0.0.1:${freePort()}`],
@@ -169,7 +172,7 @@ async function terminalPart(take: Take, term: Terminal, screen: Screen, app: str
   await command(take, term, "deno task dev", 1800)
   await pause(500)
   await take.caption("Every service is up")
-  await pause(600)
+  await pause(300)
   await take.readPrevious(0.6)
   take.end()
 }
@@ -277,7 +280,7 @@ async function browserPart(
 
     await take.begin(appScreen)
     await take.caption("The app, with a team's sample notes and tags")
-    await pause(1200)
+    await pause(1000)
     await take.readPrevious(0.4)
     await take.caption("Write a note and tag it")
     await clickLike(app, pa, app.locator("[data-e2e=note-new]"), { scroll: false })
@@ -287,12 +290,20 @@ async function browserPart(
     await pause(300)
     await clickLike(app, pa, app.getByRole("button", { name: TAG, exact: true }))
     await pause(400)
+    // The form's footer ends the page, so "Add note" would sit under the caption band. Room under
+    // the footer, below the fold where nobody sees it appear, lets a scroll lift it clear.
+    await app.locator("[data-e2e=note-save]").evaluate((save) =>
+      (save.parentElement as HTMLElement).style.paddingBottom = `160px`
+    )
+    await scrollLike(app, 160)
+    await pause(300)
     await take.caption("Create it, and the whole team can read it")
-    await clickLike(app, pa, app.getByRole("button", { name: "Create note" }))
-    // The note's page shows "Loading the note…" first, then the note under its title.
+    await clickLike(app, pa, app.getByRole("button", { name: "Add note" }))
+    // The note's page shows "Loading the note…" first, then the note under its title, whose
+    // heading holds the title's field and names the saved title in its `title` attribute.
     await take.within(ANSWER_S, () =>
       app.waitForFunction((title) =>
-        document.querySelector("h1")?.textContent?.trim() === title &&
+        document.querySelector("h1")?.getAttribute("title") === title &&
         !document.body.innerText.includes("Loading the note"), NEW_NOTE, { timeout: 60_000 }))
     await parkLike(app, pa)
     await pause(1500)
@@ -304,12 +315,13 @@ async function browserPart(
     await take.within(ANSWER_S, () => group.waitFor())
     await pause(400)
     await clickLike(app, pa, group)
-    await take.within(ANSWER_S, () => app.getByText(/^Members \(\d+\)$/).waitFor())
-    await pause(400)
-    await moveLike(app, pa, { x: 620, y: 360 })
-    const members = await app.getByText(/^Members \(\d+\)$/).boundingBox()
-    if (!members) throw new Error("no Members heading")
-    await scrollLike(app, Math.round(members.y - 90))
+    // The group's page opens on its General tab; the members have a tab of their own.
+    const membersTab = app.getByRole("tab", { name: "Members", exact: true })
+    await take.within(ANSWER_S, () => membersTab.waitFor())
+    await pause(300)
+    await clickLike(app, pa, membersTab, { scroll: false })
+    await take.within(ANSWER_S, () => app.locator("[data-e2e=group-section-members] li").first().waitFor())
+    await parkLike(app, pa)
     await pause(900)
     await take.readPrevious(0.3)
     take.end()
@@ -333,7 +345,7 @@ async function browserPart(
     await take.caption("Their sessions, groups and activity, at a glance")
     for (const tab of [/^Sessions/, /^Groups/, /^Activity/]) {
       await clickLike(admin, pb, admin.getByRole("tab", { name: tab }), { scroll: false })
-      await pause(600)
+      await pause(500)
     }
     await parkLike(admin, pb)
     await pause(300)
@@ -434,6 +446,12 @@ async function record(): Promise<void> {
     const env = await Deno.readTextFile(`${app}/infra/envs/.env`)
     await waitFor(`${HOSTS.app}/sign-in`, 900)
     await waitFor(`${HOSTS.admin}/sign-in`, 900)
+    // The proxy answers 404 for the API's paths until the API itself is healthy.
+    await waitFor(`${HOSTS.app}/api/health`, 900).catch(async (error) => {
+      const logs = ["sh", "-c", `docker logs --tail 40 ${PROJECT}-api 2>&1`]
+      console.error(await run(logs).catch(String))
+      throw error
+    })
     const dbUser = envValue(env, "DB_USER")
     await run(["deno", "task", "db:seed"], {
       cwd: app,
@@ -515,6 +533,7 @@ async function encode(): Promise<void> {
     claim: CLAIM,
     end: END,
     poster: `${TAKE}/poster.png`,
+    threads: 2,
   })
 }
 
