@@ -89,6 +89,8 @@ import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
 import { mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
 import { createSubscribersRoute } from "./routes/subscribers.ts"
+import { createWeeklyDigestRoute } from "./routes/weekly-digest.ts"
+import { createWeeklyDigestTokens } from "@server/notifications/weekly-digest.ts"
 import { createPublicBlogReads, createPublicBlogRoute } from "./routes/blog.ts"
 import {
   createPublicContactLinksRead,
@@ -537,6 +539,14 @@ if (catalogSetup.on) {
     ),
   )
 }
+const subscriberRateLimits = createSubscriberRateLimits({
+  ...config.rateLimiter,
+  store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
+  // Without a setup every subscriber route answers 503 before it spends a budget.
+  recipientKey: subscribersSetup
+    ? await createRecipientLimitKey(subscribersSetup)
+    : () => Promise.reject(new Error("subscriptions are off")),
+})
 // Visitors subscribe to mail. The worker signs and sends every mail; this checks the links.
 app.route(
   "/subscribers",
@@ -544,14 +554,7 @@ app.route(
     setup: subscribersSetup,
     store: (list) => createPostgresSubscriberStore(sql, { listId: list }),
     webAppUrl: config.webAppUrl,
-    rateLimits: createSubscriberRateLimits({
-      ...config.rateLimiter,
-      store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
-      // Without a setup every subscriber route answers 503 before it spends a budget.
-      recipientKey: subscribersSetup
-        ? await createRecipientLimitKey(subscribersSetup)
-        : () => Promise.reject(new Error("subscriptions are off")),
-    }),
+    rateLimits: subscriberRateLimits,
     requestConfirmMail: (list, email, language) =>
       enqueueSubscriberMail(sql, SUBSCRIBER_CONFIRM_MAIL_JOB, list, email, language),
     requestWelcomeMail: (list, email, language) =>
@@ -559,6 +562,16 @@ app.route(
     rememberLanguage: (list, email, language) =>
       rememberSubscriberLanguage(sql, list, email, language),
     log: console,
+  }),
+)
+// The weekly digest's one-click unsubscribe: the worker signs the link, this checks it.
+app.route(
+  "/weekly-digest",
+  createWeeklyDigestRoute({
+    tokens: subscribersSetup ? await createWeeklyDigestTokens(subscribersSetup) : null,
+    webAppUrl: config.webAppUrl,
+    tokenByIp: subscriberRateLimits.tokenByIp,
+    turnOff: async (userId) => void await db.weeklyDigest.save(userId, { on: false }),
   }),
 )
 if (config.isDev) {
