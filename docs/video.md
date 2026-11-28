@@ -43,7 +43,9 @@ Each step leaves files in the work folder, and a rerun picks up from them.
 4. **Render.** ffmpeg cuts the long video and one Short (1080x1920, centre crop, captions burned
    in). Always runs, so a changed edit list renders again.
 5. **Audio.** Both videos are levelled in two loudnorm passes to −14 LUFS with a true peak of at
-   most −1 dBTP: the first measures, the second applies one linear gain. The video is copied.
+   most −1 dBTP: the first measures, the second applies one linear gain, or loudnorm's dynamic
+   levelling when one gain would push the peak over. loudnorm aims at −1.5 dBTP, since the AAC
+   encode after it adds about 0.2 dB. The video is copied.
 6. **Drafts.** Titles, description and transcript for publishing (below). Claude's titles and
    description are used when the edit list has them; otherwise they are drafted from the
    transcript.

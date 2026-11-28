@@ -261,9 +261,9 @@ Deno.test("loudnessFilter measures in the first pass and applies a linear gain f
     input_thresh: `-34.0`,
     target_offset: `0.4`,
   }
-  expect(loudnessFilter(false)).toBe(`loudnorm=I=-14:TP=-1:LRA=11:print_format=json`)
+  expect(loudnessFilter(false)).toBe(`loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json`)
   expect(loudnessFilter(false, measured)).toBe(
-    `loudnorm=I=-14:TP=-1:LRA=11:measured_I=-23.5:measured_TP=-4.2:measured_LRA=3.1:measured_thresh=-34.0:offset=0.4:linear=true:print_format=summary`,
+    `loudnorm=I=-14:TP=-1.5:LRA=11:measured_I=-23.5:measured_TP=-4.2:measured_LRA=3.1:measured_thresh=-34.0:offset=0.4:linear=true:print_format=summary`,
   )
   expect(loudnessFilter(true)).toMatch(/^afftdn,loudnorm=/)
   expect(loudnessFilter(true, measured)).toMatch(/^afftdn,loudnorm=.*linear=true/)

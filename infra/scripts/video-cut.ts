@@ -268,7 +268,8 @@ async function render(o: CutOptions, ports: Ports, graph: string, hasAudio: bool
 
 /**
  * Step 5: levels `input` into `output` with two loudnorm passes: the first measures, the second
- * applies those values as one linear gain, with the video copied. Removes `input`.
+ * applies those values: one linear gain when that keeps the peak under the target, else
+ * loudnorm's own dynamic levelling. The video is copied. Removes `input`.
  */
 async function level(
   o: CutOptions,

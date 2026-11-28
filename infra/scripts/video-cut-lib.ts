@@ -645,8 +645,12 @@ export function trimConcatGraph(keeps: Range[], hasAudio: boolean, videoTail = `
   return parts.join(`;\n`)
 }
 
-/** Where the audio of every output is levelled to: YouTube's loudness, one dB of headroom. */
-export const LOUDNESS = { integrated: -14, truePeak: -1, range: 11 }
+/**
+ * Where the audio of every output is levelled to: YouTube's loudness. The true peak must end at
+ * or under −1 dBTP; loudnorm aims at −1.5, because the AAC encode after it raised a real
+ * recording's peak by 0.2 dB, to −0.8 when it aimed at −1.
+ */
+export const LOUDNESS = { integrated: -14, truePeak: -1.5, range: 11 }
 
 /** The values loudnorm's first pass prints, which its second pass takes back. */
 export interface LoudnormMeasure {
