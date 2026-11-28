@@ -1,8 +1,8 @@
 # Continuous integration: runs on every pull request, every push to main, every release tag
 # `v<digit>*` (release.yml waits for it) and the nightly cron run on main
 # (docs/woodpecker-ci-setup.md, "The nightly run").
-# A push to main runs only `check`, `secrets` and the images: its pull request already ran the
-# rest. The browser steps (`browser`, `lighthouse`, `e2e-smoke`, `e2e-full`) are in
+# A push to main runs only `check`, `secrets`, the images and `android`: its pull request already
+# ran the rest. The browser steps (`browser`, `lighthouse`, `e2e-smoke`, `e2e-full`) are in
 # ci-browser.yml, a workflow of its own that runs at the same time as this one, in its own
 # checkout with its own services, on every event here but a push to main
 # (https://github.com/spy4x/ringmaster/issues/297).
@@ -306,6 +306,35 @@ steps:
     commands:
       - executor --context "$$PWD" --dockerfile apps/mpa/dockerfile.bun --no-push
         --registry-mirror mirror.gcr.io
+    depends_on: []
+
+  android:
+    # Builds the Android app's debug APK with `deno task android:build` (docs/android.md, #202),
+    # in the Android SDK image the doc's `docker run` line uses (JDK 21, build-tools 36). The image
+    # has no Deno, so the step fetches the release zip, checks its SHA-256 as `runtimes` does, and
+    # unpacks it with the JDK's `jar`, since the image has no unzip. Nothing is signed or kept.
+    # The step lives here, not in a workflow of its own, so the `[WIP]` rule and the
+    # `pull_request_metadata` twins at the top hold for it without a copy, and a red build blocks
+    # the merge through `ci/woodpecker/pr/ci`. A pull request builds it only when it changes the
+    # app, the task (deno.jsonc) or this file; a push to `main` always does.
+    image: ghcr.io/cirruslabs/android-sdk:36@sha256:f9b3ea9ed2b5fc9522adae82c7b4622ab7aa54207ef532c8e615a347dca08f31
+    when:
+      - event: pull_request
+        path: &android_paths
+          - apps/android/**
+          - deno.jsonc
+          - .woodpecker/ci.yml
+      - event: pull_request_metadata
+        path: *android_paths
+      - event: push
+        branch: main
+    commands:
+      - |
+          set -eu
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          (cd /usr/local/bin && jar xf /tmp/deno.zip && chmod +x deno)
+      - deno task android:build
     depends_on: []
 
 services:
